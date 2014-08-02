@@ -1,0 +1,1 @@
+fbc -x Nomero.exe -exx -m main *.bas
