@@ -1,6 +1,6 @@
-'layer block combining
+'run effect directives
+'add effect directive to PurovskyDistrict 2 Inside
 'debug displays all blox
-'program effect directives, redo anim structure for blocks
 'program splode blox and destructable blox
 'program new collision shapes
 'program snow switch

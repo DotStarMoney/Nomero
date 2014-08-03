@@ -397,11 +397,11 @@ for i = 0 to N_tilesets - 1
                 print "      ";tempEffect.offset
                 print "      ";tempEffect.effect
             else
-                exit do
+                exit do            
             end if
         loop
     end if
-
+    
 next i
 
 print
@@ -490,12 +490,13 @@ for i = 0 to N_tilesets - 1
     bload tilesets(i).set_filename, setImages(i)
 next i
 
-
-
-
-
-
-
+for i = 0 to (N_layers - 1)
+    for q = 0 to map_width*map_height - 1
+        if (layers(i).layer_data[q] and &h1fffffff) > tilesets(2).set_firstID then
+            'print layers(i).layer_data[q] and &h1fffffff
+        end if
+    next q
+next i
 
 N_merges = 0
 'merge layers
@@ -503,16 +504,16 @@ for i = 0 to (N_layers - 1)
     curLayer = i
     if curLayer = collisionLayer then curLayer += 1
     if curLayer >= (N_layers - 1) then exit for
-
     for q = 0 to map_width*map_height - 1
         numMerged = 0
         tileA = layers(curLayer).layer_data[q] and &h1fffffff
+        
         minID = -1
         if tileA <> 0 then
-            for j = 0 to N_tilesets = 1
+            for j = 0 to N_tilesets - 1
                 if ucase(left(tilesets(j).set_name, 9)) <> "COLLISION" then
                     if tileA >= tilesets(j).set_firstID then
-                        if (minID = -1) orElse (tilesets(j).set_firstID < minID) then
+                        if (minID = -1) orElse (tilesets(j).set_firstID >= minID) then
                             minID = tilesets(j).set_firstID
                             tilesetA = j
                         end if
@@ -522,13 +523,14 @@ for i = 0 to (N_layers - 1)
         end if
         animA = 0
         if tilesets(tilesetA).tilePropList <> 0 then
+            
             tilesets(tilesetA).tilePropList->rollReset()
             do
                 tempPtr = tilesets(tilesetA).tilePropList->roll()
                 if tempPtr <> 0 then
                     effectPtr = cast(tileEffect_t ptr, tempPtr)
                     tempEffect = *effectPtr
-                    if tempEffect.tilenum = tileA then
+                    if tempEffect.tilenum = (tileA - tilesets(tilesetA).set_firstID) then
                         animA = effectPtr
                         exit do
                     end if
@@ -563,10 +565,10 @@ for i = 0 to (N_layers - 1)
                     tileB = layers(nextLayer).layer_data[q] and &h1fffffff
                     minID = -1
                     if tileB <> 0 then
-                        for j = 0 to N_tilesets = 1
+                        for j = 0 to N_tilesets - 1
                             if ucase(left(tilesets(j).set_name, 9)) <> "COLLISION" then
                                 if tileB >= tilesets(j).set_firstID then
-                                    if (minID = -1) orElse (tilesets(j).set_firstID < minID) then
+                                    if (minID = -1) orElse (tilesets(j).set_firstID > minID) then
                                         minID = tilesets(j).set_firstID
                                         tilesetB = j
                                     end if
@@ -582,7 +584,7 @@ for i = 0 to (N_layers - 1)
                             if tempPtr <> 0 then
                                 effectPtr = cast(tileEffect_t ptr, tempPtr)
                                 tempEffect = *effectPtr
-                                if tempEffect.tilenum = tileB then
+                                if tempEffect.tilenum = (tileB - tilesets(tilesetB).set_firstID) then
                                     animB = effectPtr
                                     exit do
                                 end if
@@ -639,7 +641,7 @@ for i = 0 to (N_layers - 1)
                     N_merges += 1
                     combinedTiles.insert(searchKey, @newTileNum)
                     for j = 0 to numMerged - 1
-                        tn = (tilesToMerge_tile(j) and &h1fffffff)' - 1
+                        tn = (tilesToMerge_tile(j) and &h1fffffff) 
                         rt = tilesToMerge_tile(j) shr 29
                         xtn = (tn mod 20) * 16
                         ytn = int(tn / 20) * 16

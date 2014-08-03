@@ -671,7 +671,6 @@ sub level.load(filename as string)
             #endif
             tilesets[i].set_image = imgData
             bload strdata, tilesets[i].set_image
-            
         end if
         
         
