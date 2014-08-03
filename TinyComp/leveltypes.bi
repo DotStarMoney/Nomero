@@ -45,7 +45,7 @@ end type
 type Level_VisBlock
     as ushort tileset
     as ushort tileNum
-    as ushort frameDelay
+    as short frameDelay
     as ushort usesAnim
     as ushort rotatedType
 end type

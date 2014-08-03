@@ -17,7 +17,7 @@ constructor GameSpace()
                   
     spy.body.r = 18
     spy.body.m = 5
-    spy.body.p = Vector2D(0,0)
+    spy.body.p = Vector2D(128,256)
 
     camera = spy.body.p
                        
@@ -170,7 +170,7 @@ sub GameSpace.step_draw()
       
  
     lvlData.drawLayers(scnbuff, BACKGROUND, camera.x(), camera.y(), Vector2D(0, 0))
-    backgroundSnow.drawFlakes(scnbuff, camera)
+    'backgroundSnow.drawFlakes(scnbuff, camera)
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
 
     spy.drawPlayer(scnbuff)
@@ -179,7 +179,7 @@ sub GameSpace.step_draw()
 
     lvlData.drawLayers(scnbuff, FOREGROUND, camera.x(), camera.y(), Vector2D(0, shake))
 
-    foregroundSnow.drawFlakes(scnbuff, camera)
+    'foregroundSnow.drawFlakes(scnbuff, camera)
     
     scale2sync scnbuff
 end sub

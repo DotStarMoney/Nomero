@@ -236,9 +236,9 @@ end function
 function HashTable.exists(r_key as integer) as integer
     dim as uinteger key
     dim as HashNode_t ptr curNode
-    
+
     key = hashInteger(r_key) 
-    
+
     curNode = data_[key]
     while curNode <> 0
         if curNode->key_type = KEY_INTEGER then
@@ -282,8 +282,8 @@ sub HashTable.rehash()
     dim as integer oldNumCells
     dim as integer i
     dim as uinteger key
-    
-    oldNumCells = numObjects
+ 
+    oldNumCells = numCells
     ratio = cdbl(numObjects) / numCells
     if ratio > MAX_CAPACITY then
         numCells = numCells * EXPAND_FACTOR
@@ -300,7 +300,7 @@ sub HashTable.rehash()
                     key = hashString(*(curNode->key_string))
                 end if
                 nextNode = curNode->next_
-            
+                
                 curNode->next_ = newData[key]
                 newData[key] = curNode
                 
@@ -310,6 +310,7 @@ sub HashTable.rehash()
         deallocate(data_)
         data_ = newData
     end if
+
 end sub
    
 sub HashTable.flush()

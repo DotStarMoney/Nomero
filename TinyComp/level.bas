@@ -229,8 +229,11 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     dim as integer offset, delay
     dim as Level_VisBlock block
     dim as integer row_c, nextTile
+    dim as integer retrieve
     dim as double newcx, newcy
     dim as integer tilePosX, tilePosY
+    dim as double rand
+    dim as Level_EffectData tempEffect
     
     if tl_x > br_x then swap tl_x, br_x
     if tl_y > br_y then swap tl_y, br_y
@@ -242,9 +245,9 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     if layerData[lyr].parallax < 5 then
         x = (cam_x - (lvlWidth * 0.5 * 16)) * (1-layerData[lyr].depth)
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
-
     end if
     
+    rand = rnd
     
     for yscan = tl_y to br_y
         for xscan = tl_x to br_x
@@ -255,27 +258,46 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                 tilePosX = ((block.tileNum - 1) mod row_c) * 16
                 tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
                 if block.usesAnim < 65535 then
-                    /'
-                    delay = tilesets[block.tileset].tile_anim[block.usesAnim].delay
-                    block.frameDelay += 1
-                    if block.frameDelay > delay then
-                        nextTile = tilesets[block.tileset].tile_anim[block.usesAnim].nextTile
-                        nextTile += block.tileNum
-                        block.tileNum = nextTile
-                        block.usesAnim = tilesets[block.tileset].tile_anim[block.usesAnim].nextAnim
-                        block.frameDelay = 0
-                        blocks[lyr][yscan * lvlWidth + xscan] = block
-                    else
-                        blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
-                    end if
-                    '/
+                    tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+                    select case tempEffect.effect
+                    case ANIMATE
+                        block.frameDelay += 1
+                        if block.frameDelay > tempEffect.delay then
+                            block.frameDelay = 0
+                            block.tileNum += tempEffect.nextTile
+                            if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
+                                block.usesAnim = 1
+                            else
+                                block.usesAnim = 65535
+                            end if
+                            blocks[lyr][yscan * lvlWidth + xscan] = block
+                        else
+                            blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
+                        end if
+                    case FLICKER
+                        block.frameDelay -= 1
+                        if block.frameDelay < 0 then
+                            block.tileNum += tempEffect.nextTile
+                            if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
+                                tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+                                block.usesAnim = 1
+                            else
+                                block.usesAnim = 65535
+                            end if
+                            block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                            blocks[lyr][yscan * lvlWidth + xscan] = block
+                        else
+                            blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
+                        end if
+                    case DESTRUCT
+                    end select
                 end if
                 putDispatch(scnbuff, block, xscan*16 + x, yscan*16 + y,_
                             tilePosX, tilePosY, cam_x, cam_y)
             end if
         next xscan
     next yscan
-    
+ 
 end sub
 
 sub Level.putDispatch(scnbuff as integer ptr,_
