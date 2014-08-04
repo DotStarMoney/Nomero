@@ -170,7 +170,7 @@ sub GameSpace.step_draw()
       
  
     lvlData.drawLayers(scnbuff, BACKGROUND, camera.x(), camera.y(), Vector2D(0, 0))
-    'backgroundSnow.drawFlakes(scnbuff, camera)
+    if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
 
     spy.drawPlayer(scnbuff)
@@ -179,7 +179,7 @@ sub GameSpace.step_draw()
 
     lvlData.drawLayers(scnbuff, FOREGROUND, camera.x(), camera.y(), Vector2D(0, shake))
 
-    'foregroundSnow.drawFlakes(scnbuff, camera)
+    if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     
     scale2sync scnbuff
 end sub
@@ -219,10 +219,10 @@ sub GameSpace.step_process()
     
  
     spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.033)
- 
-    backgroundSnow.stepFlakes(camera, 0.033)
-    foregroundSnow.stepFlakes(camera, 0.033)
-  
+    if lvlData.usesSnow() = 1 then 
+        backgroundSnow.stepFlakes(camera, 0.033)
+        foregroundSnow.stepFlakes(camera, 0.033)
+    end if
     projectiles.proc_collection(0.033)
  
     effects.proc_effects(0.033)

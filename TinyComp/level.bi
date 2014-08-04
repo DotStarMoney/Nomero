@@ -49,6 +49,7 @@ type Level
         declare sub setCollision(x as integer, y as integer, v as integer)
         declare sub flush()
         declare sub addFallout(x as integer, y as integer, flavor as integer)
+        declare function usesSnow() as integer
         
     private:
         declare sub putDispatch(scnbuff as integer ptr,_

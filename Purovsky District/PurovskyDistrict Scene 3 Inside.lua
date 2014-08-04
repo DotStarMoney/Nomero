@@ -24,7 +24,7 @@ return {
         {
           id = 1766,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "158",
             ["offset"] = "10"
@@ -33,7 +33,7 @@ return {
         {
           id = 1767,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "158",
             ["offset"] = "10"
@@ -42,7 +42,7 @@ return {
         {
           id = 1770,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -51,7 +51,7 @@ return {
         {
           id = 1771,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -60,7 +60,7 @@ return {
         {
           id = 1776,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -69,7 +69,7 @@ return {
         {
           id = 1777,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -78,7 +78,7 @@ return {
         {
           id = 1778,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -87,7 +87,7 @@ return {
         {
           id = 1779,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -96,7 +96,7 @@ return {
         {
           id = 1786,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "158",
             ["offset"] = "10"
@@ -105,7 +105,7 @@ return {
         {
           id = 1787,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "158",
             ["offset"] = "10"
@@ -114,7 +114,7 @@ return {
         {
           id = 1788,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -123,7 +123,7 @@ return {
         {
           id = 1789,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -132,7 +132,7 @@ return {
         {
           id = 1790,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -141,7 +141,7 @@ return {
         {
           id = 1791,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -150,7 +150,7 @@ return {
         {
           id = 1796,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -159,7 +159,7 @@ return {
         {
           id = 1797,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -168,7 +168,7 @@ return {
         {
           id = 1798,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -177,7 +177,7 @@ return {
         {
           id = 1799,
           properties = {
-            ["delay"] = "8",
+            ["delay"] = "35",
             ["effect"] = "flicker",
             ["next"] = "160",
             ["offset"] = "10"
@@ -377,768 +377,768 @@ return {
         {
           id = 0,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 1,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 2,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 3,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 4,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 5,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 6,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 7,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 8,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-8"
           }
         },
         {
           id = 9,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-8"
           }
         },
         {
           id = 10,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-8"
           }
         },
         {
           id = 11,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-8"
           }
         },
         {
           id = 12,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 13,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 14,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 15,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 16,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 17,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 18,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "22"
           }
         },
         {
           id = 19,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "22"
           }
         },
         {
           id = 20,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 21,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 22,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 23,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 24,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 25,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 26,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 27,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "4"
           }
         },
         {
           id = 28,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-8"
           }
         },
         {
           id = 29,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-8"
           }
         },
         {
           id = 30,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-8"
           }
         },
         {
           id = 31,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-8"
           }
         },
         {
           id = 32,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 33,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 34,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 35,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 36,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 37,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 38,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "22"
           }
         },
         {
           id = 39,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "22"
           }
         },
         {
           id = 40,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-24"
           }
         },
         {
           id = 41,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-24"
           }
         },
         {
           id = 42,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 43,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 44,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 45,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 46,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 47,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 48,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "25",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 49,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "25",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 50,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "20",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 51,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "20",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 52,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 53,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 54,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 55,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 56,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 57,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 58,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "22"
           }
         },
         {
           id = 59,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "22"
           }
         },
         {
           id = 60,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-24"
           }
         },
         {
           id = 61,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-24"
           }
         },
         {
           id = 62,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 63,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 64,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 65,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "8",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 66,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 67,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 68,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "25",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 69,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "25",
+            ["effect"] = "animate",
             ["next"] = "-2"
           }
         },
         {
           id = 70,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "20",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 71,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "20",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 72,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 73,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next "] = "2"
           }
         },
         {
           id = 74,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 75,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 76,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 77,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 78,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "22"
           }
         },
         {
           id = 79,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "22"
           }
         },
         {
           id = 80,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-30"
           }
         },
         {
           id = 81,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-30"
           }
         },
         {
           id = 100,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-30"
           }
         },
         {
           id = 101,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "1",
+            ["effect"] = "animate",
             ["next"] = "-30"
           }
         },
         {
           id = 166,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "20",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 167,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "20",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 168,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "2",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 169,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "2",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 170,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "2",
+            ["effect"] = "animate",
             ["next"] = "-4"
           }
         },
         {
           id = 171,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "2",
+            ["effect"] = "animate",
             ["next"] = "-4"
           }
         },
         {
           id = 186,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "20",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 187,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "20",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 188,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "2",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 189,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "2",
+            ["effect"] = "animate",
             ["next"] = "2"
           }
         },
         {
           id = 190,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "2",
+            ["effect"] = "animate",
             ["next"] = "-4"
           }
         },
         {
           id = 191,
           properties = {
-            ["effect"] = "animate",
             ["delay"] = "2",
+            ["effect"] = "animate",
             ["next"] = "-4"
           }
         }
@@ -1153,7 +1153,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -1187,7 +1187,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         ["fallout"] = ""
@@ -1223,7 +1223,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         [""] = ""
@@ -1259,7 +1259,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -1293,7 +1293,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -1315,7 +1315,7 @@ return {
         0, 0, 0, 0, 285, 286, 0, 0, 2212, 2045, 2046, 2047, 2048, 2089, 2090, 0, 2061, 2062, 0, 0, 0, 0, 0, 2059, 2060, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 305, 306, 0, 0, 2232, 2065, 2066, 2067, 2068, 2109, 2110, 0, 2081, 2082, 0, 0, 1639, 1640, 0, 2079, 2080, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 285, 286, 0, 0, 1845, 1846, 1847, 1848, 0, 1733, 1734, 0, 2093, 2094, 0, 1641, 1642, 1645, 1646, 1647, 1648, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 305, 306, 0, 0, 1865, 1866, 1867, 1868, 0, 1753, 1754, 0, 2113, 2114, 0, 1661, 1662, 1665, 1666, 1667, 1668, 0, 0, 0, 0, 0, 2116, 1348, 0, 0, 0,
+        0, 0, 0, 0, 305, 306, 0, 0, 1865, 1866, 1867, 1868, 0, 1753, 1754, 0, 2113, 2114, 0, 1661, 1662, 1665, 1666, 1667, 1668, 0, 0, 0, 0, 0, 0, 1348, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
       }
@@ -1327,7 +1327,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         [""] = ""

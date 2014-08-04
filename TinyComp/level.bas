@@ -270,6 +270,11 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                             else
                                 block.usesAnim = 65535
                             end if
+                            if tempEffect.effect = ANIMATE then
+                                block.frameDelay = 0
+                            elseif tempEffect.effect = FLICKER then
+                                block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                            end if
                             blocks[lyr][yscan * lvlWidth + xscan] = block
                         else
                             blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
@@ -284,12 +289,17 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                             else
                                 block.usesAnim = 65535
                             end if
-                            block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                            if tempEffect.effect = ANIMATE then
+                                block.frameDelay = 0
+                            elseif tempEffect.effect = FLICKER then
+                                block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                            end if
                             blocks[lyr][yscan * lvlWidth + xscan] = block
                         else
                             blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
                         end if
                     case DESTRUCT
+                        ''
                     end select
                 end if
                 putDispatch(scnbuff, block, xscan*16 + x, yscan*16 + y,_
@@ -461,7 +471,15 @@ destructor level
     imagedestroy(falloutTex)
 end destructor
 
-
+function Level.usesSnow() as integer
+    if snowfall = 1 then 
+        return 1
+    else
+        return 0
+    end if
+end function
+    
+    
 sub Level.addFallout(x as integer, y as integer, flavor as integer)
     dim as Level_FalloutType fallout
     dim as Level_FalloutType ptr ptr list
@@ -469,9 +487,72 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer)
     dim as integer imgW, imgH
     dim as integer cacheW, cacheH
     dim as Vector2D old_a, old_b
+    dim as integer tl_x, tl_y, br_x, br_y
+    dim as integer xs, ys
+    dim as double xp, yp
+    dim as double d, rand
+    dim as Level_VisBlock block
+    dim as Level_EffectData tempEffect
     
     fallout.a = Vector2D(x,y) - Vector2D(64, 64)
     fallout.b = Vector2D(x,y) + Vector2D(64, 64)
+    
+    
+    tl_x = fallout.a.x() / 16
+    tl_y = fallout.a.y() / 16
+    br_x = fallout.b.x() / 16
+    br_y = fallout.b.y() / 16
+    tl_x = max(0, min(tl_x, lvlWidth - 1))
+    tl_y = max(0, min(tl_y, lvlHeight - 1))
+    br_x = max(0, min(br_x, lvlWidth - 1))
+    br_y = max(0, min(br_y, lvlHeight - 1))    
+    
+    
+    
+    for i = 0 to blocks_N - 1
+        rand = rnd
+        if layerData[i].isFallout = 1 then
+            for ys = tl_y to br_y
+                for xs = tl_x to br_x
+                    xp = xs * 16 - x
+                    yp = ys * 16 - y
+                    d = sqr(xp*xp + yp*yp)
+                    if d <= 48 then
+                        
+                        block = blocks[i][ys * lvlWidth + xs]
+                        
+                        if block.usesAnim < 65535 andAlso block.tileset < 65535 then
+                           
+                            tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+                            
+                            if tempEffect.effect = DESTRUCT then
+                                block.tileNum += tempEffect.nextTile
+                                if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
+                                    tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+                                    block.usesAnim = 1
+                                else
+                                    block.usesAnim = 65535
+                                end if
+                                if tempEffect.effect = ANIMATE then
+                                    block.frameDelay = 0
+                                elseif tempEffect.effect = FLICKER then
+                                    block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                                end if
+                                blocks[i][ys * lvlWidth + xs] = block
+                            end if
+                            
+                        end if
+                        
+                        if d <= 12 then
+                            resetBlock(xs, ys, i)
+                        end if
+                    end if
+                next xs
+            next ys
+        end if
+    next i
+    
+    
     fallout.flavor = flavor
     fallout.cachedImage = 0
     

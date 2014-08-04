@@ -1,20 +1,18 @@
-'run effect directives
-'add effect directive to PurovskyDistrict 2 Inside
+'add object layer reader
+'pass effect objects into effect drawer, can use hash2d to determine whose visible
+'redo portal system, only linkages must be specified now
+
+
+
+
+
+
+
 'debug displays all blox
 'program splode blox and destructable blox
 'program new collision shapes
-'program snow switch
-'remove current portal implementation, keep methods
-'delete tiles in fallout layer
 
-'add object layer reader
-'give effects knowledge of projectiles
-'pass effect objects into effect drawer, can use hash2d to determine whose visible
-'redo portal system, only linkages must be specified now
 'think about zones/triggers- implement some stuff?
-'make list of effects
-
-
 
 'various destructors, use fbmld to find
 'create save states
