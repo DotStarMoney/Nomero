@@ -1,8 +1,5 @@
-'add object layer reader
 'pass effect objects into effect drawer, can use hash2d to determine whose visible
 'redo portal system, only linkages must be specified now
-
-
 
 
 

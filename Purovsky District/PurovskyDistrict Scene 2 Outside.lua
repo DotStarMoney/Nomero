@@ -1255,6 +1255,266 @@ return {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
       }
+    },
+    {
+      type = "objectgroup",
+      name = "Objects",
+      visible = true,
+      opacity = 1,
+      properties = {},
+      objects = {
+        {
+          name = "Radar Pulse",
+          type = "Effect",
+          shape = "ellipse",
+          x = 3277,
+          y = 171,
+          width = 162,
+          height = 162,
+          visible = true,
+          properties = {
+            ["effect"] = "RADAR PULSE"
+          }
+        },
+        {
+          name = "Ice Shimmer 1",
+          type = "Effect",
+          shape = "rectangle",
+          x = 34,
+          y = 529,
+          width = 60,
+          height = 20,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 2",
+          type = "Effect",
+          shape = "rectangle",
+          x = 253,
+          y = 527,
+          width = 60,
+          height = 20,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 3",
+          type = "Effect",
+          shape = "rectangle",
+          x = 386,
+          y = 526,
+          width = 60,
+          height = 20,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 4",
+          type = "Effect",
+          shape = "rectangle",
+          x = 1059,
+          y = 160,
+          width = 60,
+          height = 20,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 5",
+          type = "Effect",
+          shape = "rectangle",
+          x = 1152,
+          y = 159,
+          width = 30,
+          height = 19,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 6",
+          type = "Effect",
+          shape = "rectangle",
+          x = 1233,
+          y = 161,
+          width = 60,
+          height = 20,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 7",
+          type = "Effect",
+          shape = "rectangle",
+          x = 1392,
+          y = 158,
+          width = 28,
+          height = 21,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 8",
+          type = "Effect",
+          shape = "rectangle",
+          x = 1442,
+          y = 158,
+          width = 28,
+          height = 21,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 9",
+          type = "Effect",
+          shape = "rectangle",
+          x = 1552,
+          y = 157,
+          width = 28,
+          height = 21,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 10",
+          type = "Effect",
+          shape = "rectangle",
+          x = 1728,
+          y = 160,
+          width = 65,
+          height = 21,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 11",
+          type = "Effect",
+          shape = "rectangle",
+          x = 1808,
+          y = 160,
+          width = 28,
+          height = 21,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 12",
+          type = "Effect",
+          shape = "rectangle",
+          x = 2286,
+          y = 416,
+          width = 63,
+          height = 21,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 13",
+          type = "Effect",
+          shape = "rectangle",
+          x = 3535,
+          y = 334,
+          width = 28,
+          height = 20,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 14",
+          type = "Effect",
+          shape = "rectangle",
+          x = 3480,
+          y = 335,
+          width = 28,
+          height = 20,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Ice Shimmer 15",
+          type = "Effect",
+          shape = "rectangle",
+          x = 3488,
+          y = 192,
+          width = 62,
+          height = 20,
+          visible = true,
+          properties = {
+            ["effect"] = "SHIMMER"
+          }
+        },
+        {
+          name = "Sewer Grate",
+          type = "Effect",
+          shape = "ellipse",
+          x = 1506,
+          y = 543,
+          width = 60,
+          height = 62,
+          visible = true,
+          properties = {
+            ["effect"] = "SMOKE"
+          }
+        },
+        {
+          name = "East Door",
+          type = "Portal",
+          shape = "rectangle",
+          x = 3507,
+          y = 261,
+          width = 26,
+          height = 56,
+          visible = true,
+          properties = {
+            ["to map"] = "PurovskyDistrict Scene 3 Inside",
+            ["to portal"] = "Top Door",
+            ["type"] = "in"
+          }
+        },
+        {
+          name = "Left Wall",
+          type = "Portal",
+          shape = "rectangle",
+          x = 0,
+          y = 0,
+          width = 18,
+          height = 659,
+          visible = true,
+          properties = {
+            ["direction"] = "left",
+            ["to map"] = "PurovskyDistrict Scene 1 Outside",
+            ["to portal"] = "Left Wall"
+          }
+        }
+      }
     }
   }
 }

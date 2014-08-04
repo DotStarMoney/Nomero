@@ -1,6 +1,6 @@
 #include "list.bi"
 #include "hashtable.bi"
-
+#include "vector2d.bi"
 
 
 Public Sub Split(Text As String, Delim As String = " ", Count As Long = -1, Ret() As String)
@@ -37,6 +37,8 @@ Public Sub Split(Text As String, Delim As String = " ", Count As Long = -1, Ret(
    
 End Sub
 
+#define trimQuotes(x) (mid(x, 2, len(x)-2))
+
 enum RangeSet_t
     FOREGROUND
     ACTIVE
@@ -49,7 +51,6 @@ enum EffectType_t
     DESTRUCT
     NONE
 end enum
-
 
 type tileEffect_t
     as ushort tilenum
@@ -80,14 +81,73 @@ type layer_t
     as integer empty
 end type
 
+
+'----------- object fields ---------
+
+enum ObjectShape_t
+    ELLIPSE
+    RECTANGLE
+end enum
+
+enum ObjectType_t
+    EFFECT
+    PORTAL
+    TRIGGER
+    SPAWN
+end enum
+
+enum PortalType_t
+    D_LEFT
+    D_UP
+    D_RIGHT
+    D_DOWN
+    D_IN
+end enum
+
+type objectPortal_t
+    as zstring * 128 portal_to_map
+    as zstring * 128 portal_to_portal
+    as ushort        portal_direction
+end type
+
+enum ObjectEffectType_t
+    RADAR_PULSE = 0
+    SHIMMER     = 1
+    SMOKE       = 2
+end enum
+
+type objectEffect_t
+    as ushort effect_type
+    as ushort effect_density
+end type
+
+dim as objectPortal_t ptr tempObjPortal
+dim as objectEffect_t ptr tempObjEffect
+
+type object_t
+    as zstring * 128 object_name
+    as ushort object_type
+    as ushort object_shape
+    as ushort inRangeSet
+    as Vector2D p
+    as Vector2D size
+    as any ptr data_
+end type
+
+
 '------- fields to fill out ----------
 dim as zstring * 128 map_name
 dim as ushort snowfall
 dim as ushort map_width, map_height
-dim as ushort N_tilesets, N_layers
+dim as ushort N_tilesets, N_layers, N_objects
+
+N_tilesets = 0
+N_layers = 0
+N_objects = 0
 
 redim as set_t tilesets(0)
 redim as layer_t layers(0)
+redim as object_t objects(0)
 redim as integer ptr setImages(0)
 '-------------------------------------
 
@@ -126,7 +186,7 @@ redim as string pieces(0 to 0)
 dim as tag_index_t ti_pair
 dim as integer f, itemNestLevel, itemIndex, curPos, curTile
 dim as integer dataline, curChar, row, col, colIndex, propertyline = 0
-dim as integer propertyType = 0
+dim as integer propertyType = 0, isObject, readObjects, curObjDepth
 dim as tileEffect_t tempEffect
 dim as string ls, rs
 
@@ -147,6 +207,9 @@ map_name = tempMap
 itemNestLevel = 0
 itemIndex = 1
 dataline = 0
+isObject = 0
+readObjects = 0
+curObjDepth = ACTIVE
 do
     'cls
     Line Input #f, lne
@@ -179,6 +242,12 @@ do
                     
                 elseif right(lne, 1) = "}" then
                     
+                    if readObjects = 1 then
+                        readObjects = 0
+                    else
+                        readObjects = 0
+                        isObject = 0
+                    end if
                     POP()
                     itemNestLevel -= 1
                 
@@ -217,72 +286,143 @@ do
                     end if
                 elseif itemNestLevel > 1 then
                     TOP()
-                    if ti_pair.tag = "tilesets" then
-                        if item_tag = "name" then
-                            N_tilesets += 1
-                            redim preserve as set_t tilesets(0 to N_tilesets - 1)                        
-                            tilesets(N_tilesets - 1).set_name = mid(item_content, 2, len(item_content)-2)
-                            tilesets(N_tilesets - 1).tilePropList = 0
-                        elseif item_tag = "firstgid" then
-                            tilesets(N_tilesets - 1).set_firstID = val(item_content)
-                        elseif item_tag = "imagewidth" then
-                            tilesets(N_tilesets - 1).set_width = val(item_content)
-                        elseif item_tag = "imageheight" then
-                            tilesets(N_tilesets - 1).set_height = val(item_content)
-                        elseif item_tag = "image" then
-                            tilesets(N_tilesets - 1).set_filename = mid(item_content, 2, len(item_content)-2)
-                        elseif item_tag = "tiles" andAlso item_content <> "{}" then
-                            tilesets(N_tilesets - 1).tilePropList = new List
-                            tilesets(N_tilesets - 1).tilePropList->init(sizeof(tileEffect_t))
-                            ti_pair.tag = "tiles"
-                            ti_pair.index = itemIndex
-                            PUSH()
-                            itemIndex = 1
-                            itemNestLevel += 1
-                        end if
-                    elseif ti_pair.tag = "layers" then
-                        if item_tag = "name" then
-                            N_layers += 1
-                            redim preserve as layer_t layers(0 to N_layers - 1)
-                            layers(N_layers - 1).layer_name = mid(item_content, 2, len(item_content)-2)
-                            layers(N_layers - 1).layer_data = allocate(sizeof(uinteger) * map_width*map_height)
-                        elseif item_tag = "data" then
-                            dataline = 1
-                            row = 0
-                            col = 0
-                        elseif item_tag = "properties" then
-                            layers(N_layers - 1).order = N_layers - 1
-                            layers(N_layers - 1).depth = 1
-                            layers(N_layers - 1).parallax = 65535
-                            layers(N_layers - 1).inRangeSet = ACTIVE
-                            layers(N_layers - 1).isDestructible = 65535
-                            layers(N_layers - 1).isFallout = 65535
-                            if item_content <> "{}" then 
-                                propertyline = 1
-                                propertyType = 0
+                    if isObject = 0 then
+                        if ti_pair.tag = "tilesets" then
+                            if item_tag = "name" then
+                                N_tilesets += 1
+                                redim preserve as set_t tilesets(0 to N_tilesets - 1)                        
+                                tilesets(N_tilesets - 1).set_name = mid(item_content, 2, len(item_content)-2)
+                                tilesets(N_tilesets - 1).tilePropList = 0
+                            elseif item_tag = "firstgid" then
+                                tilesets(N_tilesets - 1).set_firstID = val(item_content)
+                            elseif item_tag = "imagewidth" then
+                                tilesets(N_tilesets - 1).set_width = val(item_content)
+                            elseif item_tag = "imageheight" then
+                                tilesets(N_tilesets - 1).set_height = val(item_content)
+                            elseif item_tag = "image" then
+                                tilesets(N_tilesets - 1).set_filename = mid(item_content, 2, len(item_content)-2)
+                            elseif item_tag = "tiles" andAlso item_content <> "{}" then
+                                tilesets(N_tilesets - 1).tilePropList = new List
+                                tilesets(N_tilesets - 1).tilePropList->init(sizeof(tileEffect_t))
+                                ti_pair.tag = "tiles"
+                                ti_pair.index = itemIndex
+                                PUSH()
+                                itemIndex = 1
+                                itemNestLevel += 1
+                            end if
+                        elseif ti_pair.tag = "layers" then
+                            if item_tag = "name" then
+                                N_layers += 1
+                                redim preserve as layer_t layers(0 to N_layers - 1)
+                                layers(N_layers - 1).layer_name = mid(item_content, 2, len(item_content)-2)
+                                layers(N_layers - 1).layer_data = allocate(sizeof(uinteger) * map_width*map_height)
+                            elseif item_tag = "type" then
+                                if isObject = 0 then
+                                    if mid(item_content, 2, len(item_content)-2) = "objectgroup" then
+                                        isObject = 1
+                                        curObjDepth = ACTIVE
+                                    end if
+                                end if
+                            elseif item_tag = "data" then
+                                dataline = 1
+                                row = 0
+                                col = 0
+                            elseif item_tag = "properties" then
+                                layers(N_layers - 1).order = N_layers - 1
+                                layers(N_layers - 1).depth = 1
+                                layers(N_layers - 1).parallax = 65535
+                                layers(N_layers - 1).inRangeSet = ACTIVE
+                                layers(N_layers - 1).isDestructible = 65535
+                                layers(N_layers - 1).isFallout = 65535
+                                if item_content <> "{}" then 
+                                    propertyline = 1
+                                    propertyType = 0
+                                end if
+                            end if
+                        elseif ti_pair.tag = "tiles" then
+                            if item_tag = "properties" then
+                                if item_content <> "{}" then 
+                                    propertyline = 1
+                                    propertyType = 1
+                                end if
+                            elseif item_tag = "id" then
+                                with tempEffect
+                                    .tilenum = val(item_content)
+                                    .nextTile = 0
+                                    .delay = 0
+                                    .offset = 0
+                                    .effect = NONE
+                                end with
                             end if
                         end if
-                    elseif ti_pair.tag = "tiles" then
-                        if item_tag = "properties" then
-                            if item_content <> "{}" then 
-                                propertyline = 1
-                                propertyType = 1
+                    
+                    else
+                        if readObjects = 0 then
+                            if item_tag = "objects" then
+                                readObjects = 1
+                                ti_pair.tag = "objects"
+                                ti_pair.index = itemIndex
+                                PUSH()
+                                itemIndex = 1
+                                itemNestLevel += 1
+                            elseif item_tag = "properties" then
+                                if item_content <> "{}" then 
+                                    propertyline = 1
+                                    propertyType = 4
+                                end if
                             end if
-                        elseif item_tag = "id" then
-                            with tempEffect
-                                .tilenum = val(item_content)
-                                .nextTile = 0
-                                .delay = 0
-                                .offset = 0
-                                .effect = NONE
-                            end with
+                        else
+                            if item_tag = "name" then
+                                N_objects += 1 
+                                redim preserve as object_t objects(0 to N_objects - 1)   
+                                objects(N_objects - 1).object_name = trimQuotes(item_content)
+                                objects(N_objects - 1).data_ = 0
+                                objects(N_objects - 1).inRangeSet = curObjDepth
+                            elseif item_tag = "type" then
+                                item_content = trimQuotes(item_content)
+                                if left(ucase(item_content), 6) = "EFFECT" then
+                                    objects(N_objects - 1).object_type = EFFECT
+                                elseif left(ucase(item_content), 6) = "PORTAL" then
+                                    objects(N_objects - 1).object_type = PORTAL
+                                end if
+                            elseif item_tag = "shape" then
+                                item_content = trimQuotes(item_content)
+                                if item_content = "ellipse" then
+                                    objects(N_objects - 1).object_shape = ELLIPSE
+                                elseif item_content = "rectangle" then
+                                    objects(N_objects - 1).object_shape = RECTANGLE
+                                end if
+                            elseif item_tag = "x" then
+                                objects(N_objects - 1).p.setX(val(item_content))
+                            elseif item_tag = "y" then
+                                objects(N_objects - 1).p.setY(val(item_content))
+                            elseif item_tag = "width" then
+                                objects(N_objects - 1).size.setX(val(item_content))
+                            elseif item_tag = "height" then
+                                objects(N_objects - 1).size.setY(val(item_content))
+                            elseif item_tag = "properties" then
+                                if item_content <> "{}" then 
+                                    propertyline = 1
+                                    propertyType = 3
+                                    select case objects(N_objects - 1).object_type
+                                    case EFFECT
+                                        objects(N_objects - 1).data_ = allocate(sizeof(ObjectEffect_t))
+                                        tempObjEffect = objects(N_objects - 1).data_
+                                        tempObjEffect->effect_density = 65536 * 0.5
+                                    case PORTAL
+                                        objects(N_objects - 1).data_ = allocate(sizeof(ObjectPortal_t))
+                                        tempObjPortal = objects(N_objects - 1).data_
+                                        tempObjPortal->portal_direction = D_IN
+                                    end select
+                                end if
+                            end if
+                            
                         end if
                     end if
                 end if
-                
                 itemIndex += 1
                 
-            end if
+             end if
         else
             if right(lne, 1) = "}" orElse right(lne,2) = "}," then 
                 propertyline = 0
@@ -336,6 +476,45 @@ do
                         if left(lcase(item_content), 2) = "on" then
                             snowfall = 1
                         end if
+                    end if
+                elseif propertyType = 3 then
+                    select case objects(N_objects - 1).object_type
+                    case EFFECT
+                        if left(lcase(item_tag), 6) = "effect" then 
+                            if left(lcase(item_content), 7) = "shimmer" then
+                                tempObjEffect->effect_type = SHIMMER
+                            elseif left(lcase(item_content), 5) = "smoke" then
+                                tempObjEffect->effect_type = SMOKE
+                            elseif left(lcase(item_content), 11) = "radar pulse" then
+                                tempObjEffect->effect_type = RADAR_PULSE
+                            end if
+                        elseif left(lcase(item_tag), 7) = "density" then
+                            tempObjEffect->effect_density = val(item_content)
+                        end if
+                    case PORTAL
+                        if left(lcase(item_tag), 9) = "direction" then 
+                            if left(lcase(item_content), 2) = "up" then
+                                tempObjPortal->portal_direction = D_UP
+                            elseif left(lcase(item_content), 4) = "down" then
+                                tempObjPortal->portal_direction = D_DOWN
+                            elseif left(lcase(item_content), 4) = "left" then
+                                tempObjPortal->portal_direction = D_LEFT
+                            elseif left(lcase(item_content), 5) = "right" then
+                                tempObjPortal->portal_direction = D_RIGHT
+                            elseif left(lcase(item_content), 2) = "in" then
+                                tempObjPortal->portal_direction = D_IN                             
+                            end if
+                        elseif left(lcase(item_tag), 6) = "to map" then
+                            tempObjPortal->portal_to_map = item_content
+                        elseif left(lcase(item_tag), 9) = "to portal" then
+                            tempObjPortal->portal_to_portal = item_content
+                        end if
+                    end select  
+                elseif propertyType = 4 then
+                    if left(lcase(item_tag), 10) = "foreground" then 
+                        curObjDepth = FOREGROUND
+                    elseif left(lcase(item_tag), 10) = "background" then 
+                        curObjDepth = BACKGROUND
                     end if
                 end if
             end if
@@ -863,6 +1042,31 @@ for i = 0 to N_layers - 1
         end if
     end if
 next i 
+put #f,,N_objects
+for i = 0 to N_objects - 1
+    with objects(i)
+        put #f,,.object_name
+        put #f,,.object_type
+        put #f,,.object_shape
+        put #f,,.inRangeSet
+        put #f,,.p
+        put #f,,.size
+        select case .object_type
+        case EFFECT
+            tempObjEffect = .data_
+            put #f,,tempObjEffect->effect_type
+            put #f,,tempObjEffect->effect_density
+        case PORTAL
+            tempObjPortal = .data_
+            put #f,,tempObjPortal->portal_to_map
+            put #f,,tempObjPortal->portal_to_portal
+            put #f,,tempObjPortal->portal_direction
+        end select
+    end with
+next i
+
+
+
 print "Level sucessfully converted..."
 sleep
 end

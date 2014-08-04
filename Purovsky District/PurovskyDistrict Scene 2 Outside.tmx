@@ -1020,4 +1020,107 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup name="Objects" width="225" height="50">
+  <object name="Radar Pulse" type="Effect" x="3277" y="171" width="162" height="162">
+   <properties>
+    <property name="effect" value="RADAR PULSE"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object name="Ice Shimmer 1" type="Effect" x="34" y="529" width="60" height="20">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 2" type="Effect" x="253" y="527" width="60" height="20">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 3" type="Effect" x="386" y="526" width="60" height="20">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 4" type="Effect" x="1059" y="160" width="60" height="20">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 5" type="Effect" x="1152" y="159" width="30" height="19">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 6" type="Effect" x="1233" y="161" width="60" height="20">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 7" type="Effect" x="1392" y="158" width="28" height="21">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 8" type="Effect" x="1442" y="158" width="28" height="21">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 9" type="Effect" x="1552" y="157" width="28" height="21">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 10" type="Effect" x="1728" y="160" width="65" height="21">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 11" type="Effect" x="1808" y="160" width="28" height="21">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 12" type="Effect" x="2286" y="416" width="63" height="21">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 13" type="Effect" x="3535" y="334" width="28" height="20">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 14" type="Effect" x="3480" y="335" width="28" height="20">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Ice Shimmer 15" type="Effect" x="3488" y="192" width="62" height="20">
+   <properties>
+    <property name="effect" value="SHIMMER"/>
+   </properties>
+  </object>
+  <object name="Sewer Grate" type="Effect" x="1506" y="543" width="60" height="62">
+   <properties>
+    <property name="effect" value="SMOKE"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object name="East Door" type="Portal" x="3507" y="261" width="26" height="56">
+   <properties>
+    <property name="to map" value="PurovskyDistrict Scene 3 Inside"/>
+    <property name="to portal" value="Top Door"/>
+    <property name="type" value="in"/>
+   </properties>
+  </object>
+  <object name="Left Wall" type="Portal" x="0" y="0" width="18" height="659">
+   <properties>
+    <property name="direction" value="left"/>
+    <property name="to map" value="PurovskyDistrict Scene 1 Outside"/>
+    <property name="to portal" value="Left Wall"/>
+   </properties>
+  </object>
+ </objectgroup>
 </map>
