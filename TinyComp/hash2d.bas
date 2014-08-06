@@ -25,6 +25,7 @@ end destructor
 
 sub Hash2D.init(spaceWidth as double, spaceHeight as double, dataSizeBytes as integer)
     dim as integer i
+    if spacialHash <> 0 then deallocate spacialHash
     this.spaceWidth  = spaceWidth
     this.spaceHeight = spaceHeight
     this.cellWidth  = CELL_WIDTH
@@ -68,7 +69,7 @@ function Hash2D.getBounds(byref a as Vector2D, byref b as Vector2D,_
     return 1
 end function
 
-sub Hash2D.insert(a as Vector2D, b as Vector2D, data_ as any ptr)
+function Hash2D.insert(a as Vector2D, b as Vector2D, data_ as any ptr) as any ptr
     dim as Vector2D a1, b1
     dim as integer tl_x, tl_y
     dim as integer br_x, br_y
@@ -104,7 +105,9 @@ sub Hash2D.insert(a as Vector2D, b as Vector2D, data_ as any ptr)
             next xscan
         next yscan
     end if
-end sub
+    
+    return newDataNode_->data_
+end function
 
 function Hash2D.search(a as Vector2D, b as Vector2D, byref ret_ as any ptr ptr) as integer
     dim as Vector2D a1, b1
@@ -239,18 +242,20 @@ sub Hash2D.flush(clr as integer = 0)
 end sub
 
 sub Hash2D.rollReset()
-    curRollX    = 0
-    curRollY    = 0
-    curRollNode = spacialHash[curRollY * this.cellCols_N + curRollX]
-    curRollFoundNodes.flush()
-    curRollEnd = 0
+    if spacialHash <> 0 then
+        curRollX    = 0
+        curRollY    = 0
+        curRollNode = spacialHash[curRollY * this.cellCols_N + curRollX]
+        curRollFoundNodes.flush()
+        curRollEnd = 0
+    end if
 end sub
 
 function Hash2D.roll() as any ptr
     dim as Hash2dNode_t ptr searchNode_
     dim as Hash2dData_t ptr foundData_
     
-    if curRollEnd = 0 then
+    if (curRollEnd = 0) andALso (spacialHash <> 0) then
         do
             if curRollNode = 0 then
                 curRollX += 1

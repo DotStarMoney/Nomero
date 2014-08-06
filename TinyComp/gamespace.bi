@@ -4,6 +4,7 @@
 #include "debug.bi"
 #include "constants.bi"
 #include "tinyspace.bi"
+#include "effectcontroller.bi"
 #include "level.bi"
 #include "fmod.bi"
 #include "utility.bi"
@@ -43,6 +44,7 @@ type GameSpace
         as ProjectileCollection projectiles
         as SnowGenerator backgroundSnow
         as SnowGenerator foregroundSnow
+        as EffectController graphicFX
         as uinteger ptr music
         as TinySpace world
         as Player    spy

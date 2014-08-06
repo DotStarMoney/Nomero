@@ -6,6 +6,7 @@
 #include "vector2d.bi"
 #include "hash2d.bi"
 #include "list.bi"
+#include "effectcontroller.bi"
 
 #define MAX_ZONES 8
 #define FLIPPED_HORIZ &h4
@@ -15,12 +16,16 @@
 
 #include "leveltypes.bi"
 
+type EffectController_ as EffectController
 
 type Level
     public:
         declare constructor
         declare constructor(filename as string)
         declare destructor
+        
+        declare sub init(e_p as EffectController_ ptr)
+        
         declare static sub loadPortals(filename as string)
         declare sub load(filename as string)
         declare function processPortalCoverage(p as Vector2D,_
@@ -79,10 +84,11 @@ type Level
         dim as List background_layer
         dim as List active_layer
         
+        dim as EffectController_ ptr graphicFX_
+        
         dim as Hash2D falloutZones
 
         static as RegionData_t ptr regionPortals
-        
         static as integer ptr falloutTex
 end type
 

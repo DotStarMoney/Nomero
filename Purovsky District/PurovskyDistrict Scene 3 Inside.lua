@@ -1153,7 +1153,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -1187,7 +1187,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {
         ["fallout"] = ""
@@ -1223,7 +1223,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {
         [""] = ""
@@ -1259,7 +1259,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -1293,7 +1293,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -1327,7 +1327,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {
         [""] = ""
@@ -1399,7 +1399,7 @@ return {
       y = 0,
       width = 35,
       height = 20,
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -1424,6 +1424,28 @@ return {
         0, 2684356521, 0, 0, 1982, 1982, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2684356521, 0,
         0, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 2684356521, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      }
+    },
+    {
+      type = "objectgroup",
+      name = "Objects",
+      visible = true,
+      opacity = 1,
+      properties = {},
+      objects = {
+        {
+          name = "Grate 1",
+          type = "Effect",
+          shape = "rectangle",
+          x = 114,
+          y = 51,
+          width = 27,
+          height = 27,
+          visible = true,
+          properties = {
+            ["effect"] = "smoke"
+          }
+        }
       }
     }
   }

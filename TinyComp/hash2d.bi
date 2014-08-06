@@ -25,7 +25,7 @@ type Hash2D
         declare destructor()
         
         declare sub init(spaceWidth as double, spaceHeight as double, dataSizeBytes as integer)
-        declare sub insert(a as Vector2D, b as Vector2D, data_ as any ptr)
+        declare function insert(a as Vector2D, b as Vector2D, data_ as any ptr) as any ptr
         declare function search(a as Vector2D, b as Vector2D,_
                                 byref ret_ as any ptr ptr) as integer
         declare sub remove(data_ptr as any ptr)

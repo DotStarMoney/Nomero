@@ -76,6 +76,7 @@ type Animation
         declare function getWidth() as integer
         declare function getHeight() as integer 
         declare function getOffset() as Vector2D
+        declare function getFrame() as integer
     private:
         declare sub init()
         declare sub applySwitch()

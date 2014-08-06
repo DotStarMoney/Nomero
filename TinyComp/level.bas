@@ -74,6 +74,10 @@ sub level.setCollision(x as integer, y as integer, v as integer)
     coldata[y * lvlWidth + x] = v
 end sub
 
+sub Level.init(e_p as EffectController ptr)
+    graphicFX_ = e_p
+end sub
+
 sub level.loadPortals(filename as string)
     dim as SeqFile.Reader struct    
     
@@ -694,7 +698,9 @@ sub level.load(filename as string)
     dim as Level_VisBlock ptr lvb
     redim as ushort setFirstIds(0)
     dim as Level_EffectData tempEffect
-    dim as ushort numAnims
+    dim as ushort numAnims, numObjs
+    dim as ushort objType, objField(7)
+    dim as Object_t tempObj
     
     f = freefile
  
@@ -727,7 +733,7 @@ sub level.load(filename as string)
     get #f,,snowfall
     get #f,,tilesets_N
     tilesets = new Level_Tileset[tilesets_N]
-            
+    graphicFX_->init(lvlWidth * 16, lvlHeight * 16)
     #ifdef DEBUG
         if tilesets = 0 then
             printlog "panic 0"
@@ -900,6 +906,33 @@ sub level.load(filename as string)
             
         end if
     next i
+    
+    get #f,,numObjs
+    for i = 0 to numObjs - 1 
+        get #f,,tempObj.object_name
+        get #f,,tempObj.object_type
+        get #f,,tempObj.object_shape
+        get #f,,tempObj.inRangeSet
+        get #f,,tempObj.p
+        get #f,,tempObj.size
+        select case objType
+        case EFFECT
+            get #f,,objField(0)
+            get #f,,objField(1)
+            graphicFX_->create(tempObj.object_name, objField(0),_
+                               tempObj.object_shape, tempObj.p,_
+                               tempObj.size, objField(1),_
+                               tempObj.inRangeSet)
+        case PORTAL
+            get #f,,strdata
+            get #f,,strdata
+            get #f,,objField(0)
+        end select
+    next i
+    
+    
+    
+    
     
     #ifdef DEBUG
         printlog str(blocks_N) & ", " & tilesets_N

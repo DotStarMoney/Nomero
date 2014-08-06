@@ -2,12 +2,25 @@
 #define LEVELTYPES_BI
 
 #include "hashtable.bi"
+#include "constants.bi"
 
-enum orderType
-    FOREGROUND
-    ACTIVE
-    BACKGROUND
+enum ObjectType_t
+    EFFECT
+    PORTAL
+    TRIGGER
+    SPAWN
 end enum
+
+type Object_t
+    as zstring * 128 object_name
+    as ushort object_type
+    as ushort object_shape
+    as ushort inRangeSet
+    as Vector2D p
+    as Vector2D size
+    as any ptr data_
+end type
+
 
 
 enum EffectType_t
@@ -60,6 +73,7 @@ Type Level_LayerData
 end type
 
 
+'''''''''''''''''''
 type PortalData_t
     as zstring ptr portalName
     as zstring ptr linkMapName
@@ -74,6 +88,8 @@ Type RegionData_t
     as integer numRegions
     as RegionPortalData_t ptr regionPortals
 end type
+'''''''''''''''''''''''
+
 
 type BoundingBox_t
     as Vector2D a,b

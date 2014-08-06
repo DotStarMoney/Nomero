@@ -3,11 +3,20 @@
 
 #include "debug.bi"
 
+
 #define SCRX 640
 #define SCRY 480
 
+enum orderType
+    FOREGROUND
+    ACTIVE
+    BACKGROUND
+end enum
 
-#define ENTRY_POINT "portals.txt"
+enum shapeType
+    ELLIPSE
+    RECTANGLE
+end enum
 
 
 #endif

@@ -1481,6 +1481,7 @@ return {
           height = 62,
           visible = true,
           properties = {
+            ["density"] = "0.25",
             ["effect"] = "SMOKE"
           }
         },

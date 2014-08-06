@@ -1104,6 +1104,7 @@
   </object>
   <object name="Sewer Grate" type="Effect" x="1506" y="543" width="60" height="62">
    <properties>
+    <property name="density" value="0.25"/>
     <property name="effect" value="SMOKE"/>
    </properties>
    <ellipse/>

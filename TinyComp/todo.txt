@@ -1,6 +1,6 @@
 'pass effect objects into effect drawer, can use hash2d to determine whose visible
 'redo portal system, only linkages must be specified now
-
+'add radar effect
 
 
 
@@ -24,3 +24,6 @@
 'find out why portal effect at location 0
 'walk through door animation
 'throwing animation
+'hat clip on purovsky inside 2
+'make snow flakes
+'floating above snow peaks due to collision shapes

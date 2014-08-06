@@ -6,12 +6,15 @@
 
 enum EffectType_
     EXPLODE
+    SPARKLE
+    SMOKE
 end enum
 
 type Effect_t
     as Vector2D p
     as Vector2D v
     as Animation anim
+    as EffectType_ fx
 end type
 
 type EffectNode_t

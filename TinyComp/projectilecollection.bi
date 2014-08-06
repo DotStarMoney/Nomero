@@ -27,6 +27,7 @@ type ProjectileNode_t
     as ProjectileNode_t ptr prev_
 end type
 
+type Level_ as Level
 
 type ProjectileCollection
     public:
@@ -35,7 +36,7 @@ type ProjectileCollection
         declare sub create(p_ as Vector2D, v_ as Vector2D, f_ as integer = CHERRY_BOMB)
         declare sub draw_collection(scnbuff as uinteger ptr)
         declare sub proc_collection(t as double)
-        declare sub setParent(TS as TinySpace ptr, LS as Level ptr, GS as any ptr)
+        declare sub setParent(TS as TinySpace ptr, LS as Level_ ptr, GS as any ptr)
         declare sub setEffectsGenerator(s as OneShotEffects ptr)
         declare sub flush()
     private:
@@ -44,7 +45,7 @@ type ProjectileCollection
         as integer              numNodes
         as OneShotEffects ptr   effects
         as any ptr game_space
-        as Level ptr parent_level
+        as Level_ ptr parent_level
 end type
 
 

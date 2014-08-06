@@ -209,6 +209,10 @@ sub Animation.switch(next_anim as integer)
     end if
 end sub
 
+function Animation.getFrame() as integer
+    return currentFrame
+end function
+
 sub Animation.hardSwitch(next_anim as integer)
     if ((next_anim <> currentAnim) andAlso (next_anim <> pendingSwitch)) OrElse _
        ((next_anim = currentAnim) andAlso (isReleasing = 1)) then

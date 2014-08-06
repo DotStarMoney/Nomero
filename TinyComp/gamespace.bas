@@ -10,11 +10,14 @@ constructor GameSpace()
     movingFrmAvg = 0.016
     vibcount = 0
 
+    lvlData.init(@graphicFX)
     lvlData.load(command(1))
     world.setBlockData(lvlData.getCollisionLayerData(),_
                        lvlData.getWidth(), lvlData.getHeight(),_
                        16.0)
                   
+    graphicFX.setParent(@effects, @projectiles)
+    
     spy.body.r = 18
     spy.body.m = 5
     spy.body.p = Vector2D(128,256)
@@ -30,9 +33,6 @@ constructor GameSpace()
     spy.setParent(@world, @lvlData, @projectiles)
     
     projectiles.setEffectsGenerator(@effects)
-
-    Level.loadPortals(ENTRY_POINT)
-
 
     'FSOUND_Init(44100, 3, 0)
     'music = FSOUND_Stream_Open("PurovskyDistrict.ogg", FSOUND_LOOP_NORMAL, 0, 0 ) 
@@ -80,7 +80,7 @@ function GameSpace.go() as integer
         totalTime = (timer - startTime) * 1000
         movingFrmAvg = movingFrmAvg * 0.92 + totalTime * 0.08
         stallTime = (1000.0 / FPS_TARGET) - movingFrmAvg
-        if stallTime > 0 then stall(stallTime)'sleep(stallTime)
+        if stallTime > 0 then sleep(stallTime)'stall(stallTime)'sleep(stallTime)
     loop 
     return 0
 end function
@@ -172,7 +172,7 @@ sub GameSpace.step_draw()
     lvlData.drawLayers(scnbuff, BACKGROUND, camera.x(), camera.y(), Vector2D(0, 0))
     if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
-
+    graphicFX.drawEffects(scnbuff, camera, ACTIVE)
     spy.drawPlayer(scnbuff)
     projectiles.draw_collection(scnbuff)
     effects.draw_effects(scnbuff)
@@ -224,6 +224,7 @@ sub GameSpace.step_process()
         foregroundSnow.stepFlakes(camera, 0.033)
     end if
     projectiles.proc_collection(0.033)
+    graphicFX.processFrame(camera)
  
     effects.proc_effects(0.033)
     
