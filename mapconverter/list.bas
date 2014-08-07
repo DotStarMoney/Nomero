@@ -176,7 +176,9 @@ sub List.flush()
         
         curNode_ = nxtNode_
     wend
-    
+    head_ = 0
+    tail_ = 0
+    curRollNode_ = 0
     size = 0
 end sub
 

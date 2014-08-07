@@ -25,7 +25,7 @@ end destructor
 
 sub Hash2D.init(spaceWidth as double, spaceHeight as double, dataSizeBytes as integer)
     dim as integer i
-    if spacialHash <> 0 then deallocate spacialHash
+    if spacialHash <> 0 then deallocate(spacialHash)
     this.spaceWidth  = spaceWidth
     this.spaceHeight = spaceHeight
     this.cellWidth  = CELL_WIDTH

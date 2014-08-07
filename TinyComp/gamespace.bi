@@ -13,6 +13,7 @@
 #include "snowgenerator.bi"
 #include "projectilecollection.bi"
 #include "oneshoteffects.bi"
+#include "leveltypes.bi"
 
 #ifdef DEBUG
     kill "debug.txt"
@@ -27,6 +28,8 @@ type GameSpace
         
         declare function go() as integer
         declare sub reconnectCollision()
+        declare sub switchRegions(ls as LevelSwitch_t)
+        declare sub centerCamera(c as Vector2D)
         
         '---------- screen functions -------------
         

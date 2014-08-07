@@ -20,6 +20,7 @@ declare function rndRange(a as double, b as double) as double
 declare sub stall(mili as integer)
 declare sub roundDbl(byref v as double, r as integer)
 declare sub scale2sync(img as uinteger ptr)
+declare function trimwhite(s as string) as string
 declare sub bitblt_FalloutMix(dest as uinteger ptr,_
                               xpos as integer, ypos as integer,_
                               src  as uinteger ptr,_

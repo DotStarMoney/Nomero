@@ -364,6 +364,16 @@ sub bitblt_FalloutToFalloutMix(dest as uinteger ptr,_
     end asm
 end sub
 
+function trimwhite(s as string) as string
+	while (left(s, 1) = " ") or (left(s, 1) = "\t")
+		s = right(s, len(s)-1)
+	wend
+	while (right(s, 1) = " ") or (right(s, 1) = "\t")
+		s = left(s, len(s)-1)
+	wend
+	return s
+end function
+
 Function ScreenClip(px as integer, py as integer ,_
                     sx as integer, sy as integer ,_
                     byref npx  as integer, byref npy  as integer ,_

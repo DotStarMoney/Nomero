@@ -21,6 +21,7 @@ type ObjectEffect_t
     as shapeType              shape
     as double                 density
     as orderType              inRangeSet 
+    as integer                counter
 end type
 
 type ProjectileCollection_ as ProjectileCollection
@@ -47,11 +48,12 @@ type EffectController
         declare sub drawEffects(scnbuff as integer ptr,_
                                 camera as Vector2D,_
                                 inRangeSet as orderType)
+        declare sub flush()
 
     private:
-        declare sub processEffect(effect_p as ObjectEffect_t)
+        declare sub processEffect(byref effect_p as ObjectEffect_t)
         declare sub drawEffect(effect_p as ObjectEffect_t)
-        declare sub flush()
+
         
         as OneShotEffects ptr        oneshots
         as ProjectileCollection_ ptr particles

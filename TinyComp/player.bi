@@ -21,7 +21,8 @@ end enum
 type Player
     public:
         declare constructor
-        declare sub setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr)
+        declare sub setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr,_
+                              gs as any ptr)
         declare sub processControls(dire as integer, jump as integer,_
                                     ups as integer, fire as integer,_
                                     shift as integer, t as double)
@@ -47,6 +48,7 @@ type Player
         declare function onLadder() as integer
         declare sub switch(ls as LevelSwitch_t)
         
+        as any ptr game_parent
         as integer groundSwitchAnimFrames
         as integer groundedFrames
         as integer lastUps

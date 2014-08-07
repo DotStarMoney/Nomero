@@ -1,13 +1,11 @@
-'pass effect objects into effect drawer, can use hash2d to determine whose visible
-'redo portal system, only linkages must be specified now
-'add radar effect
-
-
-
-
 'debug displays all blox
 'program splode blox and destructable blox
 'program new collision shapes
+'portal transition
+
+
+
+
 
 'think about zones/triggers- implement some stuff?
 
@@ -27,3 +25,4 @@
 'hat clip on purovsky inside 2
 'make snow flakes
 'floating above snow peaks due to collision shapes
+'make sure portal strings are deallocated on level flush

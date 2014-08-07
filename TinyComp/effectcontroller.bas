@@ -21,11 +21,11 @@ sub EffectController.flush()
             exit do
         end if
     loop
+    effectContainer.flush()
 end sub
 
 sub EffectController.init(lvlWidth as integer, lvlHeight as integer)
-    flush()
-    effectContainer.flush()
+	flush()
     effectContainer.init(lvlWidth, lvlHeight, sizeof(ObjectEffect_t))
 end sub
 
@@ -54,6 +54,7 @@ sub EffectController.create(effect_name as string,_
    tempObj.density = density / 65535
    tempObj.shape = shape
    tempObj.inRangeSet = inRangeSet
+   tempObj.counter = 0
    
    effectContainer.insert(tempObj.p, tempObj.p + tempObj.size, @tempObj)
                             
@@ -73,7 +74,7 @@ sub EffectController.processFrame(camera as Vector2D)
             tempObj_ = effect_list[i]
             processEffect(*tempObj_)
         next i
-        deallocate effect_list
+        deallocate(effect_list)
     end if
     
 end sub
@@ -84,7 +85,7 @@ sub EffectController.drawEffects(scnbuff as integer ptr,_
                                 
 end sub
 
-sub EffectController.processEffect(effect_p as ObjectEffect_t)
+sub EffectController.processEffect(byref effect_p as ObjectEffect_t)
     dim as Vector2D e_loc
     do
         e_loc = Vector2D(effect_p.size.x() * rnd, effect_p.size.y() * rnd)
@@ -102,6 +103,17 @@ sub EffectController.processEffect(effect_p as ObjectEffect_t)
 
     select case effect_p.effect_type
     case RADAR_PULSE
+		
+		if effect_p.counter = 0 then
+			if effect_p.counter = 0 then 
+				effect_p.counter = effect_p.density * 30
+			else
+				effect_p.counter -= 1
+			end if
+			oneshots->create(effect_p.p + effect_p.size*0.5, RADAR, Vector2D(0,0))
+		else
+			effect_p.counter -= 1
+		end if
     case SHIMMER
         if int(rnd * effect_p.density * 10) = 0 then
             oneshots->create(e_loc, SPARKLE, Vector2D(0, 0))

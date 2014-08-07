@@ -7,6 +7,7 @@
 #include "hash2d.bi"
 #include "list.bi"
 #include "effectcontroller.bi"
+#include "tinybody.bi"
 
 #define MAX_ZONES 8
 #define FLIPPED_HORIZ &h4
@@ -26,14 +27,13 @@ type Level
         
         declare sub init(e_p as EffectController_ ptr)
         
-        declare static sub loadPortals(filename as string)
         declare sub load(filename as string)
         declare function processPortalCoverage(p as Vector2D,_
                                                w as double, h as double,_
                                                byref l as levelSwitch_t,_
                                                coverage as double = 0.5) as integer
         declare sub repositionFromPortal(l as levelSwitch_t, _
-                                         byref p as Vector2D)
+                                         byref p as TinyBody)
                                         
         declare function getWidth() as integer
         declare function getHeight() as integer
@@ -87,9 +87,14 @@ type Level
         dim as EffectController_ ptr graphicFX_
         
         dim as Hash2D falloutZones
-
-        static as RegionData_t ptr regionPortals
         static as integer ptr falloutTex
+        
+        #ifdef DEBUG
+			static as integer ptr collisionBlox
+        #endif
+
+        dim as Hash2D portals
+        dim as integer pendingPortalSwitch
 end type
 
 

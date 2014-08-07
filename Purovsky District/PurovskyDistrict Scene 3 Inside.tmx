@@ -1179,5 +1179,12 @@
     <property name="effect" value="smoke"/>
    </properties>
   </object>
+  <object name="Top Door" type="Portal" x="449" y="65" width="29" height="63">
+   <properties>
+    <property name="direction" value="in"/>
+    <property name="to map" value="PurovskyDistrict Scene 2 Outside"/>
+    <property name="to portal" value="East Door"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

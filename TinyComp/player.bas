@@ -2,7 +2,7 @@
 #include "TinyBlock.bi"
 #include "utility.bi"
 #include "debug.bi"
-
+#include "gamespace.bi"
 
 
 constructor Player
@@ -33,10 +33,12 @@ function Player.getState() as PlayerState
     return state    
 end function
 
-sub Player.setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr)
+sub Player.setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr,_
+                     gs as any ptr)
     parent = p
     level_parent = l
     proj_parent = g
+    game_parent = gs
 end sub
 
 sub Player.loadAnimations(filename as string)
@@ -91,22 +93,11 @@ function Player.onLadder() as integer
 end function
 
 sub Player.switch(ls as LevelSwitch_t)
-    proj_parent->flush()
-    level_parent->load(ls.fileName)
-    parent->setBlockData(level_parent->getCollisionLayerData(),_
-                         level_parent->getWidth(), level_parent->getHeight(),_
-                         16.0)
-    level_parent->repositionFromPortal(ls, body.p)
-    select case ls.portalName
-    case "LEFT"
-        body.p -= Vector2D(anim.getOffset().x(),0)
-    case "RIGHT"
-        body.p += Vector2D(anim.getOffset().x(),0)
-    case "UP"
-        body.p -= Vector2D(0, anim.getOffset().y())
-    case "DOWN"
-        body.p += Vector2D(0, anim.getOffset().y())
-    end select
+	dim as GameSpace ptr gsp
+	gsp = cast(GameSpace ptr, game_parent)
+	gsp->switchRegions(ls)
+	level_parent->repositionFromPortal(ls, body)
+	gsp->centerCamera(body.p)
 end sub
 
 sub Player.processControls(dire as integer, jump as integer,_
@@ -296,11 +287,17 @@ sub Player.processControls(dire as integer, jump as integer,_
         
 
     ptype = level_parent->processPortalCoverage(this.body.p + this.anim.getOffset(), anim.getWidth(), anim.getHeight(), ls)
-    
-    if (ptype = 1 and (ups = 1 and lastUps = 0) and state = GROUNDED) or (ptype = 0 and (ls.fileName <> "")) then
-        switch(ls)
+	
+    if ls.shouldSwitch = 1 then
+		if ls.facing <> D_IN then
+			switch(ls)
+		else
+			if (ups = 1) andAlso (lastUps = 0) andAlso (state = GROUNDED) then
+				switch(ls)
+			end if
+		end if
     end if
-
+ 
     
     anim.step_animation()
     lastUps = ups

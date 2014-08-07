@@ -1445,6 +1445,21 @@ return {
           properties = {
             ["effect"] = "smoke"
           }
+        },
+        {
+          name = "Top Door",
+          type = "Portal",
+          shape = "rectangle",
+          x = 449,
+          y = 65,
+          width = 29,
+          height = 63,
+          visible = true,
+          properties = {
+            ["direction"] = "in",
+            ["to map"] = "PurovskyDistrict Scene 2 Outside",
+            ["to portal"] = "East Door"
+          }
         }
       }
     }

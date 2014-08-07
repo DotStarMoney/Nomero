@@ -52,6 +52,14 @@ enum EffectType_t
     NONE
 end enum
 
+enum PortalDirection_t
+    D_IN
+    D_DOWN
+    D_UP
+    D_LEFT
+    D_RIGHT
+end enum
+
 type tileEffect_t
     as ushort tilenum
     as ushort effect
@@ -96,13 +104,6 @@ enum ObjectType_t
     SPAWN
 end enum
 
-enum PortalType_t
-    D_LEFT
-    D_UP
-    D_RIGHT
-    D_DOWN
-    D_IN
-end enum
 
 type objectPortal_t
     as zstring * 128 portal_to_map
@@ -669,13 +670,6 @@ for i = 0 to N_tilesets - 1
     bload tilesets(i).set_filename, setImages(i)
 next i
 
-for i = 0 to (N_layers - 1)
-    for q = 0 to map_width*map_height - 1
-        if (layers(i).layer_data[q] and &h1fffffff) > tilesets(2).set_firstID then
-            'print layers(i).layer_data[q] and &h1fffffff
-        end if
-    next q
-next i
 
 N_merges = 0
 'merge layers
@@ -783,19 +777,22 @@ for i = 0 to (N_layers - 1)
                                (layers(curLayer).isFallout = layers(nextLayer).isFallout) then
                                 'if the two layers have the same destruction properties
                                 if animB = 0 andAlso animA = 0 then
+                                    print "to merge"
                                     'if we are not merging animated tiles
                                     'tiles can be merged!
                                     didMerge = 1
-                                    numMerged += 1
     
                                     if mustMerge = 0 then
                                         layers(curLayer).layer_data[q] = layers(nextLayer).layer_data[q]
                                         mustMerge = 1
+                                    else
+                                        searchKey += "("+str(tilesetB)+","+str(layers(nextLayer).layer_data[q])+")"
+                                        tilesToMerge_tile(numMerged - 1) = layers(nextLayer).layer_data[q] - tilesets(tilesetB).set_firstID
+                                        tilesToMerge_set(numMerged - 1) = tilesetB
+                                        numMerged += 1
                                     end if
-                                    searchKey += "("+str(tilesetB)+","+str(layers(nextLayer).layer_data[q])+")"
-                                    tilesToMerge_tile(numMerged - 1) = layers(nextLayer).layer_data[q] - tilesets(tilesetB).set_firstID
-                                    tilesToMerge_set(numMerged - 1) = tilesetB
                                     layers(nextLayer).layer_data[q] = 0'remove tile from old layer
+
                                 end if
                             end if
                         end if

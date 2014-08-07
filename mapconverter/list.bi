@@ -1,7 +1,7 @@
 #ifndef LIST_BI
 #define LIST_BI
 
-'#include "debug.bi"
+#include "debug.bi"
 
 type ListNode_t
     as any ptr data_

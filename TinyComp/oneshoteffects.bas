@@ -40,10 +40,13 @@ sub OneShotEffects.create(p_ as Vector2D, fx as EffectType_ = EXPLODE, _
         this.head_->data_.anim.load("smokeanim.txt")
     case SPARKLE
         this.head_->data_.anim.load("sparkle.txt")
+    case RADAR
+        this.head_->data_.anim.load("radaranim.txt")		
     end select
     this.head_->data_.fx = fx
     this.head_->data_.anim.play()
     this.head_->data_.anim.setSpeed(s_)
+    this.head_->data_.firstDraw = 1
     
     
     this.numNodes += 1
@@ -87,12 +90,12 @@ sub OneShotEffects.draw_effects(scnbuff as uinteger ptr)
     while curNode <> 0
         cur = curNode->data_
         
-        if cur.anim.getFrame() = 0 andAlso cur.fx = EXPLODE then
-            circle scnbuff, (cur.p.x(), cur.p.y()), 30, &h80ffffff,,,,F
+        if cur.fx = EXPLODE andAlso cur.firstDraw = 1 then
+            circle scnbuff, (cur.p.x(), cur.p.y()), 30, rgb(255,200,64),,,,F            
         end if
         cur.anim.drawAnimation(scnbuff, cur.p.x(), cur.p.y())
 
-        
+        curNode->data_.firstDraw = 0
         curNode = curNode->next_
     wend 
     

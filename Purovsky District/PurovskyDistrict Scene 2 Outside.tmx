@@ -1116,11 +1116,11 @@
     <property name="type" value="in"/>
    </properties>
   </object>
-  <object name="Left Wall" type="Portal" x="0" y="0" width="18" height="659">
+  <object name="left" type="Portal" x="0" y="0" width="18" height="659">
    <properties>
     <property name="direction" value="left"/>
     <property name="to map" value="PurovskyDistrict Scene 1 Outside"/>
-    <property name="to portal" value="Left Wall"/>
+    <property name="to portal" value="right"/>
    </properties>
   </object>
  </objectgroup>

@@ -4,9 +4,10 @@
 #include "debug.bi"
 
 
-
-dim as RegionData_t ptr Level.regionPortals = 0
 dim as integer ptr Level.falloutTex = 0
+#ifdef DEBUG
+	dim as integer ptr Level.collisionBlox = 0
+#endif
 
 function blendFallout(byval src as uinteger, byval dest As uinteger, _
                       byval param as any ptr) As uInteger
@@ -40,6 +41,13 @@ constructor level
     foreground_layer.init(sizeof(integer))
     background_layer.init(sizeof(integer))
     active_layer.init(sizeof(integer))
+    pendingPortalSwitch = 0
+    #ifdef DEBUG
+		if collisionBlox = 0 then
+			collisionBlox = imagecreate(336, 64)
+			bload "CShapes.bmp", collisionBlox
+		end if
+	#endif
 end constructor
 
 constructor level(filename as string)    
@@ -77,26 +85,6 @@ end sub
 sub Level.init(e_p as EffectController ptr)
     graphicFX_ = e_p
 end sub
-
-sub level.loadPortals(filename as string)
-    dim as SeqFile.Reader struct    
-    
-    
-    struct.push(SeqFile.READ_INTEGER)
-    struct.push(SeqFile.SET_REPEAT, 1)
-    struct.push(SeqFile.READ_STRING)
-    struct.push(SeqFile.READ_INTEGER)
-    struct.push(SeqFile.SET_REPEAT, 2)
-    struct.push(SeqFile.READ_STRING)
-    struct.push(SeqFile.READ_STRING)
-    struct.push(SeqFile.READ_STRING)
-    struct.push(SeqFile.END_REPEAT)
-    struct.push(SeqFile.END_REPEAT)
-
-    struct.readFile(filename, Level.regionPortals)
-    
-end sub
-
 
 sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                      cam_x as integer, cam_y as integer,_
@@ -214,10 +202,33 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
             exit do
         end if
     loop
+    
+    #ifdef DEBUG
+		dim as integer xs, ys
+		dim as integer tilePosX, tilePosY
+		if order = FOREGROUND then
+			tl_x = ((cam_x - SCRX * 0.5) ) / 16 - 1
+			tl_y = ((cam_y - SCRY * 0.5) ) / 16 - 1
+			br_x = ((cam_x + SCRX * 0.5) ) / 16
+			br_y = ((cam_y + SCRY * 0.5) ) / 16
+			for ys = tl_y to br_y
+				for xs = tl_x to br_x
+					i = coldata[ys * lvlWidth + xs]
+					if i <> 0 then
+						tilePosX = ((i - 1) mod 21) * 16
+						tilePosY = ((i - 1) \ 21  ) * 16
+						put scnbuff, (xs*16,ys*16), collisionBlox, (tilePosX, tilePosY)-(tilePosX+15, tilePosY+15), TRANS
+					end if
+				next xs
+			next ys
+		end if
+	#endif
    
     if falloutBlend <> 0 then imagedestroy falloutBlend
+    /'
     window screen (cam_x - SCRX * 0.5, cam_y - SCRY * 0.5)-_
                   (cam_x + SCRX * 0.5, cam_y + SCRY * 0.5)
+    '/
 
 end sub
 
@@ -261,7 +272,9 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                 row_c = tilesets[block.tileset].row_count
                 tilePosX = ((block.tileNum - 1) mod row_c) * 16
                 tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
+                
                 if block.usesAnim < 65535 then
+					
                     tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
                     select case tempEffect.effect
                     case ANIMATE
@@ -306,6 +319,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                         ''
                     end select
                 end if
+                
                 putDispatch(scnbuff, block, xscan*16 + x, yscan*16 + y,_
                             tilePosX, tilePosY, cam_x, cam_y)
             end if
@@ -649,6 +663,7 @@ end function
 sub level.flush()
     dim as integer i
     dim as Level_FalloutType ptr falloutItem
+    dim as PortalType_t ptr portalItem
     #ifdef DEBUG
         prinTLOG "phlusch"
         stall(100)
@@ -679,7 +694,20 @@ sub level.flush()
                 exit do
             end if
         loop
+		portals.rollReset()
+        do
+            portalItem = portals.roll()
+            if portalItem > 0 then
+                deallocate(portalItem->portal_name)
+                deallocate(portalItem->to_map)
+                deallocate(portalItem->to_portal)
+            else
+                exit do
+            end if
+        loop
+        portals.flush()
         falloutZones.flush()
+        graphicFX_->flush()
     end if
     #ifdef DEBUG
         prinTLOG "Fin-e"
@@ -701,6 +729,7 @@ sub level.load(filename as string)
     dim as ushort numAnims, numObjs
     dim as ushort objType, objField(7)
     dim as Object_t tempObj
+    dim as PortalType_t tempPortal
     
     f = freefile
  
@@ -708,10 +737,9 @@ sub level.load(filename as string)
         printlog "already bailing"
         stall(100)
     #endif
- 
+
     flush()
-    
-    
+ 
     coldata = 0
     lvlWidth = 0
     lvlHeight = 0
@@ -722,8 +750,7 @@ sub level.load(filename as string)
     snowfall = 0 
     layerData = 0
     portalZonesNum = 0
-    
-    
+   
     open filename for binary as #f
     get #f,,strdata
     lvlName = strdata
@@ -732,16 +759,25 @@ sub level.load(filename as string)
     get #f,,lvlHeight
     get #f,,snowfall
     get #f,,tilesets_N
-    tilesets = new Level_Tileset[tilesets_N]
+    if tilesets_N > 0 then
+		tilesets = new Level_Tileset[tilesets_N]
+	end if
     graphicFX_->init(lvlWidth * 16, lvlHeight * 16)
+   
+
+    portals.init(lvlWidth * 16, lvlHeight * 16, sizeof(PortalType_t))
+    
+    
+    
     #ifdef DEBUG
         if tilesets = 0 then
             printlog "panic 0"
             stall(100)
         end if
     #endif
-   
-    redim as ushort setFirstIds(tilesets_N - 1)
+	if tilesets_N > 0 then
+		redim as ushort setFirstIds(tilesets_N - 1)
+    end if
     
     #ifdef DEBUG
         dim as ushort pp
@@ -751,7 +787,7 @@ sub level.load(filename as string)
         stall(100)
         
     #endif
-      
+   
     for i = 0 to tilesets_N - 1
         get #f,,strdata
         tilesets[i].set_name = allocate(len(strdata) + 1)
@@ -766,7 +802,7 @@ sub level.load(filename as string)
         
         imgData = 0
         imgData = imagecreate(tilesets[i].set_width, tilesets[i].set_height)
-        
+    
         if imgData = 0 then
             #ifdef DEBUG
                 printlog "panic 1" & ", " & tilesets[i].set_width & ", " & tilesets[i].set_height
@@ -781,7 +817,6 @@ sub level.load(filename as string)
             tilesets[i].set_image = imgData
             bload strdata, tilesets[i].set_image
         end if
-        
         
         get #f,,setFirstIds(i)
         get #f,,numAnims
@@ -803,30 +838,30 @@ sub level.load(filename as string)
     next i
     
     get #f,,blocks_N
-    
     blocks_N -= 1
-    blocks = allocate(sizeof(Level_VisBlock ptr) * blocks_N)
-    #ifdef DEBUG
-        printlog "Layers: " & str(blocks_N)
-        stall(100)
-        if blocks = 0 then
-            printlog "panic 3"
-            stall(100)
-        end if
-    #endif
-    layerData = allocate(sizeof(Level_LayerData) * blocks_N)
-    #ifdef DEBUG
-        if layerData = 0 then
-            printlog "panic 4"
-            stall(100)
-        end if
-        printlog "Loading blocks..."
-        stall(100)
-    #endif
-    for i = 0 to blocks_N - 1
-        blocks[i] = 0
-    next i
-    
+    if blocks_N > 0 then
+		blocks = allocate(sizeof(Level_VisBlock ptr) * blocks_N)
+		#ifdef DEBUG
+			printlog "Layers: " & str(blocks_N)
+			stall(100)
+			if blocks = 0 then
+				printlog "panic 3"
+				stall(100)
+			end if
+		#endif
+		layerData = allocate(sizeof(Level_LayerData) * blocks_N)
+		#ifdef DEBUG
+			if layerData = 0 then
+				printlog "panic 4"
+				stall(100)
+			end if
+			printlog "Loading blocks..."
+			stall(100)
+		#endif
+		for i = 0 to blocks_N - 1
+			blocks[i] = 0
+		next i
+	end if
     
     for i = 0 to blocks_N
         get #f,,strdata
@@ -915,7 +950,7 @@ sub level.load(filename as string)
         get #f,,tempObj.inRangeSet
         get #f,,tempObj.p
         get #f,,tempObj.size
-        select case objType
+        select case tempObj.object_type
         case EFFECT
             get #f,,objField(0)
             get #f,,objField(1)
@@ -925,13 +960,20 @@ sub level.load(filename as string)
                                tempObj.inRangeSet)
         case PORTAL
             get #f,,strdata
+            tempPortal.to_map = allocate(len(strdata) + 1)
+            *(tempPortal.to_map) = strdata
             get #f,,strdata
+            tempPortal.to_portal = allocate(len(strdata) + 1)
+            *(tempPortal.to_portal) = strdata
             get #f,,objField(0)
+            tempPortal.direction = objField(0)
+            tempPortal.a = tempObj.p
+            tempPortal.b = tempObj.p + tempObj.size
+            tempPortal.portal_name = allocate(len(tempObj.object_name) + 1)
+            *(tempPortal.portal_name) = tempObj.object_name
+            portals.insert(tempPortal.a, tempPortal.b, @tempPortal)
         end select
     next i
-    
-    
-    
     
     
     #ifdef DEBUG
@@ -942,78 +984,48 @@ sub level.load(filename as string)
     #endif
     close #f
     
-    /'
-    portalZonesNum = 0
-    
-    for y = 0 to lvlHeight - 1
-        for x = 0 to lvlWidth - 1
-            skipCheck = 0
-            for i = 0 to portalZonesNum - 1
-                if x < portalZones(i).a.x() orElse _
-                   x > portalZones(i).b.x() orElse _
-                   y < portalZones(i).a.y() orElse _
-                   y > portalZones(i).b.y() then
-                    skipCheck = 1
-                    exit for
-                end if
-            next i
-            if skipCheck = 0 andAlso getCollisionBlock(x, y).cModel = 24 then
-                xscan = x
-                yscan = y
-                while getCollisionBlock(xscan + 1, yscan).cModel = 24
-                    xscan += 1
-                wend
-                while getCollisionBlock(xscan, yscan + 1).cModel = 24
-                    yscan += 1
-                wend
-                    
-                with portalZones(portalZonesNum)
-                    .a = Vector2D(x, y) * 16
-                    .b = Vector2D(xscan + 1, yscan + 1) * 16 - Vector2D(1, 1)
-                    .area = (.b.x() - .a.x()) * (.b.y() - .a.y())
-                end with
-                portalZonesNum += 1
-           end if 
-        next x
-    next y
-    '/
-    
     
     falloutZones.init(lvlWidth*16, lvlHeight*16, sizeof(Level_FalloutType))
-    
+    pendingPortalSwitch = 0
 end sub
 
 
 sub Level.repositionFromPortal(l as levelSwitch_t, _
-                              byref p as Vector2D)
-    /'
-    dim as integer i, q                          
-    
-    for i = 0 to regionPortals->numRegions - 1
-        if *(regionPortals->regionPortals[i].regionName) = left(l.fileName, len(l.fileName)-4) then
-            with regionPortals->regionPortals[i]
-                for q = 0 to .numPortals - 1
-                    if *(.portals[q].portalName) = l.portalName then
-                        select case l.portalName
-                        case "RIGHT"
-                            p = Vector2D(lvlWidth * 16 - 2, p.y())
-                        case "LEFT"
-                            p = Vector2D(1, p.y())
-                        case "DOWN"
-                            p = Vector2D(p.x(), 1)
-                        case "UP"
-                            p = Vector2D(p.x(), lvlHeight * 16 - 2)
-                        case else
-                            p = Vector2D(.portals[q].repX, .portals[q].repY)
-                        end select
-                        exit sub
-                    end if
-                next q
-            end with
-            exit sub
-        end if  
-    next i
-    '/
+                               byref p as TinyBody)
+	dim as PortalType_t ptr portal_p
+	dim as string test1, test2
+	portals.rollReset()
+	test1 = trimwhite(ucase(l.portalName))
+	
+	do
+		portal_p = portals.roll()
+		if portal_p <> 0 then
+			test2 = trimwhite(ucase(*(portal_p->portal_name)))
+			if test1 = test2 then
+				select case portal_p->direction
+				case D_UP
+					p.p = Vector2D(p.p.x(), portal_p->b.y() + p.r)
+					if p.v.y() < 0 then p.v.setY(0)
+				case D_DOWN
+					p.p = Vector2D(p.p.x(), portal_p->a.y() - p.r)
+					if p.v.y() > 0 then p.v.setY(0)
+				case D_LEFT
+					p.p = Vector2D(portal_p->b.x() + p.r, p.p.y())
+					if p.v.x() < 0 then p.v.setX(0)
+				case D_RIGHT
+					p.p = Vector2D(portal_p->a.x() - p.r, p.p.y())
+					if p.v.x() > 0 then p.v.setX(0)
+				case D_IN
+					p.p = Vector2D((portal_p->a.x() + portal_p->b.x()) * 0.5,_
+					               portal_p->b.y() - p.r)
+					p.v = Vector2D(0,0)
+				end select
+				exit do
+			end if
+		else
+			exit do
+		end if
+	loop
 end sub
 
 
@@ -1027,82 +1039,32 @@ function Level.processPortalCoverage(p as Vector2D,_
                                      w as double, h as double,_
                                      byref l as levelSwitch_t,_
                                      coverage as double = 0.5) as integer
-    dim as integer i, q
-    dim as integer curReg
-    dim as integer curPortal
-    dim as integer findPortal, index
-    dim as string searchStr
-    dim as double totalCoverage, dist, dvmag
-    dim as Vector2D tl, br, dv
-    /'
-    findPortal = 0
-
-    if p.x() <= 0 then
-        searchStr = "LEFT"
-    elseif p.x() + w >= (lvlWidth * 16 - 1) then
-        searchStr = "RIGHT"
-    elseif p.y() <= 0 then
-        searchStr = "UP"
-    elseif p.y() + h >= (lvlWidth * 16 - 1) then
-        searchStr = "DOWN"
-    else
-        for i = 0 to portalZonesNum - 1
-            
-            if (p.x() > portalZones(i).b.x()) orElse _
-               ((p.x() + w - 1) < portalZones(i).a.x()) orElse _
-               (p.y()     > portalZones(i).b.y()) orElse _
-               ((p.y() + h - 1) < portalZones(i).a.y()) then
-            else
-                tl.setX(max(portalZones(i).a.x(), p.x()))
-                tl.setY(max(portalZones(i).a.y(), p.y()))
-                br.setX(min(portalZones(i).b.x(), (p.x() + w - 1)))
-                br.setY(min(portalZones(i).b.y(), (p.y() + h - 1)))
-                                
-                totalCoverage = ((br.x() - tl.x()) * (br.y() - tl.y())) / (w * h)
-                if totalCoverage > coverage then
-                    findPortal = i + 1
-                end if
-            end if
-        next i
-    end if
-    l.fileName = ""
-    l.portalName = ""
-    l.p = Vector2D(0,0)
-    if searchStr <> "" orElse findPortal > 0 then
-        for i = 0 to regionPortals->numRegions - 1
-            if *(regionPortals->regionPortals[i].regionName) = lvlName then
-                index = 0
-                dist = 1000
-                with regionPortals->regionPortals[i]
-                    for q = 0 to .numPortals - 1
-                        if searchStr <> "" then
-                            if *(.portals[q].portalName) = searchStr then
-                                l.p = Vector2D(.portals[q].xPos, .portals[q].yPos)
-                                l.fileName = *(.portals[q].linkMapName) + ".map"
-                                l.portalName = *(.portals[q].linkPortalName)
-                                return 0
-                            end if
-                        else
-                            dv = Vector2D(.portals[q].xPos, .portals[q].yPos) * 16 - _
-                                 (portalZones(findPortal - 1).a + portalZones(findPortal - 1).b) * 0.5
-                            dvmag = dv.magnitude()
-                            if dvmag < dist then
-                                dist = dvmag
-                                index = q
-                            end if
-                        end if
-                    next q
-                    if searchStr = "" andAlso findPortal = 0 then return 0
-                    l.p = Vector2D(.portals[index].xPos, .portals[index].yPos)
-                    l.fileName = *(.portals[index].linkMapName) + ".map"
-                    l.portalName = *(.portals[index].linkPortalName)
-                    return 1
-                end with
-                exit for
-            end if
-        next i
-    end if
-    '/
+	dim as any ptr ptr p_list
+	dim as PortalType_t ptr tempPortal
+	dim as integer numFound
+	dim as double area1, area2
+	dim as Vector2D a, b
+	
+	numFound = portals.search(p, p + Vector2D(w,h), p_list)
+	
+	if numFound > 0 then
+		tempPortal = p_list[0]
+		a.setX(max(tempPortal->a.x(), p.x()))
+		a.setY(max(tempPortal->a.y(), p.y()))
+		b.setX(min(tempPortal->b.x(), p.x() + w))
+		b.setY(min(tempPortal->b.y(), p.y() + h))
+		area1 = (b.x() - a.x()) * (b.y() - a.y())
+		area2 = w * h
+		if area1 / area2 >= coverage then
+			l.fileName = *(tempPortal->to_map) + ".map"
+			l.portalName = *(tempPortal->to_portal)
+			l.shouldSwitch = 1
+			l.facing = tempPortal->direction
+			return 1
+		end if
+		l.shouldSwitch = 0
+		return 0
+	end if
 end function
 
 function level.getWidth() as integer

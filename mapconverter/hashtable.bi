@@ -6,7 +6,7 @@
 #define MAX_CAPACITY 0.8
 #define EXPAND_FACTOR 2
 
-'#include "debug.bi"
+#include "debug.bi"
 
 enum HashNodeKeyType_e
     KEY_STRING

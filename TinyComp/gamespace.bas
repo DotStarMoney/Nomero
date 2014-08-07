@@ -20,7 +20,7 @@ constructor GameSpace()
     
     spy.body.r = 18
     spy.body.m = 5
-    spy.body.p = Vector2D(128,256)
+    spy.body.p = Vector2D(128,564)
 
     camera = spy.body.p
                        
@@ -30,7 +30,7 @@ constructor GameSpace()
 
     effects.setParent(@this)
     projectiles.setParent(@world, @lvlData, @this)
-    spy.setParent(@world, @lvlData, @projectiles)
+    spy.setParent(@world, @lvlData, @projectiles, @this)
     
     projectiles.setEffectsGenerator(@effects)
 
@@ -80,7 +80,7 @@ function GameSpace.go() as integer
         totalTime = (timer - startTime) * 1000
         movingFrmAvg = movingFrmAvg * 0.92 + totalTime * 0.08
         stallTime = (1000.0 / FPS_TARGET) - movingFrmAvg
-        if stallTime > 0 then sleep(stallTime)'stall(stallTime)'sleep(stallTime)
+        if stallTime > 0 then stall(stallTime)'sleep(stallTime)
     loop 
     return 0
 end function
@@ -230,9 +230,23 @@ sub GameSpace.step_process()
     
     print spy.body.p
     
-    for i = 1 to 2
-        world.step_time(0.016)
-    next i
+    #ifdef DEBUG
+    	world.step_time(0.033)
+    #else
+		for i = 1 to 3
+			world.step_time(0.011)
+		next i
+	#endif
    
 end sub
+sub GameSpace.centerCamera(c as Vector2D)  
+	camera = c
+end sub
+sub GameSpace.switchRegions(ls as LevelSwitch_t)
+	projectiles.flush()
+	lvlData.load(ls.fileName)
+    world.setBlockData(lvlData.getCollisionLayerData(),_
+                       lvlData.getWidth(), lvlData.getHeight(),_
+                       16.0)
+end sub        
         

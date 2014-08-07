@@ -1501,7 +1501,7 @@ return {
           }
         },
         {
-          name = "Left Wall",
+          name = "left",
           type = "Portal",
           shape = "rectangle",
           x = 0,
@@ -1512,7 +1512,7 @@ return {
           properties = {
             ["direction"] = "left",
             ["to map"] = "PurovskyDistrict Scene 1 Outside",
-            ["to portal"] = "Left Wall"
+            ["to portal"] = "right"
           }
         }
       }

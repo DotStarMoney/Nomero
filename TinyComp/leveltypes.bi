@@ -72,24 +72,22 @@ Type Level_LayerData
     as single depth
 end type
 
+enum PortalDirection_t
+    D_LEFT
+    D_UP
+    D_RIGHT
+    D_DOWN
+    D_IN
+    NO_FACING
+end enum
 
-'''''''''''''''''''
-type PortalData_t
-    as zstring ptr portalName
-    as zstring ptr linkMapName
-    as zstring ptr linkPortalName
+type PortalType_t
+    as Vector2D a, b
+    as zstring ptr portal_name
+    as zstring ptr to_map
+    as zstring ptr to_portal
+    as PortalDirection_t direction
 end type
-type RegionPortalData_t
-    as zstring ptr regionName
-    as integer numPortals
-    as PortalData_t ptr portals
-end type
-Type RegionData_t
-    as integer numRegions
-    as RegionPortalData_t ptr regionPortals
-end type
-'''''''''''''''''''''''
-
 
 type BoundingBox_t
     as Vector2D a,b
@@ -102,6 +100,7 @@ type LevelSwitch_t
     as Vector2D p
     as string fileName
     as string portalName
+    as PortalDirection_t facing
 end type
 
 
