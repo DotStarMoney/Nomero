@@ -1,7 +1,7 @@
 #include "list.bi"
 #include "hashtable.bi"
 #include "vector2d.bi"
-
+' -exx list.bas hashtable.bas vector2d.bas
 
 Public Sub Split(Text As String, Delim As String = " ", Count As Long = -1, Ret() As String)
 

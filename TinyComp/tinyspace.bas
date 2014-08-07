@@ -2,7 +2,8 @@
 #include "utility.bi"
 #include "debug.bi"
 
-
+#define OWP_INDEX_START 56
+#define OWP_INDEX_END 71
 
 constructor TinySpace
     dim as integer i
@@ -214,19 +215,35 @@ function TinySpace.block_getPoint(pt as integer,_
     case 0
         np = p
     case 1
-        np = p + Vector2D(0.5, 0)
+        np = p + Vector2D(0.25, 0)
     case 2
-        np = p + Vector2D(1, 0)
+        np = p + Vector2D(0.5, 0)
     case 3
-        np = p + Vector2D(1, 0.5)
+        np = p + Vector2D(0.75, 0)
     case 4
-        np = p + Vector2D(1, 1)
+        np = p + Vector2D(1, 0)
     case 5
-        np = p + Vector2D(0.5, 1)
+        np = p + Vector2D(1, 0.25)
     case 6
-        np = p + Vector2D(0, 1)
+        np = p + Vector2D(1, 0.5)
     case 7
+        np = p + Vector2D(1, 0.75)
+    case 8
+        np = p + Vector2D(1, 1)
+    case 9
+        np = p + Vector2D(0.75, 1)
+    case 10
+        np = p + Vector2D(0.5, 1)
+    case 11
+        np = p + Vector2D(0.25, 1)
+    case 12
+        np = p + Vector2D(0, 1)
+    case 13
+        np = p + Vector2D(0, 0.75)
+    case 14
         np = p + Vector2D(0, 0.5)
+    case 15
+        np = p + Vector2D(0, 0.25)     
     end select
     return np * block_l
 end function
@@ -234,37 +251,84 @@ end function
 function TinySpace.block_getRingPoint(block_type as integer,_
                                       pnt as integer) as integer
     
-    static ring_table(1 to 21, 0 to 7) as integer = {_
-        {  1,  2,  3,  4,  5,  6,  7,  0},_
-        {  1,  2,  6, -1, -1, -1,  7,  0},_
-        {  1,  2,  3,  4,  0, -1, -1, -1},_
-        {  4, -1, -1, -1,  5,  6,  7,  0},_
-        { -1, -1,  3,  4,  5,  6,  2, -1},_
-        {  3, -1, -1,  4,  5,  6,  7,  0},_
-        { -1, -1, -1, -1,  5,  6,  7,  4},_
-        { -1, -1, -1,  4,  5,  6,  3, -1},_
-        { -1, -1,  3,  4,  5,  6,  7,  2},_
-        {  1,  2,  3,  6, -1, -1,  7,  0},_
-        {  1,  2,  7, -1, -1, -1, -1,  0},_
-        {  1,  2,  3,  0, -1, -1, -1, -1},_
-        {  1,  2,  3,  4,  7, -1, -1,  0},_
-        {  1,  2,  5, -1, -1,  6,  7,  0},_
-        {  1,  6, -1, -1, -1, -1,  7,  0},_
-        { -1,  2,  3,  4,  1, -1, -1, -1},_
-        {  1,  2,  3,  4,  5,  0, -1, -1},_
-        {  1,  4, -1, -1,  5,  6,  7,  0},_
-        {  5, -1, -1, -1, -1,  6,  7,  0},_
-        { -1, -1,  3,  4,  5,  2, -1, -1},_
-        { -1,  2,  3,  4,  5,  6,  1, -1}}
-        
-    if block_type < 1 then 
-        block_type = 1
-    elseif block_type > 21 then 
-        block_type = 21
-    end if
-    
-        
-    return ring_table(block_type, pnt)
+    static ring_table(1 to 71, 0 to 15) as integer = {_
+        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0},_
+		{1, 2, 3, 4, 12, -1, -1, -1, -1, -1, -1, -1, 13, 14, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 7, 8, 0, -1, -1, -1, -1, -1, -1, -1},_
+		{8, -1, -1, -1, -1, -1, -1, -1, 9, 10, 11, 12, 13, 14, 15, 0},_
+		{-1, -1, -1, -1, 5, 6, 7, 8, 9, 10, 11, 12, 4, -1, -1, -1},_
+		{6, -1, -1, -1, -1, -1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0},_
+		{-1, -1, -1, -1, -1, -1, -1, -1, 9, 10, 11, 12, 13, 14, 8, -1},_
+		{-1, -1, -1, -1, -1, -1, 7, 8, 9, 10, 11, 12, 6, -1, -1, -1},_
+		{-1, -1, -1, -1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 4, -1},_
+		{1, 2, 3, 4, 5, 6, 12, -1, -1, -1, -1, -1, 13, 14, 15, 0},_
+		{1, 2, 3, 4, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1},_
+		{1, 2, 3, 4, 5, 6, 7, 8, 14, -1, -1, -1, -1, -1, 15, 0},_
+		{1, 2, 3, 4, 10, -1, -1, -1, -1, -1, 11, 12, 13, 14, 15, 0},_
+		{1, 2, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, 14, 15, 0},_
+		{-1, -1, 3, 4, 5, 6, 7, 8, 2, -1, -1, -1, -1, -1, -1, -1},_
+		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, -1, -1, -1, -1, -1},_
+		{1, 2, 8, -1, -1, -1, -1, -1, 9, 10, 11, 12, 13, 14, 15, 0},_
+		{10, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11, 12, 13, 14, 15, 0},_
+		{-1, -1, -1, -1, 5, 6, 7, 8, 9, 10, 4, -1, -1, -1, -1, -1},_
+		{-1, -1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 2, -1, -1, -1},_
+		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0},_
+		{-1, -1, -1, -1, -1, -1, -1, -1, 9, 10, 11, 12, 13, 8, -1, -1},_
+		{-1, -1, -1, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 7, -1},_
+		{-1, -1, -1, -1, -1, -1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 6},_
+		{5, -1, -1, -1, -1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0},_
+		{-1, -1, -1, -1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 4},_
+		{-1, -1, -1, -1, -1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 5, -1},_
+		{-1, -1, -1, -1, -1, -1, 7, 8, 9, 10, 11, 12, 13, 6, -1, -1},_
+		{-1, -1, -1, -1, -1, -1, -1, 8, 9, 10, 11, 12, 7, -1, -1, -1},_
+		{1, 2, 3, 4, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0},_
+		{1, 2, 3, 4, 5, 14, -1, -1, -1, -1, -1, -1, -1, -1, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 13, -1, -1, -1, -1, -1, -1, 14, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 7, 12, -1, -1, -1, -1, 13, 14, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 7, 8, 13, -1, -1, -1, -1, 14, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 7, 14, -1, -1, -1, -1, -1, -1, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 15, -1, -1, -1, -1, -1, -1, -1, -1, 0},_
+		{1, 2, 3, 4, 5, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},_
+		{1, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, 14, 15, 0},_
+		{1, 2, 11, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, 14, 15, 0},_
+		{1, 2, 3, 10, -1, -1, -1, -1, -1, -1, 11, 12, 13, 14, 15, 0},_
+		{1, 2, 3, 4, 9, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, 0},_
+		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, -1, -1, -1, -1},_
+		{-1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, -1, -1, -1, -1, -1},_
+		{-1, -1, 3, 4, 5, 6, 7, 8, 9, 2, -1, -1, -1, -1, -1, -1},_
+		{-1, -1, -1, 4, 5, 6, 7, 8, 3, -1, -1, -1, -1, -1, -1, -1},_
+		{11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, 13, 14, 15, 0},_
+		{1, 10, -1, -1, -1, -1, -1, -1, -1, -1, 11, 12, 13, 14, 15, 0},_
+		{1, 2, 9, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, 0},_
+		{1, 2, 3, 8, -1, -1, -1, -1, 9, 10, 11, 12, 13, 14, 15, 0},_
+		{-1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, -1, -1, -1},_
+		{-1, -1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 2, -1, -1, -1, -1},_
+		{-1, -1, -1, 4, 5, 6, 7, 8, 9, 10, 3, -1, -1, -1, -1, -1},_
+		{-1, -1, -1, -1, 5, 6, 7, 8, 9, 4, -1, -1, -1, -1, -1, -1},_
+		{1, 2, 3, 4, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},_
+		{8, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1},_
+		{-1, -1, -1, -1, 12, -1, -1, -1, -1, -1, -1, -1, 4, -1, -1, -1},_
+		{6, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1},_
+		{-1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, 8, -1},_
+		{-1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, 6, -1, -1, -1},_
+		{-1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, 4, -1},_
+		{5, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},_
+		{-1, -1, -1, -1, -1, -1, 15, -1, -1, -1, -1, -1, -1, -1, -1, 6},_
+		{-1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, 7, -1},_
+		{-1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, 8, -1, -1},_
+		{-1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, 7, -1, -1, -1},_
+		{-1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, -1, 6, -1, -1},_
+		{-1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, 5, -1},_
+		{-1, -1, -1, -1, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 4},_
+		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0}}
+
+	if block_type <= 0 then
+		return -1
+	else
+		return ring_table(block_type, pnt)
+	end if
 end function
 
 sub TinySpace.vectorListImpulse(vecs() as Vector2D, v as Vector2D,_
@@ -350,7 +414,7 @@ sub TinySpace.traceRing(      x           as integer,_
                         byref curIndx     as integer,_
                               usedArray() as integer)
               
-    #define VALID_BLOCK ((block.cModel > 0) andAlso (block.cModel < 22))
+    #define VALID_BLOCK 1 '((block.cModel > 0) andAlso (block.cModel < 22))
     dim as integer   curPt 
     dim as integer   startPt
     dim as integer   curBlock
@@ -365,43 +429,24 @@ sub TinySpace.traceRing(      x           as integer,_
     dim as Vector2D  a_pt, b_pt
     dim as Vector2D  oldSlope, curSlope
     dim as integer   lastSwitch
-    
+     
     xs = x
     ys = y
-   
-    
-    if getBlock(xs, ys).cModel = 23 then 
-        xs_o = xs
-        ys_o = ys
-        usedArray(xs_o, ys_o) = 1
-        while getBlock(xs + 1, ys).cModel = 23
-            xs += 1
-            usedArray(xs, ys) = 1
-        wend
-        segList(curIndx).a = block_getPoint(0, Vector2D(xs_o, ys_o))
-        segList(curIndx).b = block_getPoint(2, Vector2D(xs, ys))
-        segList(curIndx).owp = 1
-        segList(curIndx).ignore = 0
 
-        curIndx += 1
-        exit sub
-    end if
-   
-   
-    for i = 0 to 7
-        curBlock = getBlock(xs, ys).cModel
+    curBlock = getBlock(xs, ys).cModel      
+    for i = 0 to 15
         if block_getRingPoint(curBlock, i) > -1 then
             curPt = i
             exit for
         end if
     next i
-    
+      
     startPt = curPt
     oldPt = -1
     a_pt = block_getPoint(startPt, Vector2D(xs, ys))
     oldSlope = Vector2D(0,0)
     lastSwitch = 0
-    
+
     do
         xs_o = xs
         ys_o = ys
@@ -412,47 +457,63 @@ sub TinySpace.traceRing(      x           as integer,_
             case 0
                 block = getBlock(xs - 1, ys)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 2) > -1) then
+                   (block_getRingPoint(block.cModel, 4) > -1) then
                     blockChange = 1
-                    newPt = 2
+                    newPt = 4
                     xs -= 1
                 end if
                 block = getBlock(xs - 1, ys - 1)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 4) > -1) then
+                   (block_getRingPoint(block.cModel, 8) > -1) then
                     blockChange = 1
-                    newPt = 4
+                    newPt = 8
                     ys -= 1
                     xs -= 1
                 end if
                 block = getBlock(xs, ys - 1)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 6) > -1) then
+                   (block_getRingPoint(block.cModel, 12) > -1) then
                     blockChange = 1
-                    newPt = 6
+                    newPt = 12
                     ys -= 1
                 end if
             case 1
-                block = getBlock(xs, ys - 1)
+				block = getBlock(xs, ys - 1)
                 if VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 5) > -1) then
+                   (block_getRingPoint(block.cModel, 11) > -1) then
                     blockChange = 1
-                    newPt = 5
+                    newPt = 11
                     ys -= 1
                 end if
             case 2
                 block = getBlock(xs, ys - 1)
-                if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 4) > -1) then
+                if VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 10) > -1) then
                     blockChange = 1
-                    newPt = 4
+                    newPt = 10
+                    ys -= 1
+                end if
+            case 3
+				block = getBlock(xs, ys - 1)
+                if VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 9) > -1) then
+                    blockChange = 1
+                    newPt = 9
+                    ys -= 1
+                end if	 
+            case 4
+                block = getBlock(xs, ys - 1)
+                if (blockChange = 0) andAlso VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 8) > -1) then
+                    blockChange = 1
+                    newPt = 8
                     ys -= 1
                 end if
                 block = getBlock(xs + 1, ys - 1)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 6) > -1) then
+                   (block_getRingPoint(block.cModel, 12) > -1) then
                     blockChange = 1
-                    newPt = 6
+                    newPt = 12
                     ys -= 1
                     xs += 1
                 end if
@@ -463,20 +524,36 @@ sub TinySpace.traceRing(      x           as integer,_
                     newPt = 0
                     xs += 1
                 end if        
-            case 3
+            case 5
+				block = getBlock(xs + 1, ys)
+                if VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 15) > -1) then
+                    blockChange = 1
+                    newPt = 15
+                    xs += 1
+                end if  	
+            case 6
                 block = getBlock(xs + 1, ys)
                 if VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 7) > -1) then
+                   (block_getRingPoint(block.cModel, 14) > -1) then
                     blockChange = 1
-                    newPt = 7
+                    newPt = 14
                     xs += 1
-                end if       
-            case 4
+                end if 
+            case 7 
+                block = getBlock(xs + 1, ys)
+                if VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 13) > -1) then
+                    blockChange = 1
+                    newPt = 13
+                    xs += 1
+                end if                  
+            case 8
                 block = getBlock(xs + 1, ys)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 6) > -1) then
+                   (block_getRingPoint(block.cModel, 12) > -1) then
                     blockChange = 1
-                    newPt = 6
+                    newPt = 12
                     xs += 1
                 end if
                 block = getBlock(xs + 1, ys + 1)
@@ -489,20 +566,36 @@ sub TinySpace.traceRing(      x           as integer,_
                 end if
                 block = getBlock(xs, ys + 1)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 4) > -1) then
+                    blockChange = 1
+                    newPt = 4
+                    ys += 1
+                end if  
+            case 9
+                block = getBlock(xs, ys + 1)
+                if VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 3) > -1) then
+                    blockChange = 1
+                    newPt = 3
+                    ys += 1
+                end if      
+            case 10
+                block = getBlock(xs, ys + 1)
+                if VALID_BLOCK andAlso _
                    (block_getRingPoint(block.cModel, 2) > -1) then
                     blockChange = 1
                     newPt = 2
                     ys += 1
-                end if     
-            case 5
+                end if   
+            case 11
                 block = getBlock(xs, ys + 1)
                 if VALID_BLOCK andAlso _
                    (block_getRingPoint(block.cModel, 1) > -1) then
                     blockChange = 1
                     newPt = 1
                     ys += 1
-                end if      
-            case 6
+                end if              
+            case 12
                 block = getBlock(xs, ys + 1)
                 if VALID_BLOCK andAlso _
                    (block_getRingPoint(block.cModel, 0) > -1) then
@@ -512,27 +605,43 @@ sub TinySpace.traceRing(      x           as integer,_
                 end if
                 block = getBlock(xs - 1, ys + 1)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 2) > -1) then
+                   (block_getRingPoint(block.cModel, 4) > -1) then
                     blockChange = 1
-                    newPt = 2
+                    newPt = 4
                     ys += 1
                     xs -= 1
                 end if
                 block = getBlock(xs - 1, ys)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 4) > -1) then
+                   (block_getRingPoint(block.cModel, 8) > -1) then
                     blockChange = 1
-                    newPt = 4
+                    newPt = 8
                     xs -= 1
                 end if      
-            case 7
+            case 13
                 block = getBlock(xs - 1, ys)
                 if VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 3) > -1) then
+                   (block_getRingPoint(block.cModel, 7) > -1) then
                     blockChange = 1
-                    newPt = 3
+                    newPt = 7
                     xs -= 1
                 end if 
+            case 14
+                block = getBlock(xs - 1, ys)
+                if VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 6) > -1) then
+                    blockChange = 1
+                    newPt = 6
+                    xs -= 1
+                end if    
+            case 15
+                block = getBlock(xs - 1, ys)
+                if VALID_BLOCK andAlso _
+                   (block_getRingPoint(block.cModel, 5) > -1) then
+                    blockChange = 1
+                    newPt = 5
+                    xs -= 1
+                end if                 
             end select
         end if
         
@@ -697,14 +806,15 @@ sub TinySpace.step_time(byval t as double)
             next scan_x
         next scan_y
         
-       
-        
+    
         for scan_y = start_y to end_y
             for scan_x = start_x to end_x
                 if usedSpace(scan_x, scan_y) = 0 then
+                    
                     if getBlock(scan_x, scan_y).cModel <> EMPTY AndAlso _
                        getBlock(scan_x, scan_y-1).cModel = EMPTY then
-                       
+            
+        
                         traceRing(scan_x, scan_y, _
                                   segment(), segment_n, _
                                   usedSpace())

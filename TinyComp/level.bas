@@ -1084,13 +1084,19 @@ function level.getCollisionLayerData() as TinyBlock ptr
     for v = 0 to lvlHeight-1
         for u = 0 to lvlWidth-1
             off = v*lvlWidth + u
-            '''''''''''''''''''''''''''''''''''''''''''''
-            if colData[off] = 22 orElse colData[off] = 24 then
-                blockd[off].cModel = 0
-            else
-                blockd[off].cModel = coldata[off]
+            
+            if     ((colData[off] >= 1 ) andAlso (colData[off] <= 21)) then
+				blockd[off].cModel = colData[off]
+			elseif ((colData[off] >= 23) andAlso (colData[off] <= 56)) then
+				blockd[off].cModel = colData[off] - 1
+			elseif ((colData[off] >= 58) andAlso (colData[off] <= 72)) then
+				blockd[off].cModel = colData[off] - 2
+			elseif ((colData[off] >= 76) andAlso (colData[off] <= 76)) then
+				blockd[off].cModel = colData[off] - 5
+			else
+                blockd[off].cModel = EMPTY
             end if
-            '''''''''''''''''''''''''''''''''''''''''''''
+
         next u
     next v
     return blockd

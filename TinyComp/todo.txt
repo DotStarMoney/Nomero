@@ -1,6 +1,7 @@
-'debug displays all blox
+'program usedArray to skip owp double shapes
+'make TinySpace/step_time keep track of segments so no erroneous impulse/new collision
+'redo owp handling in TimeSpace.step_time
 'program splode blox and destructable blox
-'program new collision shapes
 'portal transition
 
 
@@ -13,7 +14,6 @@
 'create save states
 'fix crash on exit bug
 'fix tinyspace crash bug
-'create portal transition
 'create default start location/region
 'destructor for ANIM
 'crouch animation
@@ -25,4 +25,3 @@
 'hat clip on purovsky inside 2
 'make snow flakes
 'floating above snow peaks due to collision shapes
-'make sure portal strings are deallocated on level flush
