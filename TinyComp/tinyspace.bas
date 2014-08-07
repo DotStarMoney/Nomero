@@ -644,10 +644,9 @@ sub TinySpace.step_time(byval t as double)
     
     dim as BlockEndpointData_t segment(0 to MAX_SEGS-1)
     dim as integer             segment_n
-    
-    dim as integer usedSpace(0 to block_n_cols-1,_
-                             0 to block_n_rows-1)
-                             
+   
+    redim as integer usedSpace(0,0)
+     
     i = 0
     #ifdef DEBUG
         PRINTLOG "------------------------------------------------------"
@@ -689,6 +688,8 @@ sub TinySpace.step_time(byval t as double)
         roi_y1 = end_y
         
         segment_n = 0
+        
+        redim as integer usedSpace(start_x to end_x, start_y to end_y)
         
         for scan_y = start_y to end_y
             for scan_x = start_x to end_x
