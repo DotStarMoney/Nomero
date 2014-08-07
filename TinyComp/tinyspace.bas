@@ -428,7 +428,13 @@ sub TinySpace.traceRing(      x           as integer,_
     dim as integer   blockChange
     dim as Vector2D  a_pt, b_pt
     dim as Vector2D  oldSlope, curSlope
+    dim as Vector2D  firstSlope, lastSlope
     dim as integer   lastSwitch
+    dim as integer   skipOWP
+    dim as integer   startIndex
+    
+    startIndex = curIndx
+    firstSlope = Vector2D(0,0)
      
     xs = x
     ys = y
@@ -446,6 +452,7 @@ sub TinySpace.traceRing(      x           as integer,_
     a_pt = block_getPoint(startPt, Vector2D(xs, ys))
     oldSlope = Vector2D(0,0)
     lastSwitch = 0
+    skipOWP = 0
 
     do
         xs_o = xs
@@ -647,42 +654,108 @@ sub TinySpace.traceRing(      x           as integer,_
         
         if blockChange = 0 then
             newPt = block_getRingPoint(curBlock, curPt)
+            
             lastSwitch = 0
             curSlope = block_getPoint(newPt, Vector2D(xs, ys)) - _
                        block_getPoint(curPt, Vector2D(xs_o, ys_o))
-            if oldPt <> -1 then
-                if (oldSlope.x() <> 0) orElse (oldSlope.y() <> 0) then
-                    if (oldSlope.x() <> curSlope.x()) orElse _
-                       (oldSlope.y() <> curSlope.y()) then
-                       
-                        b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
-                        segList(curIndx).a = a_pt
-                        segList(curIndx).b = b_pt
-                        segList(curIndx).owp = 0
-                        segList(curIndx).ignore = 0
-
-                        a_pt = b_pt
-                        curIndx += 1                   
-                    end if
-                end if
+            if curIndx = startIndex andAlso oldPt <> -1 andAlso _
+               ((firstSlope.x() = 0) and (firstSlope.y() = 0)) then
+				firstSlope = curSlope
             end if
+              
+            'only gen line segments if we aren't trying to skip undersides of
+            'owps
+            if skipOWP = 0 then
+				if oldPt <> -1 then
+					if (oldSlope.x() <> 0) orElse (oldSlope.y() <> 0) then
+						if (oldSlope.x() <> curSlope.x()) orElse _
+						   (oldSlope.y() <> curSlope.y()) then
+						   
+							b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
+							
+							'a total hack, but probably works!
+							if (b_pt.x() <> a_pt.x()) orElse (b_pt.y() <> a_pt.y()) then
+								segList(curIndx).a = a_pt
+								segList(curIndx).b = b_pt
+								segList(curIndx).owp = 0
+								segList(curIndx).ignore = 0
+								
+								a_pt = b_pt
+								curIndx += 1        
+							end if   
+							
+							if (-oldSlope.x() = curSlope.x()) andAlso _
+							   (-oldSlope.y() = curSlope.y()) then
+								print xs_o, ys_o
+								print xs, ys
+								skipOWP = 1
+								usedArray(xs, ys) = 2
+							end if    
+						end if
+					end if
+				end if
+			end if
         else 
-            usedArray(xs_o, ys_o) = 1
+            block = getBlock(xs, ys)
+            if usedArray(xs, ys) = 2 then
+				'if we transfer from a regular block to a visited OWP block,
+				'create the last segment. (check that skipOWP = 0 so we know we're
+				'coming from a good block)
+				if skipOWP = 0 andAlso _
+				  ((getBlock(xs_o, ys_o).cModel < OWP_INDEX_START) orElse _ 
+				  (getBlock(xs_o, ys_o).cModel > OWP_INDEX_END)) then
+					
+					b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
+					segList(curIndx).a = a_pt
+					segList(curIndx).b = b_pt
+					segList(curIndx).owp = 0
+					segList(curIndx).ignore = 0
+					
+					a_pt = b_pt
+					curIndx += 1 
+					
+				end if
+				
+				skipOWP = 1
+            else
+				if skipOWP = 1 then
+					a_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
+					'refactor start point if we are coming off of visited owp blocks
+				end if
+				skipOWP = 0
+			end if
+			
+			
+			if (getBlock(xs_o, ys_o).cModel >= OWP_INDEX_START) andAlso _
+			   (getBlock(xs_o, ys_o).cModel <= OWP_INDEX_END) then
+				usedArray(xs_o, ys_o) = 2
+			else
+				usedArray(xs_o, ys_o) = 1
+			end if
             lastSwitch = 1
         end if
-        
+		
+		circle (block_getPoint(curPt, Vector2D(xs_o, ys_o)).x(), block_getPoint(curPt, Vector2D(xs_o, ys_o)).y()),1,&hff0000,,,,F
+     
         oldPt = curPt    
         curPt = newPt
-        oldSlope = curSlope
-        
+        oldSlope = curSlope   
+        'sleep
     loop until (xs = x) andAlso (ys = y) andAlso (curPt = startPt)
-    b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
-    segList(curIndx).a = a_pt
-    segList(curIndx).b = b_pt
-    segList(curIndx).owp = 0
-    segList(curIndx).ignore = 0
-    curIndx += 1
- 
+    if skipOWP = 0 then
+		b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
+		segList(curIndx).a = a_pt
+		segList(curIndx).b = b_pt
+		segList(curIndx).owp = 0
+		segList(curIndx).ignore = 0
+		curIndx += 1
+	end if
+	lastSlope = curSlope
+	if (firstSlope.x() = lastSlope.x()) andAlso _
+	   (firstSlope.y() = lastSlope.y()) then
+	   segList(startIndex).a = segList(curIndx - 1).a
+	   curIndx -= 1
+	end if
 end sub
 
 function TinySpace.getArbiterN(bod as integer) as integer
@@ -824,10 +897,11 @@ sub TinySpace.step_time(byval t as double)
             next scan_x
         next scan_y
 
-
-
         'bug when interpen an owp, and collide with other object, engine bails... :(
-
+		#ifdef DEBUG
+			print "Found: " & str(segment_n) & ", segments."
+		#endif
+		
         if segment_n > 0 andAlso c->noCollide = 0 then
             res_t = t
             firstCycle = 1
@@ -853,7 +927,7 @@ sub TinySpace.step_time(byval t as double)
                     if skipCollisionCheck = 0 then
                         for q = 0 to segment_n - 1
                             #ifdef DEBUG
-                                line(segment(q).a.x(), segment(q).a.y())-(segment(q).b.x(), segment(q).b.y())
+                                line(segment(q).a.x(), segment(q).a.y())-(segment(q).b.x(), segment(q).b.y()), rnd*&hffffff,B
                             #endif
                             
                             'ISSUE, surfaces are the same, though since we grab different 
