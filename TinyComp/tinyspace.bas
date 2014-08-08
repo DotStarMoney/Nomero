@@ -679,9 +679,7 @@ sub TinySpace.traceRing(      x           as integer,_
 						   
 							b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
 							
-							'a total hack, but probably works!
 							if (b_pt.x() <> a_pt.x()) orElse (b_pt.y() <> a_pt.y()) then
-							
 								noWrite = 0
 								if getBlock(xs_prev, ys_prev).cModel >= OWP_INDEX_START andAlso _
 								   getBlock(xs_prev, ys_prev).cModel <= OWP_INDEX_END then
@@ -689,7 +687,6 @@ sub TinySpace.traceRing(      x           as integer,_
 								end if
 								
 								if noWrite = 0 then
-									print "writing", a_pt, b_pt, xs_prev, ys_prev
 									segList(curIndx).a = a_pt
 									segList(curIndx).b = b_pt
 									segList(curIndx).owp = 0
@@ -698,20 +695,13 @@ sub TinySpace.traceRing(      x           as integer,_
 									xs_prev = xs
 									ys_prev = ys
 								end if
-								print "here"
-								print curSlope, oldSlope
 								if (sgn(curSlope.x()) = -1) andAlso _
 								   (sgn(oldSlope.x()) = 1) andAlso _
 								   (curSlope.y() = -oldSlope.y()) then
 								   usedArray(xs_o, ys_o) = 2
-									line (xs_o*16, ys_o*16)-(xs_o*16+15, ys_o*16+15), 93284834 +  usedArray(xs_o, ys_o) * 84390309288, B
-
 								end if
-								
-								
 								a_pt = b_pt
 							end if   
-					
 						end if
 					end if
 				end if
@@ -719,9 +709,7 @@ sub TinySpace.traceRing(      x           as integer,_
         else 
             block = getBlock(xs, ys)
             if usedArray(xs, ys) = 2 then
-				'if we transfer from a regular block to a visited OWP block,
-				'create the last segment. (check that skipOWP = 0 so we know we're
-				'coming from a good block)
+
 				if skipOWP = 0 andAlso _
 				  ((getBlock(xs_o, ys_o).cModel < OWP_INDEX_START) orElse _ 
 				  (getBlock(xs_o, ys_o).cModel > OWP_INDEX_END)) then
@@ -731,7 +719,6 @@ sub TinySpace.traceRing(      x           as integer,_
 					segList(curIndx).b = b_pt
 					segList(curIndx).owp = 0
 					segList(curIndx).ignore = 0
-					print "writing 2", a_pt, b_pt
 
 					a_pt = b_pt
 					curIndx += 1 
@@ -741,44 +728,33 @@ sub TinySpace.traceRing(      x           as integer,_
             else
 				if skipOWP = 1 then
 					a_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
-					'refactor start point if we are coming off of visited owp blocks
 				end if
 				skipOWP = 0
 			end if
 			
-			
 			if (getBlock(xs_o, ys_o).cModel >= OWP_INDEX_START) andAlso _
 			   (getBlock(xs_o, ys_o).cModel <= OWP_INDEX_END) then
-			   				print curSlope.x()
 
 				if (firstCheck = 0) andAlso (curSlope.x() >= 0) then 
-				print curSlope.x()
 					usedArray(xs_o, ys_o) = 2
-					line (xs_o*16, ys_o*16)-(xs_o*16+15, ys_o*16+15), 93284834 +  usedArray(xs_o, ys_o) * 84390309288, B
-
 				end if
 			else
 				usedArray(xs_o, ys_o) = 1
 			end if
             lastSwitch = 1
 
-            print "updating"
         end if
-		
-		circle (block_getPoint(curPt, Vector2D(xs_o, ys_o)).x(), block_getPoint(curPt, Vector2D(xs_o, ys_o)).y()),1,&hffffff*rnd,,,,F
-     
+		     
         oldPt = curPt    
         curPt = newPt
         oldSlope = curSlope
         firstCheck = 0   
-        'sleep
         
     loop until (xs = x) andAlso (ys = y) andAlso _
                (curPt = startPt) andAlso _
                ((not(sgn(firstSlope.x()) = -sgn(curSlope.x()))) or (blockChange = 0)) 
                
-               
-               
+                          
     if skipOWP = 0 andAlso (usedArray(xs_o, ys_o) <> 2) then
 		b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
 		segList(curIndx).a = a_pt
@@ -786,16 +762,12 @@ sub TinySpace.traceRing(      x           as integer,_
 		segList(curIndx).owp = 0
 		segList(curIndx).ignore = 0
 		curIndx += 1
-		print "writing 3", a_pt, b_pt
-		'sleep
 	end if
 	lastSlope = curSlope
 	if (firstSlope.x() = lastSlope.x()) andAlso _
 	   (firstSlope.y() = lastSlope.y()) then
 	   segList(startIndex).a = segList(curIndx - 1).a
 	   curIndx -= 1
-	   print "connecting"
-	   'sleep
 	end if
 end sub
 
@@ -968,7 +940,7 @@ sub TinySpace.step_time(byval t as double)
                     if skipCollisionCheck = 0 then
                         for q = 0 to segment_n - 1
                             #ifdef DEBUG
-                                line(segment(q).a.x(), segment(q).a.y())-(segment(q).b.x(), segment(q).b.y()), rnd*&hffffff,B
+                                line(segment(q).a.x(), segment(q).a.y())-(segment(q).b.x(), segment(q).b.y()), &hffffff
                             #endif
                             
                             'ISSUE, surfaces are the same, though since we grab different 
