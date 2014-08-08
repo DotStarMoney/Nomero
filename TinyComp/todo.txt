@@ -1,4 +1,3 @@
-'program usedArray to skip owp double shapes
 'make TinySpace/step_time keep track of segments so no erroneous impulse/new collision
 'redo owp handling in TimeSpace.step_time
 'program splode blox and destructable blox

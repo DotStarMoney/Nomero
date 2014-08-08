@@ -20,7 +20,7 @@ constructor GameSpace()
     
     spy.body.r = 18
     spy.body.m = 5
-    spy.body.p = Vector2D(545,649)
+    spy.body.p = Vector2D(665,397)
 
     camera = spy.body.p
                        
