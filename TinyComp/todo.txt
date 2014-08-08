@@ -2,6 +2,7 @@
 'redo owp handling in TimeSpace.step_time
 'program splode blox and destructable blox
 'portal transition
+'find out why some particles aren't receiving collisions bodies
 
 
 

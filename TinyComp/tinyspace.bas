@@ -750,6 +750,7 @@ sub TinySpace.traceRing(      x           as integer,_
         oldSlope = curSlope
         firstCheck = 0   
         
+        sleep
     loop until (xs = x) andAlso (ys = y) andAlso _
                (curPt = startPt) andAlso _
                ((not(sgn(firstSlope.x()) = -sgn(curSlope.x()))) or (blockChange = 0)) 
