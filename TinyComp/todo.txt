@@ -1,8 +1,14 @@
-'make TinySpace/step_time keep track of segments so no erroneous impulse/new collision
+'scan arbiters pre step to find which ones are a continuation of the other arbiters
 'redo owp handling in TimeSpace.step_time
 'program splode blox and destructable blox
 'portal transition
 'find out why some particles aren't receiving collisions bodies
+
+'program events and triggers
+'program enemy AI
+'program HUD
+'program objects and collectables
+'program menu
 
 
 
@@ -19,8 +25,6 @@
 'crouch animation
 'pngs instead of bmps
 'jump flip direction
-'find out why portal effect at location 0
-'walk through door animation
 'throwing animation
 'hat clip on purovsky inside 2
 'make snow flakes
