@@ -105,7 +105,7 @@ sub Player.processControls(dire as integer, jump as integer,_
                            shift as integer, t as double)
     dim as Vector2D gtan
     dim as double curSpeed, oSpeed
-    dim as integer addSpd, owp, ptype
+    dim as integer addSpd, ptype
     dim as LevelSwitch_t ls
     
     
@@ -147,7 +147,7 @@ sub Player.processControls(dire as integer, jump as integer,_
             state = FREE_FALLING
         end if
     elseif parent->isGrounded(body_i, this.groundDot) then
-        gtan = parent->getGroundingNormal(body_i, Vector2D(0,-1), Vector2D(dire,0), this.groundDot, owp)
+        gtan = parent->getGroundingNormal(body_i, Vector2D(0,-1), Vector2D(dire,0), this.groundDot)
         gtan = gtan.perp()   
         if jumpHoldFrames = 0 then state = GROUNDED
 

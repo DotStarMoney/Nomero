@@ -95,8 +95,7 @@ end sub
 function TinySpace.getGroundingNormal(bod as integer,_
                                       dire as Vector2D,_
                                       prox as Vector2D,_
-                                      dot as double,_
-                                      byref isOwp as integer) as Vector2D
+                                      dot as double) as Vector2D
     dim as Vector2D ret
     dim as integer i
     dim as double mdot
@@ -108,7 +107,6 @@ function TinySpace.getGroundingNormal(bod as integer,_
             if -arbiters(bod, i).impulse * prox > mdot then
                 ret = arbiters(bod, i).impulse
                 mdot = arbiters(bod, i).impulse * prox
-                isOwp = arbiters(bod, i).owp
             end if
         end if
     next i
@@ -696,8 +694,7 @@ sub TinySpace.traceRing(      x           as integer,_
 									#endif
 									segList(curIndx).a = a_pt
 									segList(curIndx).b = b_pt
-									segList(curIndx).owp = 0
-									segList(curIndx).ignore = 0
+									segList(curIndx).tag = -1
 									curIndx += 1   
 									
 									xs_line = xs
@@ -738,8 +735,7 @@ sub TinySpace.traceRing(      x           as integer,_
 					b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
 					segList(curIndx).a = a_pt
 					segList(curIndx).b = b_pt
-					segList(curIndx).owp = 0
-					segList(curIndx).ignore = 0
+					segList(curIndx).tag = -1
 					
 					#ifdef DEBUG
 						printlog "TRACERING: ", 1
@@ -804,8 +800,7 @@ sub TinySpace.traceRing(      x           as integer,_
 		b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
 		segList(curIndx).a = a_pt
 		segList(curIndx).b = b_pt
-		segList(curIndx).owp = 0
-		segList(curIndx).ignore = 0
+		segList(curIndx).tag = -1
 		curIndx += 1
 		#ifdef DEBUG
 			printlog "TRACERING:", 1
@@ -858,6 +853,96 @@ function TinySpace.getGravity() as Vector2D
     return Vector2D(0, gravity)
 end function
 
+sub TinySpace.refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, seg_n as integer)
+
+	#define MINESCULE_RA 0.000001
+
+	dim as integer i, j
+	dim as Vector2D a, b
+	dim as Vector2D d
+	dim as Vector2D tempD
+	dim as integer noOverlap
+	dim as double slope, inter
+	redim as ArbiterData_t tempArbs(0)
+	dim as integer tempArbs_N
+	
+	for i = 0 to arbiters_n(arb_i) - 1
+		a = arbiters(arb_i, i).a
+		b = arbiters(arb_i, i).b
+		d = b - a
+		if d.x > d.y then
+			slope = d.y() / d.x()
+			inter = a.y() - slope * a.x()
+			for j = 0 to seg_n - 1
+				if abs(seg(j).a.y() - slope * seg(j).a.x() - inter) <= MINESCULE_RA then
+					if abs(seg(j).b.y() - slope * seg(j).b.x() - inter) <= MINESCULE_RA then
+					
+						noOverlap = 0
+						tempD = seg(j).a - b
+						
+						if (tempD * d) > 0 then 
+							noOverlap = 1
+						else
+							tempD = a - seg(j).b
+							if (tempD * d) > 0 then 
+								noOverlap = 1
+							end if
+						end if
+						if noOverlap = 0 then
+														
+							tempArbs_N += 1
+							redim preserve as ArbiterData_t tempArbs(tempArbs_N - 1)
+							tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)
+							tempArbs(tempArbs_N - 1).a = seg(j).a
+							tempArbs(tempArbs_N - 1).b = seg(j).b
+							tempArbs(tempArbs_N - 1).tag = j
+							seg(j).tag = tempArbs_N - 1
+							
+							exit for
+						end if
+					end if
+				end if
+			next j
+		else
+			slope = d.x() / d.y()
+			inter = a.x() - slope * a.y()
+			for j = 0 to seg_n - 1
+				if abs(seg(j).a.x() - slope * seg(j).a.y() - inter) <= MINESCULE_RA then
+					if abs(seg(j).b.x() - slope * seg(j).b.y() - inter) <= MINESCULE_RA then
+						noOverlap = 0
+						tempD = seg(j).a - b
+						if (tempD * d) > 0 then 
+							noOverlap = 1
+						else
+							tempD = a - seg(j).b
+							if (tempD * d) > 0 then noOverlap = 1
+						end if
+						if noOverlap = 0 then
+														
+							tempArbs_N += 1
+							redim preserve as ArbiterData_t tempArbs(tempArbs_N - 1)
+							tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)
+							tempArbs(tempArbs_N - 1).a = seg(j).a
+							tempArbs(tempArbs_N - 1).b = seg(j).b
+							tempArbs(tempArbs_N - 1).tag = j
+							seg(j).tag = tempArbs_N - 1
+
+							exit for
+						end if
+						
+					end if
+				end if
+			next j
+		end if		
+	next i
+	
+	arbiters_N(arb_i) = tempArbs_N
+	for i = 0 to tempArbs_N - 1
+		arbiters(arb_i, i) = tempArbs(i)
+	next i
+
+end sub
+
 sub TinySpace.step_time(byval t as double)
     dim as TinyBody ptr c
     dim as TinyBody wrk
@@ -868,7 +953,7 @@ sub TinySpace.step_time(byval t as double)
     dim as integer end_x, end_y
     dim as Vector2D test_p, impulse
     dim as integer i, q, j, hasSegment
-    dim as integer v_cancel, f_cancel, numIgnore
+    dim as integer v_cancel, f_cancel
     dim as double  depth, depthc, firstStep
     dim as double  cur_t, lo_t, hi_t, res_t
     dim as double  t_friction
@@ -886,7 +971,6 @@ sub TinySpace.step_time(byval t as double)
     dim as integer numArbs, cTarget
     dim as Vector2D v_adj, f_total, f_adj, f_bias
     Redim as Vector2D normals(0)
-    Dim as BlockEndpointData_t ignoreList(0 to 7)
     dim as integer  skipCheck
     
     dim as BlockEndpointData_t segment(0 to MAX_SEGS-1)
@@ -964,8 +1048,13 @@ sub TinySpace.step_time(byval t as double)
 
         'bug when interpen an owp, and collide with other object, engine bails... :(
 		#ifdef DEBUG
-			print "Found: " & str(segment_n) & ", segments."
+			printlog "Found: " & str(segment_n) & ", segments."
+			for j = 0 to arbiters_n(i) - 1
+				printlog str(arbiters(i, j).a) & ", " & str(arbiters(i, j).b)
+			next j
 		#endif
+		
+		refactorArbiters(i, segment(), segment_n)
 		
         if segment_n > 0 andAlso c->noCollide = 0 then
             res_t = t
@@ -983,11 +1072,7 @@ sub TinySpace.step_time(byval t as double)
                 firstStep = 0
                 iterate = 0
                 wrk = *c
-                cTarget = 0
-                numIgnore = 0
-                
-                
-                
+                cTarget = 0     
                 
                 do
                     interpen = 0
@@ -998,84 +1083,34 @@ sub TinySpace.step_time(byval t as double)
                             #ifdef DEBUG
                                 line(segment(q).a.x(), segment(q).a.y())-(segment(q).b.x(), segment(q).b.y()), rnd*&hffffff
                             #endif
-                            
-                            'ISSUE, surfaces are the same, though since we grab different 
-                            ' blocks and test similarity via end points, we dont re-ignore
-                            ' surfaces we should ignore
-                            skipCheck = 0
-                            for j = 0 to numIgnore-1
-                                if segment(q).a.x() = ignoreList(j).a.x() andAlso _
-                                   segment(q).a.y() = ignoreList(j).a.y() andAlso _
-                                   segment(q).b.x() = ignoreList(j).b.x() andAlso _
-                                   segment(q).b.y() = ignoreList(j).b.y() then
-                                   skipCheck = 1
-                                end if
-                            next j
-                            
-                            
-                            if skipCheck = 0 then
-                                if lineCircleCollide(segment(q).a, segment(q).b,_
-                                                     wrk.p, wrk.r, _
-                                                     depth, impulse) = 1 then   
-                                    tempArbs(numArbs).a       = segment(q).a
-                                    tempArbs(numArbs).b       = segment(q).b
-                                    tempArbs(numArbs).owp     = segment(q).owp
-                                    tempArbs(numArbs).depth   = depth
-                                    tempArbs(numArbs).impulse = impulse
-                                    tempArbs(numArbs).ignore  = 0
-                                    tempArbs(numArbs).new_    = 1
-                                    tempArbs(numArbs).found   = 0
-                                    for j = 0 to arbiters_n(i)-1
-                                        if (arbiters(i, j).a.x() = tempArbs(numArbs).a.x()) andAlso _
-                                           (arbiters(i, j).a.y() = tempArbs(numArbs).a.y()) andAlso _
-                                           (arbiters(i, j).b.x() = tempArbs(numArbs).b.x()) andAlso _
-                                           (arbiters(i, j).b.y() = tempArbs(numArbs).b.y()) then
-                                            tempArbs(numArbs).new_ = 0
-                                            tempArbs(numArbs).ignore = arbiters(i, j).ignore
-                                            exit for
-                                        end if
-                                    next j
-                                    if tempArbs(numArbs).ignore = 0 then
-                                        if depth > MIN_DEPTH then
-                                            if tempArbs(numArbs).owp = 1 then
-                                                if firstCollide = 0 then 
-                                                    tempArbs(numArbs).ignore = 1
-                                                    ignoreList(numIgnore).a = tempArbs(numArbs).a
-                                                    ignoreList(numIgnore).b = tempArbs(numArbs).b       
-                                                    numIgnore += 1
-                                                end if
-                                            end if
-                                        end if
-                                    end if
-                                        
-                                    if firstStep = 0 andAlso firstCollide = 1 then
-                                        if tempArbs(numArbs).owp = 1 then 
-                                            if tempArbs(numArbs).ignore = 0 then
-                                                if ((not (depth > MIN_DEPTH)) or ((-impulse * wrk.v) >= 0)) andAlso ((impulse * Vector2D(0,-1)) = 1) then
-                                                    if tempArbs(numArbs).new_ = 1 then 
-                                                        cTarget = 1 
-                                                    end if
-                                                else
-                                                    tempArbs(numArbs).ignore = 1
-                                                    ignoreList(numIgnore).a = tempArbs(numArbs).a
-                                                    ignoreList(numIgnore).b = tempArbs(numArbs).b       
-                                                    numIgnore += 1
-                                                end if
-                                            end if
-                                        else    
-                                            if tempArbs(numArbs).new_ = 1 then cTarget = 1 
-                                        end if
-                                    end if
-                                    if tempArbs(numArbs).ignore = 0 then
-                                        if depth > MIN_DEPTH then
-                                            interpen = 1
-                                        elseif tempArbs(numArbs).new_ = 1 orElse cTarget = 0 then
-                                            contacting = 1
-                                        end if
-                                    end if
-                                    numArbs += 1
-                                end if
-                            end if
+						
+					
+							if lineCircleCollide(segment(q).a, segment(q).b,_
+												 wrk.p, wrk.r, _
+												 depth, impulse) = 1 then   
+								
+								tempArbs(numArbs).a       = segment(q).a
+								tempArbs(numArbs).b       = segment(q).b
+								tempArbs(numArbs).depth   = depth
+								tempArbs(numArbs).impulse = impulse
+										
+								if segment(q).tag <> -1 then
+									tempArbs(numArbs).new_ = 0
+								else	
+									tempArbs(numArbs).new_ = 1
+								end if
+								
+								if firstStep = 0 andAlso firstCollide = 1 then		
+									if tempArbs(numArbs).new_ = 1 then cTarget = 1 
+								end if
+								if depth > MIN_DEPTH then
+									interpen = 1
+								elseif tempArbs(numArbs).new_ = 1 orElse cTarget = 0 then
+									contacting = 1
+								end if
+								numArbs += 1
+							end if
+
                         next q 
                         #ifdef DEBUG
                             PRINTLOG "         " & skipCollisionCheck & " " & firstCollide, 1 
@@ -1161,13 +1196,9 @@ sub TinySpace.step_time(byval t as double)
                     f_bias = Vector2D(0,0)
                     depthc = 0
                     for q = 0 to arbiters_n(i)-1
-                        if arbiters(i, q).ignore = 0 then
-                            normals(q) = arbiters(i, q).impulse
-                            if arbiters(i, q).depth > depthc then depthc = arbiters(i, q).depth
-                            if arbiters(i, q).new_ = 1 then f_bias = f_bias + normals(q)
-                        else
-                            normals(q) = Vector2D(0,0)
-                        end if
+						normals(q) = arbiters(i, q).impulse
+						if arbiters(i, q).depth > depthc then depthc = arbiters(i, q).depth
+						if arbiters(i, q).new_ = 1 then f_bias = f_bias + normals(q)
                     next q
                     f_bias.normalize()
                     

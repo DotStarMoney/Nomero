@@ -22,8 +22,7 @@
 type BlockEndpointData_t
     as Vector2D a
     as Vector2D b
-    as integer  owp
-    as integer  ignore
+    as integer  tag
 end type
 
 type ArbiterData_t
@@ -31,10 +30,8 @@ type ArbiterData_t
     as Vector2D b
     as Vector2D impulse
     as double   depth
-    as integer  found
-    as integer  ignore
     as integer  new_
-    as integer  owp
+    as integer  tag
 end type
 
 type TinySpace
@@ -54,11 +51,12 @@ type TinySpace
         declare function getGroundingNormal(bod as integer,_
                                             dire as Vector2D ,_
                                             prox as Vector2D ,_
-                                            dot as double,_
-                                            byref isOwp as integer) as Vector2D
+                                            dot as double) as Vector2D
         declare function getGravity() as Vector2D
     private:
         declare static sub dividePosition(p as Vector2D, size as Vector2D)
+        declare sub refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, seg_n as integer)
+        
         declare function getBlock(xp as integer, yp as integer) as TinyBlock
         declare function block_getPoint(pt as integer,_
                                         p as Vector2D) as Vector2D
