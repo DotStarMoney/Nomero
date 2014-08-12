@@ -30,8 +30,8 @@ type ArbiterData_t
     as Vector2D b
     as Vector2D impulse
     as double   depth
+    as integer  ignore
     as integer  new_
-    as integer  tag
 end type
 
 type TinySpace
@@ -70,6 +70,7 @@ type TinySpace
         declare function lineCircleCollide(a as Vector2D, b as Vector2D,_
                                            p as Vector2D, r as double,_
                                            byref depth as double,_
+                                           norm as Vector2D,_
                                            impulse as Vector2D) as integer
         
         declare function lineAAEllipseCollide(a as Vector2D, b as Vector2D,_
@@ -102,6 +103,7 @@ type TinySpace
         as integer       block_l
         
         as double        gravity
+        as integer       framesGone
 end type
 
 

@@ -17,6 +17,7 @@ constructor TinySpace
     for i = 0 to MAX_ARBS-1
         arbiters_n(i) = 0
     next i
+    framesGone = 0
 end constructor
 
 destructor TinySpace
@@ -170,7 +171,8 @@ end function
 function TinySpace.lineCircleCollide(a as Vector2D, b as Vector2D,_
                                      p as Vector2D, r as double,_
                                      byref depth as double,_
-                                           impulse as Vector2D) as integer
+                                     norm as Vector2D,_
+                                     impulse as Vector2D) as integer
                                      
     dim as Vector2D v_norm
     dim as Vector2D v_norm_iperp
@@ -197,11 +199,10 @@ function TinySpace.lineCircleCollide(a as Vector2D, b as Vector2D,_
     impulse = p - proj
     impulse.normalize()
     
-
-    if (depth < -MIN_DEPTH) orElse impulse*v_norm_iperp < 0 then
+    norm = v_norm_iperp
+    if (depth < -MIN_DEPTH) then
         return 0
     else
-
         return 1
     end if
 end function
@@ -340,8 +341,14 @@ sub TinySpace.vectorListImpulse(vecs() as Vector2D, v as Vector2D,_
     if ubound(vecs) < 1 then
         if v * -vecs(0) < 0 orElse (vecs(0).x() = 0 andAlso vecs(0).y() = 0) then
             res = Vector2D(0,0)
+            #ifdef DEBUG
+				PRINTLOG "VLISTImpulse: Ignoring V"
+			#endif
         else
             res = (v * -vecs(0)) * vecs(0)
+            #ifdef DEBUG
+				PRINTLOG "VLISTImpulse: Resolving V "
+			#endif
         end if
         return
     end if
@@ -808,13 +815,15 @@ sub TinySpace.traceRing(      x           as integer,_
 		#endif
 	end if
 	lastSlope = curSlope
-	if (firstSlope.x() = lastSlope.x()) andAlso _
-	   (firstSlope.y() = lastSlope.y()) then
-		segList(startIndex).a = segList(curIndx - 1).a
-		curIndx -= 1
-		#ifdef DEBUG
-			printlog "TRACERING: connecting"
-		#endif
+	if (curIndx - startIndex) > 1 then
+		if (firstSlope.x() = lastSlope.x()) andAlso _
+		   (firstSlope.y() = lastSlope.y()) then
+			segList(startIndex).a = segList(curIndx - 1).a
+			curIndx -= 1
+			#ifdef DEBUG
+				printlog "TRACERING: connecting"
+			#endif
+		end if
 	end if
 end sub
 
@@ -870,7 +879,7 @@ sub TinySpace.refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, s
 		a = arbiters(arb_i, i).a
 		b = arbiters(arb_i, i).b
 		d = b - a
-		if d.x > d.y then
+		if abs(d.x()) > abs(d.y()) then
 			slope = d.y() / d.x()
 			inter = a.y() - slope * a.x()
 			for j = 0 to seg_n - 1
@@ -895,9 +904,8 @@ sub TinySpace.refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, s
 							tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)
 							tempArbs(tempArbs_N - 1).a = seg(j).a
 							tempArbs(tempArbs_N - 1).b = seg(j).b
-							tempArbs(tempArbs_N - 1).tag = j
 							seg(j).tag = tempArbs_N - 1
-							
+
 							exit for
 						end if
 					end if
@@ -924,7 +932,6 @@ sub TinySpace.refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, s
 							tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)
 							tempArbs(tempArbs_N - 1).a = seg(j).a
 							tempArbs(tempArbs_N - 1).b = seg(j).b
-							tempArbs(tempArbs_N - 1).tag = j
 							seg(j).tag = tempArbs_N - 1
 
 							exit for
@@ -971,10 +978,12 @@ sub TinySpace.step_time(byval t as double)
     dim as integer numArbs, cTarget
     dim as Vector2D v_adj, f_total, f_adj, f_bias
     Redim as Vector2D normals(0)
-    dim as integer  skipCheck
+    dim as Vector2D norm
+    dim as integer  skipCheck, normals_N 
     
     dim as BlockEndpointData_t segment(0 to MAX_SEGS-1)
     dim as integer             segment_n
+    dim as integer             numIgnore
    
     redim as integer usedSpace(0,0)
      
@@ -1053,9 +1062,7 @@ sub TinySpace.step_time(byval t as double)
 				printlog str(arbiters(i, j).a) & ", " & str(arbiters(i, j).b)
 			next j
 		#endif
-		
-		refactorArbiters(i, segment(), segment_n)
-		
+				
         if segment_n > 0 andAlso c->noCollide = 0 then
             res_t = t
             firstCycle = 1
@@ -1074,6 +1081,11 @@ sub TinySpace.step_time(byval t as double)
                 wrk = *c
                 cTarget = 0     
                 
+                for q = 0 to segment_n - 1
+					segment(q).tag = -1
+                next q
+        		refactorArbiters(i, segment(), segment_n)
+        
                 do
                     interpen = 0
                     contacting = 0
@@ -1087,30 +1099,49 @@ sub TinySpace.step_time(byval t as double)
 					
 							if lineCircleCollide(segment(q).a, segment(q).b,_
 												 wrk.p, wrk.r, _
-												 depth, impulse) = 1 then   
+												 depth, norm, impulse) = 1 then   
 								
 								tempArbs(numArbs).a       = segment(q).a
 								tempArbs(numArbs).b       = segment(q).b
 								tempArbs(numArbs).depth   = depth
 								tempArbs(numArbs).impulse = impulse
-										
+												
 								if segment(q).tag <> -1 then
 									tempArbs(numArbs).new_ = 0
+									tempArbs(numArbs).ignore = arbiters(i, segment(q).tag).ignore
+									#ifdef DEBUG
+										if tempArbs(numArbs).ignore = 1 then
+											printlog "Setting tempArb to ignore... " & norm & ", " & arbiters(i, segment(q).tag).a & ", " & arbiters(i, segment(q).tag).b
+										else
+											printlog "Found previous Arbiter... " & norm
+										end if
+									#endif									
 								else	
 									tempArbs(numArbs).new_ = 1
+									tempArbs(numArbs).ignore = 0
+									#ifdef DEBUG
+										printlog "Flagging new arbiter... " &  norm
+									#endif	
+								end if
+								if ((norm * impulse) > 0) andAlso (tempArbs(numArbs).ignore = 0) then 
+									if firstStep = 0 andAlso firstCollide = 1 then		
+										if tempArbs(numArbs).new_ = 1 then cTarget = 1 
+									end if
+								
+									if depth > MIN_DEPTH then
+										interpen = 1
+									elseif tempArbs(numArbs).new_ = 1 orElse cTarget = 0 then
+										contacting = 1
+									end if
+								else
+									tempArbs(numArbs).ignore = 1
+									#ifdef DEBUG
+										printlog "Ignoring arbiter... " & norm
+									#endif
 								end if
 								
-								if firstStep = 0 andAlso firstCollide = 1 then		
-									if tempArbs(numArbs).new_ = 1 then cTarget = 1 
-								end if
-								if depth > MIN_DEPTH then
-									interpen = 1
-								elseif tempArbs(numArbs).new_ = 1 orElse cTarget = 0 then
-									contacting = 1
-								end if
 								numArbs += 1
 							end if
-
                         next q 
                         #ifdef DEBUG
                             PRINTLOG "         " & skipCollisionCheck & " " & firstCollide, 1 
@@ -1183,24 +1214,37 @@ sub TinySpace.step_time(byval t as double)
                 #endif
                 hadPulse = 0
                 arbiters_n(i) = numArbs
+                numIgnore = 0
                 for q = 0 to numArbs-1
                     arbiters(i, q) = tempArbs(q)
-                    if arbiters(i, q).new_ = 1 then hadPulse = 1
+                    if arbiters(i, q).ignore = 0 then 
+						if arbiters(i, q).new_ = 1 then hadPulse = 1
+					else
+						numIgnore += 1
+					end if
                 next q
-                
+                normals_N = 0
+
                 'by now, we have a list of all collisions, and we know if any are new
+                if arbiters_n(i) > numIgnore then
                    
-                if arbiters_n(i) > 0 then
-                    
-                    redim as Vector2D normals(max(arbiters_n(i)-1,0))
+                    normals_N = 0
                     f_bias = Vector2D(0,0)
                     depthc = 0
+                    redim as Vector2D normals(0)
                     for q = 0 to arbiters_n(i)-1
-						normals(q) = arbiters(i, q).impulse
-						if arbiters(i, q).depth > depthc then depthc = arbiters(i, q).depth
-						if arbiters(i, q).new_ = 1 then f_bias = f_bias + normals(q)
+						if arbiters(i, q).ignore = 0 then
+							normals_N += 1
+							redim preserve as Vector2D normals(normals_N - 1)
+							
+							normals(normals_N - 1) = arbiters(i, q).impulse
+							if arbiters(i, q).depth > depthc then depthc = arbiters(i, q).depth
+							if arbiters(i, q).new_ = 1 then f_bias = f_bias + normals(normals_N - 1)
+							
+						end if
                     next q
                     f_bias.normalize()
+                    if normals_N = 0 then normals(0) = Vector2D(0,0)
                     
                     if hadPulse = 1 then
                         vectorListImpulse(normals(), wrk.v, v_adj, v_cancel)
@@ -1255,7 +1299,7 @@ sub TinySpace.step_time(byval t as double)
                     'f_adj = normal force + friction force
                 end if
                 
-                if (arbiters_n(i) = 0) then
+                if (normals_N = 0) then
                     c->v = c->v + ((f_total + f_adj) / c->m) * cur_t + v_adj
                     if c->v.magnitude() > TERM_VEL then
                         c->v.normalize()
@@ -1271,6 +1315,7 @@ sub TinySpace.step_time(byval t as double)
                         c->v = c->v + v_adj
                         #ifdef DEBUG
                             PRINTLOG "Setting final velocity... ", 1
+                            PRINTLOG str(v_adj) & " ", 1
                         #endif    
                     end if
                     #ifdef DEBUG
@@ -1281,7 +1326,7 @@ sub TinySpace.step_time(byval t as double)
                         PRINTLOG "Skipping c setting, calculating v_adj and f_adj, time:"& cur_t
                     #endif
                 end if
-                if arbiters_n(i) > 0 then
+                if normals_N > 0 then
                     c->didCollide = 1
                     wrk.didCollide = 1
                 end if
@@ -1297,6 +1342,8 @@ sub TinySpace.step_time(byval t as double)
                     PRINTLOG "Had pulse: " & hadPulse
                     PRINTLOG "arbiters_n: " & arbiters_n(i)
                     PRINTLOG "Current P,V: " & c->p & c->v
+                    PRINTLOG "Frames: " & str(framesGone)
+                    PRINTLOG "Energy: " & (1/2 * c->m * (c->v.magnitude()^2))
                     for q = 0 to ubound(normals)
                         circle(c->p.x() + -normals(q).x()*c->r * c->r_rat, c->p.y() + -normals(q).y()*c->r), 3, &hff0000,,,,F
                     next q
@@ -1306,9 +1353,9 @@ sub TinySpace.step_time(byval t as double)
                 skipCollisionCheck = 1
                 firstCycle = 0
                 resolutions += 1
+                'sleep
             wend
         else
-            
  
             cur_t = t
             c->v = c->v + (f_total / c->m) * cur_t
@@ -1318,9 +1365,13 @@ sub TinySpace.step_time(byval t as double)
             end if
             c->p = c->p + c->v * cur_t
             
+            #ifdef DEBUG
+				printlog "NO COLLIDE"
+				PRINTLOG "Current P,V: " & c->p & c->v
+            #endif
         end if  
        
         i += 1
     wend
-
+	framesGone += 1
 end sub

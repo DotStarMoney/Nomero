@@ -1,1 +1,1 @@
-Nomero "PhysicsTest.map"
+Nomero "PurovskyDistrict Scene 1 Outside.map"

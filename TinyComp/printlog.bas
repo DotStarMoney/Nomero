@@ -5,6 +5,7 @@
     PRINT_LOG_ON = 1
     
     PRINT_LOG = freefile
+    kill "debug.txt"
     open "debug.txt" for append as PRINT_LOG
 #endif
 
