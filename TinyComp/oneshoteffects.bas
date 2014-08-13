@@ -1,6 +1,8 @@
 #include "oneshoteffects.bi"
 #include "gamespace.bi"
 #include "debug.bi"
+#include "level.bi"
+
 
 constructor OneShotEffects
     this.head_ = 0
@@ -41,7 +43,12 @@ sub OneShotEffects.create(p_ as Vector2D, fx as EffectType_ = EXPLODE, _
     case SPARKLE
         this.head_->data_.anim.load("sparkle.txt")
     case RADAR
-        this.head_->data_.anim.load("radaranim.txt")		
+        this.head_->data_.anim.load("radaranim.txt")
+    case FALLOUT_EXPLODE
+	    this.head_->data_.anim.load("splode.txt")
+	    level_parent->addFallout(p_.x(), p_.y())
+	    GS = cast(GameSpace ptr, parent)
+	    GS->vibrateScreen()
     end select
     this.head_->data_.fx = fx
     this.head_->data_.anim.play()
@@ -78,10 +85,10 @@ sub OneShotEffects.proc_effects(t as double)
     wend 
 end sub
 
-sub OneShotEffects.setParent(par as any ptr)
+sub OneShotEffects.setParent(par as any ptr, lev as Level ptr)
     parent = par
+    level_parent = lev
 end sub
-
 
 sub OneShotEffects.draw_effects(scnbuff as uinteger ptr)
     dim as EffectNode_t ptr curNode
@@ -90,7 +97,7 @@ sub OneShotEffects.draw_effects(scnbuff as uinteger ptr)
     while curNode <> 0
         cur = curNode->data_
         
-        if cur.fx = EXPLODE andAlso cur.firstDraw = 1 then
+        if (cur.fx = EXPLODE or cur.fx = FALLOUT_EXPLODE) andAlso cur.firstDraw = 1 then
             circle scnbuff, (cur.p.x(), cur.p.y()), 30, rgb(255,200,64),,,,F            
         end if
         cur.anim.drawAnimation(scnbuff, cur.p.x(), cur.p.y())
@@ -98,6 +105,4 @@ sub OneShotEffects.draw_effects(scnbuff as uinteger ptr)
         curNode->data_.firstDraw = 0
         curNode = curNode->next_
     wend 
-    
-    
 end sub

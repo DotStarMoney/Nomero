@@ -10,19 +10,6 @@ dim as integer ptr Level.falloutTex = 0
 	dim as integer ptr Level.collisionBlox = 0
 #endif
 
-function blendFallout(byval src as uinteger, byval dest As uinteger, _
-                      byval param as any ptr) As uInteger
-    dim as integer r, g, b
-    if src = &hff000000 orElse dest = &hffff00ff then
-        return &hffff00ff
-    else
-        r = (((src shr 16) and &hff) * (((dest shr 16) and &hff) + 1)) shr 8
-        g = (((src shr  8) and &hff) * (((dest shr  8) and &hff) + 1)) shr 8
-        b = (((src shr  0) and &hff) * (((dest shr  0) and &hff) + 1)) shr 8
-        return &hff000000 or (r shl 16) or (g shl 8) or (b shl 0)
-    end if
-end function
-
 
 constructor level
     coldata = 0
@@ -43,6 +30,7 @@ constructor level
     background_layer.init(sizeof(integer))
     active_layer.init(sizeof(integer))
     pendingPortalSwitch = 0
+    reconnect = 0
     #ifdef DEBUG
 		if collisionBlox = 0 then
 			collisionBlox = imagecreate(336, 64)
@@ -500,10 +488,77 @@ function Level.usesSnow() as integer
     end if
 end function
     
-sub Level.splodeBlockReact(x as integer, y as integer)
-
-
-
+sub Level.splodeBlockReact(xs as integer, ys as integer)
+	dim as integer i
+	dim as integer deleteBlock
+	dim as Level_VisBlock block
+	dim as Level_EffectData tempEffect
+	    
+	if xs <  0         then exit sub
+	if xs >= lvlWidth  then exit sub
+	if ys <  0         then exit sub
+	if ys >= lvlHeight then exit sub
+	
+	'dull splode 23, 73
+	'resplode 24, 74
+	'chain splode 75 and 76
+	select case getCollisionBlock(xs, ys).cModel
+	case 23
+		setCollision(xs, ys, 0)
+	case 73
+		setCollision(xs, ys, 0)
+	case 24
+		setCollision(xs, ys, 0)
+		graphicFX_->create("Temporary Explode", ONE_SHOT_EXPLODE,_
+						   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
+						   Vector2D(0,0), 0,_
+						   ACTIVE)
+	case 74
+		setCollision(xs, ys, 0)
+		graphicFX_->create("Temporary Explode", ONE_SHOT_EXPLODE,_
+				   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
+				   Vector2D(0,0), 0,_
+				   ACTIVE)
+	case 75
+		setCollision(xs, ys, 0)
+		splodeBlockReact(xs - 1, ys)
+		splodeBlockReact(xs, ys - 1)
+		splodeBlockReact(xs + 1, ys)
+		splodeBlockReact(xs, ys + 1)		
+	case 76
+		setCollision(xs, ys, 0)
+		splodeBlockReact(xs - 1, ys)
+		splodeBlockReact(xs, ys - 1)
+		splodeBlockReact(xs + 1, ys)
+		splodeBlockReact(xs, ys + 1)	
+	case else
+		exit sub
+	end select
+	'chance to smoke
+	if int(rnd * 2) = 0 then
+		graphicFX_->create("Temporary Smoke", ONE_SHOT_SMOKE,_
+		                   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
+		                   Vector2D(0,0), 0,_
+		                   ACTIVE)
+	end if
+	for i = 0 to blocks_N
+		if layerData[i].isDestructible = 1 then
+			block = blocks[i][ys * lvlWidth + xs]
+			if block.tileset < 65535 then
+				deleteBlock = 1
+				if block.usesAnim < 65535 then
+					tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+					if tempEffect.effect = DESTRUCT then
+						deleteBlock = 0
+						modBlockDestruct(i, xs, ys)
+					end if
+				end if
+				if deleteBlock = 1 then
+					resetBlock(xs, ys, i)
+				end if
+			end if
+		end if
+	next i
 end sub
 
 sub Level.modBlockDestruct(lyr as integer, xs as integer, ys as integer)
@@ -535,7 +590,7 @@ sub Level.modBlockDestruct(lyr as integer, xs as integer, ys as integer)
 	end if
 end sub
 
-sub Level.addFallout(x as integer, y as integer, flavor as integer)
+sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
     dim as Level_FalloutType fallout
     dim as Level_FalloutType ptr ptr list
     dim as integer num, i
@@ -561,29 +616,26 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer)
     tl_y = max(0, min(tl_y, lvlHeight - 1))
     br_x = max(0, min(br_x, lvlWidth - 1))
     br_y = max(0, min(br_y, lvlHeight - 1))      
-    
-    for i = 0 to blocks_N - 1
-        if layerData[i].isFallout = 1 then
-            for ys = tl_y to br_y
-                for xs = tl_x to br_x
-                    xp = xs * 16 - x
-                    yp = ys * 16 - y
-                    d = sqr(xp*xp + yp*yp)
-                    if d <= 48 then
-                        
-                        'if getCollisionBlock(xs, ys).cModel = 
-                           
-                        modBlockDestruct(i, xs, ys)
-                        
-                        if d <= 12 then
-                            resetBlock(xs, ys, i)
-                        end if
-                    end if
-                next xs
-            next ys
-        end if
-    next i
-    
+
+	
+
+	for ys = tl_y to br_y
+		for xs = tl_x to br_x
+			xp = xs * 16 - x
+			yp = ys * 16 - y
+			d = sqr(xp*xp + yp*yp)
+			if d <= 48 then
+				splodeBlockReact(xs, ys)
+				for i = 0 to blocks_N - 1
+					if (layerData[i].isFallout = 1) andAlso d <= 12 then
+						resetBlock(xs, ys, i)
+					end if
+				next i
+			end if
+		next xs
+	next ys
+   
+
     
     fallout.flavor = flavor
     fallout.cachedImage = 0
@@ -649,8 +701,12 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer)
     end if
     
     falloutZones.insert(fallout.a, fallout.b, @fallout)
-   
+	reconnect = 1
 end sub
+
+function level.mustReconnect() as integer
+	return reconnect
+end function
 
 function level.getCollisionBlock(x as integer, y as integer) as TinyBlock
     Dim as TinyBlock b
@@ -1089,7 +1145,6 @@ function level.getHeight() as integer
 end function
 
 
-
 function level.getCollisionLayerData() as TinyBlock ptr
     Dim as TinyBlock ptr blockd
     dim as integer u, v, off
@@ -1112,5 +1167,6 @@ function level.getCollisionLayerData() as TinyBlock ptr
            
         next u
     next v
+    reconnect = 0
     return blockd
 end function

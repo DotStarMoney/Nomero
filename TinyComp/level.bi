@@ -53,8 +53,9 @@ type Level
         declare sub resetBlock(x as integer, y as integer, lyr as integer)
         declare sub setCollision(x as integer, y as integer, v as integer)
         declare sub flush()
-        declare sub addFallout(x as integer, y as integer, flavor as integer)
+        declare sub addFallout(x as integer, y as integer, flavor as integer = 0)
         declare function usesSnow() as integer
+        declare function mustReconnect() as integer
         
     private:
         declare sub putDispatch(scnbuff as integer ptr,_
@@ -63,9 +64,9 @@ type Level
                                 tilePos_x as integer, tilePos_y as integer,_
                                 cam_x as integer, cam_y as integer)
                                 
-        declare sub splodeBlockReact(x as integer, y as integer)
+        declare sub splodeBlockReact(xs as integer, ys as integer)
         declare sub modBlockDestruct(lyr as integer, xs as integer, ys as integer)
-                                
+        dim as integer reconnect
         dim as ushort ptr coldata
         dim as string lvlName
         dim as ushort lvlWidth

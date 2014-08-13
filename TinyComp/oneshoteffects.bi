@@ -6,6 +6,7 @@
 
 enum EffectType_
     EXPLODE
+    FALLOUT_EXPLODE
     SPARKLE
     SMOKE
     RADAR
@@ -25,11 +26,13 @@ type EffectNode_t
     as EffectNode_t ptr prev_
 end type
 
+type level_ as Level
+
 type OneShotEffects
     public:
         declare constructor()
         declare destructor()
-        declare sub setParent(par as any ptr)
+        declare sub setParent(par as any ptr, lev as level_ ptr)
         declare sub create(p_ as Vector2D, fx as EffectType_ = EXPLODE, _
                            d_ as Vector2D = Vector2D(0,0), s_ as integer = 1) 
         declare sub proc_effects(t as double)
@@ -38,6 +41,7 @@ type OneShotEffects
         as EffectNode_t ptr head_
         as integer          numNodes
         as any ptr parent
+        as level_ ptr level_parent
 end type
 
 

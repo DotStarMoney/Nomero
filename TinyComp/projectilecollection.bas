@@ -126,7 +126,6 @@ sub ProjectileCollection.proc_collection(t as double)
                 
                 parent_level->addFallout(cur.body.p.x(), cur.body.p.y(), 1)
         
-                'GS->pow(p_.x(), p_.y(), 4)
                 deleteMe = 1
             end if
         end select

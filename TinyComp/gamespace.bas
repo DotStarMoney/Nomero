@@ -30,7 +30,7 @@ constructor GameSpace()
     spy.body.friction = 2
     spy.loadAnimations("mrspy.txt")
 
-    effects.setParent(@this)
+    effects.setParent(@this, @lvlData)
     projectiles.setParent(@world, @lvlData, @this)
     spy.setParent(@world, @lvlData, @projectiles, @this)
     
@@ -231,6 +231,8 @@ sub GameSpace.step_process()
     effects.proc_effects(0.033)
     
     print spy.body.p
+    
+    if lvlData.mustReconnect() = 1 then reconnectCollision()
     
     #ifdef DEBUG
     	world.step_time(0.033)

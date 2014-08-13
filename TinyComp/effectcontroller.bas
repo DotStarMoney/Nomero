@@ -72,7 +72,9 @@ sub EffectController.processFrame(camera as Vector2D)
     if effect_N > 0 then
         for i = 0 to effect_N - 1
             tempObj_ = effect_list[i]
-            processEffect(*tempObj_)
+            if processEffect(*tempObj_) = 1 then
+				effectContainer.remove(tempObj_)
+            end if
         next i
         deallocate(effect_list)
     end if
@@ -85,7 +87,7 @@ sub EffectController.drawEffects(scnbuff as integer ptr,_
                                 
 end sub
 
-sub EffectController.processEffect(byref effect_p as ObjectEffect_t)
+function EffectController.processEffect(byref effect_p as ObjectEffect_t) as integer
     dim as Vector2D e_loc
     do
         e_loc = Vector2D(effect_p.size.x() * rnd, effect_p.size.y() * rnd)
@@ -122,8 +124,30 @@ sub EffectController.processEffect(byref effect_p as ObjectEffect_t)
         if int(rnd * effect_p.density * 10) = 0 then
             oneshots->create(e_loc, SMOKE, Vector2D(0, -5))
         end if
+    case ONE_SHOT_SMOKE
+		if effect_p.counter = 0 then
+			effect_p.counter = 1 + int(rnd * 8)
+		else
+			effect_p.counter -= 1
+			if effect_p.counter = 1 then
+				oneshots->create(effect_p.p + effect_p.size*0.5, SMOKE, Vector2D(int(rnd * 5) - 2,-1 + -int(rnd * 4)))
+				return 1
+			end if
+		end if
+	case ONE_SHOT_EXPLODE
+		if effect_p.counter = 0 then
+			effect_p.counter = 3 + int(rnd * 6)
+		else
+			effect_p.counter -= 1
+			if effect_p.counter = 1 then
+				oneshots->create(effect_p.p + effect_p.size*0.5, FALLOUT_EXPLODE, Vector2D(0,0))
+				return 1
+			end if
+		end if
     end select   
-end sub
+    return 0
+end function
+
 sub EffectController.drawEffect(effect_p as ObjectEffect_t)
 
 end sub

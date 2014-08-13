@@ -8,9 +8,11 @@
 #include "hash2d.bi"
 
 enum EffectControllerType_e
-    RADAR_PULSE = 0
-    SHIMMER     = 1
-    STEAM       = 2
+    RADAR_PULSE      = 0
+    SHIMMER          = 1
+    STEAM            = 2
+    ONE_SHOT_SMOKE   = 3
+    ONE_SHOT_EXPLODE = 4
 end enum
 
 type ObjectEffect_t
@@ -51,7 +53,7 @@ type EffectController
         declare sub flush()
 
     private:
-        declare sub processEffect(byref effect_p as ObjectEffect_t)
+        declare function processEffect(byref effect_p as ObjectEffect_t) as integer
         declare sub drawEffect(effect_p as ObjectEffect_t)
 
         

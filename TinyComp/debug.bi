@@ -1,7 +1,7 @@
 #ifndef DEBUG_BI
 #define DEBUG_BI
 
-#define DEBUG
+'#define DEBUG
 
 #ifdef DEBUG
     #include "fbmld.bi"
