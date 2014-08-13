@@ -62,8 +62,10 @@ type Level
                                 x as integer, y as integer,_
                                 tilePos_x as integer, tilePos_y as integer,_
                                 cam_x as integer, cam_y as integer)
-        
-        
+                                
+        declare sub splodeBlockReact(x as integer, y as integer)
+        declare sub modBlockDestruct(lyr as integer, xs as integer, ys as integer)
+                                
         dim as ushort ptr coldata
         dim as string lvlName
         dim as ushort lvlWidth
@@ -77,7 +79,7 @@ type Level
         dim as ushort            tilesets_N
         
         dim as Level_VisBlock  ptr ptr blocks
-        dim as Level_LayerData ptr layerData
+        dim as Level_LayerData ptr     layerData
         dim as ushort                  blocks_N
         
         dim as List foreground_layer

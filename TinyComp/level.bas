@@ -2,6 +2,7 @@
 #include "utility.bi"
 #include "seqfile.bi"
 #include "debug.bi"
+#include "tinyblock.bi"
 
 
 dim as integer ptr Level.falloutTex = 0
@@ -211,6 +212,12 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
 			tl_y = ((cam_y - SCRY * 0.5) ) / 16 - 1
 			br_x = ((cam_x + SCRX * 0.5) ) / 16
 			br_y = ((cam_y + SCRY * 0.5) ) / 16
+			if tl_x > br_x then swap tl_x, br_x
+			if tl_y > br_y then swap tl_y, br_y
+			if tl_x <            0 then tl_x = 0
+			if br_x > lvlWidth - 1 then br_x = lvlWidth - 1
+			if tl_y <             0 then tl_y = 0
+			if br_y > lvlHeight - 1 then br_y = lvlHeight - 1   
 			for ys = tl_y to br_y
 				for xs = tl_x to br_x
 					i = coldata[ys * lvlWidth + xs]
@@ -225,10 +232,6 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
 	#endif
    
     if falloutBlend <> 0 then imagedestroy falloutBlend
-    /'
-    window screen (cam_x - SCRX * 0.5, cam_y - SCRY * 0.5)-_
-                  (cam_x + SCRX * 0.5, cam_y + SCRY * 0.5)
-    '/
 
 end sub
 
@@ -497,7 +500,41 @@ function Level.usesSnow() as integer
     end if
 end function
     
+sub Level.splodeBlockReact(x as integer, y as integer)
+
+
+
+end sub
+
+sub Level.modBlockDestruct(lyr as integer, xs as integer, ys as integer)
+    dim as Level_VisBlock block
+    dim as Level_EffectData tempEffect
     
+	block = blocks[lyr][ys * lvlWidth + xs]
+                        
+	if block.usesAnim < 65535 andAlso block.tileset < 65535 then
+	   
+		tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+		
+		if tempEffect.effect = DESTRUCT then
+			block.tileNum += tempEffect.nextTile
+			if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
+				tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+				block.usesAnim = 1
+			else
+				block.usesAnim = 65535
+			end if
+			if tempEffect.effect = ANIMATE then
+				block.frameDelay = 0
+			elseif tempEffect.effect = FLICKER then
+				block.frameDelay = tempEffect.offset + tempEffect.delay * rnd
+			end if
+			blocks[lyr][ys * lvlWidth + xs] = block
+		end if
+		
+	end if
+end sub
+
 sub Level.addFallout(x as integer, y as integer, flavor as integer)
     dim as Level_FalloutType fallout
     dim as Level_FalloutType ptr ptr list
@@ -508,7 +545,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer)
     dim as integer tl_x, tl_y, br_x, br_y
     dim as integer xs, ys
     dim as double xp, yp
-    dim as double d, rand
+    dim as double d
     dim as Level_VisBlock block
     dim as Level_EffectData tempEffect
     
@@ -523,12 +560,9 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer)
     tl_x = max(0, min(tl_x, lvlWidth - 1))
     tl_y = max(0, min(tl_y, lvlHeight - 1))
     br_x = max(0, min(br_x, lvlWidth - 1))
-    br_y = max(0, min(br_y, lvlHeight - 1))    
-    
-    
+    br_y = max(0, min(br_y, lvlHeight - 1))      
     
     for i = 0 to blocks_N - 1
-        rand = rnd
         if layerData[i].isFallout = 1 then
             for ys = tl_y to br_y
                 for xs = tl_x to br_x
@@ -537,29 +571,9 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer)
                     d = sqr(xp*xp + yp*yp)
                     if d <= 48 then
                         
-                        block = blocks[i][ys * lvlWidth + xs]
-                        
-                        if block.usesAnim < 65535 andAlso block.tileset < 65535 then
+                        'if getCollisionBlock(xs, ys).cModel = 
                            
-                            tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
-                            
-                            if tempEffect.effect = DESTRUCT then
-                                block.tileNum += tempEffect.nextTile
-                                if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
-                                    tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
-                                    block.usesAnim = 1
-                                else
-                                    block.usesAnim = 65535
-                                end if
-                                if tempEffect.effect = ANIMATE then
-                                    block.frameDelay = 0
-                                elseif tempEffect.effect = FLICKER then
-                                    block.frameDelay = tempEffect.offset + tempEffect.delay * rand
-                                end if
-                                blocks[i][ys * lvlWidth + xs] = block
-                            end if
-                            
-                        end if
+                        modBlockDestruct(i, xs, ys)
                         
                         if d <= 12 then
                             resetBlock(xs, ys, i)
@@ -996,7 +1010,6 @@ sub Level.repositionFromPortal(l as levelSwitch_t, _
 	dim as string test1, test2
 	portals.rollReset()
 	test1 = trimwhite(ucase(l.portalName))
-	
 	do
 		portal_p = portals.roll()
 		if portal_p <> 0 then
@@ -1096,7 +1109,7 @@ function level.getCollisionLayerData() as TinyBlock ptr
 			else
                 blockd[off].cModel = EMPTY
             end if
-
+           
         next u
     next v
     return blockd

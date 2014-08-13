@@ -21,7 +21,7 @@ constructor GameSpace()
     spy.body.r = 18
     spy.body.m = 5
 
-    spy.body.p = Vector2D(1062,520)
+    spy.body.p = Vector2D(250,100)
 
 
     camera = spy.body.p
@@ -36,9 +36,9 @@ constructor GameSpace()
     
     projectiles.setEffectsGenerator(@effects)
 
-    'FSOUND_Init(44100, 3, 0)
-    'music = FSOUND_Stream_Open("PurovskyDistrict.ogg", FSOUND_LOOP_NORMAL, 0, 0 ) 
-    'FSOUND_Stream_Play 1, music
+    FSOUND_Init(44100, 3, 0)
+    music = FSOUND_Stream_Open("PurovskyDistrict.ogg", FSOUND_LOOP_NORMAL, 0, 0 ) 
+    FSOUND_Stream_Play 1, music
     
     backgroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     backgroundSnow.setFreq(3, 3)
@@ -82,7 +82,7 @@ function GameSpace.go() as integer
         totalTime = (timer - startTime) * 1000
         movingFrmAvg = movingFrmAvg * 0.92 + totalTime * 0.08
         stallTime = (1000.0 / FPS_TARGET) - movingFrmAvg
-        if stallTime > 0 then sleep(stallTime)
+        if stallTime > 0 then stall(stallTime) 'sleep(stallTime)
     loop 
     return 0
 end function

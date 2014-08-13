@@ -3,7 +3,7 @@
 #include "debug.bi"
 
 #define OWP_INDEX_START 56
-#define OWP_INDEX_END 71
+#define OWP_INDEX_END 70
 
 constructor TinySpace
     dim as integer i
@@ -813,6 +813,12 @@ sub TinySpace.traceRing(      x           as integer,_
 			printlog "TRACERING:", 1
 			printlog "writing 3, " & a_pt & ", " & b_pt
 		#endif
+		#ifdef DEBUG
+	else
+		printlog "TRACERING: ", 1
+		printlog str(skipOWP) & ", " & usedArray(xs_o, ys_o) 
+		
+		#endif
 	end if
 	lastSlope = curSlope
 	if (curIndx - startIndex) > 1 then
@@ -1029,6 +1035,7 @@ sub TinySpace.step_time(byval t as double)
         
         segment_n = 0
         
+		
         redim as integer usedSpace(start_x to end_x, start_y to end_y)
         
         for scan_y = start_y to end_y

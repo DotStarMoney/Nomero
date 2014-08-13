@@ -1457,7 +1457,7 @@ return {
           visible = true,
           properties = {
             ["direction"] = "in",
-            ["to map"] = "PurovskyDistrict 2 Outside",
+            ["to map"] = "PurovskyDistrict Scene 2 Outside",
             ["to portal"] = "East Door"
           }
         }

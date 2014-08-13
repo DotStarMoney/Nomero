@@ -1,4 +1,3 @@
-'redo owp handling in TimeSpace.step_time
 'program splode blox and destructable blox
 'portal transition
 
@@ -11,10 +10,7 @@
 
 
 
-
-
-'think about zones/triggers- implement some stuff?
-
+'triggers can affect snow and stuff in other levels
 'various destructors, use fbmld to find
 'create save states
 'fix crash on exit bug
@@ -26,5 +22,6 @@
 'jump flip direction
 'throwing animation
 'hat clip on purovsky inside 2
+'move posts in pd2 into the foreground
 'make snow flakes
 'floating above snow peaks due to collision shapes

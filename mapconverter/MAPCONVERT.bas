@@ -53,11 +53,12 @@ enum EffectType_t
 end enum
 
 enum PortalDirection_t
-    D_IN
-    D_DOWN
-    D_UP
     D_LEFT
+    D_UP
     D_RIGHT
+    D_DOWN
+    D_IN
+    NO_FACING
 end enum
 
 type tileEffect_t
@@ -535,7 +536,6 @@ do
         if right(lne, 1) = "}" then 
             dataline = 0
         else
-
             split lne,,,pieces()
             for col = 0 to map_width - 1
                 layers(N_layers - 1).layer_data[row * map_width + col] = val(pieces(col))
@@ -581,7 +581,6 @@ for i = 0 to N_tilesets - 1
             end if
         loop
     end if
-    
 next i
 
 print
@@ -680,7 +679,6 @@ for i = 0 to (N_layers - 1)
     for q = 0 to map_width*map_height - 1
         numMerged = 0
         tileA = layers(curLayer).layer_data[q] and &h1fffffff
-        
         minID = -1
         if tileA <> 0 then
             for j = 0 to N_tilesets - 1
@@ -741,7 +739,7 @@ for i = 0 to (N_layers - 1)
                         for j = 0 to N_tilesets - 1
                             if ucase(left(tilesets(j).set_name, 9)) <> "COLLISION" then
                                 if tileB >= tilesets(j).set_firstID then
-                                    if (minID = -1) orElse (tilesets(j).set_firstID > minID) then
+                                    if (minID = -1) orElse (tilesets(j).set_firstID >= minID) then
                                         minID = tilesets(j).set_firstID
                                         tilesetB = j
                                     end if
@@ -777,19 +775,22 @@ for i = 0 to (N_layers - 1)
                                (layers(curLayer).isFallout = layers(nextLayer).isFallout) then
                                 'if the two layers have the same destruction properties
                                 if animB = 0 andAlso animA = 0 then
-                                    print "to merge"
                                     'if we are not merging animated tiles
                                     'tiles can be merged!
                                     didMerge = 1
     
                                     if mustMerge = 0 then
                                         layers(curLayer).layer_data[q] = layers(nextLayer).layer_data[q]
+                                        numMerged += 1
+                                        searchKey += "("+str(tilesetB)+","+str(layers(nextLayer).layer_data[q])+")"
+                                        tilesToMerge_tile(numMerged - 1) = layers(curLayer).layer_data[q] - 1
+                                        tilesToMerge_set(numMerged - 1) = tilesetA
                                         mustMerge = 1
                                     else
                                         searchKey += "("+str(tilesetB)+","+str(layers(nextLayer).layer_data[q])+")"
+                                        numMerged += 1
                                         tilesToMerge_tile(numMerged - 1) = layers(nextLayer).layer_data[q] - tilesets(tilesetB).set_firstID
                                         tilesToMerge_set(numMerged - 1) = tilesetB
-                                        numMerged += 1
                                     end if
                                     layers(nextLayer).layer_data[q] = 0'remove tile from old layer
 
@@ -823,7 +824,6 @@ for i = 0 to (N_layers - 1)
                         ytn = int(tn / 20) * 16
                         xpn = ((N_merges-1) mod 20) * 16
                         ypn = int((N_merges-1) / 20) * 16
-                        
                         if rt = 0 then
                             put mergedTiles, (xpn, ypn), setImages(tilesToMerge_set(j)), (xtn, ytn)-(xtn+15, ytn+15), TRANS
                         else
@@ -915,7 +915,6 @@ for i = 0 to (N_layers - 1)
                                 ppos(byRow) += pdir(byRow)
                                 ypos += 1
                             wend
-                        
                         end if  
                     next j
                 else
@@ -928,7 +927,6 @@ for i = 0 to (N_layers - 1)
         end if
     next q
 next i
-
 
 print "Found"; N_merges; " unique merged tiles."
 
@@ -1061,8 +1059,6 @@ for i = 0 to N_objects - 1
         end select
     end with
 next i
-
-
 
 print "Level sucessfully converted..."
 sleep

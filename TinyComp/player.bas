@@ -292,7 +292,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 		if ls.facing <> D_IN then
 			switch(ls)
 		else
-			if (ups = 1) andAlso (lastUps = 0) andAlso (state = GROUNDED) then
+			if (ups = 1) andAlso (lastUps = 0) andAlso (state = GROUNDED) then				
 				switch(ls)
 			end if
 		end if
