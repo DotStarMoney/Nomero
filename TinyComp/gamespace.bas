@@ -43,14 +43,14 @@ constructor GameSpace()
     backgroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     backgroundSnow.setFreq(3, 3)
     backgroundSnow.setDepth(8, 10)
-    backgroundSnow.setDrift(-10)
-    backgroundSnow.setSpeed(20)
+    backgroundSnow.setDrift(-1000)
+    backgroundSnow.setSpeed(1200)
     
     foregroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     foregroundSnow.setFreq(1, 15)
     foregroundSnow.setDepth(0.5, 4)
-    foregroundSnow.setDrift(-10)
-    foregroundSnow.setSpeed(30)
+    foregroundSnow.setDrift(-1000)
+    foregroundSnow.setSpeed(1800)
     
     scnbuff = imagecreate(640,480)
 
@@ -183,6 +183,18 @@ sub GameSpace.step_draw()
 
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     
+    
+      
+    window screen (0,0)-(SCRX-1,SCRY-1)
+    
+    if isSwitching <> 0 then
+		line scnbuff, (0, SCRY - 1)-(SCRX - 1, SCRY - switchFrame - 1), 0, BF
+    end if
+    
+      
+    window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
+                  (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
+    
     scale2sync scnbuff
 end sub
     
@@ -219,38 +231,61 @@ sub GameSpace.step_process()
     
     vibcount -= 1
     
- 
-    spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.033)
-    if lvlData.usesSnow() = 1 then 
-        backgroundSnow.stepFlakes(camera, 0.033)
-        foregroundSnow.stepFlakes(camera, 0.033)
+	if isSwitching <> 1 then
+		spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.00555)
     end if
-    projectiles.proc_collection(0.033)
+    
+    if lvlData.usesSnow() = 1 then 
+        backgroundSnow.stepFlakes(camera, 0.00555)
+        foregroundSnow.stepFlakes(camera, 0.00555)
+    end if
+    projectiles.proc_collection(0.00555)
     graphicFX.processFrame(camera)
  
-    effects.proc_effects(0.033)
+    effects.proc_effects(0.00555)
     
     print spy.body.p
     
     if lvlData.mustReconnect() = 1 then reconnectCollision()
     
-    #ifdef DEBUG
-    	world.step_time(0.033)
-    #else
-		for i = 1 to 3
-			world.step_time(0.011)
-		next i
-	#endif
+        
+    if isSwitching = 1 then
+		switchFrame += 64
+		if switchFrame = 512 then
+			performSwitch(pendingSwitch)
+		end if
+	elseif isSwitching = -1 then
+		switchFrame -= 64
+		if switchFrame = 0 then
+			isSwitching = 0
+		end if
+    end if
+    
+    if isSwitching = 0 then
+		#ifdef DEBUG
+			world.step_time(0.033)
+		#else
+			for i = 1 to 3
+				world.step_time(0.00555)
+			next i
+		#endif
+	end if
    
 end sub
 sub GameSpace.centerCamera(c as Vector2D)  
 	camera = c
 end sub
 sub GameSpace.switchRegions(ls as LevelSwitch_t)
+	isSwitching = 1
+	switchFrame = 0
+	pendingSwitch = ls
+end sub     
+sub GameSpace.performSwitch(ls as LevelSwitch_t)
+	isSwitching = -1
 	projectiles.flush()
 	lvlData.load(ls.fileName)
     world.setBlockData(lvlData.getCollisionLayerData(),_
                        lvlData.getWidth(), lvlData.getHeight(),_
                        16.0)
-end sub        
+end sub 
         

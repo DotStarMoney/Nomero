@@ -15,7 +15,7 @@ constructor SnowGenerator()
     flakeDrift = 0
     w = 640
     h = 480
-    speed = 15
+    speed = 200
 end constructor
 
 destructor SnowGenerator()
@@ -90,7 +90,7 @@ sub SnowGenerator.stepFlakes(cam as Vector2D, t as double)
                 end if
             end if
             
-            head_->v = Vector2D(rnd * 2 - 1 + flakeDrift, speed + rnd * 2)
+            head_->v = Vector2D(rnd * 2 - 1 + flakeDrift, speed + rnd * 10)
             head_->f = Vector2D(rnd * 1 - 0.5, rnd * 0.1)              
             
             head_->prev_ = 0
@@ -108,7 +108,7 @@ sub SnowGenerator.stepFlakes(cam as Vector2D, t as double)
         if(int(rnd * 10) = 0) then np->f = Vector2D(rnd * 0.1 - 0.05, rnd * 0.1)
         
         np->v = np->v + np->f * t
-        np->p = np->p + np->v
+        np->p = np->p + np->v * t
         
         tl_x = cam.x() - SCRX*0.5*np->depth
         tl_y = cam.y() - SCRY*0.5*np->depth

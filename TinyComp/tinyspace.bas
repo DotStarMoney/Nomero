@@ -847,7 +847,7 @@ function TinySpace.isGrounded(bod as integer, dot as double) as integer
     bod = bodyN(bod)
     if arbiters_n(bod) = 0 then exit function
     for i = 0 to arbiters_n(bod)-1
-        if (ground * arbiters(bod, i).impulse) > dot then 
+        if (ground * arbiters(bod, i).impulse) > dot andAlso (arbiters(bod, i).ignore = 0) then 
             return 1
         end if
     next i

@@ -108,7 +108,7 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
 		
 		if effect_p.counter = 0 then
 			if effect_p.counter = 0 then 
-				effect_p.counter = effect_p.density * 30
+				effect_p.counter = effect_p.density * 60
 			else
 				effect_p.counter -= 1
 			end if
@@ -117,26 +117,26 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
 			effect_p.counter -= 1
 		end if
     case SHIMMER
-        if int(rnd * effect_p.density * 10) = 0 then
+        if int(rnd * effect_p.density * 50) = 0 then
             oneshots->create(e_loc, SPARKLE, Vector2D(0, 0))
         end if
     case STEAM
-        if int(rnd * effect_p.density * 10) = 0 then
-            oneshots->create(e_loc, SMOKE, Vector2D(0, -5))
+        if int(rnd * effect_p.density * 50) = 0 then
+            oneshots->create(e_loc, SMOKE, Vector2D(0, -2.5))
         end if
     case ONE_SHOT_SMOKE
 		if effect_p.counter = 0 then
-			effect_p.counter = 1 + int(rnd * 8)
+			effect_p.counter = 1 + int(rnd * 16)
 		else
 			effect_p.counter -= 1
 			if effect_p.counter = 1 then
-				oneshots->create(effect_p.p + effect_p.size*0.5, SMOKE, Vector2D(int(rnd * 5) - 2,-1 + -int(rnd * 4)))
+				oneshots->create(effect_p.p + effect_p.size*0.5, SMOKE, Vector2D(int(rnd * 2) - 1,-1 + -int(rnd * 2)))
 				return 1
 			end if
 		end if
 	case ONE_SHOT_EXPLODE
 		if effect_p.counter = 0 then
-			effect_p.counter = 3 + int(rnd * 6)
+			effect_p.counter = 6 + int(rnd * 12)
 		else
 			effect_p.counter -= 1
 			if effect_p.counter = 1 then

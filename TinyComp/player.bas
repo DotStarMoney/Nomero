@@ -18,7 +18,7 @@ constructor Player
     groundDot      = 0.2
     cutSpeed       = 0.5
     stopFriction   = 3
-    boostFrames    = 10
+    boostFrames    = 13
     boostForce     = 800
     jumpImpulse    = 150
     freeJumpFrames = 3 
@@ -26,6 +26,7 @@ constructor Player
     lastFire = 0
     lastTopSpeed = 200
     groundSwitchAnimFrames = 0
+    pendingSwitch = 0
     anim.play()
 end constructor
 
@@ -96,8 +97,8 @@ sub Player.switch(ls as LevelSwitch_t)
 	dim as GameSpace ptr gsp
 	gsp = cast(GameSpace ptr, game_parent)
 	gsp->switchRegions(ls)
-	level_parent->repositionFromPortal(ls, body)
-	gsp->centerCamera(body.p)
+	pendingSwitchData = ls
+	pendingSwitch = 1
 end sub
 
 sub Player.processControls(dire as integer, jump as integer,_
@@ -107,6 +108,8 @@ sub Player.processControls(dire as integer, jump as integer,_
     dim as double curSpeed, oSpeed
     dim as integer addSpd, ptype
     dim as LevelSwitch_t ls
+    dim as GameSpace ptr gsp
+	gsp = cast(GameSpace ptr, game_parent)
     
     
     if state <> ON_LADDER andAlso ups <> 0 andAlso (onLadder() = 1) _
@@ -285,18 +288,23 @@ sub Player.processControls(dire as integer, jump as integer,_
         proj_parent->create(this.body.p, this.body.v + Vector2D((facing * 2 - 1) * 450, -200))
     end if
         
-
-    ptype = level_parent->processPortalCoverage(this.body.p + this.anim.getOffset(), anim.getWidth(), anim.getHeight(), ls)
-	
-    if ls.shouldSwitch = 1 then
-		if ls.facing <> D_IN then
-			switch(ls)
-		else
-			if (ups = 1) andAlso (lastUps = 0) andAlso (state = GROUNDED) then				
+	if pendingSwitch = 0 then
+		ptype = level_parent->processPortalCoverage(this.body.p + this.anim.getOffset(), anim.getWidth(), anim.getHeight(), ls)
+		
+		if ls.shouldSwitch = 1 then
+			if ls.facing <> D_IN then
 				switch(ls)
+			else
+				if (ups = 1) andAlso (lastUps = 0) andAlso (state = GROUNDED) then				
+					switch(ls)
+				end if
 			end if
 		end if
-    end if
+	else
+		level_parent->repositionFromPortal(pendingSwitchData, body)
+		gsp->centerCamera(body.p)
+		pendingSwitch = 0
+	end if
  
     
     anim.step_animation()

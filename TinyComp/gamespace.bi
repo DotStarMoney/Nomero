@@ -19,7 +19,7 @@
     kill "debug.txt"
 #endif
 
-#define FPS_TARGET 30
+#define FPS_TARGET 60
 
 type GameSpace
     public:
@@ -37,6 +37,7 @@ type GameSpace
         declare sub pow(x as double, y as double, r as double)
             
     private:
+		declare sub performSwitch(ls as LevelSwitch_t)
         declare sub step_input()
         declare sub step_draw()
         declare sub step_process()
@@ -53,9 +54,13 @@ type GameSpace
         as Player    spy
         as Level     lvlData
         as Vector2D  camera
+        as integer   	 isSwitching
+        as integer   	 switchFrame
+        as LevelSwitch_t pendingSwitch
+        
         as integer   keypress(0 to 255)
         as uinteger ptr scnbuff
-        dim as double movingFrmAvg
+		as double movingFrmAvg
 end type
         
         

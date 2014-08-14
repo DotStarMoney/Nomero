@@ -65,6 +65,8 @@ type Player
         as integer lastFire 
         as double lastTopSpeed
         as integer jumpHoldFrames
+        as integer pendingSwitch
+        dim as LevelSwitch_t pendingSwitchData
     
 End type
 
