@@ -1,6 +1,7 @@
 #include "dynamiccontroller.bi"
 #include "tinyspace.bi"
 #include "enemy.bi"
+#include "utility.bi"
 
 #define N_OBJ_TYPES 3
 
@@ -25,15 +26,57 @@ constructor DynamicController
 end constructor
 
 destructor DynamicController
-	dim as SpawnZone_t ptr         spawnZoneTemp
-	dim as DynamicObjectType_t ptr dynObjTemp
-	'roll through spawn zones and delete strings,
-	'roll through objects and delete objects 
-
+	flush()
 end destructor
+
+sub DynamicController.flush()
+	dim as SpawnZone_t ptr         szptr
+	dim as DynamicObjectType_t ptr dynObj
+	
+	spawnZones.rollReset()
+	do
+		szptr = spawnZones.roll()
+		if szptr <> 0 then
+			deallocate(szptr->spawn_objectName)
+		else
+			exit do
+		end if
+	loop
+	spawnZones.flush()
+	
+	objects.rollReset()
+	do
+		dynObj = objects.roll()
+		if dynObj <> 0 then
+			if dynObj->object_type = OBJ_ENEMY then
+				link.tinyspace_ptr->removeBody(cast(Enemy ptr, dynObj->data_)->body_i)
+				delete (cast(Enemy ptr, dynObj->data_))
+			end if
+		else
+			exit do
+		end if
+	loop
+	objects.flush()
+
+end sub
 
 sub DynamicController.setLink(link_ as ObjectLink)
 	link = link_
+end sub
+
+sub DynamicController.explosionAlert(p as Vector2D)
+	dim as DynamicObjectType_t ptr dobj
+	objects.rollReset()
+	do
+		dobj = objects.roll()
+		if dobj <> 0 then
+			if dobj->object_type = OBJ_ENEMY then
+				cast(Enemy ptr, dobj->data_)->explosionAlert(p)
+			end if
+		else
+			exit do
+		end if
+	loop
 end sub
 
 sub DynamicController.addSpawnZone(objectName as string,_
@@ -112,7 +155,8 @@ end sub
 sub DynamicController.process(t as double)
 	dim as SpawnZone_t ptr szptr
 	dim as DynamicObjectType_t ptr dobj
-	dim as integer spawnOne
+	dim as Enemy ptr enemyDelete
+	dim as integer spawnOne, shouldDelete, i
 	spawnZones.rollReset()
 	do
 		szptr = spawnZones.roll()
@@ -144,7 +188,17 @@ sub DynamicController.process(t as double)
 		dobj = objects.roll()
 		if dobj <> 0 then
 			if dobj->object_type = OBJ_ENEMY then
-				cast(Enemy ptr, dobj->data_)->process(t)
+				shouldDelete = cast(Enemy ptr, dobj->data_)->process(t)
+				if shouldDelete = 1 then
+					for i = 0 to 3
+						link.oneshoteffects_ptr->create(cast(Enemy ptr, dobj->data_)->body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),SMOKE,Vector2D(0,-2))
+						link.projectilecollection_ptr->create(cast(Enemy ptr, dobj->data_)->body.p, Vector2D(rnd*2 - 1, -1) * (300 + rnd*300), HEART)
+					next i
+					
+					link.tinyspace_ptr->removeBody(cast(Enemy ptr, dobj->data_)->body_i)
+					delete (cast(Enemy ptr, dobj->data_))
+					objects.rollRemove()
+				end if
 			elseif dobj->object_type = OBJ_ITEM then
 				'process items
 			end if

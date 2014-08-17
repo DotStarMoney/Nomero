@@ -17,7 +17,7 @@ destructor OneShotEffects
     while curNode <> 0
         oldNode = curNode
         curNode = curNode->next_
-        deallocate(oldNode)
+        delete(oldNode)
     wend 
     
 end destructor

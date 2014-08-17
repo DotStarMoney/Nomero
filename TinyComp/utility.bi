@@ -39,5 +39,10 @@ declare function ScreenClip(px as integer, py as integer ,_
                             byref sdx1 as integer, byref sdy1 as integer ,_
                             byref sdx2 as integer, byref sdy2 as integer) as integer
                            
+ 
+declare function circleBox(px as double, py as double, rad as double,_
+						   x1 as double, y1 as double,_
+						   x2 as double, y2 as double) as integer
+
 
 #endif

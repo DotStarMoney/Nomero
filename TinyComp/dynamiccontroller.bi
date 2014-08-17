@@ -53,6 +53,7 @@ type DynamicController
 		declare sub explosionAlert(p as Vector2D)
 		declare sub process(t as double)
 		declare sub drawDynamics(scnbuff as integer ptr)
+		declare sub flush()
 		
 	private:
 		declare sub addEnemy(sz as SpawnZone_t)

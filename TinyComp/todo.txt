@@ -1,16 +1,9 @@
-'program pursuit AI
-'program explosion alert AI
-'program AI death by bomb
-'program AI hit by bomb
 'program HUD
 	'player health
 	'player throw bomb
 	'player bombs left
 	'equiptment left
 'program AI shoot player
-'despawn logic
-'deallocate dyn controller bonanza
-'fix tinyspace issue
 
 'explosions trigger effects
 'program events and triggers
@@ -18,6 +11,10 @@
 'program menu
 'add music
 
+
+'despawn logic
+'still a random crash
+'improve death animation satisfaction
 'fix smoke coming out of grate in pd2
 'wrap end of Mountain 2
 'fix numerous graphical glitches in mountainside

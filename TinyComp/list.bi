@@ -34,6 +34,8 @@ type List
         as integer dataSizeBytes
         as integer size
         as ListNode_t ptr curRollNode_
+        as ListNode_t ptr oldCurRollNode_
+        as ListNode_t ptr lastReturned_
 end type
 
 

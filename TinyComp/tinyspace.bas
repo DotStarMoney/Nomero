@@ -446,6 +446,7 @@ sub TinySpace.traceRing(      x           as integer,_
     
     startIndex = curIndx
     firstSlope = Vector2D(0,0)
+    if curIndx = MAX_SEGS then exit sub
      
     xs = x
     ys = y
@@ -699,10 +700,13 @@ sub TinySpace.traceRing(      x           as integer,_
 										printlog "writing " &  a_pt & ", " & b_pt & ", " & _
 										          xs_prev & ", " & ys_prev & ", " & xs_o & ", " & ys_o
 									#endif
+
 									segList(curIndx).a = a_pt
 									segList(curIndx).b = b_pt
 									segList(curIndx).tag = -1
 									curIndx += 1   
+
+									if curIndx = MAX_SEGS then exit sub
 									
 									xs_line = xs
 									ys_line = ys     
@@ -743,6 +747,8 @@ sub TinySpace.traceRing(      x           as integer,_
 					segList(curIndx).a = a_pt
 					segList(curIndx).b = b_pt
 					segList(curIndx).tag = -1
+					
+					if curIndx = MAX_SEGS then exit sub
 					
 					#ifdef DEBUG
 						printlog "TRACERING: ", 1
@@ -805,10 +811,14 @@ sub TinySpace.traceRing(      x           as integer,_
                
     if skipOWP = 0 andAlso (usedArray(xs_o, ys_o) <> 2) then
 		b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
+		
 		segList(curIndx).a = a_pt
 		segList(curIndx).b = b_pt
 		segList(curIndx).tag = -1
 		curIndx += 1
+		
+		if curIndx = MAX_SEGS then exit sub
+		
 		#ifdef DEBUG
 			printlog "TRACERING:", 1
 			printlog "writing 3, " & a_pt & ", " & b_pt
@@ -1133,14 +1143,22 @@ sub TinySpace.step_time(byval t as double)
         tl = tl * block_l
         br = br * block_l
 
+       
+        if start_x > end_x then
+			swap start_x, end_x
+		end if
+		if start_y > end_y then
+			swap start_y, end_y
+		end if
+
         roi_x0 = start_x
         roi_y0 = start_y
         roi_x1 = end_x
         roi_y1 = end_y
         
         segment_n = 0
+ 
         
-		
         redim as integer usedSpace(start_x to end_x, start_y to end_y)
         
         for scan_y = start_y to end_y

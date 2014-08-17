@@ -4,6 +4,7 @@
 #include "debug.bi"
 #include "tinyblock.bi"
 #include "dynamiccontroller.bi"
+#include "projectilecollection.bi"
 
 
 dim as integer ptr Level.falloutTex = 0
@@ -622,7 +623,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
     br_x = max(0, min(br_x, lvlWidth - 1))
     br_y = max(0, min(br_y, lvlHeight - 1))      
 
-	
+	link.dynamiccontroller_ptr->explosionAlert(Vector2D(x,y))
 
 	for ys = tl_y to br_y
 		for xs = tl_x to br_x
@@ -783,6 +784,8 @@ sub level.flush()
         portals.flush()
         falloutZones.flush()
         graphicFX_->flush()
+        link.projectilecollection_ptr->flush()
+        link.dynamiccontroller_ptr->flush()
     end if
     #ifdef DEBUG
         prinTLOG "Fin-e"

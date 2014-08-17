@@ -34,7 +34,7 @@ constructor GameSpace()
     spy.body.r = 18
     spy.body.m = 5
 
-    spy.body.p = Vector2D(1150,200)
+    spy.body.p = Vector2D(1200,200)
 
 
     camera = spy.body.p
@@ -182,7 +182,6 @@ sub GameSpace.step_draw()
     else
         shake = 0
     end if
-      
  
     lvlData.drawLayers(scnbuff, BACKGROUND, camera.x(), camera.y(), Vector2D(0, 0))
     if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)

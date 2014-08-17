@@ -404,3 +404,38 @@ Function ScreenClip(px as integer, py as integer ,_
 
     Return 1
 End Function
+
+function circleBox(px as double, py as double, rad as double,_
+                   x1 as double, y1 as double,_
+                   x2 as double, y2 as double) as integer
+    dim as integer dx, dy, x, y, c=0
+    x=px
+    rad *= rad
+    if x<x1 then
+        x=x1
+        c = 1
+    elseif x>x2 then
+        x=x2
+        c = 1
+    endif
+    x = x - px: x *= x
+    dy = y1 - py: dy *= dy
+    if x+dy<rad then return 1
+    dy = y2 - py: dy *= dy
+    if x+dy<rad then return 1
+    y=py
+    if y<y1 then
+        y=y1
+        c=1
+    elseif y>y2 then
+        y=y2
+        c=1
+    endif
+    y = y - py: y *= y
+    dx = x1 - px: dx *= dx
+    if y+dx<rad then return 1
+    dx = x2 - px: dx *= dx
+    if y+dx<rad then return 1
+    if c=0 then return 1
+    return 0
+end function 

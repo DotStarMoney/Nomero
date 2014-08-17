@@ -37,10 +37,11 @@ type Enemy
         declare sub setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr,_
                               gs as any ptr, ply as Player_ ptr)
                               
-        declare sub process(t as double)
+        declare function process(t as double) as integer
         declare sub loadType(type_ as EnemyType)
         declare sub drawEnemy(scnbuff as uinteger ptr)
         declare function getState() as EnemyPhysicalState
+        declare sub explosionAlert(p as Vector2D)
     
         body    as TinyBody
         body_i  as integer
@@ -88,12 +89,16 @@ type Enemy
         as integer fire_
         as integer shift_
         
+        as integer health
+        
         as integer manditoryWalk
         as integer lazyness
         as integer eyeContact
 		as Animation alertAnim
 		as integer alertingFrames
 		as integer pursuitFrames
+		as integer searchDown
+		as integer takeJump
 End type
 
 #endif

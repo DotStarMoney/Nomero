@@ -11,6 +11,7 @@
 enum Projectiles
     CHERRY_BOMB
     DETRITIS
+    HEART
     WATER_DROP
 end enum
 
@@ -39,6 +40,7 @@ type ProjectileCollection
         declare sub proc_collection(t as double)
         declare sub setParent(TS as TinySpace ptr, LS as Level_ ptr, GS as any ptr)
         declare sub setEffectsGenerator(s as OneShotEffects ptr)
+		declare sub checkDynamicCollision(p as Vector2D, size as Vector2D)
         declare sub flush()
     private:
         as TinySpace ptr parent_space

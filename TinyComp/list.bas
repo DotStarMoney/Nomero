@@ -1,9 +1,9 @@
 #include "list.bi"
 #include "crt.bi"
 
-#ifdef DEBUG
+'#ifdef DEBUG
     #include "utility.bi"
-#endif
+'#endif
 
 constructor List()
     head_ = 0
@@ -187,6 +187,7 @@ function List.roll() as any ptr
     if curRollNode_ = 0 then
         return 0
     else
+		oldCurRollNode_ = curRollNode_
         tempNode_ = curRollNode_
         curRollNode_ = curRollNode_->next_
         return tempNode_->data_
@@ -194,16 +195,44 @@ function List.roll() as any ptr
 end function
 sub List.rollRemove()
     dim as ListNode_t ptr tempNode_
-    if curRollNode_ <> 0 then
-        tempNode_ = curRollNode_->next_
+    dim as ListNode_t ptr delNode_
+    if oldCurRollNode_ <> 0 then
+        delNode_ = oldCurRollNode_
+        tempNode_ = delNode_->next_
         
-        deallocate(curRollNode_->data_)
-        deallocate(curRollNode_)
+        if size = 1 then
+			deallocate(head_->data_)
+			deallocate(head_)
+			head_ = 0
+			tail_ = 0
+			size = 0
+			oldCurRollNode_ = 0
+			curRollNode_ = 0
+			exit sub
+        end if
+        
+        if delNode_ = head_ then 
+			head_ = head_->next_
+			head_->prev_ = 0 
+		end if
+		if delNode_ = tail_ then 
+			tail_ = tail_->prev_
+			tail_->next_ = 0
+		end if
+		
+		if delNode_->prev_ then delNode_->prev_ = delNode_->next_
+		if delNode_->next_ then delNode_->next_ = delNode_->prev_
+		
+        deallocate(delNode_->data_)
+        deallocate(delNode_)
+        
+        size -= 1
         
         curRollNode_ = tempNode_
     end if
 end sub
 sub List.rollReset()
     curRollNode_ = head_
+    oldCurRollNode_ = 0
 end sub
 
