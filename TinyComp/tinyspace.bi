@@ -52,6 +52,8 @@ type TinySpace
                                             dire as Vector2D ,_
                                             prox as Vector2D ,_
                                             dot as double) as Vector2D
+        declare function raycast(p as Vector2D, v as Vector2D,_
+								 byref in_pt as Vector2D) as double
         declare function getGravity() as Vector2D
     private:
         declare static sub dividePosition(p as Vector2D, size as Vector2D)

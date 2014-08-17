@@ -491,7 +491,6 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer)
         if .frame_hasData = 1 then
             off += .frame_data[drawFrame].offset
         end if
-        
         put scnbuff, (x + off.x, y + off.y), data_->image, (start_x, start_y)-(start_x + .frame_width - 1, start_y + .frame_height - 1), TRANS
     end with    
 end sub

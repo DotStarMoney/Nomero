@@ -5,11 +5,14 @@
 #include "gamespace.bi"
 #include "player.bi"
 
+#define VIEW_DISTANCE  300
+#define VIEW_CONE_DOT  0.85
+#define TOO_CLOSE_DIST 100
 
 constructor Enemy
-    acc   = 3000
+    acc   = 500
     air_acc = 400
-    top_speed = 150
+    top_speed = 100
     air_top_speed = 160
     lastJump = 0
     isJumping = 0
@@ -20,15 +23,28 @@ constructor Enemy
     groundDot      = 0.2
     cutSpeed       = 0.5
     stopFriction   = 3
-    boostFrames    = 13
+    boostFrames    = 20
     boostForce     = 800
-    jumpImpulse    = 150
+    jumpImpulse    = 80
     freeJumpFrames = 3 
     lastUps = 0
     lastFire = 0
     lastTopSpeed = 200
     groundSwitchAnimFrames = 0
+    pursuitFrames = 0
+    
+    alertingFrames = 0
+    lazyness = 100
+    manditoryWalk = 0
+    dire_ = 0
+    jump_ = 0
+    ups_ = 0
+    fire_ = 0
+    shift_ = 0
+    
     anim.play()
+    alertAnim.load("alert.txt")
+    alertAnim.play()
 end constructor
 
 function Enemy.getState() as EnemyPhysicalState
@@ -46,16 +62,102 @@ end sub
 
 sub Enemy.loadType(type_ as EnemyType)
 	enemy_type = type_
-    'anim.load(filename)
+	if type_ = SOLDIER_1 then
+		anim.load("soldier.txt")
+	elseif type_ = SOLDIER_2 then
+	
+	elseif type_ = BEAR then
+	
+	end if
+	anim.play()
 end sub
 
 sub Enemy.drawEnemy(scnbuff as uinteger ptr)
     anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
+    if thought <> IDLE then
+		alertAnim.drawAnimation(scnbuff, body.p.x(), body.p.y() - 55)
+    end if
 end sub
 
 sub Enemy.process(t as double)
+	dim as Vector2D pt
+	dim as Vector2D viewM
+	dim as integer groundAhead
+	dim as integer clearJump, noalert
+	dim as double dist
+	
+	if parent->raycast(body.p + Vector2D(18, 0) * dire_, Vector2D(0, 25), pt) >= 0 then
+		groundAhead = 1
+	end if
+	
+	select case thought
+	case IDLE
+		if groundAhead = 0 then
+			dire_ = -dire_
+			manditoryWalk = 10 + int(rnd * 20)
+		end if
+		if manditoryWalk = 0 then
+			if int(rnd * lazyness) = 0 then
+				if dire_ = 0 then
+					manditoryWalk = 10 + int(rnd * 40)
+					dire_ = int(rnd * 3) - 1
+				else
+					dire_ = 0
+					manditoryWalk = 10 + int(rnd * 20)
+				end if
+			end if
+		else
+			manditoryWalk -= 1
+		end if
+		viewM = player_parent->body.p - body.p
+		if sgn(viewM.x()) = sgn(facing * 2 - 1) then
+			dist = parent->raycast(body.p + Vector2D(0, -30), viewM, pt)
+			if dist = -1 then
+				if viewM.magnitude() < VIEW_DISTANCE then
+					viewM.normalize()
+					if viewM * Vector2D(facing*2 - 1,0) >= VIEW_CONE_DOT then
+						thought = CONCERNED
+						jump_ = 1
+						alertingFrames = lazyness * 0.5
+						dire_ = 0
+						body.v.setX(0)
+						alertAnim.hardSwitch(0)
+					end if
+				end if
+			end if
+		end if
+	case CONCERNED
+		jump_ = 0
+		dist = parent->raycast(body.p + Vector2D(0, -30), player_parent->body.p - body.p, pt)
+		viewM = player_parent->body.p - body.p
+		noalert = 1
+		if sgn(viewM.x()) = sgn(facing * 2 - 1) then
+			dist = parent->raycast(body.p + Vector2D(0, -30), viewM, pt)
+			if dist = -1 then
+				if viewM.magnitude() < VIEW_DISTANCE * 1.5 then
+					alertingFrames += 1
+					noalert = 0
+				end if
+			end if
+		end if
+		if noalert = 1 then alertingFrames -= 1
+		
+		if alertingFrames <= 0 then 
+			dire_ = int(rnd * 3) - 1
+			manditoryWalk = int(rnd * 10)
+			thought = IDLE
+		elseif alertingFrames > lazyness * 1.5 then
+			thought = PURSUIT
+		end if
+		if viewM.magnitude() < TOO_CLOSE_DIST then
+			thought = PURSUIT
+		end if
+	case PURSUIT
+		alertAnim.hardSwitch(1)
+	end select
 	
 
+	processControls(dire_,jump_,ups_,fire_,shift_, t)
 end sub
 
 sub Enemy.processControls(dire as integer, jump as integer,_
@@ -135,9 +237,9 @@ sub Enemy.processControls(dire as integer, jump as integer,_
         if state <> E_JUMPING andAlso jumpHoldFrames = 0 then 
             if groundSwitchAnimFrames = 0 then 
                 if facing = 0 then
-                    anim.hardSwitch(7)
+                    anim.hardSwitch(4)
                 elseif facing = 1 then
-                    anim.hardSwitch(8)
+                    anim.hardSwitch(5)
                 end if
             end if
             state = E_FREE_FALLING
@@ -193,17 +295,17 @@ sub Enemy.processControls(dire as integer, jump as integer,_
     if isJumping = 1 then
         jumpBoostFrames -= 1
         if jumpBoostFrames = 0 then isJumping = 0
-        
         this.body.f = Vector2D(0,-jumpBoostFrames*this.boostForce)
+	else
+		this.body.f = Vector2D(0,0)
     end if
     
     if addSpd = 1 then 
         this.body.v = this.body.v + (curSpeed - oSpeed) * gtan
     end if
-    
-    
-    
+      
     anim.step_animation()
+    alertAnim.step_animation()
     lastUps = ups
     lastFire = fire
 end sub

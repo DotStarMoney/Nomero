@@ -71,14 +71,38 @@ end sub
 sub DynamicController.addEnemy(sz as SpawnZone_t)
 	dim as string objName
 	dim as Enemy ptr newEnemy
+	dim as DynamicObjectType_t dobj
+	
 	objName = ucase(*(sz.spawn_objectName))
 	
+	newEnemy = new Enemy
+	newEnemy->setParent(link.tinyspace_ptr, link.level_ptr,_
+	                    link.projectilecollection_ptr,_
+	                    link.gamespace_ptr,_
+	                    link.player_ptr)
+	                 
 	select case objName
 	case "SOLDIER 1"
-	
+		newEnemy->loadType(SOLDIER_1)
 	case "SOLDIER 2"
+		newEnemy->loadType(SOLDIER_2)
+	case "BEAR"
+		newEnemy->loadType(BEAR)
 	end select
 	
+	
+	newEnemy->body.r = 18
+    newEnemy->body.m = 5
+    newEnemy->body.p = Vector2D(sz.p.x() + sz.size.x() * 0.5,_
+                                sz.p.y() + sz.size.y() - newEnemy->body.r)
+    newEnemy->body.friction = 2        
+    newEnemy->body_i = link.tinyspace_ptr->addBody(@(newEnemy->body))
+    
+    
+       
+	dobj.object_type = OBJ_ENEMY
+	dobj.data_ = newEnemy
+	objects.push_back(@dobj)
 end sub
 
 sub DynamicController.addItem(sz as SpawnZone_t)

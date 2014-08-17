@@ -956,6 +956,111 @@ sub TinySpace.refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, s
 
 end sub
 
+function Tinyspace.raycast(p as Vector2D, v as Vector2D,_
+                           byref in_pt as Vector2D) as double
+    dim as integer scan_x, scan_y
+    dim as integer start_x, start_y
+    dim as integer end_x, end_y, i, noset
+    dim as double  tempSwap, mag, j, j2, crss, curBestDist
+    dim as Vector2D tl, br, testP
+    dim as Vector2D pt(0 to 1), vc(0 to 1)
+    dim as double magn(0 to 1)
+    
+    dim as BlockEndpointData_t segment(0 to MAX_SEGS-1)
+    dim as integer             segment_n    
+	
+	segment_n = 0
+	noset = 1
+
+	tl = p
+	br = p + v
+	
+	if tl.x() > br.x() then
+		tempSwap = tl.x()
+		tl.setX(br.x())
+		br.setX(tempSwap)
+	end if
+	
+	if tl.y() > br.y() then
+		tempSwap = tl.y()
+		tl.setY(br.y())
+		br.setY(tempSwap)
+	end if	
+
+    dividePosition(tl, Vector2D(block_l, block_l))
+    dividePosition(br, Vector2D(block_l, block_l))
+    br = br + Vector2D(1, 1)
+    tl = tl - Vector2D(1, 1)
+    
+	start_x = max(cint(tl.x()), 0)
+	start_y = max(cint(tl.y()), 0)
+	end_x   = min(cint(br.x()), block_n_cols - 1)
+	end_y   = min(cint(br.y()), block_n_rows - 1)
+	roi_x0 = start_x
+	roi_y0 = start_y
+	roi_x1 = end_x
+	roi_y1 = end_y
+	dim as integer usedSpace(start_x to end_x, start_y to end_y)
+	
+	for scan_y = start_y to end_y
+		for scan_x = start_x to end_x
+			usedSpace(scan_x, scan_y) = 0
+		next scan_x
+	next scan_y
+	
+	for scan_y = start_y to end_y
+		for scan_x = start_x to end_x
+			if usedSpace(scan_x, scan_y) = 0 then
+				if getBlock(scan_x, scan_y).cModel <> EMPTY AndAlso _
+				   getBlock(scan_x, scan_y-1).cModel = EMPTY then
+		
+					traceRing(scan_x, scan_y, _
+							  segment(), segment_n, _
+							  usedSpace())
+				
+				end if
+			end if
+		next scan_x
+	next scan_y      
+	
+	for i = 0 to segment_n - 1
+		
+		pt(0) = segment(i).a
+		vc(0) = (segment(i).b - segment(i).a)
+		magn(0) = vc(0).magnitude()
+		vc(0) = vc(0) / magn(0)
+		pt(1) = p
+		vc(1) = v
+		magn(1) = vc(1).magnitude
+		vc(1) = vc(1) / magn(1)
+		crss = vc(0).cross(vc(1))
+		if crss <> 0 then
+		
+			j = -(vc(0).cross(pt(1)) + pt(0).cross(vc(0))) / crss
+		
+			testP = (pt(1) + j * vc(1))
+			j2 = (testP - pt(0)) * vc(0)
+		
+			if (j >= 0) andAlso (j <= magn(1)) then
+				if (j2 >= 0) andAlso (j2 <= magn(0)) then
+					if noset = 1 orElse j < curBestDist then
+						noset = 0
+						curBestDist = j
+						in_pt = testP
+					end if
+				end if
+			end if
+
+		end if
+	next i
+	
+	if noset = 0 then 
+		return curBestDist 
+	else
+		return -1
+	end if
+end function
+
 sub TinySpace.step_time(byval t as double)
     dim as TinyBody ptr c
     dim as TinyBody wrk

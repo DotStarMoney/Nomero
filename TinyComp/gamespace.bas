@@ -34,7 +34,7 @@ constructor GameSpace()
     spy.body.r = 18
     spy.body.m = 5
 
-    spy.body.p = Vector2D(250,200)
+    spy.body.p = Vector2D(1150,200)
 
 
     camera = spy.body.p
@@ -51,11 +51,11 @@ constructor GameSpace()
 
     FSOUND_Init(44100, 3, 0)
     music = FSOUND_Stream_Open("PurovskyDistrict.ogg", FSOUND_LOOP_NORMAL, 0, 0 ) 
-    FSOUND_Stream_Play 1, music
+    'FSOUND_Stream_Play 1, music
     
     backgroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     backgroundSnow.setFreq(3, 3)
-    backgroundSnow.setDepth(8, 10)
+    backgroundSnow.setDepth(15, 18)
     backgroundSnow.setDrift(-333)
     backgroundSnow.setSpeed(900)
     
@@ -188,6 +188,7 @@ sub GameSpace.step_draw()
     if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
     graphicFX.drawEffects(scnbuff, camera, ACTIVE)
+    dynControl.drawDynamics(scnbuff)
     spy.drawPlayer(scnbuff)
     projectiles.draw_collection(scnbuff)
     effects.draw_effects(scnbuff)

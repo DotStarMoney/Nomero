@@ -50,6 +50,7 @@ type DynamicController
 								 p as Vector2D, size as Vector2D,_
 								 count_ as integer = 1,_
 								 time_ as integer = 0)
+		declare sub explosionAlert(p as Vector2D)
 		declare sub process(t as double)
 		declare sub drawDynamics(scnbuff as integer ptr)
 		

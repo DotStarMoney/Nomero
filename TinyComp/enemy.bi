@@ -81,7 +81,19 @@ type Enemy
         as integer lastFire 
         as double lastTopSpeed
         as integer jumpHoldFrames
-    
+        
+        as integer dire_
+        as integer jump_
+        as integer ups_
+        as integer fire_
+        as integer shift_
+        
+        as integer manditoryWalk
+        as integer lazyness
+        as integer eyeContact
+		as Animation alertAnim
+		as integer alertingFrames
+		as integer pursuitFrames
 End type
 
 #endif
