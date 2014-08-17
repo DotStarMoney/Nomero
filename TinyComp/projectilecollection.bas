@@ -2,14 +2,14 @@
 #include "gamespace.bi"
 #include "utility.bi"
 #include "debug.bi"
+#include "tinyspace.bi"
+#include "player.bi"
 
 constructor ProjectileCollection
     this.head_ = 0
     this.numNodes = 0
     parent_space = 0
 end constructor
-
-
 
 destructor ProjectileCollection
     flush()
@@ -36,8 +36,9 @@ sub ProjectileCollection.setEffectsGenerator(s as OneShotEffects ptr)
     effects = s
 end sub
 
-
-
+sub ProjectileCollection.setLink(link_ as ObjectLink)
+	link = link_
+end sub
 
 sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = CHERRY_BOMB)
     dim as ProjectileNode_t ptr temp
@@ -90,6 +91,16 @@ sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = 
         this.head_->data_.anim.hardSwitch(3)
         this.head_->data_.anim.play()
         this.head_->data_.lifeFrames = 20
+    case BULLET
+		this.head_->data_.body   = TinyBody(p_, 1, 2)
+        this.head_->data_.body.noCollide = 0
+        this.head_->data_.body.v = v_
+        this.head_->data_.body.f = Vector2D(0, -2 * DEFAULT_GRAV)
+        this.head_->data_.body_i = parent_space->addBody(@this.head_->data_.body)
+        this.head_->data_.anim.load("bullet.txt")
+        this.head_->data_.anim.hardSwitch(0)
+        this.head_->data_.anim.play()
+        this.head_->data_.flavor = BULLET
     end select
         
     this.numNodes += 1
@@ -146,7 +157,7 @@ sub ProjectileCollection.proc_collection(t as double)
     dim as ProjectileNode_t ptr curNode
     dim as ProjectileNode_t ptr oldNode
     dim as Projectile_t         cur
-    dim as Vector2D p
+    dim as Vector2D p, plyr_p, plyr_sz
     dim as integer deleteMe, i
     dim as GameSpace ptr GS
     
@@ -175,6 +186,18 @@ sub ProjectileCollection.proc_collection(t as double)
 			if cur.body.didCollide > 0 then 
 				deleteMe = 1
 				effects->create(cur.body.p, WATER_SPLASH)
+			end if
+		case BULLET
+			link.player_ptr->getBounds(plyr_p, plyr_sz)
+			plyr_sz = plyr_sz + plyr_p
+			if circleBox(cur.body.p.x(), cur.body.p.y(), 2,_
+						 plyr_p.x(), plyr_p.y(),_
+						 plyr_sz.x(), plyr_sz.y()) = 1 then
+				link.player_ptr->harm(cur.body.p, 10)
+				deleteMe = 1
+			end if
+			if cur.body.didCollide > 0	then 
+				deleteMe = 1
 			end if
         case CHERRY_BOMB
             if cur.body.didCollide > 0 then 
@@ -205,7 +228,7 @@ sub ProjectileCollection.proc_collection(t as double)
 		   deleteMe = 1
 		   
 		end if 
-        
+        curNode->data_.anim.step_animation()
         if deleteMe = 1 then
             if curNode->prev_ <> 0 then curNode->prev_->next_ = curNode->next_
             if curNode->next_ <> 0 then curNode->next_->prev_ = curNode->prev_

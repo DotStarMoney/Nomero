@@ -91,6 +91,9 @@ type Enemy
         
         as integer health
         
+        as integer burstTimer
+        as integer burstShots
+        as integer burstFrames
         as integer manditoryWalk
         as integer lazyness
         as integer eyeContact

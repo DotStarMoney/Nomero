@@ -1,17 +1,14 @@
-'program HUD
-	'player health
-	'player throw bomb
-	'player bombs left
-	'equiptment left
-'program AI shoot player
-
-'explosions trigger effects
-'program events and triggers
-'program objects and collectables
-'program menu
-'add music
+'default start location for each room
+'explosions trigger removal or changing of effects(like sound emitters), can trigger portal creation
+'keep track of objects that have been destroyed
+'death warp
+'default music for each level
+'object is to blow up all necessary items per map, then get out.
 
 
+'ObjectLink for all objects
+'HUD damage animation
+'HUD animations
 'despawn logic
 'still a random crash
 'improve death animation satisfaction
@@ -32,6 +29,5 @@
 'move posts in pd2 into the foreground
 'make snow flakes
 'floating above snow peaks due to collision shapes
-'remove ghost oscilloscope in pd3
 'create scenery cover
 

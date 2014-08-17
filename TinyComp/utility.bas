@@ -439,3 +439,11 @@ function circleBox(px as double, py as double, rad as double,_
     if c=0 then return 1
     return 0
 end function 
+
+sub drawStringShadow(scnbuff as integer ptr,_
+					 x as integer, y as integer,_
+					 text as string,_
+					 col as integer)
+	draw STRING scnbuff, (x+1, y+1), text, rgb(16,16,16)
+	draw string scnbuff, (x, y), text, col
+end sub

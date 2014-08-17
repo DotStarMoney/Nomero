@@ -44,5 +44,9 @@ declare function circleBox(px as double, py as double, rad as double,_
 						   x1 as double, y1 as double,_
 						   x2 as double, y2 as double) as integer
 
+declare sub drawStringShadow(scnbuff as integer ptr,_
+							 x as integer, y as integer,_
+							 text as string,_
+							 col as integer)
 
 #endif

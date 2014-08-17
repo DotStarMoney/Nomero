@@ -40,6 +40,8 @@ type GameSpace
         declare sub step_draw()
         declare sub step_process()
         
+        as integer ptr hud_image
+        
         as integer vibCount
         
         as OneShotEffects effects

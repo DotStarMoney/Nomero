@@ -446,20 +446,32 @@ sub Animation.step_Loop()
 end sub
 
 function Animation.getWidth() as integer
-    return data_->animations[currentAnim].frame_width
+	if data_ <> 0 then
+		return data_->animations[currentAnim].frame_width
+	else
+		return 0
+	end if
 end function
 
 function Animation.getHeight() as integer 
-    return data_->animations[currentAnim].frame_height
+    if data_ <> 0 then
+		return data_->animations[currentAnim].frame_height
+	else
+		return 0
+	end if
 end function
 
 function Animation.getOffset() as Vector2D
     dim as Vector2D off
-    with data_->animations[currentAnim]
-        off = .frame_offset
-        if .frame_hasData = 1 then off += .frame_data[currentFrame].offset
-    end with
-    return off
+    if data_ <> 0 then
+		with data_->animations[currentAnim]
+			off = .frame_offset
+			if .frame_hasData = 1 then off += .frame_data[currentFrame].offset
+			return off
+		end with
+	else
+		return Vector2d(0,0)
+	end if
 end function
 
 sub Animation.applySwitch()

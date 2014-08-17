@@ -7,12 +7,14 @@
 #include "oneshoteffects.bi"
 #include "animation.bi"
 #include "level.bi"
+#include "objectLink.bi"
 
 enum Projectiles
     CHERRY_BOMB
     DETRITIS
     HEART
     WATER_DROP
+    BULLET
 end enum
 
 type Projectile_t
@@ -35,6 +37,7 @@ type ProjectileCollection
     public:
         declare constructor()
         declare destructor()
+		declare sub setLink(link_ as ObjectLink)
         declare sub create(p_ as Vector2D, v_ as Vector2D, f_ as integer = CHERRY_BOMB)
         declare sub draw_collection(scnbuff as uinteger ptr)
         declare sub proc_collection(t as double)
@@ -49,6 +52,7 @@ type ProjectileCollection
         as OneShotEffects ptr   effects
         as any ptr game_space
         as Level_ ptr parent_level
+        as ObjectLink link
 end type
 
 

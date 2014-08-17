@@ -27,6 +27,10 @@ constructor Player
     lastTopSpeed = 200
     groundSwitchAnimFrames = 0
     pendingSwitch = 0
+    health = 100
+    chargeFlicker = 0
+    charge = 0
+    bombs = 10
     anim.play()
 end constructor
 
@@ -99,6 +103,38 @@ sub Player.switch(ls as LevelSwitch_t)
 	gsp->switchRegions(ls)
 	pendingSwitchData = ls
 	pendingSwitch = 1
+end sub
+
+sub Player.explosionAlert(p as Vector2D)
+	dim as Vector2D expM
+	dim as double kickback
+	dim as double mag
+	
+	expM = p - (body.p - Vector2D(0, 24))
+	mag = expM.magnitude()
+	if mag < 70 then
+		kickback = (70 - mag) / 70
+		body.v = body.v - ((expM / mag) * kickback) * 250
+		health -= kickback * 100
+	end if
+end sub
+
+sub Player.getBounds(byref p as Vector2D, byref size as Vector2D)
+	p = this.body.p + this.anim.getOffset()
+	size = Vector2D(anim.getWidth(), anim.getHeight())
+end sub
+
+sub Player.harm(p as Vector2D, amount as integer)
+dim as Vector2D expM
+	dim as double kickback
+	dim as double mag
+	expM = p - (body.p - Vector2D(0, 24))
+	mag = expM.magnitude()
+	if mag < 70 then
+		kickback = (70 - mag) / 70
+		body.v = body.v - ((expM / mag) * kickback) * 100
+		health -= amount
+	end if
 end sub
 
 sub Player.processControls(dire as integer, jump as integer,_
@@ -284,9 +320,24 @@ sub Player.processControls(dire as integer, jump as integer,_
         this.body.v = this.body.v + (curSpeed - oSpeed) * gtan
     end if
     
-    if fire = 1 and lastFire = 0 then
-        proj_parent->create(this.body.p, this.body.v + Vector2D((facing * 2 - 1) * 450, -200))
-    end if
+    if fire = 1 andAlso bombs > 0 then 
+		charge += 1
+		if charge >= 100 then charge = 100
+	else
+		charge -= 1
+		if charge < 0 then charge = 0 
+	end if
+	
+	if fire = 0 andAlso lastFire = 1 then
+		if bombs > 0 then
+			proj_parent->create(this.body.p, this.body.v + Vector2D((facing * 2 - 1) * charge * 4, -200))
+			bombs -= 1
+			charge = 0
+		end if
+	end if
+	
+	chargeFlicker = (chargeFlicker + 1) mod 8
+	
         
 	if pendingSwitch = 0 then
 		ptype = level_parent->processPortalCoverage(this.body.p + this.anim.getOffset(), anim.getWidth(), anim.getHeight(), ls)
@@ -305,7 +356,6 @@ sub Player.processControls(dire as integer, jump as integer,_
 		gsp->centerCamera(body.p)
 		pendingSwitch = 0
 	end if
- 
     
     anim.step_animation()
     lastUps = ups

@@ -32,7 +32,9 @@ constructor Enemy
     lastTopSpeed = 200
     groundSwitchAnimFrames = 0
     pursuitFrames = 0
-    
+    burstTimer = 0
+    burstShots = 0
+    burstFrames = 1 
     health = 100
     
     searchDown = 0
@@ -235,10 +237,34 @@ function Enemy.process(t as double) as integer
 				dire_ = sgn(viewM.x())
 				if groundAhead = 0 then dire_ = 0
 			end if
+			burstShots = 0
+			burstTimer = 0
+			burstFrames = 1
 		else
 			dire_ = 0
 			searchDown = 0
-			'can fire
+			if burstTimer = 0 andAlso burstShots = 0 then
+				burstShots = 5
+			end if
+			viewM = player_parent->body.p - body.p
+			viewM.normalize()
+			
+			burstFrames -= 1
+			
+			if burstFrames = 0 then
+				if burstShots > 1 then
+					burstShots -= 1
+					proj_parent->create(body.p - Vector2D(0,20) + Vector2D(10,0) * ((facing*2)-1), viewM * 500, BULLET)
+				elseif burstShots = 1 then
+					burstTimer = 5
+					burstShots -= 1
+				end if
+				if burstTimer > 0 then burstTimer -= 1
+			end if
+			
+			if burstFrames <= 0 then 
+				burstFrames = 3
+			end if
 		end if
 		
 		
@@ -257,6 +283,7 @@ function Enemy.process(t as double) as integer
 		jump_ = 0
 	end if
 	
+
 	pv = body.p + anim.getOffset()
 	sv = Vector2D(anim.getWidth(), anim.getHeight())
 	proj_parent->checkDynamicCollision(pv, sv)
@@ -274,7 +301,7 @@ sub Enemy.explosionAlert(p as Vector2D)
 	dim as double kickback
 	dim as double mag
 	
-	expM = p - body.p
+	expM = p - (body.p - Vector2D(0, 24))
 	mag = expM.magnitude()
 	if mag < 200 then
 		if thought <> PURSUIT then

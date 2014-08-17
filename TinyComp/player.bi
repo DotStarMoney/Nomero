@@ -29,7 +29,15 @@ type Player
         declare sub loadAnimations(filename as string)
         declare sub drawPlayer(scnbuff as uinteger ptr)
         declare function getState() as PlayerState
+        declare sub explosionAlert(p as Vector2D)
+        declare sub harm(p as Vector2D, amount as integer)
+        declare sub getBounds(byref p as Vector2D, size as Vector2D)
     
+    
+		bombs   as integer
+		health  as integer
+		charge  as integer
+		chargeFlicker as integer
         body    as TinyBody
         body_i  as integer
         acc     as double
@@ -66,8 +74,7 @@ type Player
         as double lastTopSpeed
         as integer jumpHoldFrames
         as integer pendingSwitch
-        dim as LevelSwitch_t pendingSwitchData
-    
+        as LevelSwitch_t pendingSwitchData
 End type
 
 #endif

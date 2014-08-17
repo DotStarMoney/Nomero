@@ -5,7 +5,7 @@
 #include "tinyblock.bi"
 #include "dynamiccontroller.bi"
 #include "projectilecollection.bi"
-
+#include "player.bi"
 
 dim as integer ptr Level.falloutTex = 0
 #ifdef DEBUG
@@ -624,6 +624,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
     br_y = max(0, min(br_y, lvlHeight - 1))      
 
 	link.dynamiccontroller_ptr->explosionAlert(Vector2D(x,y))
+	link.player_ptr->explosionAlert(Vector2D(x,y))
 
 	for ys = tl_y to br_y
 		for xs = tl_x to br_x

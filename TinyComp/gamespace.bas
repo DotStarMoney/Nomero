@@ -21,6 +21,8 @@ constructor GameSpace()
     movingFrmAvg = 0.016
     vibcount = 0
 
+
+	
     lvlData.init(@graphicFX)
     lvlData.setLink(link)
     lvlData.load(command(1))
@@ -42,12 +44,15 @@ constructor GameSpace()
     spy.body_i = world.addBody(@(spy.body))
     spy.body.friction = 2
     spy.loadAnimations("mrspy.txt")
-
+	projectiles.setLink(link)
     effects.setParent(@this, @lvlData)
     projectiles.setParent(@world, @lvlData, @this)
     spy.setParent(@world, @lvlData, @projectiles, @this)
     
     projectiles.setEffectsGenerator(@effects)
+    
+    hud_image = imagecreate(154, 50)
+	bload "hud.bmp", hud_image
 
     FSOUND_Init(44100, 3, 0)
     music = FSOUND_Stream_Open("PurovskyDistrict.ogg", FSOUND_LOOP_NORMAL, 0, 0 ) 
@@ -90,7 +95,8 @@ function GameSpace.go() as integer
         step_process()
         
         if keypress(SC_ESCAPE) then exit do
-        print using "Engine at ##.##% load"; movingFrmAvg * (FPS_TARGET / 10)
+        'print spy.body.p
+        'print using "Engine at ##.##% load"; movingFrmAvg * (FPS_TARGET / 10)
         flip
         totalTime = (timer - startTime) * 1000
         movingFrmAvg = movingFrmAvg * 0.92 + totalTime * 0.08
@@ -196,13 +202,39 @@ sub GameSpace.step_draw()
 
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     
-    
       
     window screen (0,0)-(SCRX-1,SCRY-1)
+    
+    if spy.health > 75 then
+		put scnbuff, (8,11), hud_image, (0,18)-(151,25), TRANS
+    elseif spy.health > 50 then
+		put scnbuff, (8,11), hud_image, (0,26)-(151,33), TRANS
+    elseif spy.health > 25 then
+		put scnbuff, (8,11), hud_image, (0,34)-(151,41), TRANS
+    elseif spy.health > 0 then
+    	put scnbuff, (8,11), hud_image, (0,42)-(151,49), TRANS
+    end if
+
+	if spy.charge > 0 then
+		if spy.charge = 100 then
+			if spy.chargeFlicker < 4 then
+				line scnbuff, (17, 19)-(117, 22), &hff0000, BF
+			else
+				line scnbuff, (17, 19)-(117, 22), &h00ffff, BF
+			end if
+		else
+			put scnbuff, (17, 19), hud_image, (9, 15)-(spy.charge + 9, 17), TRANS
+		end if
+	end if
+	put scnbuff, (8,8), hud_image, (0,0)-(151,14), TRANS
+	
+	drawStringShadow(scnbuff, 144, 11, str(spy.bombs), rgb(200,200,200))
+
     
     if isSwitching <> 0 then
 		line scnbuff, (0, SCRY - 1)-(SCRX - 1, SCRY - switchFrame - 1), 0, BF
     end if
+    
     
       
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
@@ -258,9 +290,7 @@ sub GameSpace.step_process()
     graphicFX.processFrame(camera)
  
     effects.proc_effects(0.01667)
-    
-    print spy.body.p
-    
+        
     if lvlData.mustReconnect() = 1 then reconnectCollision()
     
         
