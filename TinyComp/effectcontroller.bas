@@ -1,6 +1,7 @@
 #include "effectcontroller.bi"
 #include "projectilecollection.bi"
 #include "oneshoteffects.bi"
+#include "utility.bi"
 
 constructor EffectController()
     ''
@@ -136,12 +137,21 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
 		end if
 	case ONE_SHOT_EXPLODE
 		if effect_p.counter = 0 then
-			effect_p.counter = 6 + int(rnd * 12)
+			effect_p.counter = 2 + int(rnd * 14)
 		else
 			effect_p.counter -= 1
 			if effect_p.counter = 1 then
 				oneshots->create(effect_p.p + effect_p.size*0.5, FALLOUT_EXPLODE, Vector2D(0,0))
 				return 1
+			end if
+		end if
+	case DRIP
+		if effect_p.counter <= 1 then
+			effect_p.counter = effect_p.density * 80 + int(rnd * effect_p.density * 80)
+		else
+			effect_p.counter -= 1
+			if effect_p.counter = 1 then
+				particles->create(effect_p.p + Vector2D(0, 10), Vector2D(0,0), WATER_DROP)
 			end if
 		end if
     end select   

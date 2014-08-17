@@ -10,6 +10,7 @@ enum EffectType_
     SPARKLE
     SMOKE
     RADAR
+    WATER_SPLASH
 end enum
 
 type Effect_t

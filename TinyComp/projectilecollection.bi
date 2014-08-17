@@ -11,6 +11,7 @@
 enum Projectiles
     CHERRY_BOMB
     DETRITIS
+    WATER_DROP
 end enum
 
 type Projectile_t

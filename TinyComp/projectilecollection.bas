@@ -81,7 +81,15 @@ sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = 
         this.head_->data_.anim.hardSwitch(int(rnd * 2) + 1)
         this.head_->data_.anim.play()
         this.head_->data_.lifeFrames = 10
-        
+	case WATER_DROP
+	    this.head_->data_.body   = TinyBody(p_, 4, 2)
+        this.head_->data_.body.noCollide = 0
+        this.head_->data_.body.v = v_
+        this.head_->data_.body_i = parent_space->addBody(@this.head_->data_.body)
+        this.head_->data_.anim.load("drip.txt")
+        this.head_->data_.anim.hardSwitch(0)
+        this.head_->data_.anim.play()
+        this.head_->data_.flavor = WATER_DROP
     end select
         
     this.numNodes += 1
@@ -108,6 +116,11 @@ sub ProjectileCollection.proc_collection(t as double)
                 
                 deleteMe = 1
             end if
+        case WATER_DROP
+			if cur.body.didCollide > 0 then 
+				deleteMe = 1
+				effects->create(cur.body.p, WATER_SPLASH)
+			end if
         case CHERRY_BOMB
             if cur.body.didCollide > 0 then 
                 
@@ -157,7 +170,8 @@ sub ProjectileCollection.draw_collection(scnbuff as uinteger ptr)
 
         case DETRITIS
             cur.anim.drawAnimation(scnbuff, cur.body.p.x(), cur.body.p.y())
-
+		case WATER_DROP
+            cur.anim.drawAnimation(scnbuff, cur.body.p.x(), cur.body.p.y())
         end select
         
         

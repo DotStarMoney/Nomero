@@ -105,6 +105,19 @@ enum ObjectType_t
     SPAWN
 end enum
 
+enum SpawnerRespawnType_t
+    SPAWN_TIMED
+    SPAWN_ONCE
+    SPAWN_FRAME
+end enum
+
+type objectSpawner_t
+    as zstring * 128 spawn_objectName
+    as single spawn_time
+    as ushort spawn_count
+    as ushort spawn_respawnType
+end type
+
 
 type objectPortal_t
     as zstring * 128 portal_to_map
@@ -116,6 +129,7 @@ enum ObjectEffectType_t
     RADAR_PULSE = 0
     SHIMMER     = 1
     SMOKE       = 2
+    DRIP        = 3
 end enum
 
 type objectEffect_t
@@ -123,8 +137,9 @@ type objectEffect_t
     as ushort effect_density
 end type
 
-dim as objectPortal_t ptr tempObjPortal
-dim as objectEffect_t ptr tempObjEffect
+dim as objectPortal_t  ptr tempObjPortal
+dim as objectEffect_t  ptr tempObjEffect
+dim as objectSpawner_t ptr tempObjSpawner
 
 type object_t
     as zstring * 128 object_name
@@ -386,6 +401,8 @@ do
                                     objects(N_objects - 1).object_type = EFFECT
                                 elseif left(ucase(item_content), 6) = "PORTAL" then
                                     objects(N_objects - 1).object_type = PORTAL
+                                elseif left(ucase(item_content), 5) = "SPAWN" then
+                                    objects(N_objects - 1).object_type = SPAWN
                                 end if
                             elseif item_tag = "shape" then
                                 item_content = trimQuotes(item_content)
@@ -415,6 +432,13 @@ do
                                         objects(N_objects - 1).data_ = allocate(sizeof(ObjectPortal_t))
                                         tempObjPortal = objects(N_objects - 1).data_
                                         tempObjPortal->portal_direction = D_IN
+                                    case SPAWN
+                                        objects(N_objects - 1).data_ = allocate(sizeof(ObjectSpawner_t))
+                                        tempObjSpawner = objects(N_objects - 1).data_
+                                        tempObjSpawner->spawn_time = 0
+                                        tempObjSpawner->spawn_objectName = ""
+                                        tempObjSpawner->spawn_count = 1
+                                        tempObjSpawner->spawn_respawnType = SPAWN_ONCE
                                     end select
                                 end if
                             end if
@@ -489,9 +513,11 @@ do
                                 tempObjEffect->effect_type = SMOKE
                             elseif left(lcase(item_content), 11) = "radar pulse" then
                                 tempObjEffect->effect_type = RADAR_PULSE
+                            elseif left(lcase(item_content), 4) = "drip" then
+                                tempObjEffect->effect_type = DRIP
                             end if
                         elseif left(lcase(item_tag), 7) = "density" then
-                            tempObjEffect->effect_density = val(item_content)
+                            tempObjEffect->effect_density = val(item_content) * 65535.0
                         end if
                     case PORTAL
                         if left(lcase(item_tag), 9) = "direction" then 
@@ -510,6 +536,22 @@ do
                             tempObjPortal->portal_to_map = item_content
                         elseif left(lcase(item_tag), 9) = "to portal" then
                             tempObjPortal->portal_to_portal = item_content
+                        end if
+                    case SPAWN
+                        if left(lcase(item_tag), 5) = "spawn" then
+                            tempObjSpawner->spawn_objectName = item_content
+                        elseif left(lcase(item_tag), 7) = "respawn" then
+                            if left(lcase(item_content), 5) = "timed" then
+                                tempObjSpawner->spawn_respawnType = SPAWN_TIMED
+                            elseif left(lcase(item_content), 5) = "once" then
+                                tempObjSpawner->spawn_respawnType = SPAWN_ONCE
+                            elseif left(lcase(item_content), 5) = "frame" then
+                                tempObjSpawner->spawn_respawnType = SPAWN_FRAME
+                            end if
+                        elseif left(lcase(item_tag), 4) = "time" then
+                            tempObjSpawner->spawn_time = val(item_content)
+                        elseif left(lcase(item_tag), 5) = "count" then
+                            tempObjSpawner->spawn_count = val(item_content)
                         end if
                     end select  
                 elseif propertyType = 4 then
@@ -551,6 +593,22 @@ close #f
 print "File parsing complete..."
 
 dim as integer i, q
+'251x21
+
+/'
+for q = 0 to map_width*map_height - 1
+    if layers(0).layer_data[q] >= tilesets(4).set_firstID then 
+        if layers(0).layer_data[q] < tilesets(5).set_firstID then
+            print tilesets(4).set_name, tilesets(4).set_firstID
+            print tilesets(5).set_name, tilesets(5).set_firstID
+            print layers(0).layer_data[q] - tilesets(4).set_firstID
+            print layers(0).layer_data[q]
+            sleep
+            exit for
+        end if
+    end if
+next q
+'/
 
 print map_name
 print map_width;", "; map_height
@@ -669,7 +727,6 @@ for i = 0 to N_tilesets - 1
     bload tilesets(i).set_filename, setImages(i)
 next i
 
-
 N_merges = 0
 'merge layers
 for i = 0 to (N_layers - 1)
@@ -722,7 +779,7 @@ for i = 0 to (N_layers - 1)
                 numMerged = 1
                 mustMerge = 1
                 searchKey = "(" + str(tilesetA) + ", " + str(layers(curLayer).layer_data[q]) + ")"
-                tilesToMerge_tile(numMerged - 1) = layers(curLayer).layer_data[q] - 1
+                tilesToMerge_tile(numMerged - 1) = layers(curLayer).layer_data[q] - tilesets(tilesetA).set_firstID
                 tilesToMerge_set(numMerged - 1) = tilesetA
             end if
             
@@ -783,8 +840,8 @@ for i = 0 to (N_layers - 1)
                                         layers(curLayer).layer_data[q] = layers(nextLayer).layer_data[q]
                                         numMerged += 1
                                         searchKey += "("+str(tilesetB)+","+str(layers(nextLayer).layer_data[q])+")"
-                                        tilesToMerge_tile(numMerged - 1) = layers(curLayer).layer_data[q] - 1
-                                        tilesToMerge_set(numMerged - 1) = tilesetA
+                                        tilesToMerge_tile(numMerged - 1) = layers(curLayer).layer_data[q] - tilesets(tilesetB).set_firstID
+                                        tilesToMerge_set(numMerged - 1) = tilesetB
                                         mustMerge = 1
                                     else
                                         searchKey += "("+str(tilesetB)+","+str(layers(nextLayer).layer_data[q])+")"
@@ -793,9 +850,10 @@ for i = 0 to (N_layers - 1)
                                         tilesToMerge_set(numMerged - 1) = tilesetB
                                     end if
                                     layers(nextLayer).layer_data[q] = 0'remove tile from old layer
-
+                                    '251 x 22  
                                 end if
                             end if
+                            
                         end if
                         if didMerge = 0 then
                             'if we hit a tile above us that we could not merge in,
@@ -916,6 +974,18 @@ for i = 0 to (N_layers - 1)
                                 ypos += 1
                             wend
                         end if  
+                        /'
+                        if ((q mod map_width) = 251) andAlso ((q \ map_width) = 22) then
+                            cls
+                            put (0,0), setImages(tilesToMerge_set(j)), (xtn, ytn)-(xtn+15, ytn+15), TRANS
+                            print
+                            print
+                            print
+                            print xtn, ytn, tilesets(tilesToMerge_set(j)).set_firstID
+                            sleep
+                    
+                        end if
+                        '/
                     next j
                 else
                     newTileNum = *cast(integer ptr, combinedTiles.retrieve(searchKey))
@@ -952,6 +1022,8 @@ for i = 0 to N_layers - 1
         end if
     next q
 next i
+
+
 
 print "Creating merged tileset..."
 
@@ -1056,6 +1128,12 @@ for i = 0 to N_objects - 1
             put #f,,tempObjPortal->portal_to_map
             put #f,,tempObjPortal->portal_to_portal
             put #f,,tempObjPortal->portal_direction
+        case SPAWN
+            tempObjSpawner = .data_
+            put #f,,tempObjSpawner->spawn_objectName
+            put #f,,tempObjSpawner->spawn_respawnType
+            put #f,,tempObjSpawner->spawn_count
+            put #f,,tempObjSpawner->spawn_time
         end select
     end with
 next i

@@ -22,7 +22,6 @@ type Object_t
 end type
 
 
-
 enum EffectType_t
     ANIMATE
     FLICKER

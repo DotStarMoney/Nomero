@@ -14,12 +14,10 @@
 #include "projectilecollection.bi"
 #include "oneshoteffects.bi"
 #include "leveltypes.bi"
-
-#ifdef DEBUG
-    kill "debug.txt"
-#endif
+#include "dynamiccontroller.bi"
 
 #define FPS_TARGET 60
+
 
 type GameSpace
     public:
@@ -49,6 +47,7 @@ type GameSpace
         as SnowGenerator backgroundSnow
         as SnowGenerator foregroundSnow
         as EffectController graphicFX
+        as DynamicController dynControl
         as uinteger ptr music
         as TinySpace world
         as Player    spy

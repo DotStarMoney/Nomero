@@ -1,0 +1,288 @@
+ <tile id="1766">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="158"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1767">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="158"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1770">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1771">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1776">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1777">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1778">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1779">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1786">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="158"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1787">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="158"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1788">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1789">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1790">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1791">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1796">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1797">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1798">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1799">
+   <properties>
+    <property name="delay" value="35"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="160"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1924">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-158"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1925">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-158"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1930">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1931">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1936">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1937">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1938">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1939">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1944">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-158"/>
+    <property name="offset" value="10"/>
+   </properties>
+  </tile>
+  <tile id="1945">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-158"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1948">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1949">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1950">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1951">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1956">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1957">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1958">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1959">
+   <properties>
+    <property name="delay" value="0"/>
+    <property name="effect" value="flicker"/>
+    <property name="next" value="-160"/>
+    <property name="offset" value="1"/>
+   </properties>
+  </tile>

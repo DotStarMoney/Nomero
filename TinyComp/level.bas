@@ -3,6 +3,7 @@
 #include "seqfile.bi"
 #include "debug.bi"
 #include "tinyblock.bi"
+#include "dynamiccontroller.bi"
 
 
 dim as integer ptr Level.falloutTex = 0
@@ -42,6 +43,10 @@ end constructor
 constructor level(filename as string)    
     load filename
 end constructor
+
+sub level.setLink(link_ as objectlink)
+	link = link_
+end sub
 
 sub level.resetBlock(x as integer, y as integer, lyr as integer)
     if x < 0 then
@@ -800,6 +805,7 @@ sub level.load(filename as string)
     dim as ushort objType, objField(7)
     dim as Object_t tempObj
     dim as PortalType_t tempPortal
+    dim as single tempSingleField
     
     f = freefile
  
@@ -1042,6 +1048,17 @@ sub level.load(filename as string)
             tempPortal.portal_name = allocate(len(tempObj.object_name) + 1)
             *(tempPortal.portal_name) = tempObj.object_name
             portals.insert(tempPortal.a, tempPortal.b, @tempPortal)
+        case SPAWN
+			get #f,,strdata
+			get #f,,objField(0)
+			get #f,,objField(1)
+			get #f,,tempSingleField
+			link.dynamiccontroller_ptr->addSpawnZone(strdata,_
+													 objField(0),_
+													 tempObj.p,_
+													 tempObj.size,_
+													 objField(1),_
+													 tempSingleField)
         end select
     next i
     

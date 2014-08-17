@@ -49,6 +49,9 @@ sub OneShotEffects.create(p_ as Vector2D, fx as EffectType_ = EXPLODE, _
 	    level_parent->addFallout(p_.x(), p_.y())
 	    GS = cast(GameSpace ptr, parent)
 	    GS->vibrateScreen()
+	case WATER_SPLASH
+	    this.head_->data_.anim.load("drip.txt")
+	    this.head_->data_.anim.hardSwitch(1)
     end select
     this.head_->data_.fx = fx
     this.head_->data_.anim.play()

@@ -20,332 +20,7 @@ return {
       imageheight = 1568,
       transparentcolor = "#ff00ff",
       properties = {},
-      tiles = {
-        {
-          id = 1766,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "158",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1767,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "158",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1770,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1771,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1776,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1777,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1778,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1779,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1786,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "158",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1787,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "158",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1788,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1789,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1790,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1791,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1796,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1797,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1798,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1799,
-          properties = {
-            ["delay"] = "35",
-            ["effect"] = "flicker",
-            ["next"] = "160",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1924,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-158",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1925,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-158",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1930,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1931,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1936,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1937,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1938,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1939,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1944,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-158",
-            ["offset"] = "10"
-          }
-        },
-        {
-          id = 1945,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-158",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1948,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1949,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1950,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1951,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1956,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1957,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1958,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        },
-        {
-          id = 1959,
-          properties = {
-            ["delay"] = "0",
-            ["effect"] = "flicker",
-            ["next"] = "-160",
-            ["offset"] = "1"
-          }
-        }
-      }
+      tiles = {}
     },
     {
       name = "Collision",
@@ -1531,6 +1206,34 @@ return {
             ["direction"] = "in",
             ["to map"] = "PurovskyDistrict Scene 2 Outside",
             ["to portal"] = "East Door"
+          }
+        },
+        {
+          name = "Drip 1",
+          type = "Effect",
+          shape = "ellipse",
+          x = 414,
+          y = 147,
+          width = 16,
+          height = 16,
+          visible = true,
+          properties = {
+            ["density"] = "0.5",
+            ["effect"] = "DRIP"
+          }
+        },
+        {
+          name = "Drip 2",
+          type = "Effect",
+          shape = "ellipse",
+          x = 236,
+          y = 147,
+          width = 16,
+          height = 16,
+          visible = true,
+          properties = {
+            ["density"] = "0.5",
+            ["effect"] = "drip"
           }
         }
       }

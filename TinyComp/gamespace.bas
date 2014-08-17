@@ -2,26 +2,39 @@
 #include "printlog.bi"
 #include "fbgfx.bi"
 #include "debug.bi"
+#include "objectlink.bi"
 
 using fb
 
 constructor GameSpace()
+	dim as ObjectLink link
     randomize timer
+    
+    link.gamespace_ptr = @this
+    link.level_ptr = @lvlData
+    link.tinyspace_ptr = @world
+    link.player_ptr = @spy
+    link.projectilecollection_ptr = @projectiles
+    link.oneshoteffects_ptr = @effects
+    link.dynamiccontroller_ptr = @dynControl
+    
     movingFrmAvg = 0.016
     vibcount = 0
 
     lvlData.init(@graphicFX)
+    lvlData.setLink(link)
     lvlData.load(command(1))
     world.setBlockData(lvlData.getCollisionLayerData(),_
                        lvlData.getWidth(), lvlData.getHeight(),_
                        16.0)
                   
+    dynControl.setLink(link)
     graphicFX.setParent(@effects, @projectiles)
     
     spy.body.r = 18
     spy.body.m = 5
 
-    spy.body.p = Vector2D(250,100)
+    spy.body.p = Vector2D(250,200)
 
 
     camera = spy.body.p
@@ -43,14 +56,14 @@ constructor GameSpace()
     backgroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     backgroundSnow.setFreq(3, 3)
     backgroundSnow.setDepth(8, 10)
-    backgroundSnow.setDrift(-1000)
-    backgroundSnow.setSpeed(1200)
+    backgroundSnow.setDrift(-333)
+    backgroundSnow.setSpeed(900)
     
     foregroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     foregroundSnow.setFreq(1, 15)
     foregroundSnow.setDepth(0.5, 4)
-    foregroundSnow.setDrift(-1000)
-    foregroundSnow.setSpeed(1800)
+    foregroundSnow.setDrift(-333)
+    foregroundSnow.setSpeed(700)
     
     scnbuff = imagecreate(640,480)
 
@@ -231,18 +244,20 @@ sub GameSpace.step_process()
     
     vibcount -= 1
     
+    dynControl.process(0.01667)
+    
 	if isSwitching <> 1 then
-		spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.00555)
+		spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.01667)
     end if
     
     if lvlData.usesSnow() = 1 then 
-        backgroundSnow.stepFlakes(camera, 0.00555)
-        foregroundSnow.stepFlakes(camera, 0.00555)
+        backgroundSnow.stepFlakes(camera, 0.01667)
+        foregroundSnow.stepFlakes(camera, 0.01667)
     end if
-    projectiles.proc_collection(0.00555)
+    projectiles.proc_collection(0.01667)
     graphicFX.processFrame(camera)
  
-    effects.proc_effects(0.00555)
+    effects.proc_effects(0.01667)
     
     print spy.body.p
     
@@ -263,7 +278,7 @@ sub GameSpace.step_process()
     
     if isSwitching = 0 then
 		#ifdef DEBUG
-			world.step_time(0.033)
+			world.step_time(0.01667)
 		#else
 			for i = 1 to 3
 				world.step_time(0.00555)

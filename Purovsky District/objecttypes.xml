@@ -2,6 +2,6 @@
 <objecttypes>
  <objecttype name="Effect" color="#0055ff"/>
  <objecttype name="Trigger" color="#ff0000"/>
- <objecttype name="Spawn" color="#000000"/>
+ <objecttype name="Spawn" color="#00aa00"/>
  <objecttype name="Portal" color="#ffff7f"/>
 </objecttypes>

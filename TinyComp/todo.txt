@@ -1,17 +1,21 @@
 'program enemy AI
+'program HUD
 
 
 'program events and triggers
-'program HUD
 'program objects and collectables
 'program menu
+'add music
 
-'walk through door on portal switch
-'water drip effect
+'wrap end of Mountain 2
+'fix numerous graphical glitches in mountainside
+'fix flashing nixie tubes in pd3
+'walk through door on portal switchS
 'triggers can affect snow and stuff in other levels
 'various destructors, use fbmld to find
 'create save states
 'fix crash on exit bug
+'fix random crash, exit PD3 to PD2, throw bunch of bombs
 'fix tinyspace crash bug
 'create default start location/region
 'destructor for ANIM
@@ -24,4 +28,4 @@
 'make snow flakes
 'floating above snow peaks due to collision shapes
 'remove ghost oscilloscope in pd3
-'fix cancel jump on owp passthrough
+

@@ -8,6 +8,7 @@
 #include "list.bi"
 #include "effectcontroller.bi"
 #include "tinybody.bi"
+#include "objectlink.bi"
 
 #define MAX_ZONES 8
 #define FLIPPED_HORIZ &h4
@@ -25,6 +26,7 @@ type Level
         declare constructor(filename as string)
         declare destructor
         
+        declare sub setLink(link_ as objectlink)
         declare sub init(e_p as EffectController_ ptr)
         
         declare sub load(filename as string)
@@ -72,6 +74,7 @@ type Level
         dim as ushort lvlWidth
         dim as ushort lvlHeight
         dim as ushort snowfall
+        dim as objectLink link
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum

@@ -11,8 +11,9 @@ enum EffectControllerType_e
     RADAR_PULSE      = 0
     SHIMMER          = 1
     STEAM            = 2
-    ONE_SHOT_SMOKE   = 3
-    ONE_SHOT_EXPLODE = 4
+    DRIP             = 3
+    ONE_SHOT_SMOKE   = 4
+    ONE_SHOT_EXPLODE = 5
 end enum
 
 type ObjectEffect_t
