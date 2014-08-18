@@ -8,14 +8,15 @@
 #include "hash2d.bi"
 
 enum EffectControllerType_e
-    RADAR_PULSE      = 0
-    SHIMMER          = 1
-    STEAM            = 2
-    DRIP             = 3
-    ONE_SHOT_SMOKE   = 4
-    ONE_SHOT_EXPLODE = 5
-    OPEN_DOOR        = 6
-    ACTIVE_SPEAKER   = 7
+    RADAR_PULSE      	= 0
+    SHIMMER         	= 1
+    STEAM           	= 2
+    DRIP             	= 3
+    TELEPORTER_SHIELD   = 4
+    ONE_SHOT_SMOKE   	= 5
+    ONE_SHOT_EXPLODE 	= 6
+    OPEN_DOOR        	= 7
+    ACTIVE_SPEAKER   	= 8
 end enum
 
 type ObjectEffect_t
@@ -49,7 +50,7 @@ type EffectController
                            inRangeSet as orderType)
                            
         declare sub init(lvlWidth as integer, lvlHeight as integer)
-                           
+        declare sub removeEffect(name_ as string)
         declare sub processFrame(camera as Vector2D)
         declare sub drawEffects(scnbuff as integer ptr,_
                                 camera as Vector2D,_

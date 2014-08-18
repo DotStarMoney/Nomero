@@ -9,6 +9,12 @@ type ListNode_t
     as ListNode_t ptr prev_
 end type
 
+type ListNodeRoll_t
+	as ListNode_t ptr curRollNode_
+    as ListNode_t ptr oldCurRollNode_
+    as ListNode_t ptr lastReturned_
+end type
+
 type List
     public:
         declare constructor()
@@ -28,6 +34,8 @@ type List
         declare function roll() as any ptr
         declare sub rollRemove()
         declare sub rollReset()
+        declare function bufferRoll() as ListNodeRoll_t
+        declare sub setRoll(ln as ListNodeRoll_t)
     private:
         as ListNode_t ptr head_
         as ListNode_t ptr tail_

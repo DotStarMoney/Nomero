@@ -126,10 +126,11 @@ type objectPortal_t
 end type
 
 enum ObjectEffectType_t
-    RADAR_PULSE = 0
-    SHIMMER     = 1
-    SMOKE       = 2
-    DRIP        = 3
+    RADAR_PULSE         = 0
+    SHIMMER             = 1
+    SMOKE               = 2
+    DRIP                = 3
+    TELEPORTER_SHIELD   = 4
 end enum
 
 type objectEffect_t
@@ -524,6 +525,8 @@ do
                                 tempObjEffect->effect_type = RADAR_PULSE
                             elseif left(lcase(item_content), 4) = "drip" then
                                 tempObjEffect->effect_type = DRIP
+                            elseif left(lcase(item_content), 17) = "teleporter shield" then
+                                tempObjEffect->effect_type = TELEPORTER_SHIELD
                             end if
                         elseif left(lcase(item_tag), 7) = "density" then
                             tempObjEffect->effect_density = val(item_content) * 65535.0
@@ -738,6 +741,7 @@ next i
 
 N_merges = 0
 'merge layers
+/'
 for i = 0 to (N_layers - 1)
     curLayer = i
     if curLayer = collisionLayer then curLayer += 1
@@ -1010,6 +1014,7 @@ for i = 0 to (N_layers - 1)
         end if
     next q
 next i
+'/
 IQUIT:
 print "Found"; N_merges; " unique merged tiles."
 

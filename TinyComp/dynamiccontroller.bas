@@ -157,6 +157,8 @@ sub DynamicController.process(t as double)
 	dim as DynamicObjectType_t ptr dobj
 	dim as Enemy ptr enemyDelete
 	dim as integer spawnOne, shouldDelete, i
+	dim as ListNodeRoll_t lnr
+
 	spawnZones.rollReset()
 	do
 		szptr = spawnZones.roll()
@@ -188,7 +190,9 @@ sub DynamicController.process(t as double)
 		dobj = objects.roll()
 		if dobj <> 0 then
 			if dobj->object_type = OBJ_ENEMY then
+				lnr = objects.bufferRoll()
 				shouldDelete = cast(Enemy ptr, dobj->data_)->process(t)
+				objects.setRoll(lnr)
 				if shouldDelete = 1 then
 					for i = 0 to 3
 						link.oneshoteffects_ptr->create(cast(Enemy ptr, dobj->data_)->body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),SMOKE,Vector2D(0,-2))
@@ -199,6 +203,7 @@ sub DynamicController.process(t as double)
 					delete (cast(Enemy ptr, dobj->data_))
 					objects.rollRemove()
 				end if
+				
 			elseif dobj->object_type = OBJ_ITEM then
 				'process items
 			end if

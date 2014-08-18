@@ -235,4 +235,15 @@ sub List.rollReset()
     curRollNode_ = head_
     oldCurRollNode_ = 0
 end sub
-
+function List.bufferRoll() as ListNodeRoll_t
+	Dim as ListNodeRoll_t ln
+	ln.curRollNode_ = curRollNode_
+	ln.oldCurRollNode_ = oldCurRollNode_
+	ln.lastReturned_ = lastReturned_
+	return ln
+end function
+sub List.setRoll(ln as ListNodeRoll_t)
+	curRollNode_ = ln.curRollNode_
+	oldCurRollNode_ = ln.oldCurRollNode_
+	lastReturned_ = ln.lastReturned_
+end sub

@@ -1,0 +1,968 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="50" height="20" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="default start" value="44, 18"/>
+  <property name="music" value="RadioStatic 1.ogg"/>
+  <property name="snow" value="off"/>
+ </properties>
+ <tileset firstgid="1" name="BIG Compilation" tilewidth="16" tileheight="16">
+  <image source="BIG Compilation.bmp" trans="ff00ff" width="320" height="1728"/>
+ </tileset>
+ <tileset firstgid="2161" name="artillery boxes" tilewidth="16" tileheight="16">
+  <image source="artillery boxes.bmp" trans="ff00ff" width="320" height="96"/>
+ </tileset>
+ <tileset firstgid="2281" name="skematics board" tilewidth="16" tileheight="16">
+  <image source="skematics board.bmp" trans="ff00ff" width="288" height="194"/>
+ </tileset>
+ <tileset firstgid="2497" name="Collision" tilewidth="16" tileheight="16">
+  <image source="CShapes.bmp" trans="ff00ff" width="336" height="64"/>
+ </tileset>
+ <tileset firstgid="2581" name="Teleporter final" tilewidth="16" tileheight="16">
+  <image source="Teleporter final.bmp" trans="ff00ff" width="80" height="144"/>
+ </tileset>
+ <tileset firstgid="2626" name="animations" tilewidth="16" tileheight="16">
+  <image source="animations.bmp" trans="ff00ff" width="320" height="192"/>
+  <tile id="0">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="1">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="2">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="3">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="4">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="5">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="6">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="7">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="8">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-8"/>
+   </properties>
+  </tile>
+  <tile id="9">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-8"/>
+   </properties>
+  </tile>
+  <tile id="10">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-8"/>
+   </properties>
+  </tile>
+  <tile id="11">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-8"/>
+   </properties>
+  </tile>
+  <tile id="12">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="13">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="14">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="15">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="16">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="17">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="18">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="22"/>
+   </properties>
+  </tile>
+  <tile id="19">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="22"/>
+   </properties>
+  </tile>
+  <tile id="20">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="21">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="22">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="23">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="24">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="25">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="26">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="27">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="4"/>
+   </properties>
+  </tile>
+  <tile id="28">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-8"/>
+   </properties>
+  </tile>
+  <tile id="29">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-8"/>
+   </properties>
+  </tile>
+  <tile id="30">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-8"/>
+   </properties>
+  </tile>
+  <tile id="31">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-8"/>
+   </properties>
+  </tile>
+  <tile id="32">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="33">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="34">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="35">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="36">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="37">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="38">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="22"/>
+   </properties>
+  </tile>
+  <tile id="39">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="22"/>
+   </properties>
+  </tile>
+  <tile id="40">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-24"/>
+   </properties>
+  </tile>
+  <tile id="41">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-24"/>
+   </properties>
+  </tile>
+  <tile id="42">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="43">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="44">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="45">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="46">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="47">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="48">
+   <properties>
+    <property name="delay" value="25"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="49">
+   <properties>
+    <property name="delay" value="25"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="50">
+   <properties>
+    <property name="delay" value="20"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="51">
+   <properties>
+    <property name="delay" value="20"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="52">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="53">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="54">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="55">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="56">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="57">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="58">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="22"/>
+   </properties>
+  </tile>
+  <tile id="59">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="22"/>
+   </properties>
+  </tile>
+  <tile id="60">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-24"/>
+   </properties>
+  </tile>
+  <tile id="61">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-24"/>
+   </properties>
+  </tile>
+  <tile id="62">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="63">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="64">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="65">
+   <properties>
+    <property name="delay" value="8"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="66">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="67">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="68">
+   <properties>
+    <property name="delay" value="25"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="69">
+   <properties>
+    <property name="delay" value="25"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="70">
+   <properties>
+    <property name="delay" value="20"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="71">
+   <properties>
+    <property name="delay" value="20"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="72">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="73">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next " value="2"/>
+   </properties>
+  </tile>
+  <tile id="74">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="75">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="76">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="77">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="78">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="22"/>
+   </properties>
+  </tile>
+  <tile id="79">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="22"/>
+   </properties>
+  </tile>
+  <tile id="80">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-30"/>
+   </properties>
+  </tile>
+  <tile id="81">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-30"/>
+   </properties>
+  </tile>
+  <tile id="100">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-30"/>
+   </properties>
+  </tile>
+  <tile id="101">
+   <properties>
+    <property name="delay" value="1"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-30"/>
+   </properties>
+  </tile>
+  <tile id="166">
+   <properties>
+    <property name="delay" value="20"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="167">
+   <properties>
+    <property name="delay" value="20"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="168">
+   <properties>
+    <property name="delay" value="2"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="169">
+   <properties>
+    <property name="delay" value="2"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="170">
+   <properties>
+    <property name="delay" value="2"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-4"/>
+   </properties>
+  </tile>
+  <tile id="171">
+   <properties>
+    <property name="delay" value="2"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-4"/>
+   </properties>
+  </tile>
+  <tile id="176">
+   <properties>
+    <property name="delay" value="4"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="177">
+   <properties>
+    <property name="delay" value="4"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="178">
+   <properties>
+    <property name="delay" value="4"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="179">
+   <properties>
+    <property name="delay" value="4"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="186">
+   <properties>
+    <property name="delay" value="20"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="187">
+   <properties>
+    <property name="delay" value="20"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="188">
+   <properties>
+    <property name="delay" value="2"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="189">
+   <properties>
+    <property name="delay" value="2"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="190">
+   <properties>
+    <property name="delay" value="2"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-4"/>
+   </properties>
+  </tile>
+  <tile id="191">
+   <properties>
+    <property name="delay" value="2"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-4"/>
+   </properties>
+  </tile>
+  <tile id="196">
+   <properties>
+    <property name="delay" value="4"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="197">
+   <properties>
+    <property name="delay" value="4"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="2"/>
+   </properties>
+  </tile>
+  <tile id="198">
+   <properties>
+    <property name="delay" value="4"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+  <tile id="199">
+   <properties>
+    <property name="delay" value="4"/>
+    <property name="effect" value="animate"/>
+    <property name="next" value="-2"/>
+   </properties>
+  </tile>
+ </tileset>
+ <layer name="World -1" width="50" height="20">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,446,126,0,0,126,126,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,446,446,0,0,126,126,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,446,446,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,126,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="World 0" width="50" height="20">
+  <data encoding="csv">
+1013,1014,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1883,1884,1013,1014,
+1033,1034,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1903,1904,1033,1034,
+1859,1860,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1881,1882,
+1879,1880,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1901,1902,
+1859,1860,1695,1696,1695,1696,1695,1696,1695,1772,1772,1772,1772,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1881,1882,
+1879,1880,1715,1716,1715,1716,1715,1716,1772,1772,1772,1772,1772,1772,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1901,1902,
+1859,1860,1695,1696,1695,1696,1695,1772,1772,1772,1772,1772,1772,1772,1772,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1613,1613,1613,1634,1613,1613,1615,1616,1695,1696,1695,1696,1881,1882,
+1879,1880,1715,1716,1715,1716,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1613,1613,1613,1613,1613,1613,1635,1636,1715,1716,1715,1716,1901,1902,
+1859,1860,1695,1696,1695,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1613,1614,1613,1613,1613,1613,1613,1613,1695,1696,1695,1696,1881,1882,
+1879,1880,1715,1716,1772,1772,1772,1772,1772,1716,1772,1772,1772,1772,1772,1772,1772,1772,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1633,1634,1613,1613,1613,1613,1613,1613,1715,1716,1715,1716,1901,1902,
+1859,1860,1695,1772,1772,1772,1772,1772,1772,1696,1695,1696,1772,1772,1772,2287,2288,2289,2290,2291,2292,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1881,1882,
+1879,1880,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,2305,2306,2307,2308,2309,2310,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1901,1902,
+1859,1860,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,1772,2323,2324,2325,2326,2327,2328,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1881,1882,
+1879,1880,1772,1772,1772,1772,1772,1716,1715,1716,1715,1772,1715,1716,1715,2341,2342,2343,2344,2345,2346,1772,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1901,1902,
+1859,1860,1772,1772,1772,1772,1772,1696,1695,1696,1695,1772,1695,1696,1695,1696,1772,1772,1772,1772,1772,1772,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1881,1882,
+1879,1880,1772,1772,1772,1772,1745,1745,1694,1716,1715,1716,1715,1716,1745,1745,1745,1745,1772,1772,1772,1772,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1745,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1901,1902,
+1859,1860,1772,1772,1772,1745,1745,1745,1745,1696,1695,1696,1695,1696,1745,1745,1745,1745,1745,1772,1772,1772,1695,1696,1695,1696,1845,1846,1847,1848,1695,1696,1845,1846,1847,1848,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1695,1696,1881,1882,
+1879,1880,1772,1772,1745,1745,1745,1745,1745,1716,1715,1716,1715,1716,1745,1745,1745,1745,1745,1745,1772,1772,1715,1716,1715,1716,1865,1866,1867,1868,1715,1716,1865,1866,1867,1868,1715,1716,1715,1716,1715,1716,1715,1716,1715,1716,1726,1726,1901,1902,
+1013,1014,1775,1776,1775,1776,1775,1776,1775,1775,1776,1775,1776,1775,1775,1776,1775,1775,1776,1775,1776,1775,1776,1775,1776,1775,1775,1776,1775,1776,1775,1776,1775,1775,1776,1775,1776,1775,1776,1775,1776,1775,1776,1775,1776,1775,1776,1775,1013,1014,
+1033,1034,1795,1796,1795,1796,1795,1796,1795,1795,1796,1795,1796,1795,1795,1796,1795,1795,1796,1795,1796,1795,1796,1795,1796,1795,1795,1796,1795,1796,1795,1796,1795,1795,1796,1795,1796,1795,1796,1795,1796,1795,1796,1795,1796,1795,1796,1795,1033,1034
+</data>
+ </layer>
+ <layer name="World 1" width="50" height="20">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,1767,1768,1769,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,1790,1787,1788,1789,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1803,1804,0,0,1801,1802,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,1804,1790,0,0,0,0,1789,1804,0,0,0,0,0,0,0,0,0,0,0,0,0,1823,1824,0,0,1821,1822,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,1803,1804,0,0,1790,0,0,0,0,0,0,1789,1804,0,0,1804,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1803,1804,0,0,0,0,
+0,0,0,1823,1824,1804,1790,0,0,0,0,0,0,0,0,1789,1804,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1168,1610613904,1610613924,1610613904,1610613924,1610613904,1610613924,1610613904,1610613924,1823,1824,1803,1804,0,0,
+0,0,0,0,1804,1790,0,0,0,0,0,0,0,0,0,0,1789,0,0,0,0,0,1803,1804,0,0,0,0,0,0,0,0,0,0,0,1188,0,0,0,0,0,0,0,0,0,0,1823,1824,0,0,
+0,0,0,0,1790,0,0,0,0,0,0,0,0,0,0,0,0,1789,1804,0,0,0,1823,1824,0,0,0,0,0,0,0,0,0,0,0,1168,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,1804,1790,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1789,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1188,2684355748,2684355728,2684355748,2684355728,2684355748,2684355728,2684355748,2684355728,1803,1804,1803,1804,0,0,
+0,0,1790,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1803,1804,0,0,0,0,0,0,0,0,0,0,0,0,0,1610613904,1803,1804,1610613924,1803,1804,1610613904,1803,1804,1824,1803,1804,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1823,1824,0,0,0,0,1801,1802,0,0,0,0,0,0,0,0,1823,1824,1804,1823,1824,1804,1823,1824,1804,1804,1824,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1789,0,0,0,1745,0,1821,1822,0,0,0,0,0,0,0,1745,0,1823,1824,0,1823,1824,1803,1804,1824,1824,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1789,0,0,1745,1745,0,0,0,0,0,0,0,0,0,1745,1745,0,1803,1804,1803,1804,1823,1824,0,1803,1804,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1745,0,0,0,0,0,0,0,1745,1745,1745,1823,1824,1823,1824,0,0,0,1823,1824,0,0,
+0,0,0,0,0,0,2684356349,0,0,0,0,0,0,0,0,0,0,3221227261,0,0,0,0,0,0,0,0,0,0,1745,1745,0,0,0,0,0,0,0,0,1745,1745,1821,1822,0,0,0,0,0,0,0,0,
+0,0,0,0,0,2684356349,0,0,0,0,0,0,0,0,0,0,0,0,3221227261,0,0,0,0,0,0,0,0,0,0,0,1745,0,0,0,0,0,0,0,2091,2092,1745,0,0,0,0,0,0,0,0,0,
+0,0,0,0,2684356349,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3221227261,0,0,0,0,0,0,0,0,0,0,1745,1745,0,0,0,0,0,0,2111,2112,1745,1745,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="World 1.5" width="50" height="20">
+  <properties>
+   <property name="destructible" value=""/>
+  </properties>
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2792,2793,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,2638,2639,0,0,0,0,0,0,0,0,0,2812,2813,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,2658,2659,0,0,0,0,0,0,0,0,0,2666,2667,0,0,0,0,0,0,0,0,0,2644,2645,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2686,2687,0,0,0,0,0,0,0,0,0,2664,2665,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2630,2631,2632,2633,2640,2641,0,0,0,0,2802,2803,2674,2675,2668,2669,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2650,2651,2652,2653,2660,2661,0,0,0,0,2822,2823,2694,2695,2688,2689,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1733,1734,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1753,1754,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="World 2" width="50" height="20">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,2583,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,2583,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,2583,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,2583,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,2581,2582,2583,2584,2585,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1168,3221226660,0,0,1168,1877,1878,0,0,0,0,
+0,0,0,0,0,0,0,0,2586,2587,2588,2589,2590,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1188,3221226660,0,0,1188,1875,1875,1877,1878,0,0,
+0,0,0,0,0,0,0,0,2591,2592,2593,2594,2595,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1921,1922,1921,1922,0,0,0,0,0,0,0,1168,3221226660,0,0,1168,3221227350,3221227349,1875,1875,0,0,
+0,0,0,0,0,0,0,0,2596,2597,2598,2599,2600,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1941,1942,1941,1942,0,0,0,0,0,0,0,1188,3221226640,0,0,1188,0,0,3221227350,3221227349,0,0,
+0,0,0,0,0,0,0,0,2601,2602,2603,2604,2605,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,201,202,0,0,203,204,201,202,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,221,222,0,0,223,224,221,222,0,0,0,0,0,0,
+0,0,0,1921,1922,0,0,1943,1944,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1610614688,0,0,0,0,0,203,204,0,0,0,0,0,0,
+0,0,0,1941,1942,0,0,1845,1846,1847,1848,0,1845,1846,1847,1848,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1610614688,0,0,0,0,223,224,0,0,0,0,0,0,
+0,0,0,0,0,0,0,1865,1866,1867,1868,2624,1865,1866,1867,1868,0,0,0,0,0,0,0,0,0,0,0,0,1610614688,0,0,0,0,0,0,0,0,0,1610614688,0,0,0,0,0,1135,1136,0,0,0,0,
+0,0,0,0,0,0,1168,3221226661,483,484,485,486,483,484,1168,3221226662,1168,0,0,0,0,0,0,0,0,0,0,0,0,1610614688,0,0,0,0,0,0,0,0,0,1610614688,0,0,0,0,1155,1156,0,0,0,0,
+0,0,1325,1326,0,0,1168,0,1168,0,0,1168,0,0,1168,0,1168,0,0,0,0,0,1845,1846,1847,1848,0,0,0,0,1610614688,0,0,0,0,0,0,0,0,0,1610614688,0,0,0,1163,1164,1325,1326,0,0,
+0,0,1345,1346,0,0,1188,0,1188,0,0,1188,0,0,1188,0,1188,0,0,0,0,0,1865,1866,1867,1868,0,0,0,0,0,1610614688,0,0,0,0,0,0,0,0,0,1610614688,0,0,1183,1184,1345,1346,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="World 3" width="50" height="20">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,2009,2010,0,0,1641,1642,1645,1646,1647,1648,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2009,2010,0,0,0,
+0,0,0,2029,2030,0,0,1661,1662,1665,1666,1667,1668,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2029,2030,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,2586,2587,2588,2589,2590,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,203,204,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,2591,2592,2593,2594,2595,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,223,224,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,2596,2597,2598,2599,2600,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,2601,2602,2603,2604,2605,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,1849,1850,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,1950,0,0,0,0,0,0,0,1869,1870,0,2147485598,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,1927,1928,0,0,0,0,0,0,0,0,0,0,2147485576,2147485575,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,1927,1947,1948,0,2621,2622,2623,2624,2625,0,0,0,0,2147485596,2147485595,2147485575,0,0,0,0,0,0,0,0,0,0,0,0,1897,1898,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,1947,1948,1926,3221226661,3221226662,3221226662,3221226662,3221226662,3221226662,3221226662,3221226661,3221226662,3221226661,2147485574,2147485596,2147485595,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,1925,1926,1946,0,503,504,505,506,503,504,0,0,0,2147485594,2147485574,2147485573,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,1945,1946,0,0,483,484,485,486,483,484,0,0,0,0,2147485594,2147485593,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="World 4" width="50" height="20">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,2081,2082,0,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,2009,2010,0,2085,2086,0,0,
+0,0,2101,2102,0,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,2029,2030,0,2105,2106,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,1645,1646,1647,1648,1645,1646,1647,1648,1641,1642,0,0,0,0,0,0,0,0,0,0,1917,1918,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,1665,1666,1667,1668,1665,1666,1667,1668,1661,1662,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="Collision" width="50" height="20" visible="0">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,0,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2571,2571,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,2570,2570,0,0,0,0,0,0,0,0,0,2570,2571,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,2570,2570,0,0,0,0,0,0,0,0,0,2571,2570,0,0,0,0,0,0,0,0,0,2570,2571,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2571,2571,0,0,0,0,0,0,0,0,0,2571,2571,0,0,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,0,0,2504,2527,2522,2527,2503,0,0,0,0,0,0,0,0,0,2571,2571,2571,2571,2570,2571,0,0,0,0,2571,2571,2571,2571,2571,2570,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,0,2501,2497,0,0,0,0,0,2497,2497,2497,2497,2500,0,0,0,0,2571,2570,2571,2571,2571,2571,0,0,0,0,2571,2571,2570,2571,2571,2571,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,0,2501,0,0,0,0,0,0,0,0,0,0,0,0,2500,0,0,0,2554,2554,2554,2554,2554,2554,2554,2554,0,0,2554,2554,2554,2554,2571,2571,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,2497,0,0,2501,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2500,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2571,2570,0,0,0,0,0,0,0,0,0,0,2497,0,
+0,0,2497,2497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,2497,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup name="Objects" width="50" height="20">
+  <object name="Sparkle" type="Effect" x="370" y="160" width="27" height="24">
+   <properties>
+    <property name="effect" value="shimmer"/>
+   </properties>
+  </object>
+  <object name="front door" type="Portal" x="706" y="230" width="27" height="56">
+   <properties>
+    <property name="direction" value="in"/>
+    <property name="to map" value="Woodpecker Level"/>
+    <property name="to portal" value="To NS"/>
+   </properties>
+  </object>
+  <object name="teleporter shield" type="Effect" x="128" y="176" width="80" height="48">
+   <properties>
+    <property name="effect" value="teleporter shield"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

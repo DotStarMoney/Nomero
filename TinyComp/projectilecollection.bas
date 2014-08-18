@@ -72,7 +72,7 @@ sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = 
         this.head_->data_.anim.play()
         this.head_->data_.lifeFrames = 15
 	case WATER_DROP
-	    this.head_->data_.body   = TinyBody(p_, 4, 2)
+	    this.head_->data_.body   = TinyBody(p_ + Vector2D(12,4), 4, 2)
         this.head_->data_.body.noCollide = 0
         this.head_->data_.body.v = v_
         this.head_->data_.body_i = parent_space->addBody(@this.head_->data_.body)
@@ -105,12 +105,15 @@ sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = 
         
     this.numNodes += 1
 end sub
-sub ProjectileCollection.checkDynamicCollision(p as Vector2D, size as Vector2D)
+sub ProjectileCollection.checkDynamicCollision(p_ as Vector2D, size_ as Vector2D)
     dim as ProjectileNode_t ptr curNode
     dim as ProjectileNode_t ptr oldNode
     dim as Projectile_t         cur
     dim as integer deleteMe, i
     dim as GameSpace ptr GS
+    dim as Vector2D p, size
+    p = p_
+    size = size_
     curNode = this.head_
     while curNode <> 0
         cur = curNode->data_
@@ -130,14 +133,12 @@ sub ProjectileCollection.checkDynamicCollision(p as Vector2D, size as Vector2D)
 				GS = cast(GameSpace ptr, game_space)
 				GS->vibrateScreen()
 		
-				
-				parent_level->addFallout(cur.body.p.x(), cur.body.p.y(), 1)
+				parent_level->addFallout(cur.body.p.x(), cur.body.p.y())
 		
 				deleteMe = 1	 
 					 
 			end if
 		end if
-        
         if deleteMe = 1 then
             if curNode->prev_ <> 0 then curNode->prev_->next_ = curNode->next_
             if curNode->next_ <> 0 then curNode->next_->prev_ = curNode->prev_
@@ -214,7 +215,6 @@ sub ProjectileCollection.proc_collection(t as double)
                 GS = cast(GameSpace ptr, game_space)
                 GS->vibrateScreen()
         
-                
                 parent_level->addFallout(cur.body.p.x(), cur.body.p.y(), 1)
         
                 deleteMe = 1

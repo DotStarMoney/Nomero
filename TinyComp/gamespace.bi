@@ -37,7 +37,8 @@ type GameSpace
         '---------- screen functions -------------
         
         declare sub vibrateScreen()
-            
+        as Vector2D lastSpawn
+        as string lastMap
     private:
 		declare sub performSwitch(ls as LevelSwitch_t)
         declare sub step_input()
@@ -47,8 +48,6 @@ type GameSpace
         as integer ptr hud_image
         
         as integer vibCount
-        as Vector2D lastSpawn
-        as string lastMap
         as string curMusic
         as integer switchTracks
         

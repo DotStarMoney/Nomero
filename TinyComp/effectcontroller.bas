@@ -64,6 +64,9 @@ sub EffectController.create(effect_name as string,_
 	case OPEN_DOOR
 		tempObj.anim.load("door.txt")
 		tempObj.anim.play()
+	case TELEPORTER_SHIELD
+		tempObj.anim.load("teleportershield.txt")
+		tempObj.anim.play()
 	end select
 
    
@@ -112,6 +115,24 @@ sub EffectController.drawEffects(scnbuff as integer ptr,_
     end if                               
 end sub
 
+
+sub EffectController.removeEffect(name_ as string)
+	dim as ObjectEffect_t ptr obj_ptr
+	effectContainer.rollReset()
+	do
+		obj_ptr = effectContainer.roll()
+		if obj_ptr <> 0 then
+			if ucase(*(obj_ptr->effect_name)) = ucase(name_) then 
+				deallocate(obj_ptr->effect_name)
+				effectContainer.remove(obj_ptr)
+				exit do
+			end if
+		else
+			exit do
+		end if
+	loop
+end sub
+
 function EffectController.processEffect(byref effect_p as ObjectEffect_t) as integer
     dim as Vector2D e_loc
     do
@@ -131,11 +152,11 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
     select case effect_p.effect_type
     case ACTIVE_SPEAKER
 		if effect_p.counter = 0 then
-			effect_p.counter = 133
+			effect_p.counter = 126
 		elseif effect_p.counter > 1 then
 			effect_p.counter -= 1
 		else
-			effect_p.counter = 133
+			effect_p.counter = 126
 		end if
 		if effect_p.counter > 70 then
 			effect_p.anim.step_animation()
@@ -205,8 +226,8 @@ sub EffectController.explodeEffects(p as Vector2D)
         for i = 0 to effect_N - 1
             tempObj_ = effect_list[i]
             effect_p = *tempObj_
-            if effect_p.effect_type = RADAR_PULSE then
-				deallocate effect_p.effect_name
+            if (effect_p.effect_type = RADAR_PULSE) orElse (effect_p.effect_type = SHIMMER) then
+				deallocate(effect_p.effect_name)
 				effectContainer.remove(tempObj_)
             end if
             
@@ -220,6 +241,8 @@ sub EffectController.drawEffect(scnbuff as integer ptr, effect_p as ObjectEffect
 	case ACTIVE_SPEAKER
 		effect_p.anim.drawAnimation(scnbuff, effect_p.p.x(), effect_p.p.y())
 	case OPEN_DOOR
+		effect_p.anim.drawAnimation(scnbuff, effect_p.p.x(), effect_p.p.y())
+	case TELEPORTER_SHIELD
 		effect_p.anim.drawAnimation(scnbuff, effect_p.p.x(), effect_p.p.y())
 	end select
 end sub

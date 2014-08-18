@@ -1,1 +1,1 @@
-Nomero "Mountain Level.map"
+Nomera "PurovskyDistrict Scene 1 Outside.map"

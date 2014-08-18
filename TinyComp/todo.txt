@@ -1,13 +1,23 @@
-'connect and rig mountain level
-'add collision blocks to rear of mountain 1
-'add instant death block
-'memu
+'write mine track
+'rig woodpecker
+'write woodpecker track
+'rig space
+'menu
 'escape to bring up quit menu
 'death screen
 'transition screens
+'loop music for mountain
 
 
-
+'mode 7 layers?
+'fix bug in seqfile
+'improve animation class
+'figure out issue with black tiles in sky layer
+'make mapconvert workflow simpler
+'tinyspace owp bug
+'map converter merge bug
+'make counter tops owp
+'tile flipping bug
 'if an object is not fully destroyed before level switch, destroyed blocks
 '	may not be recorded
 'music should return to prev position on load
@@ -34,5 +44,5 @@
 'move posts in pd2 into the foreground
 'make snow flakes
 'floating above snow peaks due to collision shapes
-'create scenery cover
+'create scenery cover and smoke cover COVER SYSTEM
 

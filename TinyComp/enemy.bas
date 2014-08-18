@@ -98,13 +98,13 @@ function Enemy.process(t as double) as integer
 		groundAhead = 0
 	end if
 	
-	if parent->raycast(body.p - Vector2D(0, -74), Vector2D(25,0)*dire_, pt) >= 0 then
+	if parent->raycast(body.p - Vector2D(0, -74), Vector2D(32,0)*dire_, pt) >= 0 then
 		clearJump = 0
 	else
 		clearJump = 1
 	end if
 	
-	if parent->raycast(body.p + Vector2D(0, 4), Vector2D(25,0)*dire_, pt) >= 0 then
+	if parent->raycast(body.p + Vector2D(0, 4), Vector2D(32,0)*dire_, pt) >= 0 then
 		blocked = 1
 	else
 		blocked = 0
@@ -112,7 +112,7 @@ function Enemy.process(t as double) as integer
 	
 	select case thought
 	case IDLE
-		if groundAhead = 0 then
+		if groundAhead = 0 orElse blocked = 1 then
 			dire_ = -dire_
 			manditoryWalk = 10 + int(rnd * 20)
 		end if
@@ -128,9 +128,6 @@ function Enemy.process(t as double) as integer
 			end if
 		else
 			manditoryWalk -= 1
-		end if
-		if blocked = 1 andAlso takeJump = 0 andAlso clearJump = 1 then
-			takeJump = 10
 		end if
 		viewM = player_parent->body.p - body.p
 		viewMag = viewM.magnitude()
@@ -329,6 +326,7 @@ sub Enemy.explosionAlert(p as Vector2D)
 			alertAnim.hardSwitch(0)
 		end if
 	end if
+	
 end sub
 
 sub Enemy.processControls(dire as integer, jump as integer,_

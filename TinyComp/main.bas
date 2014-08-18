@@ -7,6 +7,14 @@
     screenset 1,0 
 #endif
 
+FSOUND_Init(44100, 3, 0)
+
+
+
+
+
+
+
 Dim as GameSpace gameNomero
 
 

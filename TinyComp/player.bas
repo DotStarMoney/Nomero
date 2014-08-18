@@ -108,6 +108,8 @@ function Player.onSpikes() as integer
         for xscan = x0 to x1
             if level_parent->getCollisionBlock(xscan, yscan).cModel = 57 then
                 return 1
+            elseif level_parent->getCollisionBlock(xscan, yscan).cModel = 77 then
+				return 2
             end if
         next xscan
     next yscan
@@ -424,7 +426,11 @@ sub Player.processControls(dire as integer, jump as integer,_
 		pendingSwitch = 0
 	end if
 	
-	if onSpikes() = 1 then harm(Vector2D(-1000,-1000), 1)
+	if onSpikes() = 1 then 
+		harm(Vector2D(-1000,-1000), 1)
+	elseif onSpikes() = 2 then
+		harm(Vector2D(-1000,-1000), 100)
+	end if
     
     if harmedFlashing > 0 then harmedFlashing -= 1
     anim.step_animation()
