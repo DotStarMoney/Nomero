@@ -21,6 +21,11 @@ type Object_t
     as any ptr data_
 end type
 
+type destroyedBlocks_t
+	as integer width_
+	as integer height_
+	as byte ptr data_
+end type
 
 enum EffectType_t
     ANIMATE

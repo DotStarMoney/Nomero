@@ -1,17 +1,16 @@
-'add static draw effect in effect controller
-'explosions trigger removal of effects, can trigger portal creation and change of music
-'music switching in levels
-'keep track of objects that have been destroyed
-'death warp
-'object is to blow up all necessary items per map, then get out.
+'connect and rig mountain level
+'add collision blocks to rear of mountain 1
+'add instant death block
 'memu
 'escape to bring up quit menu
+'death screen
 'transition screens
 
-'how get more bombs? Lose when you run out...?
 
 
-
+'if an object is not fully destroyed before level switch, destroyed blocks
+'	may not be recorded
+'music should return to prev position on load
 'ObjectLink for all objects
 'HUD damage animation
 'HUD animations

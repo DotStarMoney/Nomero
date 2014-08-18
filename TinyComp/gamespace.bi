@@ -15,6 +15,7 @@
 #include "oneshoteffects.bi"
 #include "leveltypes.bi"
 #include "dynamiccontroller.bi"
+#include "fbgdtriggerdispatch.bi"
 
 #define FPS_TARGET 60
 
@@ -28,11 +29,14 @@ type GameSpace
         declare sub reconnectCollision()
         declare sub switchRegions(ls as LevelSwitch_t)
         declare sub centerCamera(c as Vector2D)
+        declare function getLastFileName() as string
+        declare function getCurrentFileName() as string
+        declare function getLastPosition() as Vector2D
+        declare sub hardSwitchMusic(filename as string)
         
         '---------- screen functions -------------
         
         declare sub vibrateScreen()
-        declare sub pow(x as double, y as double, r as double)
             
     private:
 		declare sub performSwitch(ls as LevelSwitch_t)
@@ -40,23 +44,23 @@ type GameSpace
         declare sub step_draw()
         declare sub step_process()
         
-        as integer gamePhase
-        as integer ptr pieces
-        as integer pieces_N
-        
         as integer ptr hud_image
         
         as integer vibCount
         as Vector2D lastSpawn
         as string lastMap
+        as string curMusic
+        as integer switchTracks
         
+        as FBGDTriggerDispatch triggers
         as OneShotEffects effects
         as ProjectileCollection projectiles
         as SnowGenerator backgroundSnow
         as SnowGenerator foregroundSnow
         as EffectController graphicFX
         as DynamicController dynControl
-        as uinteger ptr music
+        as uinteger ptr music(0 to 1)
+        as integer currentMusic
         as TinySpace world
         as Player    spy
         as Level     lvlData

@@ -983,6 +983,9 @@ for i = 0 to (N_layers - 1)
                                 ypos += 1
                             wend
                         end if  
+                                                   
+                                                  
+
                         /'
                         if ((q mod map_width) = 251) andAlso ((q \ map_width) = 22) then
                             cls
@@ -1002,11 +1005,12 @@ for i = 0 to (N_layers - 1)
                 end if
                 'assign merged tile
                 layers(curLayer).layer_data[q] = newTileNum
+                if N_merges > 2000 then goto IQUIT
             end if
         end if
     next q
 next i
-
+IQUIT:
 print "Found"; N_merges; " unique merged tiles."
 
 for i = 0 to N_tilesets - 1

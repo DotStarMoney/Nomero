@@ -419,6 +419,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 		end if
 	else
 		level_parent->repositionFromPortal(pendingSwitchData, body)
+		if ucase(pendingSwitchData.portalName) = "DEFAULT" then centerToMap(body.p)
 		gsp->centerCamera(body.p)
 		pendingSwitch = 0
 	end if

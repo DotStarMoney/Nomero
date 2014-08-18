@@ -44,20 +44,30 @@ sub EffectController.create(effect_name as string,_
                             density as double,_
                             inRangeSet as orderType)
                             
-   dim as ObjectEffect_t tempObj
+	dim as ObjectEffect_t tempObj
    
    
-   tempObj.effect_name = allocate(len(effect_name)+1)
-   *(tempObj.effect_name) = effect_name
-   tempObj.effect_type = effect_type
-   tempObj.p = p 
-   tempObj.size = size
-   tempObj.density = density / 65535
-   tempObj.shape = shape
-   tempObj.inRangeSet = inRangeSet
-   tempObj.counter = 0
+	tempObj.effect_name = allocate(len(effect_name)+1)
+	*(tempObj.effect_name) = effect_name
+	tempObj.effect_type = effect_type
+	tempObj.p = p 
+	tempObj.size = size
+	tempObj.density = density / 65535
+	tempObj.shape = shape
+	tempObj.inRangeSet = inRangeSet
+	tempObj.counter = 0
+	select case effect_type 
+	case ACTIVE_SPEAKER
+		tempObj.anim.load("speaker.txt")
+		if density > 0.5 then tempObj.anim.hardSwitch(1)
+		tempObj.anim.play()
+	case OPEN_DOOR
+		tempObj.anim.load("door.txt")
+		tempObj.anim.play()
+	end select
+
    
-   effectContainer.insert(tempObj.p, tempObj.p + tempObj.size, @tempObj)
+	effectContainer.insert(tempObj.p, tempObj.p + tempObj.size, @tempObj)
                             
 end sub
            
@@ -96,7 +106,7 @@ sub EffectController.drawEffects(scnbuff as integer ptr,_
     if effect_N > 0 then
         for i = 0 to effect_N - 1
             tempObj_ = effect_list[i]
-            drawEffect(*tempObj_)
+            drawEffect(scnbuff, *tempObj_)
         next i
         deallocate(effect_list)
     end if                               
@@ -119,8 +129,18 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
     e_loc = e_loc + effect_p.size * 0.5 + effect_p.p
 
     select case effect_p.effect_type
+    case ACTIVE_SPEAKER
+		if effect_p.counter = 0 then
+			effect_p.counter = 133
+		elseif effect_p.counter > 1 then
+			effect_p.counter -= 1
+		else
+			effect_p.counter = 133
+		end if
+		if effect_p.counter > 70 then
+			effect_p.anim.step_animation()
+		end if
     case RADAR_PULSE
-		
 		if effect_p.counter = 0 then
 			if effect_p.counter = 0 then 
 				effect_p.counter = effect_p.density * 60
@@ -171,9 +191,35 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
     end select   
     return 0
 end function
+sub EffectController.explodeEffects(p as Vector2D)
+	dim as any ptr ptr effect_list
+    dim as integer effect_N, i
+    dim as ObjectEffect_t ptr tempObj_
+    dim effect_p as ObjectEffect_t
+    dim as Vector2D a, b
+    a = p
+    b = p
+    
+    effect_N = effectContainer.search(a, b, effect_list)
+    if effect_N > 0 then
+        for i = 0 to effect_N - 1
+            tempObj_ = effect_list[i]
+            effect_p = *tempObj_
+            if effect_p.effect_type = RADAR_PULSE then
+				deallocate effect_p.effect_name
+				effectContainer.remove(tempObj_)
+            end if
+            
+        next i
+        deallocate(effect_list)
+    end if
+end sub
 
-sub EffectController.drawEffect(effect_p as ObjectEffect_t)
-	
-	
-	
+sub EffectController.drawEffect(scnbuff as integer ptr, effect_p as ObjectEffect_t)
+	select case effect_p.effect_type
+	case ACTIVE_SPEAKER
+		effect_p.anim.drawAnimation(scnbuff, effect_p.p.x(), effect_p.p.y())
+	case OPEN_DOOR
+		effect_p.anim.drawAnimation(scnbuff, effect_p.p.x(), effect_p.p.y())
+	end select
 end sub

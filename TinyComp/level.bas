@@ -23,6 +23,7 @@ constructor level
     snowfall = 0
     tilesets = 0
     blocks = 0
+    destroyedBlockMemory.init(sizeof(destroyedBlocks_t))
     portalZonesNum = 0
     if falloutTex = 0 then
         falloutTex = imagecreate(128,128)
@@ -515,16 +516,24 @@ sub Level.splodeBlockReact(xs as integer, ys as integer)
 		setCollision(xs, ys, 0)
 	case 24
 		setCollision(xs, ys, 0)
-		graphicFX_->create("Temporary Explode", ONE_SHOT_EXPLODE,_
-						   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
-						   Vector2D(0,0), 0,_
-						   ACTIVE)
+		if noVisuals = 0 then
+			graphicFX_->create("Temporary Explode", ONE_SHOT_EXPLODE,_
+							   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
+							   Vector2D(0,0), 0,_
+							   ACTIVE)
+		else
+			addFallout(xs*16 + 8, ys*16 + 8)
+		end if
 	case 74
 		setCollision(xs, ys, 0)
-		graphicFX_->create("Temporary Explode", ONE_SHOT_EXPLODE,_
-				   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
-				   Vector2D(0,0), 0,_
-				   ACTIVE)
+		if noVisuals = 0 then
+			graphicFX_->create("Temporary Explode", ONE_SHOT_EXPLODE,_
+					   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
+					   Vector2D(0,0), 0,_
+					   ACTIVE)
+		else
+			addFallout(xs*16 + 8, ys*16 + 8)
+		end if
 	case 75
 		setCollision(xs, ys, 0)
 		splodeBlockReact(xs - 1, ys)
@@ -541,11 +550,15 @@ sub Level.splodeBlockReact(xs as integer, ys as integer)
 		exit sub
 	end select
 	'chance to smoke
-	if int(rnd * 2) = 0 then
-		graphicFX_->create("Temporary Smoke", ONE_SHOT_SMOKE,_
-		                   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
-		                   Vector2D(0,0), 0,_
-		                   ACTIVE)
+	
+	curDestBlocks[ys * lvlWidth + xs] = 1
+	if noVisuals = 0 then
+		if int(rnd * 2) = 0 then
+			graphicFX_->create("Temporary Smoke", ONE_SHOT_SMOKE,_
+							   ELLIPSE, Vector2D(xs * 16 + 8, ys * 16 + 8),_
+							   Vector2D(0,0), 0,_
+							   ACTIVE)
+		end if
 	end if
 	for i = 0 to blocks_N
 		if layerData[i].isDestructible = 1 then
@@ -626,7 +639,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
 	link.dynamiccontroller_ptr->explosionAlert(Vector2D(x,y))
 	link.player_ptr->explosionAlert(Vector2D(x,y))
 	
-	
+	link.effectcontroller_ptr->explodeEffects(Vector2D(x,y))
 
 	for ys = tl_y to br_y
 		for xs = tl_x to br_x
@@ -635,11 +648,13 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
 			d = sqr(xp*xp + yp*yp)
 			if d <= 48 then
 				splodeBlockReact(xs, ys)
-				for i = 0 to blocks_N - 1
-					if (layerData[i].isFallout = 1) andAlso d <= 12 then
-						resetBlock(xs, ys, i)
-					end if
-				next i
+				if noVisuals = 0 then
+					for i = 0 to blocks_N - 1
+						if (layerData[i].isFallout = 1) andAlso d <= 12 then
+							resetBlock(xs, ys, i)
+						end if
+					next i
+				end if
 			end if
 		next xs
 	next ys
@@ -712,6 +727,14 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
     falloutZones.insert(fallout.a, fallout.b, @fallout)
 	reconnect = 1
 end sub
+
+function Level.checkDestroyedBlocks(x as integer, y as integer) as integer
+	if curDestBlocks[y * lvlWidth + x] <> 0 then
+		return 1
+	else
+		return 0
+	end if
+end function
 
 function level.mustReconnect() as integer
 	return reconnect
@@ -821,6 +844,7 @@ sub level.load(filename as string)
     dim as Object_t tempObj
     dim as PortalType_t tempPortal
     dim as single tempSingleField
+    dim as destroyedBlocks_t tempDblocks
     
     f = freefile
  
@@ -1092,9 +1116,32 @@ sub level.load(filename as string)
     #endif
     close #f
     
-    
+    if destroyedBlockMemory.exists(lvlName) = 1 then
+		curDestBlocks = cast(destroyedBlocks_t ptr, destroyedBlockMemory.retrieve(lvlName))->data_
+	else
+		curDestBlocks = allocate(sizeof(byte) * lvlWidth * lvlHeight)
+		for i = 0 to lvlWidth * lvlHeight - 1
+			curDestBlocks[i] = 0
+		next i
+		tempDblocks.data_ = curDestBlocks
+		tempDblocks.width_ = lvlWidth
+		tempDblocks.height_ = lvlHeight
+		destroyedBlockMemory.insert(lvlName, @tempDblocks)
+	end if
+	noVisuals = 1
+	for i = 0 to lvlWidth * lvlHeight - 1
+		if curDestBlocks[i] <> 0 then
+			splodeBlockReact(i mod lvlWidth, i / lvlWidth)
+		end if
+	next i
+	noVisuals = 0
     falloutZones.init(lvlWidth*16, lvlHeight*16, sizeof(Level_FalloutType))
     pendingPortalSwitch = 0
+    justLoaded = 1
+end sub
+
+sub Level.overrideCurrentMusicFile(filename as string)
+	loadedMusic = filename
 end sub
 
 
@@ -1104,6 +1151,11 @@ sub Level.repositionFromPortal(l as levelSwitch_t, _
 	dim as string test1, test2
 	portals.rollReset()
 	test1 = trimwhite(ucase(l.portalName))
+	if test1 = "DEFAULT" then 
+		p.p = Vector2D(default_x, default_y) * 16
+		p.v = Vector2D(0,0)
+		exit sub
+	end if
 	do
 		portal_p = portals.roll()
 		if portal_p <> 0 then
@@ -1112,19 +1164,31 @@ sub Level.repositionFromPortal(l as levelSwitch_t, _
 				select case portal_p->direction
 				case D_UP
 					p.p = Vector2D(p.p.x(), portal_p->b.y() + p.r)
+					if p.p.x() < portal_p->a.x() orElse p.p.x() > portal_p->b.x() then
+						p.p.setX((portal_p->a.x() + portal_p->b.x()) * 0.5)
+					end if
 					if p.v.y() < 0 then p.v.setY(0)
 				case D_DOWN
 					p.p = Vector2D(p.p.x(), portal_p->a.y() - p.r)
+					if p.p.x() < portal_p->a.x() orElse p.p.x() > portal_p->b.x() then
+						p.p.setX((portal_p->a.x() + portal_p->b.x()) * 0.5)
+					end if
 					if p.v.y() > 0 then p.v.setY(0)
 				case D_LEFT
 					p.p = Vector2D(portal_p->b.x() + p.r, p.p.y())
+					if p.p.y() < portal_p->a.y() orElse p.p.y() > portal_p->b.y() then
+						p.p.setY((portal_p->a.y() + portal_p->b.y()) * 0.5)
+					end if
 					if p.v.x() < 0 then p.v.setX(0)
 				case D_RIGHT
 					p.p = Vector2D(portal_p->a.x() - p.r, p.p.y())
+					if p.p.y() < portal_p->a.y() orElse p.p.y() > portal_p->b.y() then
+						p.p.setY((portal_p->a.y() + portal_p->b.y()) * 0.5)
+					end if
 					if p.v.x() > 0 then p.v.setX(0)
 				case D_IN
 					p.p = Vector2D((portal_p->a.x() + portal_p->b.x()) * 0.5,_
-					               portal_p->b.y() - p.r)
+								   portal_p->b.y() - p.r)
 					p.v = Vector2D(0,0)
 				end select
 				exit do
@@ -1135,7 +1199,9 @@ sub Level.repositionFromPortal(l as levelSwitch_t, _
 	loop
 end sub
 
-
+sub Level.addPortal(pt as PortalType_t)
+	portals.insert(pt.a, pt.b, @pt)
+end sub
 
 
 function Level.getName() as string

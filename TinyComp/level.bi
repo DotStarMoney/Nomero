@@ -9,6 +9,7 @@
 #include "effectcontroller.bi"
 #include "tinybody.bi"
 #include "objectlink.bi"
+#include "hashtable.bi"
 
 #define MAX_ZONES 8
 #define FLIPPED_HORIZ &h4
@@ -60,8 +61,13 @@ type Level
         declare function mustReconnect() as integer
         
         declare function getCurrentMusicFile() as string
+        declare sub overrideCurrentMusicFile(filename as string)
+        declare sub addPortal(pt as PortalType_t)
         declare function getDefaultPos() as Vector2D
-        
+        declare sub flushDestroyedBlockMemory()
+        declare function checkDestroyedBlocks(x as integer, y as integer) as integer
+       
+        dim as integer justLoaded
     private:
         declare sub putDispatch(scnbuff as integer ptr,_
                                 block as Level_VisBlock,_
@@ -81,6 +87,9 @@ type Level
         dim as string loadedMusic
         dim as ushort default_x
         dim as ushort default_y
+        dim as Hashtable destroyedBlockMemory
+        dim as ubyte ptr curDestBlocks
+        dim as integer noVisuals
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum

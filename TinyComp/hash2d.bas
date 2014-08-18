@@ -104,9 +104,10 @@ function Hash2D.insert(a as Vector2D, b as Vector2D, data_ as any ptr) as any pt
                 spacialHash[yscan * this.cellCols_N + xscan] = new_
             next xscan
         next yscan
+		return newDataNode_->data_
     end if
     
-    return newDataNode_->data_
+    return 0
 end function
 
 function Hash2D.search(a as Vector2D, b as Vector2D, byref ret_ as any ptr ptr) as integer

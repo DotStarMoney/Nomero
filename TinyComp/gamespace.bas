@@ -17,13 +17,13 @@ constructor GameSpace()
     link.projectilecollection_ptr = @projectiles
     link.oneshoteffects_ptr = @effects
     link.dynamiccontroller_ptr = @dynControl
+    link.effectcontroller_ptr = @graphicFX
+    
+    triggers.setLink(link)
     
     movingFrmAvg = 0.016
     vibcount = 0
 
-	gamephase = 0
-	pieces_N = 0
-	pieces = 0
 	
     lvlData.init(@graphicFX)
     lvlData.setLink(link)
@@ -52,14 +52,21 @@ constructor GameSpace()
     hud_image = imagecreate(154, 65)
 	bload "hud.bmp", hud_image
 
+	currentMusic = 0
+    music(0) = 0
+    music(1) = 0
     FSOUND_Init(44100, 3, 0)
-    music = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(), FSOUND_LOOP_NORMAL, 0, 0 ) 
-    FSOUND_Stream_Play 1, music
+    curMusic = lvlData.getCurrentMusicFile()
+    music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
+											 FSOUND_LOOP_NORMAL, 0, 0) 
+    FSOUND_Stream_Play currentMusic, music(currentMusic)
+    FSOUND_SetVolumeAbsolute(currentMusic, 255)
+    switchTracks = 0
     
     spy.centerToMap(lvlData.getDefaultPos())
     lastSpawn = spy.body.p
     camera = spy.body.p
-    lastMap = command(1)
+    lastMap = lvlData.getName()
     
     backgroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     backgroundSnow.setFreq(3, 3)
@@ -124,26 +131,15 @@ sub GameSpace.vibrateScreen()
     vibcount = 3
 end sub
 
-sub GameSpace.pow(x as double, y as double, r as double)
-    dim as double xscan, yscan
-    dim as double xd, yd
-    x /= 16
-    y /= 16
-    for yscan = -r to r
-        for xscan = -r to r
-            if xscan*xscan + yscan*yscan <= r*r then
-                xd = xscan + x
-                yd = yscan + y
-                lvlData.resetBlock xd, yd, 1
-                lvlData.resetBlock xd, yd, 2
-                lvlData.resetBlock xd, yd, 3
-                lvlData.setCollision xd, yd, 0
-            end if
-        next xscan
-    next yscan
-    world.setBlockData(lvlData.getCollisionLayerData(),_
-                       lvlData.getWidth(), lvlData.getHeight(),_
-                       16.0)
+sub GameSpace.hardSwitchMusic(filename as string)
+	music(1 - currentMusic) = FSOUND_Stream_Open(filename,_
+												 FSOUND_LOOP_NORMAL, 0, 0) 
+	FSOUND_Stream_Play (1 - currentMusic), music(1 - currentMusic)
+	FSOUND_SetVolumeAbsolute (1 - currentMusic), 0
+	FSOUND_Stream_Stop  music(currentMusic)
+	FSOUND_Stream_Close music(currentMusic)
+	FSOUND_SetVolumeAbsolute (1 - currentMusic), 255
+	currentMusic = 1 - currentMusic
 end sub
 
 sub GameSpace.step_draw()
@@ -151,8 +147,11 @@ sub GameSpace.step_draw()
     dim as integer tl_x, tl_y
     dim as integer br_x, br_y
     dim as integer shake
-    
-    camera = spy.body.p * 0.1 + camera * 0.9
+    if isSwitching = 0 then
+		camera = spy.body.p * 0.1 + camera * 0.9
+	elseif isSwitching = -1 then
+		camera = spy.body.p
+	end if
     if lvlData.getWidth() * 16 > SCRX then
         if camera.x() < SCRX*0.5 then 
             camera.setX(SCRX*0.5)
@@ -299,19 +298,40 @@ sub GameSpace.step_process()
     effects.proc_effects(0.01667)
         
     if lvlData.mustReconnect() = 1 then reconnectCollision()
-    
+    triggers.process(0.01667)
         
     if isSwitching = 1 then
 		switchFrame += 64
-		if switchFrame = 512 then
+		if switchFrame > 512 then
 			performSwitch(pendingSwitch)
 		end if
 	elseif isSwitching = -1 then
+		if switchFrame = 512 then
+			if lvlData.getCurrentMusicFile() <> curMusic then
+				music(1 - currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
+															 FSOUND_LOOP_NORMAL, 0, 0) 
+				FSOUND_Stream_Play (1 - currentMusic), music(1 - currentMusic)
+				FSOUND_SetVolumeAbsolute (1 - currentMusic), 0
+				switchTracks = 1
+			end if
+		end if
 		switchFrame -= 64
+		if switchTracks = 1 then
+			FSOUND_SetVolumeAbsolute(currentMusic, (switchFrame / 512) * 255)
+			FSOUND_SetVolumeAbsolute((1 - currentMusic), (1 - (switchFrame / 512)) * 255)
+		end if
 		if switchFrame = 0 then
 			isSwitching = 0
+			if switchTracks = 1 then
+				switchTracks = 0
+				FSOUND_Stream_Stop  music(currentMusic)
+				FSOUND_Stream_Close music(currentMusic)
+				currentMusic = 1 - currentMusic
+				curMusic = lvlData.getCurrentMusicFile()
+			end if
 		end if
     end if
+    
     
     if isSwitching = 0 then
 		#ifdef DEBUG
@@ -340,4 +360,13 @@ sub GameSpace.performSwitch(ls as LevelSwitch_t)
                        lvlData.getWidth(), lvlData.getHeight(),_
                        16.0)
 end sub 
-        
+
+function GameSpace.getLastFileName() as string
+	return lastMap + ".map"
+end function
+function GameSpace.getLastPosition() as Vector2D    
+	return lastSpawn
+end function    
+function GameSpace.getCurrentFileName() as string
+	return lvlData.getName() + ".map"
+end function

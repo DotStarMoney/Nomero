@@ -47,6 +47,7 @@ type Player
         top_speed as double
         air_top_speed as double
         
+        as integer facing
         groundDot      as double
         cutSpeed       as double
         stopFriction   as double
@@ -65,7 +66,6 @@ type Player
         as integer groundedFrames
         as integer lastUps
         as PlayerState state
-        as integer facing
         as TinySpace ptr parent
         as Level ptr level_parent
         as ProjectileCollection ptr proj_parent
