@@ -1,9 +1,15 @@
-'default start location for each room
-'explosions trigger removal or changing of effects(like sound emitters), can trigger portal creation
+'add static draw effect in effect controller
+'explosions trigger removal of effects, can trigger portal creation and change of music
+'music switching in levels
 'keep track of objects that have been destroyed
 'death warp
-'default music for each level
 'object is to blow up all necessary items per map, then get out.
+'memu
+'escape to bring up quit menu
+'transition screens
+
+'how get more bombs? Lose when you run out...?
+
 
 
 'ObjectLink for all objects

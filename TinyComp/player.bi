@@ -32,6 +32,8 @@ type Player
         declare sub explosionAlert(p as Vector2D)
         declare sub harm(p as Vector2D, amount as integer)
         declare sub getBounds(byref p as Vector2D, size as Vector2D)
+        declare sub centerToMap(byref p as Vector2D)
+        declare function beingHarmed() as integer
     
     
 		bombs   as integer
@@ -51,9 +53,11 @@ type Player
         boostFrames    as integer
         boostForce     as double
         jumpImpulse    as double
+        harmedFlashing as integer
         freeJumpFrames as integer
     private: 
         declare function onLadder() as integer
+        declare function onSpikes() as integer
         declare sub switch(ls as LevelSwitch_t)
         
         as any ptr game_parent

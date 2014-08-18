@@ -51,9 +51,69 @@ sub Player.loadAnimations(filename as string)
 end sub
 
 sub Player.drawPlayer(scnbuff as uinteger ptr)
-    anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
+	if harmedFlashing > 0 then
+		if chargeFlicker < 4 then anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
+	else
+		anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
+	end if
 end sub
 
+function Player.beingHarmed() as integer
+	if harmedFlashing > 0 then 
+		return 1
+	else
+		return 0
+	end if
+end function
+function Player.onSpikes() as integer
+	dim as integer x0,y0
+    dim as integer x1,y1
+    dim as integer xscan, yscan
+    
+    x0 = body.p.x() - anim.getWidth() * 0.5 - 8
+    if state <> JUMPING then
+		y0 = body.p.y() - anim.getHeight() * 0.5 - 16
+		y1 = y0 + anim.getHeight() - 16
+	else
+		y0 = body.p.y() - anim.getHeight() * 0.5 + 8
+		y1 = body.p.y() + anim.getHeight() * 0.5 - 20
+	end if
+    
+    x1 = x0 + anim.getWidth() '+ 16
+    x0 /= 16
+    y0 /= 16
+    x1 /= 16
+    y1 /= 16
+    if x0 < 0 then
+        x0 = 0
+    elseif x0 >= level_parent->getWidth() then
+        x0 = level_parent->getWidth() - 1
+    end if
+    if x1 < 0 then
+        x1 = 0
+    elseif x1 >= level_parent->getWidth() then
+        x1 = level_parent->getWidth() - 1
+    end if 
+    if y0 < 0 then
+        y0 = 0
+    elseif y0 >= level_parent->getHeight() then
+        y0 = level_parent->getHeight() - 1
+    end if
+    if y1 < 0 then
+        y1 = 0
+    elseif y1 >= level_parent->getHeight() then
+        y1 = level_parent->getHeight() - 1
+    end if
+    for yscan = y0 to y1
+        for xscan = x0 to x1
+            if level_parent->getCollisionBlock(xscan, yscan).cModel = 57 then
+                return 1
+            end if
+        next xscan
+    next yscan
+    return 0
+end function 
+   
 function Player.onLadder() as integer
     dim as integer x0,y0
     dim as integer x1,y1
@@ -116,6 +176,7 @@ sub Player.explosionAlert(p as Vector2D)
 		kickback = (70 - mag) / 70
 		body.v = body.v - ((expM / mag) * kickback) * 250
 		health -= kickback * 100
+		harmedFlashing = 24
 	end if
 end sub
 
@@ -133,8 +194,13 @@ dim as Vector2D expM
 	if mag < 70 then
 		kickback = (70 - mag) / 70
 		body.v = body.v - ((expM / mag) * kickback) * 100
-		health -= amount
 	end if
+	health -= amount
+	harmedFlashing = 24
+end sub
+
+sub Player.centerToMap(byref p as Vector2D)
+	body.p = p - Vector2D(0, body.r)
 end sub
 
 sub Player.processControls(dire as integer, jump as integer,_
@@ -356,7 +422,10 @@ sub Player.processControls(dire as integer, jump as integer,_
 		gsp->centerCamera(body.p)
 		pendingSwitch = 0
 	end if
+	
+	if onSpikes() = 1 then harm(Vector2D(-1000,-1000), 1)
     
+    if harmedFlashing > 0 then harmedFlashing -= 1
     anim.step_animation()
     lastUps = ups
     lastFire = fire

@@ -154,6 +154,9 @@ end type
 
 '------- fields to fill out ----------
 dim as zstring * 128 map_name
+dim as zstring * 128 music_file
+dim as ushort default_x
+dim as ushort default_y
 dim as ushort snowfall
 dim as ushort map_width, map_height
 dim as ushort N_tilesets, N_layers, N_objects
@@ -502,6 +505,12 @@ do
                         if left(lcase(item_content), 2) = "on" then
                             snowfall = 1
                         end if
+                    elseif left(lcase(item_tag), 13) = "default start" then
+                        split item_content,,,pieces()
+                        default_x = val(pieces(0))
+                        default_y = val(pieces(1))
+                    elseif left(lcase(item_tag), 5) = "music" then
+                        music_file = item_content
                     end if
                 elseif propertyType = 3 then
                     select case objects(N_objects - 1).object_type
@@ -1057,6 +1066,9 @@ put #f,,map_name
 put #f,,map_width
 put #f,,map_height
 put #f,,snowfall
+put #f,,default_x
+put #f,,default_y
+put #f,,music_file
 N_tilesets -= 1
 put #f,,N_tilesets
 N_tilesets += 1

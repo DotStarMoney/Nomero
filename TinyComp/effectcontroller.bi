@@ -14,6 +14,8 @@ enum EffectControllerType_e
     DRIP             = 3
     ONE_SHOT_SMOKE   = 4
     ONE_SHOT_EXPLODE = 5
+    OPEN_DOOR        = 6
+    ACTIVE_SPEAKER   = 7
 end enum
 
 type ObjectEffect_t

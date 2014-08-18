@@ -21,7 +21,9 @@ constructor GameSpace()
     movingFrmAvg = 0.016
     vibcount = 0
 
-
+	gamephase = 0
+	pieces_N = 0
+	pieces = 0
 	
     lvlData.init(@graphicFX)
     lvlData.setLink(link)
@@ -36,10 +38,6 @@ constructor GameSpace()
     spy.body.r = 18
     spy.body.m = 5
 
-    spy.body.p = Vector2D(1200,200)
-
-
-    camera = spy.body.p
                        
     spy.body_i = world.addBody(@(spy.body))
     spy.body.friction = 2
@@ -51,12 +49,17 @@ constructor GameSpace()
     
     projectiles.setEffectsGenerator(@effects)
     
-    hud_image = imagecreate(154, 50)
+    hud_image = imagecreate(154, 65)
 	bload "hud.bmp", hud_image
 
     FSOUND_Init(44100, 3, 0)
-    music = FSOUND_Stream_Open("PurovskyDistrict.ogg", FSOUND_LOOP_NORMAL, 0, 0 ) 
-    'FSOUND_Stream_Play 1, music
+    music = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(), FSOUND_LOOP_NORMAL, 0, 0 ) 
+    FSOUND_Stream_Play 1, music
+    
+    spy.centerToMap(lvlData.getDefaultPos())
+    lastSpawn = spy.body.p
+    camera = spy.body.p
+    lastMap = command(1)
     
     backgroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     backgroundSnow.setFreq(3, 3)
@@ -220,13 +223,17 @@ sub GameSpace.step_draw()
 			if spy.chargeFlicker < 4 then
 				line scnbuff, (17, 19)-(117, 22), &hff0000, BF
 			else
-				line scnbuff, (17, 19)-(117, 22), &h00ffff, BF
+				line scnbuff, (17, 19)-(117, 22), &hffff00, BF
 			end if
 		else
 			put scnbuff, (17, 19), hud_image, (9, 15)-(spy.charge + 9, 17), TRANS
 		end if
 	end if
-	put scnbuff, (8,8), hud_image, (0,0)-(151,14), TRANS
+	if spy.beingHarmed() > 0 then
+		put scnbuff, (8,8), hud_image, (0,50)-(151,64), TRANS
+	else
+		put scnbuff, (8,8), hud_image, (0,0)-(151,14), TRANS
+	end if
 	
 	drawStringShadow(scnbuff, 144, 11, str(spy.bombs), rgb(200,200,200))
 
@@ -327,7 +334,7 @@ sub GameSpace.switchRegions(ls as LevelSwitch_t)
 end sub     
 sub GameSpace.performSwitch(ls as LevelSwitch_t)
 	isSwitching = -1
-	projectiles.flush()
+	
 	lvlData.load(ls.fileName)
     world.setBlockData(lvlData.getCollisionLayerData(),_
                        lvlData.getWidth(), lvlData.getHeight(),_

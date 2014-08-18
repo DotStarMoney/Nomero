@@ -59,6 +59,9 @@ type Level
         declare function usesSnow() as integer
         declare function mustReconnect() as integer
         
+        declare function getCurrentMusicFile() as string
+        declare function getDefaultPos() as Vector2D
+        
     private:
         declare sub putDispatch(scnbuff as integer ptr,_
                                 block as Level_VisBlock,_
@@ -75,6 +78,9 @@ type Level
         dim as ushort lvlHeight
         dim as ushort snowfall
         dim as objectLink link
+        dim as string loadedMusic
+        dim as ushort default_x
+        dim as ushort default_y
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum

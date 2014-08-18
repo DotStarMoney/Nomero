@@ -6,7 +6,10 @@ return {
   height = 20,
   tilewidth = 16,
   tileheight = 16,
-  properties = {},
+  properties = {
+    ["default start"] = "28, 8",
+    ["music"] = "TestTheme.ogg"
+  },
   tilesets = {
     {
       name = "BIG Compilation",

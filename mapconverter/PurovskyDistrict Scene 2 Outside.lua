@@ -7,6 +7,8 @@ return {
   tilewidth = 16,
   tileheight = 16,
   properties = {
+    ["default start"] = "5, 41",
+    ["music"] = "PurovskyDistrict.ogg",
     ["snow"] = "on"
   },
   tilesets = {

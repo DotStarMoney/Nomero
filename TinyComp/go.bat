@@ -1,1 +1,1 @@
-Nomero "PurovskyDistrict Scene 2 Outside.map"
+Nomero "PurovskyDistrict Scene 1 Outside.map"

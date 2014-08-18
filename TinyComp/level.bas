@@ -625,6 +625,8 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
 
 	link.dynamiccontroller_ptr->explosionAlert(Vector2D(x,y))
 	link.player_ptr->explosionAlert(Vector2D(x,y))
+	
+	
 
 	for ys = tl_y to br_y
 		for xs = tl_x to br_x
@@ -794,6 +796,15 @@ sub level.flush()
     #endif
 end sub
 
+function Level.getCurrentMusicFile() as string
+	return loadedMusic
+end function
+
+function Level.getDefaultPos() as Vector2D
+	return Vector2D(default_x * 16, default_y * 16)
+end function
+
+
 sub level.load(filename as string)
     dim as integer f, i, q, j, s, x, y, xscan, yscan, skipCheck
     dim as TinyBlock block
@@ -838,6 +849,12 @@ sub level.load(filename as string)
     get #f,,lvlWidth
     get #f,,lvlHeight
     get #f,,snowfall
+    get #f,,default_x
+    get #f,,default_y
+    get #f,,strdata
+    
+    loadedMusic = strdata
+    
     get #f,,tilesets_N
     if tilesets_N > 0 then
 		tilesets = new Level_Tileset[tilesets_N]

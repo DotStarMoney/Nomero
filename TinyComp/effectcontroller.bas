@@ -85,7 +85,21 @@ end sub
 sub EffectController.drawEffects(scnbuff as integer ptr,_
                                  camera as Vector2D,_
                                  inRangeSet as orderType)
-                                
+	dim as any ptr ptr effect_list
+    dim as integer effect_N, i
+    dim as ObjectEffect_t ptr tempObj_
+    dim as Vector2D a, b
+    a = camera - Vector2D(SCRX, SCRY) * 0.5
+    b = camera + Vector2D(SCRX, SCRY) * 0.5
+    
+    effect_N = effectContainer.search(a, b, effect_list)
+    if effect_N > 0 then
+        for i = 0 to effect_N - 1
+            tempObj_ = effect_list[i]
+            drawEffect(*tempObj_)
+        next i
+        deallocate(effect_list)
+    end if                               
 end sub
 
 function EffectController.processEffect(byref effect_p as ObjectEffect_t) as integer
@@ -159,5 +173,7 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
 end function
 
 sub EffectController.drawEffect(effect_p as ObjectEffect_t)
-
+	
+	
+	
 end sub

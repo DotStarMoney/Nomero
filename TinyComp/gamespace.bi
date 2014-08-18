@@ -40,9 +40,15 @@ type GameSpace
         declare sub step_draw()
         declare sub step_process()
         
+        as integer gamePhase
+        as integer ptr pieces
+        as integer pieces_N
+        
         as integer ptr hud_image
         
         as integer vibCount
+        as Vector2D lastSpawn
+        as string lastMap
         
         as OneShotEffects effects
         as ProjectileCollection projectiles
