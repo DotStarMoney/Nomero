@@ -1,1 +1,1 @@
-fbc -x Nomera.exe -exx -m main *.bas
+fbc -s gui -x Nomera.exe -m main *.bas

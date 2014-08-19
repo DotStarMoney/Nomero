@@ -43,6 +43,8 @@ do
 	
 	if fadeIn > 200 then
 		drawstringshadow scnbuff, SCRX*0.5 - 90, 324, "Press any key to play!", iif(flippy <= 4, &hffffff, rgb(0,128,255))
+		drawstringshadow scnbuff, SCRX*0.5 - 100, 448, "A game by Christopher Brown,",&hffffff
+		drawstringshadow scnbuff, SCRX*0.5 - 150, 464, "with artwork and levels by Elliott Hirsch", &hffffff
 	end if
 	flippy = (flippy + 1) mod 10
 	sync()
