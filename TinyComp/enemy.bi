@@ -6,7 +6,7 @@
 #include "level.bi"
 #include "animation.bi"
 #include "projectilecollection.bi"
-
+#include "objectlink.bi"
 
 enum EnemyPhysicalState
     E_JUMPING
@@ -36,7 +36,7 @@ type Enemy
         declare constructor
         declare sub setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr,_
                               gs as any ptr, ply as Player_ ptr)
-                              
+        declare sub setLink(link_ as objectLink)
         declare function process(t as double) as integer
         declare sub loadType(type_ as EnemyType)
         declare sub drawEnemy(scnbuff as uinteger ptr)
@@ -61,7 +61,7 @@ type Enemy
 		declare sub processControls(dire as integer, jump as integer,_
 								    ups as integer, fire as integer,_
 								    shift as integer, t as double)
-								    
+		as objectLink link    
 		as EnemyType enemy_type
 		as EnemeyThoughtState thought
         as any ptr game_parent

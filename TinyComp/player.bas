@@ -46,6 +46,11 @@ sub Player.setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollecti
     game_parent = gs
 end sub
 
+sub Player.setLink(link_ as objectLink)
+	link = link_
+end sub
+
+
 sub Player.loadAnimations(filename as string)
     anim.load(filename)
 end sub
@@ -179,6 +184,7 @@ sub Player.explosionAlert(p as Vector2D)
 		body.v = body.v - ((expM / mag) * kickback) * 250
 		health -= kickback * 100
 		harmedFlashing = 24
+		link.soundeffects_ptr->playSound(SND_HURT)
 	end if
 end sub
 
@@ -210,7 +216,7 @@ sub Player.processControls(dire as integer, jump as integer,_
                            shift as integer, t as double)
     dim as Vector2D gtan
     dim as double curSpeed, oSpeed
-    dim as integer addSpd, ptype
+    dim as integer addSpd, ptype, spikes
     dim as LevelSwitch_t ls
     dim as GameSpace ptr gsp
 	gsp = cast(GameSpace ptr, game_parent)
@@ -257,6 +263,10 @@ sub Player.processControls(dire as integer, jump as integer,_
         gtan = parent->getGroundingNormal(body_i, Vector2D(0,-1), Vector2D(dire,0), this.groundDot)
         gtan = gtan.perp()   
         if jumpHoldFrames = 0 then state = GROUNDED
+		if lastState <> GROUNDED andAlso lastVel.magnitude() > 300 andAlso landedSFXFrames = 0 then
+			landedSFXFrames = 8
+			link.soundeffects_ptr->playSound(SND_LAND)
+		end if
 
         curSpeed = gtan * this.body.v
         oSpeed = curSpeed
@@ -361,6 +371,7 @@ sub Player.processControls(dire as integer, jump as integer,_
     if jump = 1 and lastJump = 0 then
         if freeJump > 0 and isJumping = 0 then
             state = JUMPING
+            link.soundeffects_ptr->playSound(SND_JUMP)
             isJumping = 1
             jumpBoostFrames = this.boostFrames
             if facing = 0 then 
@@ -389,6 +400,9 @@ sub Player.processControls(dire as integer, jump as integer,_
     end if
     
     if fire = 1 andAlso bombs > 0 then 
+		if charge = 99 then
+			link.soundeffects_ptr->playSound(SND_FULLCHARGE)
+		end if
 		charge += 1
 		if charge >= 100 then charge = 100
 	else
@@ -399,6 +413,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 	if fire = 0 andAlso lastFire = 1 then
 		if bombs > 0 then
 			proj_parent->create(this.body.p, this.body.v + Vector2D((facing * 2 - 1) * charge * 4, -200))
+			link.soundeffects_ptr->playSound(SND_THROW)
 			bombs -= 1
 			charge = 0
 		end if
@@ -416,6 +431,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 			else
 				if (ups = 1) andAlso (lastUps = 0) andAlso (state = GROUNDED) then				
 					switch(ls)
+					link.soundeffects_ptr->playSound(SND_DOOR)
 				end if
 			end if
 		end if
@@ -426,15 +442,22 @@ sub Player.processControls(dire as integer, jump as integer,_
 		pendingSwitch = 0
 	end if
 	
-	if onSpikes() = 1 then 
+	spikes = onSpikes()
+	if spikes = 1 then 
 		harm(Vector2D(-1000,-1000), 1)
-	elseif onSpikes() = 2 then
+	elseif spikes = 2 then
 		harm(Vector2D(-1000,-1000), 100)
 	end if
-    
+	if lastSpikes = 0 andAlso spikes <> 0 then
+		link.soundeffects_ptr->playSound(SND_HURT)
+	end if
+    if landedSFXFrames > 0 then landedSFXFrames -= 1
     if harmedFlashing > 0 then harmedFlashing -= 1
     anim.step_animation()
     lastUps = ups
     lastFire = fire
+    lastSpikes = onSpikes() 
+    lastState = state
+    lastVel = body.v
 end sub
 

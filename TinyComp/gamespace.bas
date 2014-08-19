@@ -18,20 +18,27 @@ constructor GameSpace()
     link.oneshoteffects_ptr = @effects
     link.dynamiccontroller_ptr = @dynControl
     link.effectcontroller_ptr = @graphicFX
+    link.soundeffects_ptr = @soundFX
     
+    graphicFX.setLink(link)
     triggers.setLink(link)
+    soundFX.setLink(link)
+    soundFX.init()
+    effects.setLink(link)
+    spy.setLink(link)
     
     movingFrmAvg = 0.016
     vibcount = 0
-
-	
+	lockAction = 0
+	winStatus = 0
     lvlData.init(@graphicFX)
     lvlData.setLink(link)
     lvlData.load(command(1))
     world.setBlockData(lvlData.getCollisionLayerData(),_
                        lvlData.getWidth(), lvlData.getHeight(),_
                        16.0)
-                  
+    fadeoutTex = 0
+    bailFrame = 0         
     dynControl.setLink(link)
     graphicFX.setParent(@effects, @projectiles)
     
@@ -55,12 +62,12 @@ constructor GameSpace()
 	currentMusic = 0
     music(0) = 0
     music(1) = 0
-    FSOUND_Init(44100, 3, 0)
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
     FSOUND_Stream_Play currentMusic, music(currentMusic)
     FSOUND_SetVolumeAbsolute(currentMusic, 255)
+        
     switchTracks = 0
     
     spy.centerToMap(lvlData.getDefaultPos())
@@ -94,13 +101,19 @@ destructor GameSpace
     imagedestroy scnbuff
 end destructor
         
+sub GameSpace.setMusicVolume(v as integer)
+	FSOUND_SetVolumeAbsolute currentMusic, v
+end sub
+        
 function GameSpace.go() as integer
     dim as single startTime, totalTime
     dim as integer stallTime
     do
         startTime = timer
         cls
-        step_draw()
+        screenlock
+			step_draw()
+		screenunlock
         step_input()
         step_process()
         
@@ -241,7 +254,21 @@ sub GameSpace.step_draw()
 		line scnbuff, (0, SCRY - 1)-(SCRX - 1, SCRY - switchFrame - 1), 0, BF
     end if
     
+    triggers.draw_(scnbuff)
     
+    if shouldBail > 0 then
+		if fadeoutTex = 0 then 
+			fadeoutTex = imagecreate(SCRX, SCRY)
+			if shouldBail = 1 then
+				line fadeoutTex,(0,0)-(639, 479),&hffffff, BF
+			else
+				line fadeoutTex,(0,0)-(639, 479),&h606060, BF
+			end if
+		end if
+		put scnbuff, (0,0), fadeoutTex, ALPHA, min(255, bailFrame+1)
+		bailFrame += 3
+		
+	end if
       
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
@@ -284,8 +311,10 @@ sub GameSpace.step_process()
     
     dynControl.process(0.01667)
     
-	if isSwitching <> 1 then
-		spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.01667)
+	if isSwitching <> 1 andAlso lockAction <> 1 then
+    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.01667)
+    elseif lockAction = 1 then
+    	spy.processControls(0, 0, 0, 0, 0, 0.01667)
     end if
     
     if lvlData.usesSnow() = 1 then 
@@ -331,8 +360,12 @@ sub GameSpace.step_process()
 			end if
 		end if
     end if
-    
-    
+  
+	if bailFrame > 255 then
+		doGameEnd()
+	end if
+  
+  
     if isSwitching = 0 then
 		#ifdef DEBUG
 			world.step_time(0.01667)
@@ -343,6 +376,32 @@ sub GameSpace.step_process()
 		#endif
 	end if
    
+end sub
+sub GameSpace.doGameEnd()
+	#macro sync()
+		screenlock	
+			scale2sync scnbuff
+		screenunlock
+		flip
+	#endmacro
+	window screen (0,0)-(SCRX-1,SCRY-1)
+	if winstatus = 0 then
+		line scnbuff,(0,0)-(SCRX-1,SCRY-1),&h606060,BF
+		sync()
+		stall(1000)
+		drawstringshadow scnbuff, SCRX * 0.5 - 80, SCRY*0.5 - 8, "THANK YOU FOR PLAYING", &hffffff
+		sync()
+	else
+		line scnbuff,(0,0)-(SCRX-1,SCRY-1),&hffffff,BF
+		sync()
+		stall(1000)
+		drawstringshadow scnbuff, SCRX * 0.5 - 60, SCRY*0.5 - 8, "CONGRATULATIONS", &h808080
+		sync()
+	end if
+	do
+		if multikey(1) then end
+	loop
+
 end sub
 sub GameSpace.centerCamera(c as Vector2D)  
 	camera = c

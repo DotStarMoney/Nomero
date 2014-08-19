@@ -2,6 +2,7 @@
 #include "tinyspace.bi"
 #include "enemy.bi"
 #include "utility.bi"
+#include "soundeffects.bi"
 
 #define N_OBJ_TYPES 3
 
@@ -141,6 +142,8 @@ sub DynamicController.addEnemy(sz as SpawnZone_t)
     newEnemy->body.friction = 2        
     newEnemy->body_i = link.tinyspace_ptr->addBody(@(newEnemy->body))
     
+    newEnemy->setLink(link)
+    
     
        
 	dobj.object_type = OBJ_ENEMY
@@ -198,7 +201,7 @@ sub DynamicController.process(t as double)
 						link.oneshoteffects_ptr->create(cast(Enemy ptr, dobj->data_)->body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),SMOKE,Vector2D(0,-2))
 						link.projectilecollection_ptr->create(cast(Enemy ptr, dobj->data_)->body.p, Vector2D(rnd*2 - 1, -1) * (300 + rnd*300), HEART)
 					next i
-					
+					link.soundeffects_ptr->playSound(SND_DEATH)
 					link.tinyspace_ptr->removeBody(cast(Enemy ptr, dobj->data_)->body_i)
 					delete (cast(Enemy ptr, dobj->data_))
 					objects.rollRemove()

@@ -78,6 +78,10 @@ sub Enemy.loadType(type_ as EnemyType)
 	anim.play()
 end sub
 
+sub Enemy.setLink(link_ as objectLink)
+	link = link_
+end sub
+
 sub Enemy.drawEnemy(scnbuff as uinteger ptr)
     anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
     if thought <> IDLE then
@@ -179,10 +183,12 @@ function Enemy.process(t as double) as integer
 			thought = IDLE
 		elseif alertingFrames > lazyness * 1.5 then
 			thought = PURSUIT
+			link.soundeffects_ptr->playSound(SND_ALARM)
 			alertAnim.hardSwitch(1)
 		end if
 		if (viewM.magnitude() < TOO_CLOSE_DIST) andAlso (dist = -1) then
 			thought = PURSUIT
+			link.soundeffects_ptr->playSound(SND_ALARM)
 			alertAnim.hardSwitch(1)
 		end if
 	case PURSUIT
@@ -251,6 +257,7 @@ function Enemy.process(t as double) as integer
 			if burstFrames = 0 then
 				if burstShots > 1 then
 					burstShots -= 1
+					link.soundeffects_ptr->playSound(SND_SHOOT)
 					proj_parent->create(body.p - Vector2D(0,20) + Vector2D(10,0) * ((facing*2)-1), viewM * 500, BULLET)
 				elseif burstShots = 1 then
 					burstTimer = 5
@@ -302,6 +309,7 @@ sub Enemy.explosionAlert(p as Vector2D)
 	mag = expM.magnitude()
 	if mag < 200 then
 		if thought <> PURSUIT then
+			link.soundeffects_ptr->playSound(SND_ALARM)
 			thought = PURSUIT
 			takeJump = 1
 			alertingFrames = lazyness*1.5

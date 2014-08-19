@@ -10,6 +10,7 @@ type oneshoteffects_ 		as oneshoteffects
 type effectcontroller_ 		as effectcontroller
 type projectilecollection_ 	as projectilecollection
 type dynamiccontroller_ 	as dynamiccontroller
+type soundeffects_			as soundeffects
 
 
 type ObjectLink
@@ -21,6 +22,7 @@ type ObjectLink
 	as oneshoteffects_ ptr       oneshoteffects_ptr
 	as effectcontroller_ ptr     effectcontroller_ptr
 	as dynamiccontroller_ ptr    dynamiccontroller_ptr
+	as soundeffects_ ptr		 soundeffects_ptr
 end type
 
 

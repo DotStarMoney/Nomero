@@ -8,7 +8,7 @@
 'transition screens
 'loop music for mountain
 
-
+'sound on switch volume is not shut off
 'mode 7 layers?
 'fix bug in seqfile
 'improve animation class

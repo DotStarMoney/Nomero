@@ -6,6 +6,7 @@
 #include "level.bi"
 #include "animation.bi"
 #include "projectilecollection.bi"
+#include "objectlink.bi"
 
 #define LADDER_GRAB_EDGE_LENGTH 24
 #define CLIMBING_SPEED 82
@@ -23,6 +24,7 @@ type Player
         declare constructor
         declare sub setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr,_
                               gs as any ptr)
+        declare sub setLink(link_ as objectlink)
         declare sub processControls(dire as integer, jump as integer,_
                                     ups as integer, fire as integer,_
                                     shift as integer, t as double)
@@ -61,11 +63,14 @@ type Player
         declare function onSpikes() as integer
         declare sub switch(ls as LevelSwitch_t)
         
+        as objectlink link
+        as integer lastSpikes
         as any ptr game_parent
         as integer groundSwitchAnimFrames
         as integer groundedFrames
         as integer lastUps
         as PlayerState state
+        as PlayerState lastState
         as TinySpace ptr parent
         as Level ptr level_parent
         as ProjectileCollection ptr proj_parent
@@ -79,6 +84,8 @@ type Player
         as integer jumpHoldFrames
         as integer pendingSwitch
         as LevelSwitch_t pendingSwitchData
+        as Vector2D lastVel
+        as integer landedSFXFrames
 End type
 
 #endif

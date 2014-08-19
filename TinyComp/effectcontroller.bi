@@ -6,6 +6,7 @@
 #include "projectilecollection.bi"
 #include "vector2d.bi"
 #include "hash2d.bi"
+#include "objectlink.bi"
 
 enum EffectControllerType_e
     RADAR_PULSE      	= 0
@@ -40,7 +41,7 @@ type EffectController
         declare destructor()
         declare sub setParent(ose_ptr as OneShotEffects ptr, _
                               pc_ptr as ProjectileCollection_ ptr)
-                         
+        declare sub setLink(link_ as objectLink)            
         declare sub create(effect_name as string,_
                            effect_type as EffectControllerType_e,_
                            shape as shapeType,_
@@ -67,6 +68,7 @@ type EffectController
         as OneShotEffects ptr        oneshots
         as ProjectileCollection_ ptr particles
         as Hash2D                    effectContainer
+        as objectLink	link
 
 end type
 

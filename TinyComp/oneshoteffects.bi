@@ -3,6 +3,7 @@
 
 #include "vector2d.bi"
 #include "animation.bi"
+#include "objectlink.bi"
 
 enum EffectType_
     EXPLODE
@@ -38,8 +39,10 @@ type OneShotEffects
                            d_ as Vector2D = Vector2D(0,0), s_ as integer = 1) 
         declare sub proc_effects(t as double)
         declare sub draw_effects(scnbuff as uinteger ptr)
+        declare sub setLink(link_ as objectLink)
     private:
         as EffectNode_t ptr head_
+        as objectLink	link
         as integer          numNodes
         as any ptr parent
         as level_ ptr level_parent

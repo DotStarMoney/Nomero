@@ -6,6 +6,7 @@
 #include "dynamiccontroller.bi"
 #include "projectilecollection.bi"
 #include "player.bi"
+#include "soundeffects.bi"
 
 dim as integer ptr Level.falloutTex = 0
 #ifdef DEBUG

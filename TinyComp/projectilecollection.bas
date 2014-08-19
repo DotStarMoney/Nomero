@@ -125,7 +125,8 @@ sub ProjectileCollection.checkDynamicCollision(p_ as Vector2D, size_ as Vector2D
 				effects->create(cur.body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
 				effects->create(cur.body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
 				effects->create(cur.body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
-				
+				link.soundeffects_ptr->playSound(SND_EXPLODE)
+
 				for i = 1 to 5
 					create(cur.body.p, Vector2D(rnd*2 - 1, rnd*2 - 1) * (1 + rnd*700), DETRITIS)
 				next i
@@ -187,6 +188,7 @@ sub ProjectileCollection.proc_collection(t as double)
 			if cur.body.didCollide > 0 then 
 				deleteMe = 1
 				effects->create(cur.body.p, WATER_SPLASH)
+				link.soundeffects_ptr->playSound(SND_DRIP)
 			end if
 		case BULLET
 			link.player_ptr->getBounds(plyr_p, plyr_sz)
@@ -196,6 +198,7 @@ sub ProjectileCollection.proc_collection(t as double)
 						 plyr_sz.x(), plyr_sz.y()) = 1 then
 				link.player_ptr->harm(cur.body.p, 10)
 				deleteMe = 1
+				link.soundeffects_ptr->playSound(SND_HURT)
 			end if
 			if cur.body.didCollide > 0	then 
 				deleteMe = 1
@@ -207,7 +210,8 @@ sub ProjectileCollection.proc_collection(t as double)
                 effects->create(cur.body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
                 effects->create(cur.body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
                 effects->create(cur.body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
-                
+                link.soundeffects_ptr->playSound(SND_EXPLODE)
+
                 for i = 1 to 5
                     create(cur.body.p, Vector2D(rnd*2 - 1, rnd*2 - 1) * (1 + rnd*700), DETRITIS)
                 next i

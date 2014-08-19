@@ -16,6 +16,7 @@
 #include "leveltypes.bi"
 #include "dynamiccontroller.bi"
 #include "fbgdtriggerdispatch.bi"
+#include "soundeffects.bi"
 
 #define FPS_TARGET 60
 
@@ -33,24 +34,33 @@ type GameSpace
         declare function getCurrentFileName() as string
         declare function getLastPosition() as Vector2D
         declare sub hardSwitchMusic(filename as string)
+        declare sub setMusicVolume(v as integer)
         
         '---------- screen functions -------------
         
         declare sub vibrateScreen()
         as Vector2D lastSpawn
         as string lastMap
+        as integer lockAction
+        as integer winStatus
+        as integer shouldBail
+        as integer bailFrame
+        as Vector2D  camera
     private:
 		declare sub performSwitch(ls as LevelSwitch_t)
         declare sub step_input()
         declare sub step_draw()
         declare sub step_process()
+        declare sub doGameEnd()
         
         as integer ptr hud_image
         
         as integer vibCount
         as string curMusic
         as integer switchTracks
+        as integer ptr fadeoutTex
         
+        as SoundEffects soundfx
         as FBGDTriggerDispatch triggers
         as OneShotEffects effects
         as ProjectileCollection projectiles
@@ -63,7 +73,6 @@ type GameSpace
         as TinySpace world
         as Player    spy
         as Level     lvlData
-        as Vector2D  camera
         as integer   	 isSwitching
         as integer   	 switchFrame
         as LevelSwitch_t pendingSwitch

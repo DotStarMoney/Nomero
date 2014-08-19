@@ -2,6 +2,7 @@
 #include "projectilecollection.bi"
 #include "oneshoteffects.bi"
 #include "utility.bi"
+#include "soundeffects.bi"
 
 constructor EffectController()
     ''
@@ -10,6 +11,10 @@ end constructor
 destructor EffectController()
     flush()
 end destructor
+
+sub EffectController.setLink(link_ as objectlink)
+	link = link_
+end sub	
 
 sub EffectController.flush()
     dim as ObjectEffect_t ptr obj_ptr
@@ -197,6 +202,7 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
 			effect_p.counter -= 1
 			if effect_p.counter = 1 then
 				oneshots->create(effect_p.p + effect_p.size*0.5, FALLOUT_EXPLODE, Vector2D(0,0))
+				link.soundeffects_ptr->playSound(SND_EXPLODE)
 				return 1
 			end if
 		end if

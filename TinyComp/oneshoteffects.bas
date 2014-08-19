@@ -2,6 +2,7 @@
 #include "gamespace.bi"
 #include "debug.bi"
 #include "level.bi"
+#include "soundeffects.bi"
 
 
 constructor OneShotEffects
@@ -91,6 +92,10 @@ end sub
 sub OneShotEffects.setParent(par as any ptr, lev as Level ptr)
     parent = par
     level_parent = lev
+end sub
+
+sub OneShotEffects.setLink(link_ as objectLink)
+	link = link_
 end sub
 
 sub OneShotEffects.draw_effects(scnbuff as uinteger ptr)

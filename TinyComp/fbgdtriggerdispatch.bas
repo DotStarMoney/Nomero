@@ -6,21 +6,32 @@
 
 constructor FBGDTriggerDispatch
 	dim as integer i
-	phase = 3
+	phase = 0
 	for i = 0 to ubound(dPoints)
 		dPoints(i) = 0
 	next i
 	completed = 0
+	setOnceOxy = 0
 end constructor
 
 sub FBGDTriggerDispatch.setLink(link_ as objectLink)
 	link = link_
 end sub
 
+sub FBGDTriggerDispatch.draw_(scnbuff as integer ptr)
+	if phase = 4 andAlso link.gamespace_ptr->shouldBail <> 1 then
+		
+		drawStringShadow(scnbuff, SCRX * 0.5 - 50, SCRY * 0.5 - 8,_
+						 "OXYGEN", &hffffff)
+		drawStringShadow(scnbuff, SCRX * 0.5 + 10, SCRY * 0.5 - 8,_
+						 str(int(oxygen / 10)), &hffffff)
+	end if
+end sub
+
 sub FBGDTriggerDispatch.process(t as double)
 	dim as LevelSwitch_t ls
 	dim as PortalType_t pt
-	dim as integer i
+	dim as integer i, vol
 	
 	if link.player_ptr->health <= 0 then
 		link.player_ptr->health = 100
@@ -30,6 +41,7 @@ sub FBGDTriggerDispatch.process(t as double)
 		end if
 		link.player_ptr->centerToMap(link.gamespace_ptr->getLastPosition())
 		link.player_ptr->harmedFlashing = 48
+		link.soundeffects_ptr->playSound(SND_DEATH)
 		if phase = 0 then
 			link.player_ptr->bombs = 10
 			link.player_ptr->facing = 1
@@ -57,6 +69,7 @@ sub FBGDTriggerDispatch.process(t as double)
 				dPoints(i) = 0
 			next i
 			completed = 0
+			link.player_ptr->bombs = 10
 		end if
 		
 		if link.level_ptr->getName() = "PurovskyDistrict Scene 2 Outside" then
@@ -113,6 +126,7 @@ sub FBGDTriggerDispatch.process(t as double)
 				dPoints(i) = 0
 			next i
 			completed = 0
+			link.player_ptr->bombs = 10
 		end if
 		
 		if link.level_ptr->getName() = "Mountain Level Scene 2" then
@@ -175,6 +189,7 @@ sub FBGDTriggerDispatch.process(t as double)
 				dPoints(i) = 0
 			next i
 			completed = 0
+			link.player_ptr->bombs = 10
 		end if
 		
 		
@@ -240,6 +255,7 @@ sub FBGDTriggerDispatch.process(t as double)
 	elseif phase = 3 then
 		
 		if link.level_ptr->getName() = "Space Level" then 
+			link.gamespace_ptr->setMusicVolume(0)
 		    link.gamespace_ptr->lastSpawn = link.level_ptr->getDefaultPos()
 			link.gamespace_ptr->lastMap = link.level_ptr->getName()
 			phase = 4
@@ -247,6 +263,8 @@ sub FBGDTriggerDispatch.process(t as double)
 				dPoints(i) = 0
 			next i
 			completed = 0
+			oxygen = 1000
+			link.player_ptr->bombs = 10
 		end if
 		
 		
@@ -309,7 +327,23 @@ sub FBGDTriggerDispatch.process(t as double)
 		end if
 		link.level_ptr->justLoaded = 0
 	elseif phase = 4 then
-		
+		if setOnceOxy = 0 then
+			setOnceOxy = 1
+			oxygen = 1000
+		end if
+		vol = (max(1300 - (link.player_ptr->body.p.x() + 200), 64.0) / 1300.0) * 255
+		link.gamespace_ptr->setMusicVolume(vol)
+		oxygen -= 1
+		if oxygen < 0 then oxygen = 0
+		if link.level_ptr->checkDestroyedBlocks(7, 13) then 
+			link.gamespace_ptr->setMusicVolume(0)
+			link.gamespace_ptr->winStatus = 1
+			link.gamespace_ptr->shouldBail = 1
+			link.gamespace_ptr->lockAction = 1
+		elseif oxygen <= 0 then
+			link.gamespace_ptr->shouldBail = 2
+			link.gamespace_ptr->lockAction = 1
+		end if
 	end if
 end sub
 

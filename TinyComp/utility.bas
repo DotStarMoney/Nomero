@@ -114,7 +114,7 @@ sub scale2sync(img as uinteger ptr)
     dim as integer w, h
     imageinfo img,w,h,,,pxlData
     scnptr = screenptr
-    screenlock
+   ' screenlock
         asm
                 mov         esi,        [pxlData]
                 mov         edi,        [scnptr]
@@ -183,7 +183,7 @@ sub scale2sync(img as uinteger ptr)
                 jnz         row_copy
         
         end asm
-    screenunlock
+    'screenunlock
 end sub
 
 
