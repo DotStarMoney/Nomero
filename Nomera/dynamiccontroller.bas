@@ -45,6 +45,7 @@ sub DynamicController.flush()
 	loop
 	spawnZones.flush()
 	
+	
 	objects.rollReset()
 	do
 		dynObj = objects.roll()
@@ -123,8 +124,7 @@ sub DynamicController.addEnemy(sz as SpawnZone_t)
 	newEnemy->setParent(link.tinyspace_ptr, link.level_ptr,_
 	                    link.projectilecollection_ptr,_
 	                    link.gamespace_ptr,_
-	                    link.player_ptr)
-	                 
+	                    link.player_ptr)            
 	select case objName
 	case "SOLDIER 1"
 		newEnemy->loadType(SOLDIER_1)
@@ -134,13 +134,12 @@ sub DynamicController.addEnemy(sz as SpawnZone_t)
 		newEnemy->loadType(BEAR)
 	end select
 	
-	
 	newEnemy->body.r = 18
     newEnemy->body.m = 5
     newEnemy->body.p = Vector2D(sz.p.x() + sz.size.x() * 0.5,_
                                 sz.p.y() + sz.size.y() - newEnemy->body.r)
     newEnemy->body.friction = 2        
-    newEnemy->body_i = link.tinyspace_ptr->addBody(@(newEnemy->body))
+	newEnemy->body_i = link.tinyspace_ptr->addBody(@(newEnemy->body))
     
     newEnemy->setLink(link)
     
@@ -149,6 +148,7 @@ sub DynamicController.addEnemy(sz as SpawnZone_t)
 	dobj.object_type = OBJ_ENEMY
 	dobj.data_ = newEnemy
 	objects.push_back(@dobj)
+	
 end sub
 
 sub DynamicController.addItem(sz as SpawnZone_t)
@@ -171,7 +171,6 @@ sub DynamicController.process(t as double)
 				szptr->isNew = 0
 				spawnOne = 1
 			end if
-			
 			'run despawn logic on enemy death flag (hasMember = 0)
 			
 			if spawnOne = 1 andAlso szptr->hasMember = 0 then
@@ -180,7 +179,7 @@ sub DynamicController.process(t as double)
 				case OBJ_ENEMY
 					addEnemy(*szptr)			
 				case OBJ_ITEM
-					addItem(*szptr)
+					'addItem(*szptr)
 				end select
 			end if
 		else
@@ -214,10 +213,13 @@ sub DynamicController.process(t as double)
 			exit do
 		end if
 	loop
+	
+	
 end sub
 
 sub DynamicController.drawDynamics(scnbuff as integer ptr)
 	dim as DynamicObjectType_t ptr dobj
+	
 	objects.rollReset()
 	do
 		dobj = objects.roll()
@@ -231,5 +233,6 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr)
 			exit do
 		end if
 	loop
+	
 end sub
 

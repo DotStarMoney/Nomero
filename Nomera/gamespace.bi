@@ -80,6 +80,8 @@ type GameSpace
         as integer   keypress(0 to 255)
         as uinteger ptr scnbuff
 		as double movingFrmAvg
+		as integer stallTime_mili
+		as double frameTime
 end type
         
         

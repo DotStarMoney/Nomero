@@ -1,6 +1,7 @@
 #include "tinyspace.bi"
 #include "utility.bi"
 #include "debug.bi"
+#include "printlog.bi"
 
 #define OWP_INDEX_START 56
 #define OWP_INDEX_END 70
@@ -815,12 +816,27 @@ sub TinySpace.traceRing(      x           as integer,_
 		segList(curIndx).a = a_pt
 		segList(curIndx).b = b_pt
 		segList(curIndx).tag = -1
-		curIndx += 1
+				
+		if (segList(startIndex).b.x() = segList(curIndx).a.x()) andAlso _
+		   (segList(startIndex).b.y() = segList(curIndx).a.y()) andAlso _
+		   (segList(startIndex).a.x() = segList(curIndx).b.x()) andAlso _
+		   (segList(startIndex).a.y() = segList(curIndx).b.y()) then
+		   
+		   segList(startIndex).a = segList(curIndx).a
+		   segList(startIndex).b = segList(curIndx).b
+		   #ifdef DEBUG
+				printlog "TRACERING:", 1
+				printlog "Swapping first and last owp..."
+		   #endif
+		else
+			curIndx += 1
+		end if
+		
 		
 		if curIndx = MAX_SEGS then exit sub
 		
 		#ifdef DEBUG
-			printlog "TRACERING:", 1
+			printlog "TRACERING: ", 1
 			printlog "writing 3, " & a_pt & ", " & b_pt
 		#endif
 		#ifdef DEBUG
@@ -866,8 +882,9 @@ end function
 
 function TinySpace.getBlock(xp as integer, yp as integer) as TinyBlock
     dim as TinyBlock ret
-    if (xp < roi_x0) orElse (xp >= roi_x1+1) orElse _
-       (yp < roi_y0) orElse (yp >= roi_y1+1) then
+    if (xp >= block_n_cols) orElse (yp >= block_n_rows) orElse _
+       (xp < roi_x0) orElse (xp >= roi_x1 + 1) orElse _
+       (yp < roi_y0) orElse (yp >= roi_y1 + 1) then
         ret.cModel = 0
         return ret
     end if
@@ -969,7 +986,7 @@ end sub
 function Tinyspace.raycast(p as Vector2D, v as Vector2D,_
                            byref in_pt as Vector2D) as double
     dim as integer scan_x, scan_y
-    dim as integer start_x, start_y
+    dim as integer start_x, start_y, skipSearch
     dim as integer end_x, end_y, i, noset
     dim as double  tempSwap, mag, j, j2, crss, curBestDist
     dim as Vector2D tl, br, testP
@@ -981,9 +998,10 @@ function Tinyspace.raycast(p as Vector2D, v as Vector2D,_
 	
 	segment_n = 0
 	noset = 1
-
+	
 	tl = p
 	br = p + v
+	
 	
 	if tl.x() > br.x() then
 		tempSwap = tl.x()
@@ -1006,63 +1024,80 @@ function Tinyspace.raycast(p as Vector2D, v as Vector2D,_
 	start_y = max(cint(tl.y()), 0)
 	end_x   = min(cint(br.x()), block_n_cols - 1)
 	end_y   = min(cint(br.y()), block_n_rows - 1)
-	roi_x0 = start_x
-	roi_y0 = start_y
-	roi_x1 = end_x
-	roi_y1 = end_y
-	dim as integer usedSpace(start_x to end_x, start_y to end_y)
 	
-	for scan_y = start_y to end_y
-		for scan_x = start_x to end_x
-			usedSpace(scan_x, scan_y) = 0
-		next scan_x
-	next scan_y
+	skipSearch = 0
+	if start_x >= end_x orElse end_x < start_x orElse _
+	   start_y >= end_y orElse end_y < start_y then
+	   skipSearch = 1
+	end if 
 	
-	for scan_y = start_y to end_y
-		for scan_x = start_x to end_x
-			if usedSpace(scan_x, scan_y) = 0 then
-				if getBlock(scan_x, scan_y).cModel <> EMPTY AndAlso _
-				   getBlock(scan_x, scan_y-1).cModel = EMPTY then
+	if skipSearch = 0 then
 		
-					traceRing(scan_x, scan_y, _
-							  segment(), segment_n, _
-							  usedSpace())
-				
+		roi_x0 = start_x
+		roi_y0 = start_y
+		roi_x1 = end_x
+		roi_y1 = end_y
+
+		redim as integer usedSpace(start_x to end_x, start_y to end_y)
+		
+		
+		for scan_y = start_y to end_y
+			for scan_x = start_x to end_x
+				usedSpace(scan_x, scan_y) = 0
+			next scan_x
+		next scan_y
+		
+		
+		
+		for scan_y = start_y to end_y
+			for scan_x = start_x to end_x
+				if usedSpace(scan_x, scan_y) = 0 then
+					
+					if getBlock(scan_x, scan_y).cModel <> EMPTY AndAlso _
+					   getBlock(scan_x, scan_y-1).cModel = EMPTY then
+						
+						traceRing(scan_x, scan_y, _
+								  segment(), segment_n, _
+								  usedSpace())
+						
+					end if
+					
 				end if
-			end if
-		next scan_x
-	next scan_y      
-	
-	for i = 0 to segment_n - 1
+			next scan_x
+		next scan_y  
 		
-		pt(0) = segment(i).a
-		vc(0) = (segment(i).b - segment(i).a)
-		magn(0) = vc(0).magnitude()
-		vc(0) = vc(0) / magn(0)
-		pt(1) = p
-		vc(1) = v
-		magn(1) = vc(1).magnitude
-		vc(1) = vc(1) / magn(1)
-		crss = vc(0).cross(vc(1))
-		if crss <> 0 then
 		
-			j = -(vc(0).cross(pt(1)) + pt(0).cross(vc(0))) / crss
-		
-			testP = (pt(1) + j * vc(1))
-			j2 = (testP - pt(0)) * vc(0)
-		
-			if (j >= 0) andAlso (j <= magn(1)) then
-				if (j2 >= 0) andAlso (j2 <= magn(0)) then
-					if noset = 1 orElse j < curBestDist then
-						noset = 0
-						curBestDist = j
-						in_pt = testP
+		for i = 0 to segment_n - 1
+			
+			pt(0) = segment(i).a
+			vc(0) = (segment(i).b - segment(i).a)
+			magn(0) = vc(0).magnitude()
+			vc(0) = vc(0) / magn(0)
+			pt(1) = p
+			vc(1) = v
+			magn(1) = vc(1).magnitude
+			vc(1) = vc(1) / magn(1)
+			crss = vc(0).cross(vc(1))
+			if crss <> 0 then
+			
+				j = -(vc(0).cross(pt(1)) + pt(0).cross(vc(0))) / crss
+			
+				testP = (pt(1) + j * vc(1))
+				j2 = (testP - pt(0)) * vc(0)
+			
+				if (j >= 0) andAlso (j <= magn(1)) then
+					if (j2 >= 0) andAlso (j2 <= magn(0)) then
+						if noset = 1 orElse j < curBestDist then
+							noset = 0
+							curBestDist = j
+							in_pt = testP
+						end if
 					end if
 				end if
-			end if
 
-		end if
-	next i
+			end if
+		next i
+	end if
 	
 	if noset = 0 then 
 		return curBestDist 
@@ -1100,7 +1135,7 @@ sub TinySpace.step_time(byval t as double)
     dim as Vector2D v_adj, f_total, f_adj, f_bias
     Redim as Vector2D normals(0)
     dim as Vector2D norm
-    dim as integer  skipCheck, normals_N 
+    dim as integer  skipCheck, normals_N, skipSearch
     
     dim as BlockEndpointData_t segment(0 to MAX_SEGS-1)
     dim as integer             segment_n
@@ -1120,7 +1155,6 @@ sub TinySpace.step_time(byval t as double)
         res_t = t
 
         f_total = c->f + Vector2D(0, c->m * gravity)
-        
         
         test_p = c->p
         tl = Vector2D(c->p.x() - c->r * c->r_rat, c->p.y() - c->r)
@@ -1143,364 +1177,378 @@ sub TinySpace.step_time(byval t as double)
         tl = tl * block_l
         br = br * block_l
 
-       
-        if start_x > end_x then
-			swap start_x, end_x
-		end if
-		if start_y > end_y then
-			swap start_y, end_y
-		end if
+		skipSearch = 0
+		if start_x >= end_x orElse end_x < start_x orElse _
+		   start_y >= end_y orElse end_y < start_y then
+		   skipSearch = 1
+		end if 
+		
+		
+		if skipSearch = 0 then
 
-        roi_x0 = start_x
-        roi_y0 = start_y
-        roi_x1 = end_x
-        roi_y1 = end_y
-        
-        segment_n = 0
- 
-        
-        redim as integer usedSpace(start_x to end_x, start_y to end_y)
-        
-        for scan_y = start_y to end_y
-            for scan_x = start_x to end_x
-                usedSpace(scan_x, scan_y) = 0
-            next scan_x
-        next scan_y
-        
-    
-        for scan_y = start_y to end_y
-            for scan_x = start_x to end_x
-                if usedSpace(scan_x, scan_y) = 0 then
-                    
-                    if getBlock(scan_x, scan_y).cModel <> EMPTY AndAlso _
-                       getBlock(scan_x, scan_y-1).cModel = EMPTY then
-            
-        
-                        traceRing(scan_x, scan_y, _
-                                  segment(), segment_n, _
-                                  usedSpace())
-                    
-                    end if
-                end if
-            next scan_x
-        next scan_y
-
-        'bug when interpen an owp, and collide with other object, engine bails... :(
-		#ifdef DEBUG
-			printlog "Found: " & str(segment_n) & ", segments."
-			for j = 0 to arbiters_n(i) - 1
-				printlog str(arbiters(i, j).a) & ", " & str(arbiters(i, j).b)
-			next j
-		#endif
-				
-        if segment_n > 0 andAlso c->noCollide = 0 then
-            res_t = t
-            firstCycle = 1
-            v_adj = Vector2D(0,0)
-            f_adj = Vector2D(0,0)
-            cur_t = res_t
-            lo_t = 0
-            hi_t = cur_t
-            skipCollisionCheck = 0
-            firstCollide = 0
-            resolutions = 0
-
-            while cur_t > 0 andAlso resolutions < (MAX_RESOLUTIONS+1)
-                firstStep = 0
-                iterate = 0
-                wrk = *c
-                cTarget = 0     
-                
-                for q = 0 to segment_n - 1
-					segment(q).tag = -1
-                next q
-        		refactorArbiters(i, segment(), segment_n)
-        
-                do
-                    interpen = 0
-                    contacting = 0
-                    numArbs = 0
-                    if skipCollisionCheck = 0 then
-                        for q = 0 to segment_n - 1
-                            #ifdef DEBUG
-                                line(segment(q).a.x(), segment(q).a.y())-(segment(q).b.x(), segment(q).b.y()), rnd*&hffffff
-                            #endif
+			roi_x0 = start_x
+			roi_y0 = start_y
+			roi_x1 = end_x
+			roi_y1 = end_y
+			
+			segment_n = 0
+			
+			redim as integer usedSpace(start_x to end_x, start_y to end_y)
+			for scan_y = start_y to end_y
+				for scan_x = start_x to end_x
+					usedSpace(scan_x, scan_y) = 0
+				next scan_x
+			next scan_y
+	  
+			for scan_y = start_y to end_y
+				for scan_x = start_x to end_x
+					if usedSpace(scan_x, scan_y) = 0 then
 						
-					
-							if lineCircleCollide(segment(q).a, segment(q).b,_
-												 wrk.p, wrk.r, _
-												 depth, norm, impulse) = 1 then   
-								
-								tempArbs(numArbs).a       = segment(q).a
-								tempArbs(numArbs).b       = segment(q).b
-								tempArbs(numArbs).depth   = depth
-								tempArbs(numArbs).impulse = impulse
-												
-								if segment(q).tag <> -1 then
-									tempArbs(numArbs).new_ = 0
-									tempArbs(numArbs).ignore = arbiters(i, segment(q).tag).ignore
-									#ifdef DEBUG
-										if tempArbs(numArbs).ignore = 1 then
-											printlog "Setting tempArb to ignore... " & norm & ", " & arbiters(i, segment(q).tag).a & ", " & arbiters(i, segment(q).tag).b
-										else
-											printlog "Found previous Arbiter... " & norm
-										end if
-									#endif									
-								else	
-									tempArbs(numArbs).new_ = 1
-									tempArbs(numArbs).ignore = 0
-									#ifdef DEBUG
-										printlog "Flagging new arbiter... " &  norm
-									#endif	
-								end if
-								if ((norm * impulse) > 0) andAlso (tempArbs(numArbs).ignore = 0) then 
-									if firstStep = 0 andAlso firstCollide = 1 then		
-										if tempArbs(numArbs).new_ = 1 then cTarget = 1 
-									end if
-								
-									if depth > MIN_DEPTH then
-										interpen = 1
-									elseif tempArbs(numArbs).new_ = 1 orElse cTarget = 0 then
-										contacting = 1
-									end if
-								else
-									tempArbs(numArbs).ignore = 1
-									#ifdef DEBUG
-										printlog "Ignoring arbiter... " & norm
-									#endif
-								end if
-								
-								numArbs += 1
-							end if
-                        next q 
-                        #ifdef DEBUG
-                            PRINTLOG "         " & skipCollisionCheck & " " & firstCollide, 1 
-                            PRINTLOG " " & firstStep & " " & contacting & " " & interpen & ", " & cTarget & "," & cur_t & "," & numArbs
-                            PRINTLOG "         Work p: " & wrk.p & " v: "& wrk.v & " v_adj: " & v_adj & " f_adj: " & f_adj
-                        #endif
-                        
-                        if firstCollide = 0 then
-                            ' check if we are already in resting contact
-                            #ifdef DEBUG
-                                PRINTLOG "On first collide"
-                            #endif
-                            if interpen = 0 and contacting = 1 then 
-                                cur_t = 0
-                                #ifdef DEBUG
-                                    PRINTLOG "Contacting on first frame, pre step"
-                                #endif
-                                exit do
-                            end if
-                        else
-                            if interpen = 1 then
-                                hi_t  = cur_t
-                                cur_t = (hi_t + lo_t) * 0.5
-                            else 
-                                if firstStep = 0 then
-                                    #ifdef DEBUG
-                                        PRINTLOG "Contacting on first step OR no collision"
-                                    #endif
-                                    exit do
-                                end if
-                                if contacting = 0 then
-                                    lo_t = cur_t
-                                    cur_t = (hi_t + lo_t) * 0.5
-                                else
-                                    #ifdef DEBUG
-                                        PRINTLOG "Contacting after resolution"
-                                    #endif
-                                    exit do
-                                end if
-                            end if
-                            firstStep = 1
-                        end if
-                    else
-                        skipCollisionCheck = 0
-                        #ifdef DEBUG
-                            PRINTLOG "skipping first collision check"
-                        #endif
-                    end if
-                    
-                    wrk = *c
-                    wrk.v = wrk.v + ((f_total + f_adj) / wrk.m) * cur_t + v_adj
-                    if wrk.v.magnitude() > TERM_VEL then
-                        wrk.v.normalize()
-                        wrk.v = wrk.v * TERM_VEL
-                    end if
-                    wrk.p = wrk.p + wrk.v * cur_t
-                    
-                    #ifdef DEBUG
-                        circle (wrk.p.x(), wrk.p.y()), wrk.r, rgba(0,255.0*(max(iterate,1))/10.0,0,32),,,wrk.r_rat,F
-                    #endif
-                    
-                    firstCollide = 1
-                    iterate += 1
-                loop until iterate > MAX_ITERATIONS
-                #ifdef DEBUG
-                    if iterate = MAX_ITERATIONS + 1 then
-                        PRINTLOG "<!> ERROR, BAILING OUT <!>"
-                        wrk.v = Vector2D(0,0)
-                    end if
-                #endif
-                hadPulse = 0
-                arbiters_n(i) = numArbs
-                numIgnore = 0
-                for q = 0 to numArbs-1
-                    arbiters(i, q) = tempArbs(q)
-                    if arbiters(i, q).ignore = 0 then 
-						if arbiters(i, q).new_ = 1 then hadPulse = 1
-					else
-						numIgnore += 1
-					end if
-                next q
-                normals_N = 0
-
-                'by now, we have a list of all collisions, and we know if any are new
-                if arbiters_n(i) > numIgnore then
-                   
-                    normals_N = 0
-                    f_bias = Vector2D(0,0)
-                    depthc = 0
-                    redim as Vector2D normals(0)
-                    for q = 0 to arbiters_n(i)-1
-						if arbiters(i, q).ignore = 0 then
-							normals_N += 1
-							redim preserve as Vector2D normals(normals_N - 1)
+						if getBlock(scan_x, scan_y).cModel <> EMPTY AndAlso _
+						   getBlock(scan_x, scan_y-1).cModel = EMPTY then
 							
-							normals(normals_N - 1) = arbiters(i, q).impulse
-							if arbiters(i, q).depth > depthc then depthc = arbiters(i, q).depth
-							if arbiters(i, q).new_ = 1 then f_bias = f_bias + normals(normals_N - 1)
-							
+							traceRing(scan_x, scan_y, _
+									  segment(), segment_n, _
+									  usedSpace())       
+								
 						end if
-                    next q
-                    f_bias.normalize()
-                    if normals_N = 0 then normals(0) = Vector2D(0,0)
-                    
-                    if hadPulse = 1 then
-                        vectorListImpulse(normals(), wrk.v, v_adj, v_cancel)
-                        vn = wrk.v
-                        vn.normalize()
-                        if (-wrk.v * f_bias) > MIN_TRIG_ELAS_DV then
-                            reflect = (-wrk.v * f_bias) * f_bias
-                            reflect = reflect * wrk.elasticity
-                            #ifdef DEBUG
-                                line (c->p.x(), c->p.y())-(c->p.x() - reflect.x(), c->p.y() - reflect.y()), &hffcc00
-                                line (c->p.x(), c->p.y())-(c->p.x() - wrk.v.x(), c->p.y() - wrk.v.y()), &hffcc00
+					end if
+				next scan_x
+			next scan_y
+			
+			
+			#ifdef DEBUG
+				printlog "Found: " & str(segment_n) & ", segments."
+				for j = 0 to arbiters_n(i) - 1
+					printlog str(arbiters(i, j).a) & ", " & str(arbiters(i, j).b)
+				next j
+			#endif
 
-                            #endif
-                            v_adj = v_adj + reflect
-                        end if
-                    else
-                        vectorListImpulse(normals(), wrk.v, v_adj, v_cancel)
-                    end if
-                    vectorListImpulse(normals(), f_total, f_adj, f_cancel)
-                    
-                    'f_adj = normal force
-                    if f_cancel = 0 then
-                        t_friction = f_adj.magnitude() * wrk.friction ' * [surface friction]
-                        fric_force = f_adj.perp()
-                        fric_force.normalize()
-                        t_tangent = (fric_force * wrk.v)
-                    
-                        if abs(t_tangent) > MIN_TRIG_FRIC_V then
-                        
-                            if (t_friction / c->m) * res_t < abs(t_tangent) then
-                                #ifdef DEBUG
-                                    PRINTLOG "FRICTION: Friction applied normally..."
-                                #endif
-                                f_adj = f_adj - sgn(t_tangent) * t_friction * fric_force
-                            else
-                                #ifdef DEBUG
-                                    PRINTLOG "FRICTION: Full velocity and force cancel: ", 1
-                                    PRINTLOG (t_tangent * fric_force) & ", " & v_adj
-                                #endif
-                                f_adj = f_adj - ((t_tangent / res_t) * c->m) * fric_force
-                                v_adj = v_adj - t_tangent * fric_force
-                            end if
-                        else
-                            #ifdef DEBUG
-                                PRINTLOG "FRICTION: Reducing force to zero"
-                            #endif
-                            if abs(f_total*fric_force) < t_friction then
-                                f_adj = f_adj - (f_total * fric_force) * fric_force
-                            end if
-                        end if
-                    end if
-                    'f_adj = normal force + friction force
-                end if
-                
-                if (normals_N = 0) then
-                    c->v = c->v + ((f_total + f_adj) / c->m) * cur_t + v_adj
-                    if c->v.magnitude() > TERM_VEL then
-                        c->v.normalize()
-                        c->v = c->v * TERM_VEL
-                    end if
-                    c->p = c->p + c->v * cur_t
-                    #ifdef DEBUG
-                        PRINTLOG "Resolve without wrk value"
-                    #endif
-                elseif cur_t > 0 then
-                    *c = wrk
-                    if (cur_t = res_t) then 
-                        c->v = c->v + v_adj
-                        #ifdef DEBUG
-                            PRINTLOG "Setting final velocity... ", 1
-                            PRINTLOG str(v_adj) & " ", 1
-                        #endif    
-                    end if
-                    #ifdef DEBUG
-                        PRINTLOG "Taking wrk value"
-                    #endif
-                else
-                    #ifdef DEBUG
-                        PRINTLOG "Skipping c setting, calculating v_adj and f_adj, time:"& cur_t
-                    #endif
-                end if
-                if normals_N > 0 then
-                    c->didCollide = 1
-                    wrk.didCollide = 1
-                end if
-                
-                res_t -= cur_t
-                cur_t = res_t
-                lo_t = 0
-                hi_t = cur_t
-                 
-                #ifdef DEBUG
-                    PRINTLOG " v_adj: " & v_adj & " f_adj: " & f_adj & " f_total: " & f_total 
-                    PRINTLOG "Current time: " & cur_t
-                    PRINTLOG "Had pulse: " & hadPulse
-                    PRINTLOG "arbiters_n: " & arbiters_n(i)
-                    PRINTLOG "Current P,V: " & c->p & c->v
-                    PRINTLOG "Frames: " & str(framesGone)
-                    PRINTLOG "Energy: " & (1/2 * c->m * (c->v.magnitude()^2))
-                    for q = 0 to ubound(normals)
-                        circle(c->p.x() + -normals(q).x()*c->r * c->r_rat, c->p.y() + -normals(q).y()*c->r), 3, &hff0000,,,,F
-                    next q
-                #endif
-                
-                
-                skipCollisionCheck = 1
-                firstCycle = 0
-                resolutions += 1
-                'sleep
-            wend
-        else
- 
-            cur_t = t
-            c->v = c->v + (f_total / c->m) * cur_t
-            if c->v.magnitude() > TERM_VEL then
-                c->v.normalize()
-                c->v = c->v * TERM_VEL
-            end if
-            c->p = c->p + c->v * cur_t
-            
-            #ifdef DEBUG
-				printlog "NO COLLIDE"
-				PRINTLOG "Current P,V: " & c->p & c->v
-            #endif
-        end if  
-       
+			
+			if segment_n > 0 andAlso c->noCollide = 0 then
+				res_t = t
+				firstCycle = 1
+				v_adj = Vector2D(0,0)
+				f_adj = Vector2D(0,0)
+				cur_t = res_t
+				lo_t = 0
+				hi_t = cur_t
+				skipCollisionCheck = 0
+				firstCollide = 0
+				resolutions = 0
+				
+				while cur_t > 0 andAlso resolutions < (MAX_RESOLUTIONS+1)
+					
+					
+					firstStep = 0
+					iterate = 0
+					wrk = *c
+					cTarget = 0     
+					
+					
+					for q = 0 to segment_n - 1
+						segment(q).tag = -1
+					next q
+					refactorArbiters(i, segment(), segment_n)
+					
+					
+					do
+						interpen = 0
+						contacting = 0
+						numArbs = 0
+						
+						if skipCollisionCheck = 0 then
+							for q = 0 to segment_n - 1
+								#ifdef DEBUG
+									line(segment(q).a.x(), segment(q).a.y())-(segment(q).b.x(), segment(q).b.y()), rnd*&hffffff
+								#endif
+							
+						
+								if lineCircleCollide(segment(q).a, segment(q).b,_
+													 wrk.p, wrk.r, _
+													 depth, norm, impulse) = 1 then   
+									
+									tempArbs(numArbs).a       = segment(q).a
+									tempArbs(numArbs).b       = segment(q).b
+									tempArbs(numArbs).depth   = depth
+									tempArbs(numArbs).impulse = impulse
+													
+									if segment(q).tag <> -1 then
+										tempArbs(numArbs).new_ = 0
+										tempArbs(numArbs).ignore = arbiters(i, segment(q).tag).ignore
+										#ifdef DEBUG
+											if tempArbs(numArbs).ignore = 1 then
+												printlog "Setting tempArb to ignore... " & norm & ", " & arbiters(i, segment(q).tag).a & ", " & arbiters(i, segment(q).tag).b
+											else
+												printlog "Found previous Arbiter... " & norm
+											end if
+										#endif									
+									else	
+										tempArbs(numArbs).new_ = 1
+										tempArbs(numArbs).ignore = 0
+										#ifdef DEBUG
+											printlog "Flagging new arbiter... " &  norm
+										#endif	
+									end if
+									if ((norm * impulse) > 0) andAlso (tempArbs(numArbs).ignore = 0) then 
+										if firstStep = 0 andAlso firstCollide = 1 then		
+											if tempArbs(numArbs).new_ = 1 then cTarget = 1 
+										end if
+									
+										if depth > MIN_DEPTH then
+											interpen = 1
+										elseif tempArbs(numArbs).new_ = 1 orElse cTarget = 0 then
+											contacting = 1
+										end if
+									else
+										tempArbs(numArbs).ignore = 1
+										#ifdef DEBUG
+											printlog "Ignoring arbiter... " & norm
+										#endif
+									end if
+									
+									numArbs += 1
+								end if
+							next q 
+							#ifdef DEBUG
+								PRINTLOG "         " & skipCollisionCheck & " " & firstCollide, 1 
+								PRINTLOG " " & firstStep & " " & contacting & " " & interpen & ", " & cTarget & "," & cur_t & "," & numArbs
+								PRINTLOG "         Work p: " & wrk.p & " v: "& wrk.v & " v_adj: " & v_adj & " f_adj: " & f_adj
+							#endif
+							
+							if firstCollide = 0 then
+								' check if we are already in resting contact
+								#ifdef DEBUG
+									PRINTLOG "On first collide"
+								#endif
+								if interpen = 0 and contacting = 1 then 
+									cur_t = 0
+									#ifdef DEBUG
+										PRINTLOG "Contacting on first frame, pre step"
+									#endif
+									exit do
+								end if
+							else
+								if interpen = 1 then
+									hi_t  = cur_t
+									cur_t = (hi_t + lo_t) * 0.5
+								else 
+									if firstStep = 0 then
+										#ifdef DEBUG
+											PRINTLOG "Contacting on first step OR no collision"
+										#endif
+										exit do
+									end if
+									if contacting = 0 then
+										lo_t = cur_t
+										cur_t = (hi_t + lo_t) * 0.5
+									else
+										#ifdef DEBUG
+											PRINTLOG "Contacting after resolution"
+										#endif
+										exit do
+									end if
+								end if
+								firstStep = 1
+							end if
+						else
+							skipCollisionCheck = 0
+							#ifdef DEBUG
+								PRINTLOG "skipping first collision check"
+							#endif
+						end if
+						
+						
+						
+						wrk = *c
+						wrk.v = wrk.v + ((f_total + f_adj) / wrk.m) * cur_t + v_adj
+						if wrk.v.magnitude() > TERM_VEL then
+							wrk.v.normalize()
+							wrk.v = wrk.v * TERM_VEL
+						end if
+						wrk.p = wrk.p + wrk.v * cur_t
+						
+						
+						#ifdef DEBUG
+							circle (wrk.p.x(), wrk.p.y()), wrk.r, rgba(0,255.0*(max(iterate,1))/10.0,0,32),,,wrk.r_rat,F
+						#endif
+						
+						firstCollide = 1
+						iterate += 1
+					loop until iterate > MAX_ITERATIONS
+					
+					
+					#ifdef DEBUG
+						if iterate = MAX_ITERATIONS + 1 then
+							PRINTLOG "<!> ERROR, BAILING OUT <!>"
+							wrk.v = Vector2D(0,0)
+						end if
+					#endif
+					hadPulse = 0
+					arbiters_n(i) = numArbs
+					numIgnore = 0
+					for q = 0 to numArbs-1
+						arbiters(i, q) = tempArbs(q)
+						if arbiters(i, q).ignore = 0 then 
+							if arbiters(i, q).new_ = 1 then hadPulse = 1
+						else
+							numIgnore += 1
+						end if
+					next q
+					normals_N = 0
+
+					'by now, we have a list of all collisions, and we know if any are new
+					if arbiters_n(i) > numIgnore then
+					   
+						normals_N = 0
+						f_bias = Vector2D(0,0)
+						depthc = 0
+						redim as Vector2D normals(0)
+						for q = 0 to arbiters_n(i)-1
+							if arbiters(i, q).ignore = 0 then
+								normals_N += 1
+								redim preserve as Vector2D normals(normals_N - 1)
+								
+								normals(normals_N - 1) = arbiters(i, q).impulse
+								if arbiters(i, q).depth > depthc then depthc = arbiters(i, q).depth
+								if arbiters(i, q).new_ = 1 then f_bias = f_bias + normals(normals_N - 1)
+								
+							end if
+						next q
+						f_bias.normalize()
+						if normals_N = 0 then normals(0) = Vector2D(0,0)
+						
+						if hadPulse = 1 then
+							vectorListImpulse(normals(), wrk.v, v_adj, v_cancel)
+							vn = wrk.v
+							vn.normalize()
+							if (-wrk.v * f_bias) > MIN_TRIG_ELAS_DV then
+								reflect = (-wrk.v * f_bias) * f_bias
+								reflect = reflect * wrk.elasticity
+								#ifdef DEBUG
+									line (c->p.x(), c->p.y())-(c->p.x() - reflect.x(), c->p.y() - reflect.y()), &hffcc00
+									line (c->p.x(), c->p.y())-(c->p.x() - wrk.v.x(), c->p.y() - wrk.v.y()), &hffcc00
+
+								#endif
+								v_adj = v_adj + reflect
+							end if
+						else
+							vectorListImpulse(normals(), wrk.v, v_adj, v_cancel)
+						end if
+						vectorListImpulse(normals(), f_total, f_adj, f_cancel)
+						
+						'f_adj = normal force
+						if f_cancel = 0 then
+							t_friction = f_adj.magnitude() * wrk.friction ' * [surface friction]
+							fric_force = f_adj.perp()
+							fric_force.normalize()
+							t_tangent = (fric_force * wrk.v)
+						
+							if abs(t_tangent) > MIN_TRIG_FRIC_V then
+							
+								if (t_friction / c->m) * res_t < abs(t_tangent) then
+									#ifdef DEBUG
+										PRINTLOG "FRICTION: Friction applied normally..."
+									#endif
+									f_adj = f_adj - sgn(t_tangent) * t_friction * fric_force
+								else
+									#ifdef DEBUG
+										PRINTLOG "FRICTION: Full velocity and force cancel: ", 1
+										PRINTLOG (t_tangent * fric_force) & ", " & v_adj
+									#endif
+									f_adj = f_adj - ((t_tangent / res_t) * c->m) * fric_force
+									v_adj = v_adj - t_tangent * fric_force
+								end if
+							else
+								#ifdef DEBUG
+									PRINTLOG "FRICTION: Reducing force to zero"
+								#endif
+								if abs(f_total*fric_force) < t_friction then
+									f_adj = f_adj - (f_total * fric_force) * fric_force
+								end if
+							end if
+						end if
+						'f_adj = normal force + friction force
+					end if
+					
+					if (normals_N = 0) then
+						c->v = c->v + ((f_total + f_adj) / c->m) * cur_t + v_adj
+						if c->v.magnitude() > TERM_VEL then
+							c->v.normalize()
+							c->v = c->v * TERM_VEL
+						end if
+						c->p = c->p + c->v * cur_t
+						#ifdef DEBUG
+							PRINTLOG "Resolve without wrk value"
+						#endif
+					elseif cur_t > 0 then
+						*c = wrk
+						if (cur_t = res_t) then 
+							c->v = c->v + v_adj
+							#ifdef DEBUG
+								PRINTLOG "Setting final velocity... ", 1
+								PRINTLOG str(v_adj) & " ", 1
+							#endif    
+						end if
+						#ifdef DEBUG
+							PRINTLOG "Taking wrk value"
+						#endif
+					else
+						#ifdef DEBUG
+							PRINTLOG "Skipping c setting, calculating v_adj and f_adj, time:"& cur_t
+						#endif
+					end if
+					if normals_N > 0 then
+						c->didCollide = 1
+						wrk.didCollide = 1
+					end if
+					
+					res_t -= cur_t
+					cur_t = res_t
+					lo_t = 0
+					hi_t = cur_t
+					 
+					#ifdef DEBUG
+						PRINTLOG " v_adj: " & v_adj & " f_adj: " & f_adj & " f_total: " & f_total 
+						PRINTLOG "Current time: " & cur_t
+						PRINTLOG "Had pulse: " & hadPulse
+						PRINTLOG "arbiters_n: " & arbiters_n(i)
+						PRINTLOG "Current P,V: " & c->p & c->v
+						PRINTLOG "Frames: " & str(framesGone)
+						PRINTLOG "Energy: " & (1/2 * c->m * (c->v.magnitude()^2))
+						for q = 0 to ubound(normals)
+							circle(c->p.x() + -normals(q).x()*c->r * c->r_rat, c->p.y() + -normals(q).y()*c->r), 3, &hff0000,,,,F
+						next q
+					#endif
+					
+					
+					skipCollisionCheck = 1
+					firstCycle = 0
+					resolutions += 1
+				wend
+				
+			else
+				
+				
+				cur_t = t
+				c->v = c->v + (f_total / c->m) * cur_t            
+				if c->v.magnitude() > TERM_VEL then
+					c->v.normalize()
+					c->v = c->v * TERM_VEL
+				end if
+				c->p = c->p + c->v * cur_t
+				
+				
+				#ifdef DEBUG
+					printlog "NO COLLIDE"
+					PRINTLOG "Current P,V: " & c->p & c->v
+				#endif
+				
+				
+				
+			end if  
+        end if
+
         i += 1
     wend
 	framesGone += 1

@@ -112,9 +112,10 @@ sub scale2sync(img as uinteger ptr)
     dim as uinteger ptr pxlData
     dim as uinteger ptr scnptr
     dim as integer w, h
+
     imageinfo img,w,h,,,pxlData
     scnptr = screenptr
-   ' screenlock
+    screenlock
         asm
                 mov         esi,        [pxlData]
                 mov         edi,        [scnptr]
@@ -183,7 +184,7 @@ sub scale2sync(img as uinteger ptr)
                 jnz         row_copy
         
         end asm
-    'screenunlock
+    screenunlock
 end sub
 
 
@@ -199,33 +200,7 @@ sub bitblt_FalloutMix(dest as uinteger ptr,_
     dim as integer     dest_row_adv, src_row_adv
     imageinfo dest,dest_w,dest_h,,,dest_pxls
     imageinfo src,src_w,src_h,,,src_pxls
-    
-    if xpos < 0 orElse ypos < 0 then 
-        print "bas 1", xpos, ypos
-        flip
-        stall(2000)
-    end if
-    if ((xpos + src_x1 - src_x0) >= dest_w) orElse ((ypos + src_y1 - src_y0) >= dest_h) then
-        print "-------------------------------"
-        print "bas 2", xpos + src_x1 - src_x0 + 1, ypos + src_y1 - src_y0 + 1
-        print dest_w, dest_h
-        print src_x0, src_y0, src_x1, src_y1, xpos, ypos
-        
-        flip
-        stall(2000)
-    end if
-    if src_x0 < 0 orElse src_y0 < 0 then
-        print "bas 3"
-        flip
-        stall(2000)
-    end if
-    if src_x1 >= src_w orElse src_y1 >= src_h then
-        print "bas 4", src_x1, src_y1, src_w, src_h
-        flip
-        stall(2000)
-    end if
-    
-    
+      
     dest_pxls += xpos + ypos * dest_w
     src_pxls += src_x0 + src_y0 * src_w
     

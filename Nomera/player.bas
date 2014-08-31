@@ -21,7 +21,7 @@ constructor Player
     boostFrames    = 13
     boostForce     = 800
     jumpImpulse    = 150
-    freeJumpFrames = 3 
+    freeJumpFrames = 6
     lastUps = 0
     lastFire = 0
     lastTopSpeed = 200
@@ -84,7 +84,11 @@ function Player.onSpikes() as integer
 		y1 = body.p.y() + anim.getHeight() * 0.5 - 20
 	end if
     
-    x1 = x0 + anim.getWidth() '+ 16
+    x1 = x0 + anim.getWidth()
+    
+    x0 += 8
+    x1 -= 8
+    
     x0 /= 16
     y0 /= 16
     x1 /= 16
@@ -111,6 +115,7 @@ function Player.onSpikes() as integer
     end if
     for yscan = y0 to y1
         for xscan = x0 to x1
+			line (xscan * 16, yscan * 16)-(xscan * 16 + 15, yscan * 16 + 15), &hffff00, B
             if level_parent->getCollisionBlock(xscan, yscan).cModel = 57 then
                 return 1
             elseif level_parent->getCollisionBlock(xscan, yscan).cModel = 77 then
@@ -403,7 +408,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 		if charge = 99 then
 			link.soundeffects_ptr->playSound(SND_FULLCHARGE)
 		end if
-		charge += 1
+		charge += 3
 		if charge >= 100 then charge = 100
 	else
 		charge -= 1

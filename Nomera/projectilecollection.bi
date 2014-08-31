@@ -8,6 +8,7 @@
 #include "animation.bi"
 #include "level.bi"
 #include "objectLink.bi"
+#include "list.bi"
 
 enum Projectiles
     CHERRY_BOMB
@@ -25,11 +26,6 @@ type Projectile_t
     as integer lifeFrames
 end type
 
-type ProjectileNode_t
-    as Projectile_t data_
-    as ProjectileNode_t ptr next_
-    as ProjectileNode_t ptr prev_
-end type
 
 type Level_ as Level
 
@@ -47,8 +43,7 @@ type ProjectileCollection
         declare sub flush()
     private:
         as TinySpace ptr parent_space
-        as ProjectileNode_t ptr head_
-        as integer              numNodes
+        as List proj_list
         as OneShotEffects ptr   effects
         as any ptr game_space
         as Level_ ptr parent_level

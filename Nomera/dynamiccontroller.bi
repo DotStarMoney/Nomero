@@ -65,6 +65,7 @@ type DynamicController
 		as ObjectLink link
 		as List objects
 		as List spawnZones
+		
 end type
 	
 	

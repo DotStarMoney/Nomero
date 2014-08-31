@@ -17,10 +17,10 @@ sub PRINTLOG(s as string = "", nextline as integer = 0)
         else
             print #PRINT_LOG, s
         end if
-    end if
-    if nextline = 1 then
-        print s;
-    else
-        print s
-    end if
+		if nextline = 1 then
+			print s;
+		else
+			print s
+		end if
+	end if
 end sub

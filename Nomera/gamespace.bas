@@ -3,6 +3,7 @@
 #include "fbgfx.bi"
 #include "debug.bi"
 #include "objectlink.bi"
+#include "windows.bi"
 
 using fb
 
@@ -88,6 +89,8 @@ constructor GameSpace()
     foregroundSnow.setSpeed(700)
     
     scnbuff = imagecreate(640,480)
+    stallTime_mili = 15
+    movingFrmAvg = 0
 
 end constructor
 
@@ -106,25 +109,27 @@ sub GameSpace.setMusicVolume(v as integer)
 end sub
         
 function GameSpace.go() as integer
-    dim as single startTime, totalTime
-    dim as integer stallTime
+    dim as double startTime, totalTime
     do
         startTime = timer
-        cls
-        screenlock
-			step_draw()
-		screenunlock
+		step_draw()
         step_input()
         step_process()
-        
+        frameTime = timer - startTime
         if keypress(SC_ESCAPE) then exit do
         'print spy.body.p
-        'print using "Engine at ##.##% load"; movingFrmAvg * (FPS_TARGET / 10)
-        flip
-        totalTime = (timer - startTime) * 1000
-        movingFrmAvg = movingFrmAvg * 0.92 + totalTime * 0.08
-        stallTime = (1000.0 / FPS_TARGET) - movingFrmAvg
-        if stallTime > 0 then stall(stallTime) 'sleep(stallTime)
+        locate 1,1
+        
+        movingFrmAvg = movingFrmAvg * 0.95 + 0.05 * (frameTime / (1 / FPS_TARGET) * 100)
+	'	print using "Engine at ##.##% load"; movingFrmAvg
+		stall( stallTime_mili)
+        totalTime = (timer - startTime)
+        if totalTime < (1 / FPS_TARGET) then
+			stallTime_mili += 1
+		else
+			stallTime_mili -= 1
+			if stallTime_mili < 0 then stallTime_mili = 0
+		end if
     loop 
     return 0
 end function
@@ -185,7 +190,7 @@ sub GameSpace.step_draw()
         camera.setY(lvlData.getHeight() * 8)
     end if
         
-    cls
+    
   
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
@@ -311,6 +316,7 @@ sub GameSpace.step_process()
     
     dynControl.process(0.01667)
     
+
 	if isSwitching <> 1 andAlso lockAction <> 1 then
     	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.01667)
     elseif lockAction = 1 then

@@ -21,8 +21,8 @@ type List
         declare destructor()
         declare sub init(dataSizeBytes as integer)
         
-        declare sub push_back(data_ as any ptr)
-        declare sub push_front(data_ as any ptr)
+        declare function push_back(data_ as any ptr) as any ptr
+        declare function push_front(data_ as any ptr) as any ptr
         declare sub pop_back()
         declare sub pop_front()
         declare function getBack() as any ptr

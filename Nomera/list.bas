@@ -5,6 +5,7 @@
     #include "utility.bi"
 '#endif
 
+
 constructor List()
     head_ = 0
     tail_ = 0
@@ -21,7 +22,7 @@ sub List.init(dataSizeBytes as integer)
     this.dataSizeBytes = dataSizeBytes
 end sub
         
-sub List.push_back(data_ as any ptr)
+function List.push_back(data_ as any ptr) as any ptr
     dim as ListNode_t ptr newNode_
     
     newNode_ = allocate(sizeof(ListNode_t))
@@ -43,9 +44,10 @@ sub List.push_back(data_ as any ptr)
     end if
     
     size += 1
-end sub
+    return newNode_->data_
+end function
 
-sub List.push_front(data_ as any ptr)
+function List.push_front(data_ as any ptr) as any ptr
     dim as ListNode_t ptr newNode_
     
     newNode_ = allocate(sizeof(ListNode_t))
@@ -68,7 +70,8 @@ sub List.push_front(data_ as any ptr)
     
     size += 1
     
-end sub
+    return newNode_->data_
+end function
 
 sub List.pop_back()
     dim as ListNode_t ptr delNode_
@@ -196,6 +199,7 @@ end function
 sub List.rollRemove()
     dim as ListNode_t ptr tempNode_
     dim as ListNode_t ptr delNode_
+
     if oldCurRollNode_ <> 0 then
         delNode_ = oldCurRollNode_
         tempNode_ = delNode_->next_
@@ -220,15 +224,18 @@ sub List.rollRemove()
 			tail_->next_ = 0
 		end if
 		
-		if delNode_->prev_ then delNode_->prev_ = delNode_->next_
-		if delNode_->next_ then delNode_->next_ = delNode_->prev_
+		if delNode_->prev_ then delNode_->prev_->next_ = delNode_->next_
+		if delNode_->next_ then delNode_->next_->prev_ = delNode_->prev_
+		
 		
         deallocate(delNode_->data_)
         deallocate(delNode_)
         
         size -= 1
         
-        curRollNode_ = tempNode_
+        oldCurRollNode_ = tempNode_
+        if oldCurRollNode_ <> 0 then curRollNode_ = oldCurRollNode_->next_
+ 		  
     end if
 end sub
 sub List.rollReset()
