@@ -2,6 +2,7 @@
 #include "hashtable.bi"
 #include "vector2d.bi"
 #include "dir.bi"
+#include "file.bi"
 ' -exx list.bas hashtable.bas vector2d.bas
 
 Enum MaskResult_e
@@ -11,12 +12,15 @@ Enum MaskResult_e
     COVERING
     FULL_COVERING
 end enum
+dim shared as integer maskComparePixels = 0
 
 function equalImages(imgA as integer ptr, imgB as integer ptr) as integer
     dim as integer x, y
     for y = 0 to 15
         for x = 0 to 15
-            if point(x, y, imgA) <> point(x, y, imgB) then return 0
+            if (point(x, y, imgA) and &h00ffffff) <> (point(x, y, imgB) and &h00ffffff) then 
+                return 0
+            end if
         next x
     next y
     return 1
@@ -25,7 +29,7 @@ function imageIsNotEmpty(imgA as integer ptr) as integer
     dim as integer x, y
     for y = 0 to 15
         for x = 0 to 15
-            if point(x, y, imgA) <> &hffff00ff then return 1
+            if ((point(x, y, imgA) and &h00ffffff) <> &h00ff00ff) then return 1
         next x
     next y
     return 0
@@ -36,27 +40,26 @@ function hashImage(img as integer ptr) as integer
     dim as integer hash
     for y = 0 to 15
         for x = 0 to 15
-            hash = hash xor point(x, y, img)
+            hash = hash xor (point(x, y, img) and &h00ffffff)
         next x
     next y
     return hash
 end function
-dim shared as integer maskComparePixels = 0
 function maskCompare(low as integer ptr, high as integer ptr) as MaskResult_e
     dim as integer x, y
     dim as integer col1, col2
     dim as integer low_Count = 0, high_Count = 0, or_Count = 0
     for y = 0 to 15
         for x = 0 to 15
-            col1 = point(x, y, low)
-            col2 = point(x, y, high)
-            if( col1 = &hFFFFFFFF ) then
+            col1 = point(x, y, low) and &h00ffffff
+            col2 = point(x, y, high) and &h00ffffff
+            if( col1 = &hFFFFFF ) then
                 low_Count += 1
             end if
-            if( col2 = &hFFFFFFFF ) then
+            if( col2 = &hFFFFFF ) then
                 high_Count += 1
             end if    
-            if( (col1 = &hFFFFFFFF) or (col2 = &hFFFFFFFF) ) then
+            if( (col1 = &hFFFFFF) or (col2 = &hFFFFFF) ) then
                 or_Count += 1
             end if
         next x
@@ -90,10 +93,10 @@ sub extractMask(dest as integer ptr, src as integer ptr, xoff as integer, yoff a
     dim as integer col
     for y = 0 to 15
         for x = 0 to 15
-            if( point(xoff + x, yoff + y, src) = &hFFFF00FF ) then
-                pset dest, (x, y), 0
+            if( (point(xoff + x, yoff + y, src) and &h00ffffff) = &hFF00FF ) then
+                pset dest, (x, y), &h00000000
             else
-                pset dest, (x, y), &hffffffff
+                pset dest, (x, y), &h00ffffff
             end if
         next x
     next y
@@ -1028,9 +1031,10 @@ type imageTilePair_t
 end type
 type auxTable_t
     as Hashtable   hashedImageLists
-    as zstring ptr filename
     as integer set_width
     as integer set_height
+    as integer set_firstID
+    as integer set_num
 end type
 '--------------------------------
 
@@ -1045,33 +1049,88 @@ dim as integer N_runs = 0, curFlags, pushRun = 0, findFullCoverage, deleteTile
 dim as integer ptr curMask, coverageMask, foMask, dMask, sMask, curImage, tempMaskImg, storeImg
 dim as integer stackPos, tileX, tileY, remInd, isAnim, animSearch, firstInLoop, activeLayer
 dim as integer ptr cmpImg(0 to 1)
-dim as integer tileEmpty, maskComp
+dim as integer tileEmpty, maskComp, numTilesSet
 stackPos = 0
 redim as mergeStack_t mergeStack(N_runs)
 dim as any ptr rollReturn
 dim as Hashtable curListHash
 dim as List tilesetListHashes
 dim as List ptr tempTileList
-dim as auxTable_t tempTable
+dim as auxTable_t ptr tempTable
 dim as imageTilePair_t ptr tempITPair
 dim as integer ptr curAtlas
 dim curfile as string
+dim as string setname
 dim f2 as integer = freefile
+dim as integer ptr curTilePtr
 
-tilesetListHashes.init(sizeof(auxTable_t))
-/'
-curfile = Dir("tilesets\", fbNormal )
+curAtlas = imagecreate(320,4096)
+curTilePtr = imagecreate(16,16)
+
+tilesetListHashes.init(sizeof(auxTable_t ptr))
+
+print "Loading external tilesets..."
+curfile = Dir("tilesets\*", fbNormal )
 Do
-    if right(curfile, 5) = ".hash" then
-        tempTable.hashedImageLists.init(sizeof(List ptr))
-        open curfile for input as #1
+    if right(curfile, 4) = ".bmp" then
+        tileA = 0
+        bload "tilesets\" & curfile, curAtlas
+        tempTable = new auxTable_t
+        tempTable->set_width = 320
+        tempTable->set_firstID = highTileValue
+        tempTable->hashedImageLists.init(sizeof(List ptr))
+        numTilesSet = 0
+        do
+            tileX = (tileA mod 20) * 16
+            tileY = int(tileA / 20) * 16
+            put curTilePtr, (0,0), curAtlas, (tileX,tileY)-(tileX+15,tileY+15), PSET
+            if imageIsNotEmpty(curTilePtr) then
+                imgTag = hashImage(curTilePtr)
+                tempITPair = new imageTilePair_t
+                tempITPair->tilenum = highTileValue + numTilesSet
+                tempITPair->image = imagecreate(16,16)
+                put tempITPair->image, (0,0), curTilePtr, PSET
+                numTilesSet += 1
+                if tempTable->hashedImageLists.exists(imgTag) then
+                    tempTileList = *cast(List ptr ptr, tempTable->hashedImageLists.retrieve(imgTag))
+                    tempTileList->push_back(@tempITPair)
+                else
+                    tempTileList = new List
+                    tempTileList->init(sizeof(imageTilePair_t ptr))
+                    tempTileList->push_back(@tempITPair)
+                    tempTable->hashedImageLists.insert(imgTag, @tempTileList)
+                end if
+            else
+                exit do
+            end if
+            tileA += 1
+        loop
+        tempTable->set_height = (int(numTilesSet / 20) + 1) * 16
+        highTileValue += 20 * int(tempTable->set_height / 16)
         
+        N_tilesets += 1
+        redim preserve as set_t tilesets(N_tilesets - 1)
+        with tilesets(N_tilesets - 1)
+            setname = left(curfile, instr(curfile, ".") - 1)
+            .set_name = setname
+            .set_filename = curfile
+            .set_width = tempTable->set_width
+            .set_height = tempTable->set_height
+            .set_firstID = tempTable->set_firstID
+            .used = 0
+            .tilePropList = 0
+        end with        
         
-        
+        tempTable->set_num = N_tilesets - 1
+        tilesetListHashes.push_back(@tempTable)
+
     end if
     curfile = Dir( )
 Loop While Len( curfile ) > 0
-'/
+imagedestroy curAtlas
+
+print "Computing optimal layers and merges..."
+
 curListHash.init(sizeof(List ptr))
 
 N_merges = 0
@@ -1089,7 +1148,6 @@ cmpImg(1) = imagecreate(16,16,0)
 dim as integer ptr mergedTiles = imagecreate(320, 4096)
 
 
-curRange = ACTIVE
 print
 print
 for activeLayer = 0 to 3
@@ -1325,7 +1383,41 @@ for activeLayer = 0 to 3
         for j = 0 to N_runs - 1
             if mergeStack(j).newTile = 1 then
                 imgTag = hashImage(mergeStack(j).image)
-                if tilesetListHashes.getSize() = 0 then
+                canMerge = 1 
+                if tilesetListHashes.getSize() <> 0 then
+                    tilesetListHashes.rollReset()
+                    do
+                        rollReturn = tilesetListHashes.roll()
+                        if rollReturn then
+                            tempTable = *cast(auxTable_t ptr ptr, rollReturn)
+                            if tempTable->hashedImageLists.exists(imgTag) then
+                                tempTileList = *cast(List ptr ptr, tempTable->hashedImageLists.retrieve(imgTag))
+                                tempTileList->rollReset()
+                                do
+                                    rollReturn = tempTileList->roll()
+                                    if rollReturn then
+                                        tempITPair = *cast(imageTilePair_t ptr ptr, rollReturn)
+                                        if equalImages(tempITPair->image, mergeStack(j).image) then
+                                        
+                                            layers(mergeStack(j).layer).layer_data[q] = tempITPair->tilenum
+                                            tilesets(tempTable->set_num).used = 1
+                                            canMerge = 0
+                                            exit do
+                                            
+                                        end if
+                                    else
+                                        exit do
+                                    end if
+                                loop
+                            end if
+                        else
+                            exit do
+                        end if
+                    loop while canMerge = 1
+                end if
+                
+                
+                if canMerge = 1 then
                     if curListHash.exists(imgTag) then
                         tempTileList = *cast(List ptr ptr, curListHash.retrieve(imgTag))
                         tempTileList->rollReset()
@@ -1343,7 +1435,7 @@ for activeLayer = 0 to 3
                                 end if
                             else
                                 put mergedTiles, ((N_merges mod 20) * 16, (N_merges \ 20) * 16), mergeStack(j).image, PSET
-
+    
                                 N_merges += 1
                                 
                                 tempITPair = new imageTilePair_t
@@ -1353,7 +1445,7 @@ for activeLayer = 0 to 3
                                 tempTileList->push_back(@tempITPair)
                                 
                                 layers(mergeStack(j).layer).layer_data[q] = highTileValue + tempITPair->tilenum
-
+    
                                 exit do
                             end if
                         loop
@@ -1374,11 +1466,8 @@ for activeLayer = 0 to 3
                         curListHash.insert(imgTag, @tempTileList)
                         
                         layers(mergeStack(j).layer).layer_data[q] = highTileValue + tempITPair->tilenum
-
+    
                     end if
-                else
-                    'pan the database... *sigh*
-                
                 end if
             else
                 'do nothing
@@ -1391,15 +1480,6 @@ tempRotatedImg = imagecreate(320, (int(N_merges / 20) + 1) * 16)
 put tempRotatedImg, (0,0), mergedTiles, (0,0)-(319, (int(N_merges / 20) + 1) * 16 - 1), PSET
 swap tempRotatedImg, mergedTiles
 imagedestroy tempRotatedImg
-
-/'
-f2 = freefile
-open "tilesets/" & map_name & "_merged.hash" for output as #f2
-write #f2, map_name & "_merged"
-write #f2, 
-'/
-
-bsave "tilesets/test.bmp", mergedTiles
 
 dim as integer newOrder = 0
 dim as ushort newLayersNum = 0
@@ -1421,7 +1501,6 @@ next i
 
 print "Deleted " & str(deletedLayers) & " layers."
 
-print "Creating merged tileset..."
 
 dim as integer ptr tempImg
 if N_merges > 0 then
@@ -1433,16 +1512,50 @@ if N_merges > 0 then
         .set_width = 320
         .set_height = (int(N_merges / 20) + 1) * 16
         .set_firstID = highTileValue
+        .used = 1
         .tilePropList = 0
         tempImg = imagecreate(.set_width, .set_height)
         put tempImg, (0,0), mergedTiles, (0,0)-(.set_width-1,.set_height-1), PSET
-        bsave .set_filename, tempImg
+        bsave "tilesets\" & .set_filename, tempImg
         imageDestroy(tempImg)
-        
     end with
 end if
 
 imagedestroy(mergedTiles)
+
+print "Refactoring tile instances..."
+dim as integer ptr tempTilesetCopy
+
+for i = 0 to N_tilesets - 1
+    if ucase(left(tilesets(i).set_name, 9)) <> "COLLISION" then
+        if tilesets(i).used = 0 then
+            highTile = (int((tilesets(i).set_width - 1) / 16) + 1) * (int((tilesets(i).set_width - 1) / 16) + 1)
+            for j = 0 to N_layers - 1
+                if layers(j).empty = 0 then
+                    for q = 0 to map_width * map_height - 1
+                        if layers(j).layer_data[q] >= tilesets(i).set_firstID then
+                            layers(j).layer_data[q] -= highTile
+                        end if
+                    next q
+                end if
+            next j
+            for j = i + 1 to N_tilesets - 1
+                tilesets(j).set_firstID -= highTile
+            next j
+        else
+            if not FileExists("tilesets\" & tilesets(i).set_filename) then
+                tempTilesetCopy = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
+                bload tilesets(i).set_filename, tempTilesetCopy
+                bsave "tilesets\" & tilesets(i).set_filename, tempTilesetCopy
+                imagedestroy tempTilesetCopy
+            end if
+        end if
+    end if
+    tilesets(i).set_filename = "tilesets\" & tilesets(i).set_filename
+next i
+
+
+
 
 print "Writing file..."
 
@@ -1460,7 +1573,7 @@ N_tilesets -= 1
 put #f,,N_tilesets
 N_tilesets += 1
 for i = 0 to N_tilesets - 1
-    if ucase(left(tilesets(i).set_name, 9)) <> "COLLISION" then
+    if (ucase(left(tilesets(i).set_name, 9))) <> "COLLISION" andAlso (tilesets(i).used = 1) then
         put #f,,tilesets(i).set_name
         put #f,,tilesets(i).set_filename
         put #f,,tilesets(i).set_width
@@ -1490,9 +1603,10 @@ for i = 0 to N_tilesets - 1
     end if
 next i 
 put #f,,newLayersNum
+Print "Writing layers..."
+
 for i = 0 to N_layers - 1
     if layers(i).empty = 0 then
-        Print "Writing layer: " & str(layers(i).order)
         if ucase(left(layers(i).layer_name, 9)) <> "COLLISION" then
             put #f,,layers(i).layer_name
             put #f,,layers(i).order
