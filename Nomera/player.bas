@@ -115,7 +115,6 @@ function Player.onSpikes() as integer
     end if
     for yscan = y0 to y1
         for xscan = x0 to x1
-			line (xscan * 16, yscan * 16)-(xscan * 16 + 15, yscan * 16 + 15), &hffff00, B
             if level_parent->getCollisionBlock(xscan, yscan).cModel = 57 then
                 return 1
             elseif level_parent->getCollisionBlock(xscan, yscan).cModel = 77 then
@@ -342,7 +341,7 @@ sub Player.processControls(dire as integer, jump as integer,_
             end if
             state = FREE_FALLING
         else
-            jumpHoldFrames = 4
+            jumpHoldFrames = 2
         end if
         curSpeed = this.body.v.x()
         oSpeed = curSpeed

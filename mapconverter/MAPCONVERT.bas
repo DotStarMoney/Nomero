@@ -1,7 +1,103 @@
 #include "list.bi"
 #include "hashtable.bi"
 #include "vector2d.bi"
+#include "dir.bi"
 ' -exx list.bas hashtable.bas vector2d.bas
+
+Enum MaskResult_e
+    SUBSET
+    DISJOINT
+    OVERLAP
+    COVERING
+    FULL_COVERING
+end enum
+
+function equalImages(imgA as integer ptr, imgB as integer ptr) as integer
+    dim as integer x, y
+    for y = 0 to 15
+        for x = 0 to 15
+            if point(x, y, imgA) <> point(x, y, imgB) then return 0
+        next x
+    next y
+    return 1
+end function
+function imageIsNotEmpty(imgA as integer ptr) as integer
+    dim as integer x, y
+    for y = 0 to 15
+        for x = 0 to 15
+            if point(x, y, imgA) <> &hffff00ff then return 1
+        next x
+    next y
+    return 0
+end function
+function hashImage(img as integer ptr) as integer
+    dim as integer x, y
+    dim as integer col
+    dim as integer hash
+    for y = 0 to 15
+        for x = 0 to 15
+            hash = hash xor point(x, y, img)
+        next x
+    next y
+    return hash
+end function
+dim shared as integer maskComparePixels = 0
+function maskCompare(low as integer ptr, high as integer ptr) as MaskResult_e
+    dim as integer x, y
+    dim as integer col1, col2
+    dim as integer low_Count = 0, high_Count = 0, or_Count = 0
+    for y = 0 to 15
+        for x = 0 to 15
+            col1 = point(x, y, low)
+            col2 = point(x, y, high)
+            if( col1 = &hFFFFFFFF ) then
+                low_Count += 1
+            end if
+            if( col2 = &hFFFFFFFF ) then
+                high_Count += 1
+            end if    
+            if( (col1 = &hFFFFFFFF) or (col2 = &hFFFFFFFF) ) then
+                or_Count += 1
+            end if
+        next x
+    next y
+    maskComparePixels = or_Count
+    if high_Count = 256 then 
+        if low_Count = 0 then
+            return DISJOINT
+        else
+            return FULL_COVERING
+        end if
+    end if
+    if low_Count + high_Count = or_Count then return DISJOINT
+    if high_Count >= low_Count then
+        if or_Count = high_Count then
+            return COVERING
+        else
+            return OVERLAP
+        end if
+    else
+        if or_Count = low_Count then
+            return SUBSET
+        else
+            return OVERLAP
+        end if
+    end if
+end function
+
+sub extractMask(dest as integer ptr, src as integer ptr, xoff as integer, yoff as integer)
+    dim as integer x, y
+    dim as integer col
+    for y = 0 to 15
+        for x = 0 to 15
+            if( point(xoff + x, yoff + y, src) = &hFFFF00FF ) then
+                pset dest, (x, y), 0
+            else
+                pset dest, (x, y), &hffffffff
+            end if
+        next x
+    next y
+end sub
 
 Public Sub Split(Text As String, Delim As String = " ", Count As Long = -1, Ret() As String)
 
@@ -41,6 +137,7 @@ End Sub
 
 enum RangeSet_t
     FOREGROUND
+    ACTIVE_COVER
     ACTIVE
     BACKGROUND
 end enum
@@ -61,6 +158,13 @@ enum PortalDirection_t
     NO_FACING
 end enum
 
+type singleTile_t
+    as integer tileset
+    as integer tileNum
+    as integer tileID
+    as integer usesAnim
+end type
+
 type tileEffect_t
     as ushort tilenum
     as ushort effect
@@ -75,6 +179,7 @@ type set_t
     as ushort set_width
     as ushort set_height
     as ushort set_firstID
+    as integer used
     as List ptr tilePropList
 end type
 
@@ -82,10 +187,14 @@ type layer_t
     as zstring * 128 layer_name
     as uinteger ptr layer_data
     as ushort parallax
+    as ushort coverage
+    as ushort illuminated
+    as ubyte  ambientLevel
     as single depth
     as ushort inRangeSet
     as ushort isDestructible
     as ushort isFallout
+    as ushort mergeless
     as ushort order
     as integer empty
 end type
@@ -209,6 +318,7 @@ dim as integer f, itemNestLevel, itemIndex, curPos, curTile
 dim as integer dataline, curChar, row, col, colIndex, propertyline = 0
 dim as integer propertyType = 0, isObject, readObjects, curObjDepth
 dim as tileEffect_t tempEffect
+dim as tileEffect_t ptr tempEffectPtr
 dim as string ls, rs
 
 
@@ -233,6 +343,7 @@ readObjects = 0
 curObjDepth = ACTIVE
 do
     'cls
+ 
     Line Input #f, lne
     while left(lne, 1) = " "
         lne = right(lne, len(lne)-1)
@@ -242,7 +353,6 @@ do
     wend
     
     if dataline = 0 then
-        
         if propertyline = 0 then
             curPos = instr(lne,"=") 
             if curPos < 1 then
@@ -274,7 +384,6 @@ do
                 
                 end if
             else
-            
                 item_tag     = left(lne, curPos-2)
                 item_content = right(lne, len(lne) - curPos - 1)
                 if right(item_content, 1) = "," then
@@ -352,6 +461,10 @@ do
                                 layers(N_layers - 1).order = N_layers - 1
                                 layers(N_layers - 1).depth = 1
                                 layers(N_layers - 1).parallax = 65535
+                                layers(N_layers - 1).coverage = 65535
+                                layers(N_layers - 1).mergeless = 65535
+                                layers(N_layers - 1).ambientLevel = 255
+                                layers(N_layers - 1).illuminated = 65535
                                 layers(N_layers - 1).inRangeSet = ACTIVE
                                 layers(N_layers - 1).isDestructible = 65535
                                 layers(N_layers - 1).isFallout = 65535
@@ -376,16 +489,17 @@ do
                                 end with
                             end if
                         end if
-                    
                     else
                         if readObjects = 0 then
                             if item_tag = "objects" then
-                                readObjects = 1
-                                ti_pair.tag = "objects"
-                                ti_pair.index = itemIndex
-                                PUSH()
-                                itemIndex = 1
-                                itemNestLevel += 1
+                                if item_content <> "{}" then
+                                    readObjects = 1
+                                    ti_pair.tag = "objects"
+                                    ti_pair.index = itemIndex
+                                    PUSH()
+                                    itemIndex = 1
+                                    itemNestLevel += 1
+                                end if
                             elseif item_tag = "properties" then
                                 if item_content <> "{}" then 
                                     propertyline = 1
@@ -451,7 +565,8 @@ do
                     end if
                 end if
                 itemIndex += 1
-                
+                                 
+
              end if
         else
             if right(lne, 1) = "}" orElse right(lne,2) = "}," then 
@@ -473,7 +588,7 @@ do
                     elseif left(lcase(item_tag), 5) = "depth" then
                         layers(N_layers - 1).depth = val(item_content)
                     elseif left(lcase(item_tag), 8) = "parallax" then
-                        layers(N_layers - 1).parallax = val(item_content)
+                        layers(N_layers - 1).parallax = 1
                     elseif left(lcase(item_tag), 10) = "foreground" then
                         layers(N_layers - 1).inRangeSet = FOREGROUND
                     elseif left(lcase(item_tag), 10) = "background" then
@@ -576,6 +691,7 @@ do
             end if
         end if
     else
+        
         curChar = 1
         while curChar <= len(lne)
             if mid(lne, curChar, 1) = "," then
@@ -605,22 +721,6 @@ close #f
 print "File parsing complete..."
 
 dim as integer i, q
-'251x21
-
-/'
-for q = 0 to map_width*map_height - 1
-    if layers(0).layer_data[q] >= tilesets(4).set_firstID then 
-        if layers(0).layer_data[q] < tilesets(5).set_firstID then
-            print tilesets(4).set_name, tilesets(4).set_firstID
-            print tilesets(5).set_name, tilesets(5).set_firstID
-            print layers(0).layer_data[q] - tilesets(4).set_firstID
-            print layers(0).layer_data[q]
-            sleep
-            exit for
-        end if
-    end if
-next q
-'/
 
 print map_name
 print map_width;", "; map_height
@@ -651,6 +751,7 @@ for i = 0 to N_tilesets - 1
             end if
         loop
     end if
+    tilesets(i).used = 0
 next i
 
 print
@@ -666,7 +767,7 @@ for i = 0 to N_layers - 1
     print "   ";layers(i).isFallout
 next i
 
-Print "Press a key to process and write file..."
+Print "Press a key to generate optimal layers and write file..."
 sleep
 
 dim as ushort temp
@@ -707,16 +808,6 @@ for i = 0 to N_layers - 1
     end if
 next i
 
-dim as integer curLayer, nextLayer, minID, N_merges, tempData
-dim as integer tilesetA, tilesetB, canMerge, mustMerge, highTile
-dim as tileEffect_t ptr animA, animB, effectPtr
-dim as integer j, tileA, tileB, foundMergeLayer, didMerge, fullCover
-dim as string searchKey
-dim as integer ptr mergedTiles = imagecreate(320, 2048)
-redim as integer ptr setImages(N_tilesets - 1)
-
-dim as uinteger tilesToMerge_tile(N_layers - 1)
-dim as uinteger tilesToMerge_set(N_layers - 1)
 dim as integer numMerged, newTileNum, tn, xtn, ytn, rt
 dim as integer xpn, ypn
 
@@ -731,304 +822,590 @@ dim as integer ptr ptile(0 to 1)
 dim as integer byCol, byRow, oldCol
 dim as integer xpos, ypos, w
 
-
+redim as integer ptr setImages(N_tilesets)
 dim as HashTable combinedTiles
-combinedTiles.init(sizeof(integer))
+dim as HashTable rotatedTiles
+dim as integer foundOneRotated = 0
+dim as integer curRotatedHeight = 1024
+dim as integer ptr tempRotatedImg
+dim as integer finalHeight, j
+dim as integer N_rotated = 0
+dim as integer tileNum, curSet, newRTile
+
+rotatedTiles.init(sizeof(integer))
+
 for i = 0 to N_tilesets - 1
     setImages(i) = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
     bload tilesets(i).set_filename, setImages(i)
 next i
+N_tilesets += 1
+setImages(N_tilesets - 1) = imagecreate(320, curRotatedHeight)
+redim preserve as set_t tilesets(0 to N_tilesets-1)
+
+tilesets(N_tilesets - 1).set_name     = map_name + "_rotated"
+tilesets(N_tilesets - 1).set_filename = map_name + "_rotated.bmp"
+tilesets(N_tilesets - 1).set_firstID  = highTileValue
+tilesets(N_tilesets - 1).tilePropList = 0
+tilesets(N_tilesets - 1).set_width = 320
+
+
+for i = 0 to N_layers - 1
+    if i <> collisionLayer then
+        for q = 0 to map_width*map_height - 1
+            if layers(i).layer_data[q] and &hE0000000 then
+                if rotatedTiles.exists(layers(i).layer_data[q]) = 0 then
+                    
+                    foundOneRotated = 1
+                    
+                    tileNum = layers(i).layer_data[q] and &h1FFFFFFF
+                    
+                    for j = N_tilesets - 1 to 0 step -1
+                        if tileNum > tilesets(j).set_firstID then
+                            curSet = j
+                            exit for
+                        end if
+                    next j
+                    
+                    tileNum -= tilesets(curSet).set_firstID
+                    
+                    tn = tileNum
+                    rt = layers(i).layer_data[q] shr 29
+                    xtn = (tn mod 20) * 16
+                    ytn = int(tn / 20) * 16
+                    xpn = ((N_rotated) mod 20) * 16
+                    ypn = int((N_rotated) / 20) * 16
+                    
+                    if rt = 0 then
+                        put setImages(N_tilesets - 1), (xpn, ypn), setImages(curSet), (xtn, ytn)-(xtn+15, ytn+15), PSET
+                    else
+                        ptile(X_) = @xtn
+                        ptile(Y_) = @ytn
+                        ppos(X_) = xpn
+                        ppos(Y_) = ypn
+                        pdes(X_) = xpn
+                        pdes(Y_) = ypn
+                        select case rt
+                        case 1
+                            byRow = X_
+                            byCol = Y_
+                            ppos(byRow) += 15
+                            ppos(byCol) += 15
+                            pdes(byRow) += -1
+                            pdes(byCol) += -1
+                            pdir(byRow) = -1
+                            pdir(byCol) = -1
+                        case 2
+                            byRow = Y_
+                            byCol = X_
+                            ppos(byRow) += 15
+                            ppos(byCol) += 0
+                            pdes(byRow) += -1
+                            pdes(byCol) += 16
+                            pdir(byRow) = -1
+                            pdir(byCol) = 1
+                        case 5
+                            byRow = X_
+                            byCol = Y_
+                            ppos(byRow) += 0
+                            ppos(byCol) += 15
+                            pdes(byRow) += 16
+                            pdes(byCol) += -1
+                            pdir(byRow) = 1
+                            pdir(byCol) = -1
+                        case 4
+                            byRow = Y_
+                            byCol = X_
+                            ppos(byRow) += 0
+                            ppos(byCol) += 15
+                            pdes(byRow) += 16
+                            pdes(byCol) += -1
+                            pdir(byRow) = 1
+                            pdir(byCol) = -1
+                        case 3
+                            byRow = X_
+                            byCol = Y_
+                            ppos(byRow) += 15
+                            ppos(byCol) += 0
+                            pdes(byRow) += -1
+                            pdes(byCol) += 16
+                            pdir(byRow) = -1
+                            pdir(byCol) = 1
+                        case 6
+                            byRow = Y_
+                            byCol = X_
+                            ppos(byRow) += 15
+                            ppos(byCol) += 15
+                            pdes(byRow) += -1
+                            pdes(byCol) += -1
+                            pdir(byRow) = -1
+                            pdir(byCol) = -1
+                        case 7
+                            byRow = X_
+                            byCol = Y_
+                            ppos(byRow) += 0
+                            ppos(byCol) += 0
+                            pdes(byRow) += 16
+                            pdes(byCol) += 16
+                            pdir(byRow) = 1
+                            pdir(byCol) = 1
+                        end select
+                        ypos = ytn
+                        oldCol = ppos(byCol)
+                        while ppos(byRow) <> pdes(byRow)
+                            ppos(byCol) = oldCol
+                            xpos = xtn
+                            while ppos(byCol) <> pdes(byCol)
+                                
+                                col = setImages(curSet)[8 + xpos + ypos*tilesets(curSet).set_width]
+                                if col <> &hffff00ff then 
+                                    setImages(N_tilesets - 1)[8 + ppos(X_) + ppos(Y_) * 320] = col
+                                end if
+                                ppos(byCol) += pdir(byCol)
+                                xpos += 1
+                            wend
+                            ppos(byRow) += pdir(byRow)
+                            ypos += 1
+                        wend
+                    end if  
+                    newRTile = highTileValue + N_rotated
+                    rotatedTiles.insert(layers(i).layer_data[q], @newRTile)
+                    layers(i).layer_data[q] = newRTile
+                    N_rotated += 1
+                else
+                    layers(i).layer_data[q] = *cast(integer ptr, rotatedTiles.retrieve(layers(i).layer_data[q]))
+                end if
+            end if
+        next q
+    end if
+next i
+
+
+if foundOneRotated = 0 then 
+    imagedestroy setImages(N_tilesets - 1)
+    N_tilesets -= 1
+else
+    tilesets(N_tilesets - 1).set_width = 320
+    curRotatedHeight = (int(N_rotated / 20) + 1) * 16
+    tilesets(N_tilesets - 1).set_height = curRotatedHeight
+    tilesets(N_tilesets - 1).used = 0
+    tempRotatedImg = imagecreate(320, curRotatedHeight)
+    put tempRotatedImg,(0,0), setImages(N_tilesets - 1), (0,0)-(319, curRotatedHeight - 1), PSET
+    imagedestroy setImages(N_tilesets - 1)
+    setImages(N_tilesets - 1) = tempRotatedImg
+    highTileValue += 20 * (curRotatedHeight / 16)
+end if
+
+dim as ushort curRange
+
+'can merge when 
+curRange = ACTIVE
+
+#define ILLUMINATED_MASK &h01
+#define FALLOUT_MASK &h02
+#define DESTRUCTIBLE_MASK &h04
+#define COVERAGE_MASK &h08
+#define PARALLAX_MASK &h10
+#define MERGELESS_MASK &h20
+#define NONE_MASK &h00
+
+type mergeStack_t
+    as integer ptr mask
+    as integer ptr image
+    as integer     flags
+    as single      depth
+    as ubyte       ambientLevel
+    as integer     layer
+    as integer     newTile
+    as integer     tileset
+    as integer     tileNum
+end type
+
+
+'-------------------------------
+type imageTilePair_t
+    as integer tilenum
+    as integer ptr image   
+end type
+type auxTable_t
+    as Hashtable   hashedImageLists
+    as zstring ptr filename
+    as integer set_width
+    as integer set_height
+end type
+'--------------------------------
+
+dim as integer curLayer, nextLayer, minID, N_merges, tempData, imgTag
+dim as integer tilesetA, tilesetB, canMerge, mustMerge, highTile
+dim as tileEffect_t ptr animA, animB, effectPtr
+dim as integer tileA, tileB, foundMergeLayer, didMerge, fullCover
+dim as string searchKey
+
+dim as mergeStack_t tempStackItem
+dim as integer N_runs = 0, curFlags, pushRun = 0, findFullCoverage, deleteTile
+dim as integer ptr curMask, coverageMask, foMask, dMask, sMask, curImage, tempMaskImg, storeImg
+dim as integer stackPos, tileX, tileY, remInd, isAnim, animSearch, firstInLoop, activeLayer
+dim as integer ptr cmpImg(0 to 1)
+dim as integer tileEmpty, maskComp
+stackPos = 0
+redim as mergeStack_t mergeStack(N_runs)
+dim as any ptr rollReturn
+dim as Hashtable curListHash
+dim as List tilesetListHashes
+dim as List ptr tempTileList
+dim as auxTable_t tempTable
+dim as imageTilePair_t ptr tempITPair
+dim as integer ptr curAtlas
+dim curfile as string
+dim f2 as integer = freefile
+
+tilesetListHashes.init(sizeof(auxTable_t))
+/'
+curfile = Dir("tilesets\", fbNormal )
+Do
+    if right(curfile, 5) = ".hash" then
+        tempTable.hashedImageLists.init(sizeof(List ptr))
+        open curfile for input as #1
+        
+        
+        
+    end if
+    curfile = Dir( )
+Loop While Len( curfile ) > 0
+'/
+curListHash.init(sizeof(List ptr))
 
 N_merges = 0
-'merge layers
-/'
-for i = 0 to (N_layers - 1)
-    curLayer = i
-    if curLayer = collisionLayer then curLayer += 1
-    if curLayer >= (N_layers - 1) then exit for
+foMask = imagecreate(16, 16, 0)
+dMask = imagecreate(16, 16, 0)
+sMask = imagecreate(16, 16, 0)
+curMask = imagecreate(16, 16, 0)
+coverageMask = imagecreate(16, 16, 0)
+curImage = imagecreate(16,16,0)
+tempMaskImg = imagecreate(16,16,0)
+cmpImg(0) = imagecreate(16,16,0)
+cmpImg(1) = imagecreate(16,16,0)
+
+
+dim as integer ptr mergedTiles = imagecreate(320, 4096)
+
+
+curRange = ACTIVE
+print
+print
+for activeLayer = 0 to 3
+    select case activeLayer
+    case 0
+        curRange = BACKGROUND
+    case 1
+        curRange = ACTIVE
+    case 2
+        curRange = ACTIVE_COVER
+    case 3
+        curRange = FOREGROUND
+    end select
     for q = 0 to map_width*map_height - 1
-        numMerged = 0
-        tileA = layers(curLayer).layer_data[q] and &h1fffffff
-        minID = -1
-        if tileA <> 0 then
-            for j = 0 to N_tilesets - 1
-                if ucase(left(tilesets(j).set_name, 9)) <> "COLLISION" then
-                    if tileA >= tilesets(j).set_firstID then
-                        if (minID = -1) orElse (tilesets(j).set_firstID >= minID) then
-                            minID = tilesets(j).set_firstID
-                            tilesetA = j
+        locate Csrlin - 2, 1: print space(20)
+        locate Csrlin - 1, 1: print "Progress... " & str(int(((q + (map_width*map_height) * activeLayer)  / (map_width * map_height * 4 - 1)) * 100)) & "%"
+        print "Refactored tiles: " & str(N_merges)
+        N_runs = 0
+        for i = N_layers - 1 to 0 step -1
+            if i <> collisionLayer andAlso layers(i).inRangeSet = curRange then
+                if layers(i).layer_data[q] <> 0 then
+                    
+                    tileNum = layers(i).layer_data[q]
+                    for j = N_tilesets - 1 to 0 step -1
+                        if tileNum >= tilesets(j).set_firstID then
+                            curSet = j
+                            tileNum -= tilesets(j).set_firstID
+                            exit for
                         end if
-                    end if
-                end if
-            next j
-        end if
-        animA = 0
-        if tilesets(tilesetA).tilePropList <> 0 then
-            
-            tilesets(tilesetA).tilePropList->rollReset()
-            do
-                tempPtr = tilesets(tilesetA).tilePropList->roll()
-                if tempPtr <> 0 then
-                    effectPtr = cast(tileEffect_t ptr, tempPtr)
-                    tempEffect = *effectPtr
-                    if tempEffect.tilenum = (tileA - tilesets(tilesetA).set_firstID) then
-                        animA = effectPtr
-                        exit do
+                    next j
+                    tileX = (tileNum * 16) mod tilesets(curSet).set_width
+                    tileY = int((tileNum * 16) / tilesets(curSet).set_width) * 16
+                    put curImage, (0,0), setImages(curSet), (tileX, tileY)-(tileX+15, tileY+15), PSET
+
+                    if imageIsNotEmpty(curImage) then
+                        
+                       
+                        curFlags = iif(layers(i).illuminated < 65535, ILLUMINATED_MASK, NONE_MASK) OR _
+                                   iif(layers(i).isFallout < 65535, FALLOUT_MASK, NONE_MASK) OR _
+                                   iif(layers(i).isDestructible < 65535, DESTRUCTIBLE_MASK, NONE_MASK) OR _
+                                   iif(layers(i).coverage < 65535, COVERAGE_MASK, NONE_MASK) OR _
+                                   iif(layers(i).parallax < 65535, PARALLAX_MASK, NONE_MASK)  OR _
+                                   iif(layers(i).mergeless < 65535, MERGELESS_MASK, NONE_MASK)
+                        
+                        line curMask, (0,0)-(15,15),0, BF
+                    
+                        isAnim = 0
+                        animSearch = tileNum
+                        firstInLoop = tileNum
+                        if tilesets(curSet).tilePropList then
+                            do
+                                tilesets(curSet).tilePropList->rollReset()
+                                do
+                                    tempEffectPtr = tilesets(curSet).tilePropList->roll()
+                                    if tempEffectPtr then
+                                        if animSearch = tempEffectPtr->tilenum then 
+                                            isAnim = 1
+                                            extractMask(tempMaskImg, setImages(curSet), _
+                                                        (animSearch * 16) mod tilesets(curSet).set_width, _
+                                                        int((tileNum * 16) / tilesets(curSet).set_width) * 16)
+                                            put curMask, (0,0), tempMaskImg, OR
+                                            animSearch += tempEffectPtr->nextTile
+                                            exit do
+                                        end if
+                                    else
+                                        animSearch = -1
+                                        exit do
+                                    end if
+                                loop
+                            loop until (animSearch <> -1) or (animSearch = firstInLoop)
+                        end if
+                        if isAnim = 0 then extractMask(curMask, setImages(curSet), tileX, tileY)
+                        pushRun = 1
+                        
+                        findFullCoverage = 0
+                        line coverageMask, (0,0)-(15,15), 0, BF
+                        line foMask, (0,0)-(15,15), 0, BF
+                        line dMask, (0,0)-(15,15), 0, BF
+                        line sMask, (0,0)-(15,15), 0, BF
+                        
+                        if (not (curFlags and MERGELESS_MASK)) andAlso (isAnim = 0) then
+                            for j = N_runs - 1 to 0 step -1                            
+                                if (mergeStack(j).depth <> layers(i).depth) then
+                                    findFullCoverage = 1
+                                else    
+                                    
+                                    if (not (mergeStack(j).flags and MERGELESS_MASK)) andAlso (mergeStack(j).newTile = 1) then
+                                        if (mergeStack(j).ambientLevel = layers(i).ambientLevel) andALso _
+                                           (mergeStack(j).flags = curFlags) andAlso _
+                                           (findFullCoverage = 0) then    
+                                            
+                                            if maskCompare(coverageMask, mergeStack(j).mask) = DISJOINT then                                                
+                                                if N_runs > 1 then
+                                                    tempStackItem = mergeStack(j)
+                                                    for remInd = j to N_runs-2
+                                                        mergeStack(remInd) = mergeStack(remInd + 1)
+                                                    next remInd
+                                                    mergeStack(N_runs - 1) = tempStackItem
+                                                end if
+                                                
+                                                layers(mergeStack(N_runs - 1).layer).layer_data[q] = 0
+                                                
+                                                mergeStack(N_runs - 1).layer = i
+                                                put mergeStack(N_runs - 1).mask, (0,0), curMask, OR
+                                                put curImage, (0,0), mergeStack(N_runs - 1).image, TRANS
+                                                put mergeStack(N_runs - 1).image, (0,0), curImage, PSET
+                                                                                            
+                                                pushRun = 0
+                                                exit for
+                                            end if
+                                        end if
+                                    end if
+        
+                                    put coverageMask, (0,0), mergeStack(j).mask, OR
+                                    if mergeStack(j).flags and FALLOUT_MASK then put foMask, (0,0), mergeStack(j).mask, OR
+                                    if mergeStack(j).flags and DESTRUCTIBLE_MASK then put dMask, (0,0), mergeStack(j).mask, OR
+                                    if ((mergeStack(j).flags and DESTRUCTIBLE_MASK) = 0) and _
+                                       ((mergeStack(j).flags and FALLOUT_MASK) = 0) then 
+                                        put sMask, (0,0), mergeStack(j).mask, OR 
+                                        put foMask, (0,0), mergeStack(j).mask, OR 
+                                        put dMask, (0,0), mergeStack(j).mask, OR 
+                                    end if
+                                    deleteTile = 0
+                                    if (curFlags and DESTRUCTIBLE_MASK) and (curFlags and FALLOUT_MASK) then
+                                        maskComp = maskCompare(curMask, coverageMask)
+                                        if findFullCoverage = 0 then
+                                            if maskComp = COVERING orElse maskComp = FULL_COVERING then deleteTile = 1
+                                        else
+                                            if maskComp = FULL_COVERING then deleteTile = 1
+                                        end if
+                                    elseif (curFlags and DESTRUCTIBLE_MASK) then
+                                        maskComp = maskCompare(curMask, dMask)
+                                        if findFullCoverage = 0 then
+                                            if maskComp = COVERING orElse maskComp = FULL_COVERING then deleteTile = 1
+                                        else
+                                            if maskComp = FULL_COVERING then deleteTile = 1
+                                        end if
+                                    elseif (curFlags and FALLOUT_MASK) then
+                                        maskComp = maskCompare(curMask, foMask)
+                                        if findFullCoverage = 0 then
+                                            if maskComp = COVERING orElse maskComp = FULL_COVERING then deleteTile = 1
+                                        else
+                                            if maskComp = FULL_COVERING then deleteTile = 1
+                                        end if
+                                    else
+                                        maskComp = maskCompare(curMask, sMask)
+                                        if findFullCoverage = 0 then
+                                            if maskComp = COVERING orElse maskComp = FULL_COVERING then deleteTile = 1
+                                        else
+                                            if maskComp = FULL_COVERING then deleteTile = 1
+                                        end if
+                                        
+                                    end if
+                                end if
+                                if deleteTile = 1 then
+                                    
+                                    layers(i).layer_data[q] = 0
+
+                                    pushRun = 0
+                                    exit for
+                                end if
+                        
+                            next j
+                        end if
+                            
+                        if pushRun = 1 then
+                            N_runs += 1
+                            redim preserve as mergeStack_t mergeStack(N_runs - 1)
+                            mergeStack(N_runs - 1).layer = i
+                            mergeStack(N_runs - 1).mask = imagecreate(16,16,0)
+                            mergeStack(N_runs - 1).depth = layers(i).depth
+                            mergeStack(N_runs - 1).ambientLevel = layers(i).ambientLevel
+                            mergeStack(N_runs - 1).flags = curFlags
+                            mergeStack(N_runs - 1).image = imagecreate(16, 16, 0)
+                            if isAnim = 1 then
+                                mergeStack(N_runs - 1).newTile = 0
+                                mergeStack(N_runs - 1).tileset = curSet
+                                tilesets(curSet).used = 1
+                                mergeStack(N_runs - 1).tilenum = tilenum
+                            else
+                                mergeStack(N_runs - 1).newTile = 1
+                            end if
+                            put mergeStack(N_runs - 1).image, (0,0), curImage, PSET
+                            put mergeStack(N_runs - 1).mask, (0,0), curMask, OR
+                        end if
+                    else
+                        tileEmpty = 1
                     end if
                 else
-                    exit do
-                end if 
-            loop
-        end if
-        
-        if animA = 0 then
-            
-            foundMergeLayer = -1
-            if tileA = 0 then
-                numMerged = 0
-                mustMerge = 0
-                searchKey = ""
-            else
-                numMerged = 1
-                mustMerge = 1
-                searchKey = "(" + str(tilesetA) + ", " + str(layers(curLayer).layer_data[q]) + ")"
-                tilesToMerge_tile(numMerged - 1) = layers(curLayer).layer_data[q] - tilesets(tilesetA).set_firstID
-                tilesToMerge_set(numMerged - 1) = tilesetA
-            end if
-            
-            for nextLayer = (curLayer + 1) to (N_layers-1) 
-                if nextLayer <> collisionLayer then
-                    if layers(nextLayer).depth <> layers(curLayer).depth then
-                        ' as soon as we hit a layer with different parallax, we cannot merge any further into our layer
-                        exit for
-                    end if
-                    didMerge = 0
-                    tileB = layers(nextLayer).layer_data[q] and &h1fffffff
-                    minID = -1
-                    if tileB <> 0 then
-                        for j = 0 to N_tilesets - 1
-                            if ucase(left(tilesets(j).set_name, 9)) <> "COLLISION" then
-                                if tileB >= tilesets(j).set_firstID then
-                                    if (minID = -1) orElse (tilesets(j).set_firstID >= minID) then
-                                        minID = tilesets(j).set_firstID
-                                        tilesetB = j
-                                    end if
-                                end if
-                            end if
-                        next j
-                    end if
-                    animB = 0
-                    if tilesets(tilesetB).tilePropList <> 0 then
-                        tilesets(tilesetB).tilePropList->rollReset()
-                        do
-                            tempPtr = tilesets(tilesetB).tilePropList->roll()
-                            if tempPtr <> 0 then
-                                effectPtr = cast(tileEffect_t ptr, tempPtr)
-                                tempEffect = *effectPtr
-                                if tempEffect.tilenum = (tileB - tilesets(tilesetB).set_firstID) then
-                                    animB = effectPtr
-                                    exit do
-                                end if
-                            else
-                                exit do
-                            end if 
-                        loop
-                    end if  
+                    tileEmpty = 1
+                end if
+                if tileEmpty = 1 then
+                    curFlags = iif(layers(i).illuminated < 65535, ILLUMINATED_MASK, NONE_MASK) OR _
+                               iif(layers(i).isFallout < 65535, FALLOUT_MASK, NONE_MASK) OR _
+                               iif(layers(i).isDestructible < 65535, DESTRUCTIBLE_MASK, NONE_MASK) OR _
+                               iif(layers(i).coverage < 65535, COVERAGE_MASK, NONE_MASK) OR _
+                               iif(layers(i).parallax < 65535, PARALLAX_MASK, NONE_MASK)  OR _
+                               iif(layers(i).mergeless < 65535, MERGELESS_MASK, NONE_MASK)
                     
-                    
-                    ''''''''''
-                    if tileB <> 0 then
-                        'there is a tile in this layer above us
-                        if layers(curLayer).inRangeSet = layers(nextLayer).inRangeSet then
-                            'if tileA and tileB would be drawn in the same order plane
-                            if (layers(curLayer).isDestructible = layers(nextLayer).isDestructible) andAlso _
-                               (layers(curLayer).isFallout = layers(nextLayer).isFallout) then
-                                'if the two layers have the same destruction properties
-                                if animB = 0 andAlso animA = 0 then
-                                    'if we are not merging animated tiles
-                                    'tiles can be merged!
-                                    didMerge = 1
-    
-                                    if mustMerge = 0 then
-                                        layers(curLayer).layer_data[q] = layers(nextLayer).layer_data[q]
-                                        numMerged += 1
-                                        searchKey += "("+str(tilesetB)+","+str(layers(nextLayer).layer_data[q])+")"
-                                        tilesToMerge_tile(numMerged - 1) = layers(curLayer).layer_data[q] - tilesets(tilesetB).set_firstID
-                                        tilesToMerge_set(numMerged - 1) = tilesetB
-                                        mustMerge = 1
-                                    else
-                                        searchKey += "("+str(tilesetB)+","+str(layers(nextLayer).layer_data[q])+")"
-                                        numMerged += 1
-                                        tilesToMerge_tile(numMerged - 1) = layers(nextLayer).layer_data[q] - tilesets(tilesetB).set_firstID
-                                        tilesToMerge_set(numMerged - 1) = tilesetB
+                    line coverageMask, (0,0)-(15,15), 0, BF
+                    layers(i).layer_data[q] = 0
+                    for j = N_runs - 1 to 0 step -1
+                        if (mergeStack(j).depth <> layers(i).depth) then
+                            exit for
+                        else    
+                            if (not (mergeStack(j).flags and MERGELESS_MASK)) andAlso (mergeStack(j).newTile = 1) then
+                                if (mergeStack(j).ambientLevel = layers(i).ambientLevel) andALso _
+                                   (mergeStack(j).flags = curFlags) then
+                                    if maskCompare(coverageMask, mergeStack(j).mask) = DISJOINT then
+                                        
+                                        if N_runs > 1 then
+                                            tempStackItem = mergeStack(j)
+                                            for remInd = j to N_runs-2
+                                                mergeStack(remInd) = mergeStack(remInd + 1)
+                                            next remInd
+                                            mergeStack(N_runs - 1) = tempStackItem
+                                        end if
+                                        layers(mergeStack(N_runs - 1).layer).layer_data[q] = 0
+                                        mergeStack(N_runs - 1).layer = i
+                                        exit for
                                     end if
-                                    layers(nextLayer).layer_data[q] = 0'remove tile from old layer
-                                    '251 x 22  
                                 end if
                             end if
                             
+                            put coverageMask, (0,0), mergeStack(j).mask, OR
+                                
                         end if
-                        if didMerge = 0 then
-                            'if we hit a tile above us that we could not merge in,
-                            'do not attempt to merge any further
-                            exit for
-                        end if
-                    end if
-                    '''''''''''''''''''
-                    
-                    
-                end if
-            next nextLayer
-            
-            if numMerged > 1 then 
-                'if numMerged > 1 then we need to actually combine some tiles 
-                'together. If its = 1, we either just moved a tile into a lower
-                'layer or had a single tile, unaffected, in the layer already
-                if combinedTiles.exists(searchKey) = 0 then
-                    newTileNum = N_merges + highTileValue
-                    N_merges += 1
-                    combinedTiles.insert(searchKey, @newTileNum)
-                    for j = 0 to numMerged - 1
-                        tn = (tilesToMerge_tile(j) and &h1fffffff) 
-                        rt = tilesToMerge_tile(j) shr 29
-                        xtn = (tn mod 20) * 16
-                        ytn = int(tn / 20) * 16
-                        xpn = ((N_merges-1) mod 20) * 16
-                        ypn = int((N_merges-1) / 20) * 16
-                        if rt = 0 then
-                            put mergedTiles, (xpn, ypn), setImages(tilesToMerge_set(j)), (xtn, ytn)-(xtn+15, ytn+15), TRANS
-                        else
-                            ptile(X_) = @xtn
-                            ptile(Y_) = @ytn
-                            ppos(X_) = xpn
-                            ppos(Y_) = ypn
-                            pdes(X_) = xpn
-                            pdes(Y_) = ypn
-                            select case rt
-                            case 1
-                                byRow = X_
-                                byCol = Y_
-                                ppos(byRow) += 15
-                                ppos(byCol) += 15
-                                pdes(byRow) += -1
-                                pdes(byCol) += -1
-                                pdir(byRow) = -1
-                                pdir(byCol) = -1
-                            case 2
-                                byRow = Y_
-                                byCol = X_
-                                ppos(byRow) += 15
-                                ppos(byCol) += 0
-                                pdes(byRow) += -1
-                                pdes(byCol) += 16
-                                pdir(byRow) = -1
-                                pdir(byCol) = 1
-                            case 3
-                                byRow = X_
-                                byCol = Y_
-                                ppos(byRow) += 0
-                                ppos(byCol) += 15
-                                pdes(byRow) += 16
-                                pdes(byCol) += -1
-                                pdir(byRow) = 1
-                                pdir(byCol) = -1
-                            case 4
-                                byRow = Y_
-                                byCol = X_
-                                ppos(byRow) += 0
-                                ppos(byCol) += 15
-                                pdes(byRow) += 16
-                                pdes(byCol) += -1
-                                pdir(byRow) = 1
-                                pdir(byCol) = -1
-                            case 5
-                                byRow = X_
-                                byCol = Y_
-                                ppos(byRow) += 15
-                                ppos(byCol) += 0
-                                pdes(byRow) += -1
-                                pdes(byCol) += 16
-                                pdir(byRow) = -1
-                                pdir(byCol) = 1
-                            case 6
-                                byRow = Y_
-                                byCol = X_
-                                ppos(byRow) += 15
-                                ppos(byCol) += 15
-                                pdes(byRow) += -1
-                                pdes(byCol) += -1
-                                pdir(byRow) = -1
-                                pdir(byCol) = -1
-                            case 7
-                                byRow = X_
-                                byCol = Y_
-                                ppos(byRow) += 0
-                                ppos(byCol) += 0
-                                pdes(byRow) += 16
-                                pdes(byCol) += 16
-                                pdir(byRow) = 1
-                                pdir(byCol) = 1
-                            end select
-                            ypos = ytn
-                            oldCol = ppos(byCol)
-                            while ppos(byRow) <> pdes(byRow)
-                                ppos(byCol) = oldCol
-                                xpos = xtn
-                                while ppos(byCol) <> pdes(byCol)
-                                    
-                                    col = setImages(tilesToMerge_set(j))[8 + xpos + ypos*tilesets(tilesToMerge_set(j)).set_width]
-                                    if col <> &hffff00ff then 
-                                        mergedTiles[8 + ppos(X_) + ppos(Y_) * 320] = col ' &hFF6495ED'
-                                    end if
-                                    ppos(byCol) += pdir(byCol)
-                                    xpos += 1
-                                wend
-                                ppos(byRow) += pdir(byRow)
-                                ypos += 1
-                            wend
-                        end if  
-                                                   
-                                                  
-
-                        /'
-                        if ((q mod map_width) = 251) andAlso ((q \ map_width) = 22) then
-                            cls
-                            put (0,0), setImages(tilesToMerge_set(j)), (xtn, ytn)-(xtn+15, ytn+15), TRANS
-                            print
-                            print
-                            print
-                            print xtn, ytn, tilesets(tilesToMerge_set(j)).set_firstID
-                            sleep
-                    
-                        end if
-                        '/
                     next j
-                else
-                    newTileNum = *cast(integer ptr, combinedTiles.retrieve(searchKey))
-                    'get merged tile
                 end if
-                'assign merged tile
-                layers(curLayer).layer_data[q] = newTileNum
-                if N_merges > 2000 then goto IQUIT
+                
             end if
-        end if
-    next q
-next i
-'/
-IQUIT:
-print "Found"; N_merges; " unique merged tiles."
+        next i
+        for j = 0 to N_runs - 1
+            if mergeStack(j).newTile = 1 then
+                imgTag = hashImage(mergeStack(j).image)
+                if tilesetListHashes.getSize() = 0 then
+                    if curListHash.exists(imgTag) then
+                        tempTileList = *cast(List ptr ptr, curListHash.retrieve(imgTag))
+                        tempTileList->rollReset()
+                        do
+                            rollReturn = tempTileList->roll()
+                            if rollReturn then
+                                tempITPair = *cast(imageTilePair_t ptr ptr, rollReturn)
+                                
+                                if equalImages(tempITPair->image, mergeStack(j).image) then
+                                    
+                                    'found our guy
+                                    layers(mergeStack(j).layer).layer_data[q] = highTileValue + tempITPair->tilenum
+                                    exit do
+                                    
+                                end if
+                            else
+                                put mergedTiles, ((N_merges mod 20) * 16, (N_merges \ 20) * 16), mergeStack(j).image, PSET
 
-for i = 0 to N_tilesets - 1
-    
-    imagedestroy(setImages(i))
-    
-next i
+                                N_merges += 1
+                                
+                                tempITPair = new imageTilePair_t
+                                tempITPair->image = imagecreate(16,16)
+                                put tempITPair->image, (0,0), mergeStack(j).image, PSET
+                                tempITPair->tilenum = N_merges - 1
+                                tempTileList->push_back(@tempITPair)
+                                
+                                layers(mergeStack(j).layer).layer_data[q] = highTileValue + tempITPair->tilenum
+
+                                exit do
+                            end if
+                        loop
+                    else
+                        put mergedTiles, ((N_merges mod 20) * 16, (N_merges \ 20) * 16), mergeStack(j).image, PSET
+                        
+                        N_merges += 1
+                        
+                        tempTileList = new List
+                        tempTileList->init(sizeof(imageTilePair_t ptr))
+                        
+                        tempITPair = new imageTilePair_t
+                        tempITPair->image = imagecreate(16,16)
+                        put tempITPair->image, (0,0), mergeStack(j).image, PSET
+                        tempITPair->tilenum = N_merges - 1
+                        
+                        tempTileList->push_back(@tempITPair)
+                        curListHash.insert(imgTag, @tempTileList)
+                        
+                        layers(mergeStack(j).layer).layer_data[q] = highTileValue + tempITPair->tilenum
+
+                    end if
+                else
+                    'pan the database... *sigh*
+                
+                end if
+            else
+                'do nothing
+            end if
+        next j
+    next q
+next activeLayer
+
+tempRotatedImg = imagecreate(320, (int(N_merges / 20) + 1) * 16)
+put tempRotatedImg, (0,0), mergedTiles, (0,0)-(319, (int(N_merges / 20) + 1) * 16 - 1), PSET
+swap tempRotatedImg, mergedTiles
+imagedestroy tempRotatedImg
+
+/'
+f2 = freefile
+open "tilesets/" & map_name & "_merged.hash" for output as #f2
+write #f2, map_name & "_merged"
+write #f2, 
+'/
+
+bsave "tilesets/test.bmp", mergedTiles
 
 dim as integer newOrder = 0
 dim as ushort newLayersNum = 0
+dim as integer deletedLayers = 0
 
 for i = 0 to N_layers - 1
-    
     layers(i).empty = 1
     for q = 0 to map_width*map_height - 1
         if layers(i).layer_data[q] <> 0 then 
@@ -1038,10 +1415,11 @@ for i = 0 to N_layers - 1
             newLayersNum += 1
             exit for
         end if
-    next q
+    next q 
+    if layers(i).empty = 1 then deletedLayers += 1
 next i
 
-
+print "Deleted " & str(deletedLayers) & " layers."
 
 print "Creating merged tileset..."
 

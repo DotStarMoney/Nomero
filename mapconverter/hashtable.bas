@@ -7,12 +7,13 @@
 
 constructor HashTable(datasize as uinteger)
     ready_flag = 0
+    data_ = 0
     init(datasize)
 end constructor
 
 constructor HashTable()
-    init(0)
     ready_flag = 0
+    data_ = 0
 end constructor
 
 destructor HashTable()
@@ -22,6 +23,7 @@ end destructor
 
 sub HashTable.init(datasize as uinteger)
     dim as integer i
+    if data_ <> 0 then flush()
     curRollNode = 0
     ready_flag = 1
     dataSizeBytes = datasize
@@ -333,6 +335,6 @@ sub HashTable.flush()
     next i
     numObjects = 0
     deallocate(data_)
-    
+    data_ = 0
     init(dataSizeBytes)
 end sub
