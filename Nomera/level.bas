@@ -193,6 +193,7 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                 put scnbuff, (ocx - SCRX*0.5,ocy - SCRY*0.5), falloutBlend, TRANS
                 
             else
+				
                 drawLayer(scnbuff, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
             end if
         else
@@ -319,8 +320,8 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                     end select
                 end if
                 
-                putDispatch(scnbuff, block, xscan*16 + x, yscan*16 + y,_
-                            tilePosX, tilePosY, cam_x, cam_y)
+                put scnbuff, (xscan*16 + x, yscan*16 + y), tilesets[block.tileset].set_image, (tilePosX, tilePosY)-(tilePosX + 15, tilePosY + 15), TRANS
+
             end if
         next xscan
     next yscan
@@ -989,7 +990,6 @@ sub level.load(filename as string)
         get #f,,strdata
         strdata_n = strdata
         if ucase(left(strdata_n, 9)) = "COLLISION" then
-            
             coldata = allocate(lvlWidth * lvlHeight * sizeof(ushort))
             #ifdef DEBUG
                 if coldata = 0 then 
@@ -1010,6 +1010,9 @@ sub level.load(filename as string)
             get #f,,layerData[lyr].inRangeSet
             get #f,,layerData[lyr].isDestructible
             get #f,,layerData[lyr].isFallout
+            get #f,,layerData[lyr].illuminated
+            get #f,,layerData[lyr].ambientLevel
+            get #f,,layerData[lyr].coverage
             
             select case layerData[lyr].inRangeSet
             case BACKGROUND
@@ -1035,8 +1038,7 @@ sub level.load(filename as string)
             
             for j = 0 to lvlWidth * lvlHeight - 1
                 get #f,,blockNumber
-         
-                
+       
                 blocks[lyr][j].tileset = 65535
                 blocks[lyr][j].tilenum = 65535
                 blocks[lyr][j].rotatedType = blockNumber shr 29
@@ -1139,6 +1141,10 @@ sub level.load(filename as string)
     falloutZones.init(lvlWidth*16, lvlHeight*16, sizeof(Level_FalloutType))
     pendingPortalSwitch = 0
     justLoaded = 1
+	#ifdef DEBUG
+        printlog "Loading complete!"
+        stall(100)
+    #endif
 end sub
 
 sub Level.overrideCurrentMusicFile(filename as string)

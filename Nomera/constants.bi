@@ -9,6 +9,7 @@
 
 enum orderType
     FOREGROUND
+    ACTIVE_COVER
     ACTIVE
     BACKGROUND
 end enum

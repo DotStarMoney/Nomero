@@ -111,6 +111,7 @@ end sub
 function GameSpace.go() as integer
     dim as double startTime, totalTime
     do
+		
         startTime = timer
 		step_draw()
         step_input()
@@ -131,6 +132,7 @@ function GameSpace.go() as integer
 			stallTime_mili -= 1
 			if stallTime_mili < 0 then stallTime_mili = 0
 		end if
+		
     loop 
     return 0
 end function
@@ -209,7 +211,7 @@ sub GameSpace.step_draw()
     else
         shake = 0
     end if
- 
+	
     lvlData.drawLayers(scnbuff, BACKGROUND, camera.x(), camera.y(), Vector2D(0, 0))
     if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
@@ -367,7 +369,7 @@ sub GameSpace.step_process()
 			end if
 		end if
     end if
-  
+
 	if bailFrame > 255 then
 		doGameEnd()
 	end if
@@ -382,7 +384,7 @@ sub GameSpace.step_process()
 			next i
 		#endif
 	end if
-   
+
 end sub
 sub GameSpace.doGameEnd()
 	#macro sync()
