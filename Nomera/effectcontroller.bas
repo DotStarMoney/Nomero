@@ -84,8 +84,8 @@ sub EffectController.processFrame(camera as Vector2D)
     dim as integer effect_N, i
     dim as ObjectEffect_t ptr tempObj_
     dim as Vector2D a, b
-    a = camera - Vector2D(SCRX, SCRY) * 5
-    b = camera + Vector2D(SCRX, SCRY) * 5
+    a = camera - Vector2D(SCRX, SCRY)
+    b = camera + Vector2D(SCRX, SCRY)
     
     effect_N = effectContainer.search(a, b, effect_list)
     if effect_N > 0 then

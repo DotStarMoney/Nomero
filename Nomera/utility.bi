@@ -8,7 +8,7 @@ declare function min overload(x as integer, y as integer) as integer
 declare function max overload(x as double, y as double) as double
 declare function max overload(x as integer, y as integer) as integer
 
-declare function wrap(v as double) as double
+declare function wrap(v as double, v_w as double = 6.28318530718) as double
 declare Sub Split(Text As String, Delim As String = " ", Count As Long = -1, Ret() As String)
 
 declare sub parallaxAdjust(byref p_x as double, byref p_y as double,_

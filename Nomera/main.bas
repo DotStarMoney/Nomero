@@ -13,7 +13,9 @@
 	screenunlock
 	'flip
 #endmacro
-	
+
+'FSOUND_Init(44100, 16, 0)
+
 	
 #ifndef DEBUG
 	dim as uinteger ptr blipSound 
@@ -31,7 +33,6 @@
 
 
 
-	FSOUND_Init(44100, 16, 0)
 
 	blipSound = FSOUND_SAMPLE_Load(FSOUND_FREE,"blip.wav",0,0,0)
 

@@ -35,13 +35,12 @@ function max overload(x as integer, y as integer) as integer
     end if
 end function
 
-function wrap(v as double) as double
-    while v >= 6.28318530718
-        v -= 6.28318530718
-    wend
-    while v < 0
-        v += 6.28318530718
-    wend
+function wrap(v as double, v_w as double = 6.28318530718) as double
+	if v >= v_w then 
+		v -= int(v / v_w) * v_w
+	elseif v < 0 then
+		v += (1 - int(v / v_w)) * v_w
+	end if
     return v
 end function
 

@@ -5,16 +5,19 @@
 #include "tinyblock.bi"
 #include "tinybody.bi"
 #include "vector2d.bi"
+#include "tinydynamic.bi"
+#include "hash2d.bi"
 #include "debug.bi"
 
+#define MAX_DYNAMICS 8
 #define MAX_BODIES 256
 #define MAX_SEGS 128
 #define MAX_ARBS 6
 #define DEFAULT_GRAV 620.0
 #define MIN_DEPTH 0.1
 #define TERM_VEL 800.0
-#define MAX_ITERATIONS 8
-#define MAX_RESOLUTIONS 5
+#define MAX_ITERATIONS 6
+#define MAX_RESOLUTIONS 3
 #define MIN_TRIG_FRIC_V 0.1
 #define MIN_TRIG_ELAS_DV 20
 
@@ -42,6 +45,10 @@ type TinySpace
                                  byval w as integer, _
                                  byval h as integer, _
                                  byval l as double)
+                                 
+        declare function addDynamic(dyna_ as TinyDynamic ptr) as integer
+        declare sub removeDynamic(index as integer)
+                                 
         declare function addBody(body_ as TinyBody ptr) as integer
         declare sub removeBody(index as integer)
         declare sub step_time(byval t as double)
@@ -80,11 +87,17 @@ type TinySpace
                                               rw as double, rh as double,_
                                               byref depth as double,_
                                               impulse as Vector2D) as integer
-
-
+                                              
         declare sub vectorListImpulse(vecs() as Vector2D, v as Vector2D,_
                                       res as Vector2D, byref fullCancel as integer)
         declare function bodyN(inst as integer) as integer
+        declare function dynamicN(inst as integer) as integer
+                                    
+        as Hash2D spacialHash                            
+        
+        as TinyDynamic ptr dynamics(0 to MAX_DYNAMICS-1)
+        as integer		   dynamics_n
+        as integer         dcount
                                     
         as TinyBody ptr  bodies(0 to MAX_BODIES-1)
         as integer       bodies_n

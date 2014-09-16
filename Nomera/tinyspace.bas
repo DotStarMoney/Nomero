@@ -6,6 +6,8 @@
 #define OWP_INDEX_START 56
 #define OWP_INDEX_END 70
 
+'elasticity is broken because after bounce we dont re-collect line segments! 
+
 constructor TinySpace
     dim as integer i
     this.t = 0.0
@@ -13,6 +15,8 @@ constructor TinySpace
     block_n_cols = 0
     block_data = 0
     bcount = 0
+    dcount = 0
+    dynamics_n = 0
     bodies_n = 0
     gravity = DEFAULT_GRAV
     for i = 0 to MAX_ARBS-1
@@ -70,6 +74,65 @@ sub TinySpace.removeBody(index as integer)
     wend
 end sub
 
+function TinySpace.addDynamic(dyna_ as TinyDynamic ptr) as integer
+	dim as Vector2D a, b
+	
+	if dyna_->getBB(a, b) = 0 then
+		return -1
+	end if
+	
+    dynamics(dynamics_n) = dyna_
+    dynamics(dynamics_n)->ind = dcount
+    spacialHash.insert(a, b, @dyna_)
+    
+    dynamics_n += 1
+    dcount += 1
+    return dcount - 1
+end function
+
+sub TinySpace.removeDynamic(index as integer)
+	dim as TinyDynamic ptr dyn_ptr
+	dim as integer i, q
+	spacialHash.rollReset()
+	do
+		dyn_ptr = spacialHash.roll()
+		if dyn_ptr <> 0 then
+			if index = dyn_ptr->ind then 
+				spacialHash.remove(dyn_ptr)
+				exit do
+			end if
+		else
+			exit do
+		end if
+	loop
+    i = 0
+    index = dynamicN(index)
+    while i < dynamics_n
+        if i = index then
+            for q = i to dynamics_n - 2
+                dynamics(q) = dynamics(q + 1)
+            next q
+            dynamics_n -= 1
+            exit while
+        else 
+            i += 1
+        end if
+    wend
+	
+	
+	'''''''''''''''''''''''''''
+	'CLEAN UP ANY ARBITERS
+	
+	
+end sub
+function TinySpace.dynamicN(inst as integer) as integer
+    dim as integer i
+    for i = 0 to dynamics_n - 1
+        if dynamics(dynamics_n)->ind = inst then return i
+    next i
+    return -1
+end function
+
 sub TinySpace.setBlockData(byval d as TinyBlock ptr, _
                            byval w as integer, _
                            byval h as integer, _
@@ -90,7 +153,7 @@ sub TinySpace.setBlockData(byval d as TinyBlock ptr, _
             this.block_data[d_cnt].friction      = d[d_cnt].friction
             
     next d_cnt 
-    
+    spacialHash.init(w * 16, h * 16, sizeof(TinyDynamic ptr))
     deallocate(d)
 end sub
 
@@ -696,7 +759,7 @@ sub TinySpace.traceRing(      x           as integer,_
 								end if
 								
 								if noWrite = 0 then
-									#ifdef DEBUG
+									#ifdef DEBUG_VERBOSE
 										printlog "TRACERING: ", 1
 										printlog "writing " &  a_pt & ", " & b_pt & ", " & _
 										          xs_prev & ", " & ys_prev & ", " & xs_o & ", " & ys_o
@@ -712,7 +775,7 @@ sub TinySpace.traceRing(      x           as integer,_
 									xs_line = xs
 									ys_line = ys     
 								end if
-								#ifdef DEBUG
+								#ifdef DEBUG_VERBOSE
 									printlog "TRACERING: ", 1
 									printlog curSlope & ", " & oldSlope
 								#endif
@@ -722,7 +785,7 @@ sub TinySpace.traceRing(      x           as integer,_
 									
 									usedArray(xs_o, ys_o) = 2
 									
-									#ifdef DEBUG
+									#ifdef DEBUG_VERBOSE
 										line (xs_o*16, ys_o*16)-(xs_o*16+15, ys_o*16+15), 93284834 +  usedArray(xs_o, ys_o) * 84390309288, B
 									#endif
 								end if
@@ -751,7 +814,7 @@ sub TinySpace.traceRing(      x           as integer,_
 					
 					if curIndx = MAX_SEGS then exit sub
 					
-					#ifdef DEBUG
+					#ifdef DEBUG_VERBOSE
 						printlog "TRACERING: ", 1
 						printlog "writing 2, " & a_pt & ", " & b_pt
 					#endif
@@ -772,14 +835,14 @@ sub TinySpace.traceRing(      x           as integer,_
 			if (getBlock(xs_o, ys_o).cModel >= OWP_INDEX_START) andAlso _
 			   (getBlock(xs_o, ys_o).cModel <= OWP_INDEX_END) then
 			   
-				#ifdef DEBUG
+				#ifdef DEBUG_VERBOSE
 					printlog "TRACERING: ", 1
 					printlog str(curSlope.x())
 				#endif
 				if (firstCheck = 0) andAlso (curSlope.x() >= 0) then 
 					usedArray(xs_o, ys_o) = 2
 					
-					#ifdef DEBUF
+					#ifdef DEBUG_VERBOSE
 						line (xs_o*16, ys_o*16)-(xs_o*16+15, ys_o*16+15), 93284834 +  usedArray(xs_o, ys_o) * 84390309288, B
 						printlog "TRACERING: ", 1
 						printlog str(curSlope.x())
@@ -791,7 +854,7 @@ sub TinySpace.traceRing(      x           as integer,_
 			end if
             lastSwitch = 1
 
-			#ifdef DEBUG
+			#ifdef DEBUG_VERBOSE
 				printlog "TRACERING: updating"
 			#endif
         end if
@@ -824,7 +887,7 @@ sub TinySpace.traceRing(      x           as integer,_
 		   
 		   segList(startIndex).a = segList(curIndx).a
 		   segList(startIndex).b = segList(curIndx).b
-		   #ifdef DEBUG
+		   #ifdef DEBUG_VERBOSE
 				printlog "TRACERING:", 1
 				printlog "Swapping first and last owp..."
 		   #endif
@@ -835,11 +898,11 @@ sub TinySpace.traceRing(      x           as integer,_
 		
 		if curIndx = MAX_SEGS then exit sub
 		
-		#ifdef DEBUG
+		#ifdef DEBUG_VERBOSE
 			printlog "TRACERING: ", 1
 			printlog "writing 3, " & a_pt & ", " & b_pt
 		#endif
-		#ifdef DEBUG
+		#ifdef DEBUG_VERBOSE
 	else
 		printlog "TRACERING: ", 1
 		printlog str(skipOWP) & ", " & usedArray(xs_o, ys_o) 
@@ -852,7 +915,7 @@ sub TinySpace.traceRing(      x           as integer,_
 		   (firstSlope.y() = lastSlope.y()) then
 			segList(startIndex).a = segList(curIndx - 1).a
 			curIndx -= 1
-			#ifdef DEBUG
+			#ifdef DEBUG_VERBOSE
 				printlog "TRACERING: connecting"
 			#endif
 		end if
