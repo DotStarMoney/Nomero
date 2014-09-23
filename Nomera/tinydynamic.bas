@@ -1,6 +1,11 @@
 #include "crt.bi"
 #include "tinydynamic.bi"
 #include "utility.bi"
+#include "debug.bi"
+#include "printlog.bi"
+
+static as integer TinyDynamic.instCount = 1
+
 
 constructor TinyDynamic()
 	construct()
@@ -31,6 +36,8 @@ sub TinyDynamic.clearShapeData()
 	if cur_pts_p <> 0 then deallocate(cur_pts_p)
 	if cur_pts_v <> 0 then deallocate(cur_pts_v)
 	if base_pts <> 0 then deallocate(base_pts)
+	if segmentTags <> 0 then deallocate(segmentTags)
+	if referenceTags <> 0 then deallocate(referenceTags)
 	pointsN = 0
 end sub
 
@@ -46,6 +53,8 @@ sub TinyDynamic.construct()
 	cur_pts_p = 0
 	cur_pts_v = 0
 	hasBB = 0
+	segmentTags = 0 
+	referenceTags = 0
 	base_pts = 0
 	centroid = Vector2D(0,0)
 end sub
@@ -79,7 +88,7 @@ sub TinyDynamic.init(proto as TinyDynamic_Prototype_e)
 		BASICPATH.toggleTime = 0
 	case DYNA_PIVOTER
 		PIVOTER.angle = 0
-		PIVOTER.angle_v = PI / 180
+		PIVOTER.angle_v = (PI / 180)*4
 	end select
 	if pointsN <> 0 then
 		setup = 1
@@ -102,16 +111,38 @@ sub TinyDynamic.importShape(pts as Vector2D ptr, ptsN as integer)
 	memcpy(base_pts, pts, sizeof(Vector2D) * ptsN)
 	memcpy(cur_pts_p, pts, sizeof(Vector2D) * ptsN)
 	memcpy(cur_pts_v, pts, sizeof(Vector2D) * ptsN)
+	
 	if (pts[0].x = pts[ptsN-1].x) andAlso (pts[0].y = pts[ptsN-1].y) then 
 		isComplete = 1
 	else
 		isComplete = 0
 	end if
+	segmentTags = allocate(sizeof(integer) * (ptsN - 1))
+	referenceTags = allocate(sizeof(integer) * (ptsN - 1))
+	for i = 0 to ptsN - 2
+		referenceTags[i] = instCount
+		instCount += 1
+	next i
 	if type_ <> DYNA_NONE then 
 		setup = 1
 		offset_time(0)
 	end if
 end sub
+
+function TinyDynamic.getNumSegs() as integer
+	return pointsN - 1
+end function
+
+function TinyDynamic.getTag(i as integer) as integer
+	return segmentTags[i]
+end function
+sub TinyDynamic.setTag(i as integer, t as integer)
+	segmentTags[i] = t
+end sub
+
+function TinyDynamic.getReferenceTag(i as integer) as integer
+	return referenceTags[i]
+end function
 
 sub TinyDynamic.setCentroid(c_p as Vector2D)
 	centroid = c_p
@@ -139,6 +170,7 @@ sub TinyDynamic.step_time(t as double)
 		offset_time(0)
 	else
 		cur_t = base_t
+		offset_time(0)
 	end if
 end sub
 
@@ -172,7 +204,17 @@ sub TinyDynamic.offset_time(t as double)
 	dim as Vector2D pathP
 	dim as integer dire
 	
+		
+	if setup = 0 then exit sub
+	
+	
 	cur_t = base_t + t
+	
+	#ifdef DEBUG
+		printlog "Computing TinyDynamic at time: " & str(cur_t)
+	#endif	
+	
+	
 	select case type_
 	case DYNA_SFX_SPINNER
 		SFX_SPINNER.angle = wrap(cur_t * SFX_SPINNER.angle_v)
@@ -189,97 +231,123 @@ sub TinyDynamic.offset_time(t as double)
 	
 		temp_dist = cur_t * BASICPATH.speed
 		
-		select case BASICPATH.type_
-		case BOUNCE
-			temp_dist = wrap(temp_dist, BASICPATH.path_length*2)
-		case SINUSOID
-			temp_dist = (sin(temp_dist) + 1) * BASICPATH.path_length
-		case TOGGLE
-			if BASICPATH.toggleState = 0 then
-				temp_dist = 0
-			elseif BASICPATH.toggleState = 1 then
-				temp_dist= BASICPATH.path_length - 0.001
-			else
-				temp_dist = (cur_t - BASICPATH.toggleTime) * BASICPATH.speed * BASICPATH.path_length
-				if temp_dist < 0 then BASICPATH.toggleTime = 0
-				
-				if t = 0 then
-					if temp_dist > BASICPATH.path_length then 
-						if BASICPATH.toggleState = 2 then
-							BASICPATH.toggleState = 1
-							temp_dist = BASICPATH.path_length - 0.001
-						else
-							BASICPATH.toggleState = 0
-							temp_dist = 0
+		if (BASICPATH.pathPoints[0].x <> BASICPATH.pathPoints[BASICPATH.pathPointsN - 1].x) orElse _
+		   (BASICPATH.pathPoints[0].y <> BASICPATH.pathPoints[BASICPATH.pathPointsN - 1].y) then
+			
+			select case BASICPATH.type_
+			case BOUNCE
+				temp_dist = wrap(temp_dist, BASICPATH.path_length*2)
+			case SINUSOID
+				temp_dist = (sin(temp_dist) + 1) * BASICPATH.path_length
+			case TOGGLE
+				if BASICPATH.toggleState = 0 then
+					temp_dist = 0
+				elseif BASICPATH.toggleState = 1 then
+					temp_dist= BASICPATH.path_length - 0.001
+				else
+					temp_dist = (cur_t - BASICPATH.toggleTime) * BASICPATH.speed * BASICPATH.path_length
+					if temp_dist < 0 then BASICPATH.toggleTime = 0
+					
+					if t = 0 then
+						if temp_dist > BASICPATH.path_length then 
+							if BASICPATH.toggleState = 2 then
+								BASICPATH.toggleState = 1
+								temp_dist = BASICPATH.path_length - 0.001
+							else
+								BASICPATH.toggleState = 0
+								temp_dist = 0
+							end if
 						end if
 					end if
-				end if
-				
-			end if			
-		end select
-		
-		dire = 1
-		if temp_dist > BASICPATH.path_length then
-			dire = -1
-			temp_dist = BASICPATH.path_length*2 - temp_dist
-		end if
-		seg_dist = 0
-		for i = 0 to BASICPATH.pathPointsN - 2
-			seg_d = BASICPATH.pathPoints[i + 1] - BASICPATH.pathPoints[i]
-			seg_dm = seg_d.magnitude()
-			seg_d = seg_d / seg_dm
-			seg_dist += seg_dm
-			if temp_dist < seg_dist then
-				BASICPATH.segment = i
-				BASICPATH.segment_pos = (seg_dm - (seg_dist - temp_dist))
-				pathP = centroid + seg_d * BASICPATH.segment_pos
-				exit for
-			end if
-		next i			
-		for i = 0 to pointsN - 1 
-			cur_pts_p[i] = pathP + base_pts[i]
-		next i
+					
+				end if			
+			end select
 			
-		select case BASICPATH.type_
-		case BOUNCE				
-			if dire = -1 then 
-				for i = 0 to pointsN - 1 
-					cur_pts_v[i] = seg_d * -BASICPATH.speed
-				next i
-			else
-				for i = 0 to pointsN - 1 
-					cur_pts_v[i] = seg_d * BASICPATH.speed
-				next i
+			dire = 1
+			if temp_dist > BASICPATH.path_length then
+				dire = -1
+				temp_dist = BASICPATH.path_length*2 - temp_dist
 			end if
-		case SINUSOID
+			seg_dist = 0
+			for i = 0 to BASICPATH.pathPointsN - 2
+				seg_d = BASICPATH.pathPoints[i + 1] - BASICPATH.pathPoints[i]
+				seg_dm = seg_d.magnitude()
+				seg_d = seg_d / seg_dm
+				seg_dist += seg_dm
+				if temp_dist < seg_dist then
+					BASICPATH.segment = i
+					BASICPATH.segment_pos = (seg_dm - (seg_dist - temp_dist))
+					pathP = centroid + seg_d * BASICPATH.segment_pos
+					exit for
+				end if
+			next i			
 			for i = 0 to pointsN - 1 
-				cur_pts_v[i] = seg_d * sin(temp_dist) * BASICPATH.speed
+				cur_pts_p[i] = pathP + base_pts[i]
 			next i
-		case TOGGLE
-			if BASICPATH.toggleState < 2 then
-				for i = 0 to pointsN - 1 
-					cur_pts_v[i] = Vector2D(0,0)
-				next i
-			else
-				if BASICPATH.toggleState = 2 then
-					for i = 0 to pointsN - 1 
-						cur_pts_v[i] = seg_d * BASICPATH.speed
-					next i
-				else
+				
+			select case BASICPATH.type_
+			case BOUNCE				
+				if dire = -1 then 
 					for i = 0 to pointsN - 1 
 						cur_pts_v[i] = seg_d * -BASICPATH.speed
 					next i
+				else
+					for i = 0 to pointsN - 1 
+						cur_pts_v[i] = seg_d * BASICPATH.speed
+					next i
 				end if
-			end if
-		end select
+			case SINUSOID
+				for i = 0 to pointsN - 1 
+					cur_pts_v[i] = seg_d * sin(temp_dist) * BASICPATH.speed
+				next i
+			case TOGGLE
+				if BASICPATH.toggleState < 2 then
+					for i = 0 to pointsN - 1 
+						cur_pts_v[i] = Vector2D(0,0)
+					next i
+				else
+					if BASICPATH.toggleState = 2 then
+						for i = 0 to pointsN - 1 
+							cur_pts_v[i] = seg_d * BASICPATH.speed
+						next i
+					else
+						for i = 0 to pointsN - 1 
+							cur_pts_v[i] = seg_d * -BASICPATH.speed
+						next i
+					end if
+				end if
+			end select
+		else
+			temp_dist = wrap(cur_t * BASICPATH.speed, BASICPATH.path_length)
+			seg_dist = 0
+			for i = 0 to BASICPATH.pathPointsN - 2
+				seg_d = BASICPATH.pathPoints[i + 1] - BASICPATH.pathPoints[i]
+				seg_dm = seg_d.magnitude()
+				seg_d = seg_d / seg_dm
+				seg_dist += seg_dm
+				if temp_dist < seg_dist then
+					BASICPATH.segment = i
+					BASICPATH.segment_pos = (seg_dm - (seg_dist - temp_dist))
+					pathP = centroid + seg_d * BASICPATH.segment_pos
+					exit for
+				end if
+			next i			
+			for i = 0 to pointsN - 1 
+				cur_pts_p[i] = pathP + base_pts[i]
+				cur_pts_v[i] = seg_d * BASICPATH.speed
+			next i
+		end if
 	case DYNA_PIVOTER
 		PIVOTER.angle = wrap(cur_t * PIVOTER.angle_v)
 		for i = 0 to pointsN - 1 
 			cur_pts_p[i] = Vector2D(base_pts[i].x * cos(PIVOTER.angle) - base_pts[i].y * sin(PIVOTER.angle),_
 									base_pts[i].y * cos(PIVOTER.angle) + base_pts[i].x * sin(PIVOTER.angle))
-									
 			cur_pts_v[i] = Vector2D(-cur_pts_p[i].y * PIVOTER.angle_v, cur_pts_p[i].x * PIVOTER.angle_v)
+			cur_pts_p[i] = cur_pts_p[i] + centroid
 		next i		
+		for i = 0 to pointsN - 2
+			line (cur_pts_p[i].x(), cur_pts_p[i].y())-(cur_pts_p[i+1].x(), cur_pts_p[i+1].y())
+		next i
 	end select
 end sub
 
@@ -373,11 +441,98 @@ sub TinyDynamic.calcBB()
 	end if
 end sub
 
-function TinyDynamic.circleCollide(p as Vector2D, v as Vector2D, r as double,_
-								   byref depth as double, byref impuse as Vector2D,_
-							       byref pt_vel as Vector2D) as integer
-	dim as integer i
+function TinyDynamic.circleCollide(p as Vector2D, r as double,_
+								   arbList() as ArbiterData_t, byref curIndex as integer,_
+								   byref maxD as double, slop as double = 0.1) as integer
 	
+	dim as integer  i, j
+	dim as integer  oddNodes
+	dim as Vector2D seg_v
+	dim as Vector2D seg_vn
+	dim as Vector2D seg_v_perp
+	dim as double   seg_m
+	dim as double   seg_i
+	dim as Vector2D seg_pos
+	dim as Vector2D proj_to_p
+	dim as double   c_depth
+	dim as Vector2D c_impulse
+	dim as double   ppmag
+	dim as double   maxDepth
+	dim as integer  foundArbs
+
+	if setup = 0 then return 0
+	
+	maxDepth = -1
+	foundArbs = 0
+
+	for i = 0 to pointsN - 2
+		seg_v = cur_pts_p[i + 1] - cur_pts_p[i]
+		seg_m = seg_v.magnitude()
+		seg_vn = seg_v / seg_m
+		seg_v_perp = seg_vn.iperp()
+		seg_i = (seg_vn) * (p - cur_pts_p[i])
+		if seg_i < 0 then
+			seg_i = 0
+		elseif seg_i > (seg_m - 0.00001) then
+			seg_i = seg_m - 0.00001
+		end if		
+		seg_pos = cur_pts_p[i] + seg_i * seg_vn
+		proj_to_p = (p - seg_pos)
+		ppmag = proj_to_p.magnitude()
+		c_impulse = proj_to_p / ppmag
+		if ppmag >= (r + slop) then continue for
+		if proj_to_p * seg_v_perp > 0 then
+			c_depth = r - ppmag
+		else
+			c_depth = ppmag + r
+		end if
+		if c_depth > maxDepth then maxDepth = c_depth
+		curIndex += 1
+		foundArbs += 1
+		with arbList(curIndex - 1)
+			.a = cur_pts_p[i]
+			.b = cur_pts_p[i + 1]
+			.dynamic_ = 1
+			.impulse = c_impulse
+			.depth = c_depth
+			.velocity = (cur_pts_v[i + 1] - cur_pts_v[i]) * _
+			            (seg_i / seg_m) + cur_pts_v[i]
+			.dynamic_tag = referenceTags[i]
+			.tag = segmentTags[i]
+			.dynamic_norm = seg_v_perp
+			.guide_dot = seg_v_perp
+			.guide_axis = cur_pts_p[i] + (r - slop) * seg_v_perp
+			.ignore = 0
+			.new_ = 0
+		end with
+	next i
+	
+	maxD = maxDepth
+	if foundArbs > 0 then return foundArbs
+	
+	if (isComplete = 1) andAlso (foundArbs = 0) then
+		oddNodes = 0
+		j = pointsN - 2
+
+		for i = 0 to pointsN - 2
+			if ((((cur_pts_p[i].y < p.y) andAlso (cur_pts_p[j].y >= p.y)) orElse _
+				 ((cur_pts_p[j].y < p.y) andAlso (cur_pts_p[i].y >= p.y))) andAlso _
+				 ((cur_pts_p[i].x <= p.x) orElse (cur_pts_p[j].x <= p.x))) Then
+				 
+				oddNodes = oddNodes xor (cur_pts_p[i].x + ((p.y - cur_pts_p[i].y) / _
+										(cur_pts_p[j].y - cur_pts_p[i].y)) * _
+										(cur_pts_p[j].x - cur_pts_p[i].x)) < p.x
+		 
+			end if
+			j = i
+		next i
+		
+		if oddNodes = 1 then 
+			maxDepth = 99999
+			return -1
+		end if
+	end if
+
 	return 0						   
 end function
 
@@ -385,6 +540,10 @@ function TinyDynamic.getBB(byref a as Vector2d, byref b as Vector2D) as integer
 	a = tl
 	b = dr
 	return hasBB
+end function
+
+function TinyDynamic.isClosed() as integer
+	return isComplete
 end function
 
 function TinyDynamic.exportParams() as any ptr

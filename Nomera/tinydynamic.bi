@@ -2,6 +2,7 @@
 #define TINYDYNAMIC_BI
 
 #include "vector2d.bi"
+#include "arbiter.bi"
 
 enum TinyDynamic_Prototype_e
 	DYNA_NONE
@@ -62,17 +63,23 @@ type TinyDynamic
 		declare sub activate()
 		declare sub deactivate()
 		declare function isActive() as integer
+		declare function isClosed() as integer
 		declare sub importShape(pts as Vector2D ptr, ptsN as integer)
 		declare sub setCentroid(c_p as Vector2D)
 		declare function getCentroid() as Vector2D
 		declare function getBB(byref a as Vector2d, byref b as Vector2D) as integer
 		declare sub calcBB()
-		declare function circleCollide(p as Vector2D, v as Vector2D, r as double,_
-									   byref depth as double, byref impuse as Vector2D,_
-									   byref pt_vel as Vector2D) as integer
+		declare function circleCollide(p as Vector2D, r as double,_
+									   arbList() as ArbiterData_t, byref curIndex as integer,_
+									   byref maxD as double, slop as double = 0.1) as integer
+		declare function getNumSegs() as integer
+		declare function getReferenceTag(i as integer) as integer
+		declare function getTag(i as integer) as integer
+		declare sub setTag(i as integer, t as integer)
 		
 		as integer ind
 	private:
+		static as integer instCount
 		declare sub construct()
 		declare sub clearShapeData()
 		as Vector2D centroid
@@ -88,6 +95,8 @@ type TinyDynamic
 		as Vector2D ptr base_pts
 		as Vector2D ptr cur_pts_p
 		as Vector2D ptr cur_pts_v
+		as integer ptr  segmentTags
+		as integer ptr  referenceTags
 		
 		as TinyDynamic_Prototype_e type_
 

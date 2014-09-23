@@ -7,7 +7,7 @@ return {
   tilewidth = 16,
   tileheight = 16,
   properties = {
-    ["default start"] = "32, 32",
+    ["default start"] = "40, 32",
     ["music"] = "TestTheme.ogg",
     ["snow"] = "off"
   },

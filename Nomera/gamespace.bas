@@ -91,6 +91,18 @@ constructor GameSpace()
     scnbuff = imagecreate(640,480)
     stallTime_mili = 15
     movingFrmAvg = 0
+    
+    dim as integer handle
+    dim as TinyDynamic ptr dynaTest = new TinyDynamic
+
+    dim as Vector2D shapeTest(0 to 2) = {Vector2D(0,0), Vector2D(480, 0), Vector2D(460, -30)}
+    dynaTest->init(DYNA_PIVOTER)
+    dynaTest->importShape(@shapeTest(0), 3)
+    dynaTest->setCentroid(Vector2D(512,562))
+    dynaTest->calcBB()
+    dynaTest->activate()
+    
+    handle = world.addDynamic(dynaTest)
 
 end constructor
 
@@ -120,7 +132,6 @@ function GameSpace.go() as integer
         if keypress(SC_ESCAPE) then exit do
         'print spy.body.p
         locate 1,1
-        
         movingFrmAvg = movingFrmAvg * 0.95 + 0.05 * (frameTime / (1 / FPS_TARGET) * 100)
 		print using "Engine at ##.##% load"; movingFrmAvg
 		
@@ -131,6 +142,12 @@ function GameSpace.go() as integer
 		else
 			stallTime_mili -= 1
 			if stallTime_mili < 0 then stallTime_mili = 0
+		end if
+		
+		if multikey(SC_DOWN) then
+			sleep
+			stall(20)
+			sleep
 		end if
 		
     loop 

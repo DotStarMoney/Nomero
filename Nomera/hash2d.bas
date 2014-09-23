@@ -14,6 +14,7 @@ constructor Hash2D
     cellRows_N = 0
     cellCols_N = 0
     spacialHash = 0
+    size = 0
     curRollFoundNodes.init(sizeof(Hash2dData_t ptr))
     pointerToHashData.init(sizeof(Hash2dData_t ptr))
 end constructor
@@ -22,6 +23,10 @@ destructor Hash2D
     flush()
     deallocate(spacialHash)
 end destructor
+
+function Hash2D.getSize() as integer 
+	return size
+end function
 
 sub Hash2D.init(spaceWidth as double, spaceHeight as double, dataSizeBytes as integer)
     dim as integer i
@@ -34,6 +39,7 @@ sub Hash2D.init(spaceWidth as double, spaceHeight as double, dataSizeBytes as in
     this.cellRows_N = int(spaceHeight / this.cellHeight) + 1
     this.dataSizeBytes = dataSizeBytes
     spacialHash = allocate(sizeof(Hash2dNode_t ptr) * this.cellRows_N * this.cellCols_N)
+    size = 0
     flush(1)
 end sub
 
@@ -104,6 +110,7 @@ function Hash2D.insert(a as Vector2D, b as Vector2D, data_ as any ptr) as any pt
                 spacialHash[yscan * this.cellCols_N + xscan] = new_
             next xscan
         next yscan
+        size += 1
 		return newDataNode_->data_
     end if
     
@@ -207,6 +214,7 @@ sub Hash2D.remove(data_ptr as any ptr)
         end if
     loop
     
+    size -= 1
     deallocate(curDataNode_->data_)
     delete curDataNode_
     
@@ -220,7 +228,7 @@ sub Hash2D.flush(clr as integer = 0)
     
     foundDataPointers.init(sizeof(Hash2dData_t ptr))
     pointerToHashData.flush()
-    
+    size = 0
     for i = 0 to this.cellRows_N * this.cellCols_N - 1
         if clr = 0 then
             curNode_ = spacialHash[i]

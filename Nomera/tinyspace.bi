@@ -8,15 +8,18 @@
 #include "tinydynamic.bi"
 #include "hash2d.bi"
 #include "debug.bi"
+#include "arbiter.bi"
 
 #define MAX_DYNAMICS 8
-#define MAX_BODIES 256
-#define MAX_SEGS 128
+#define MAX_BODIES 64
+#define MAX_SEGS 64
 #define MAX_ARBS 6
 #define DEFAULT_GRAV 620.0
 #define MIN_DEPTH 0.1
 #define TERM_VEL 800.0
-#define MAX_ITERATIONS 6
+#define MAX_ITERATIONS 10
+#define MAX_AXIS_ITERATIONS 5
+#define MAX_RETRYS 3
 #define MAX_RESOLUTIONS 3
 #define MIN_TRIG_FRIC_V 0.1
 #define MIN_TRIG_ELAS_DV 20
@@ -28,14 +31,7 @@ type BlockEndpointData_t
     as integer  tag
 end type
 
-type ArbiterData_t
-    as Vector2D a
-    as Vector2D b
-    as Vector2D impulse
-    as double   depth
-    as integer  ignore
-    as integer  new_
-end type
+
 
 type TinySpace
     public:
@@ -64,7 +60,8 @@ type TinySpace
         declare function getGravity() as Vector2D
     private:
         declare static sub dividePosition(p as Vector2D, size as Vector2D)
-        declare sub refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, seg_n as integer)
+        declare sub refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, seg_n as integer, _
+									 dyn_seg as TinyDynamic ptr ptr ptr, dyn_seg_n as integer)
         
         declare function getBlock(xp as integer, yp as integer) as TinyBlock
         declare function block_getPoint(pt as integer,_
@@ -88,8 +85,9 @@ type TinySpace
                                               byref depth as double,_
                                               impulse as Vector2D) as integer
                                               
-        declare sub vectorListImpulse(vecs() as Vector2D, v as Vector2D,_
-                                      res as Vector2D, byref fullCancel as integer)
+        declare sub vectorListImpulse(vecs_p() as Vector2D, v as Vector2D,_
+                                      res as Vector2D, byref fullCancel as integer,_
+									  norm_skip() as integer, refactor as integer)
         declare function bodyN(inst as integer) as integer
         declare function dynamicN(inst as integer) as integer
                                     

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="64" height="64" tilewidth="16" tileheight="16">
  <properties>
-  <property name="default start" value="32, 32"/>
+  <property name="default start" value="40, 32"/>
   <property name="music" value="TestTheme.ogg"/>
   <property name="snow" value="off"/>
  </properties>

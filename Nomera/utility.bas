@@ -39,7 +39,7 @@ function wrap(v as double, v_w as double = 6.28318530718) as double
 	if v >= v_w then 
 		v -= int(v / v_w) * v_w
 	elseif v < 0 then
-		v += (1 - int(v / v_w)) * v_w
+		v += (1 + int(abs(v) / v_w)) * v_w
 	end if
     return v
 end function

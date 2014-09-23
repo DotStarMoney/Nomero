@@ -6,7 +6,7 @@
 #define OWP_INDEX_START 56
 #define OWP_INDEX_END 70
 
-'elasticity is broken because after bounce we dont re-collect line segments! 
+#define TS_GETDYN(x, i) (*(x[i]))
 
 constructor TinySpace
     dim as integer i
@@ -240,11 +240,9 @@ function TinySpace.lineCircleCollide(a as Vector2D, b as Vector2D,_
                                      
     dim as Vector2D v_norm
     dim as Vector2D v_norm_iperp
-    dim as Vector2D cvec
     dim as double   proj_mag
     dim as double   seg_mag
     dim as Vector2D proj
-    dim as double   correctAmt
 
     v_norm = b - a
     seg_mag = v_norm.magnitude()
@@ -394,13 +392,35 @@ function TinySpace.block_getRingPoint(block_type as integer,_
 	end if
 end function
 
-sub TinySpace.vectorListImpulse(vecs() as Vector2D, v as Vector2D,_
-                                res as Vector2D, byref fullCancel as integer)
+sub TinySpace.vectorListImpulse(vecs_p() as Vector2D, v as Vector2D,_
+                                res as Vector2D, byref fullCancel as integer,_
+                                norm_skip() as integer, refactor as integer)
                            
-    dim as integer i
+    dim as integer i, j
     dim as double ang, w_ang, curMin, curMax
     dim as integer minIndex, maxIndex
     dim as Vector2D minVec, maxVec
+    dim as Vector2D vecs(0 to ubound(vecs_p))
+    
+    
+    if refactor = 0 then
+		for i = 0 to ubound(vecs_p)
+			vecs(i) = vecs_p(i)
+		next i	
+    else
+    	j = 0
+    	for i = 0 to ubound(vecs_p)
+			if norm_skip(i) = 0 then
+				vecs(j) = vecs_p(i)
+				j += 1
+			end if
+		next i	
+		if j = 0 then
+			res = Vector2D(0,0)
+		else
+			redim preserve as Vector2D vecs(0 to j-1)
+		end if
+    end if
     
     if ubound(vecs) < 1 then
         if v * -vecs(0) < 0 orElse (vecs(0).x() = 0 andAlso vecs(0).y() = 0) then
@@ -958,11 +978,12 @@ function TinySpace.getGravity() as Vector2D
     return Vector2D(0, gravity)
 end function
 
-sub TinySpace.refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, seg_n as integer)
+sub TinySpace.refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, seg_n as integer, _
+							   dyn_seg as TinyDynamic ptr ptr ptr, dyn_seg_n as integer)
 
 	#define MINESCULE_RA 0.000001
 
-	dim as integer i, j
+	dim as integer i, j, q, k
 	dim as Vector2D a, b
 	dim as Vector2D d
 	dim as Vector2D tempD
@@ -972,71 +993,86 @@ sub TinySpace.refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, s
 	dim as integer tempArbs_N
 	
 	for i = 0 to arbiters_n(arb_i) - 1
-		a = arbiters(arb_i, i).a
-		b = arbiters(arb_i, i).b
-		d = b - a
-		if abs(d.x()) > abs(d.y()) then
-			slope = d.y() / d.x()
-			inter = a.y() - slope * a.x()
-			for j = 0 to seg_n - 1
-				if abs(seg(j).a.y() - slope * seg(j).a.x() - inter) <= MINESCULE_RA then
-					if abs(seg(j).b.y() - slope * seg(j).b.x() - inter) <= MINESCULE_RA then
-					
-						noOverlap = 0
-						tempD = seg(j).a - b
+		if arbiters(arb_i, i).dynamic_ = 0 then
+			a = arbiters(arb_i, i).a
+			b = arbiters(arb_i, i).b
+			d = b - a
+			if abs(d.x()) > abs(d.y()) then
+				slope = d.y() / d.x()
+				inter = a.y() - slope * a.x()
+				for j = 0 to seg_n - 1
+					if abs(seg(j).a.y() - slope * seg(j).a.x() - inter) <= MINESCULE_RA then
+						if abs(seg(j).b.y() - slope * seg(j).b.x() - inter) <= MINESCULE_RA then
 						
-						if (tempD * d) > 0 then 
-							noOverlap = 1
-						else
-							tempD = a - seg(j).b
+							noOverlap = 0
+							tempD = seg(j).a - b
+							
 							if (tempD * d) > 0 then 
 								noOverlap = 1
+							else
+								tempD = a - seg(j).b
+								if (tempD * d) > 0 then 
+									noOverlap = 1
+								end if
+							end if
+							if noOverlap = 0 then
+															
+								tempArbs_N += 1
+								redim preserve as ArbiterData_t tempArbs(tempArbs_N - 1)
+								tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)
+								tempArbs(tempArbs_N - 1).a = seg(j).a
+								tempArbs(tempArbs_N - 1).b = seg(j).b
+								tempArbs(tempArbs_N - 1).dynamic_ = 0
+								seg(j).tag = tempArbs_N - 1
+
+								exit for
 							end if
 						end if
-						if noOverlap = 0 then
-														
-							tempArbs_N += 1
-							redim preserve as ArbiterData_t tempArbs(tempArbs_N - 1)
-							tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)
-							tempArbs(tempArbs_N - 1).a = seg(j).a
-							tempArbs(tempArbs_N - 1).b = seg(j).b
-							seg(j).tag = tempArbs_N - 1
+					end if
+				next j
+			else
+				slope = d.x() / d.y()
+				inter = a.x() - slope * a.y()
+				for j = 0 to seg_n - 1
+					if abs(seg(j).a.x() - slope * seg(j).a.y() - inter) <= MINESCULE_RA then
+						if abs(seg(j).b.x() - slope * seg(j).b.y() - inter) <= MINESCULE_RA then
+							noOverlap = 0
+							tempD = seg(j).a - b
+							if (tempD * d) > 0 then 
+								noOverlap = 1
+							else
+								tempD = a - seg(j).b
+								if (tempD * d) > 0 then noOverlap = 1
+							end if
+							if noOverlap = 0 then
+															
+								tempArbs_N += 1
+								redim preserve as ArbiterData_t tempArbs(tempArbs_N - 1)
+								tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)
+								tempArbs(tempArbs_N - 1).a = seg(j).a
+								tempArbs(tempArbs_N - 1).b = seg(j).b
+								tempArbs(tempArbs_N - 1).dynamic_ = 0
+								seg(j).tag = tempArbs_N - 1
 
-							exit for
+								exit for
+							end if
+							
 						end if
 					end if
-				end if
-			next j
+				next j
+			end if		
 		else
-			slope = d.x() / d.y()
-			inter = a.x() - slope * a.y()
-			for j = 0 to seg_n - 1
-				if abs(seg(j).a.x() - slope * seg(j).a.y() - inter) <= MINESCULE_RA then
-					if abs(seg(j).b.x() - slope * seg(j).b.y() - inter) <= MINESCULE_RA then
-						noOverlap = 0
-						tempD = seg(j).a - b
-						if (tempD * d) > 0 then 
-							noOverlap = 1
-						else
-							tempD = a - seg(j).b
-							if (tempD * d) > 0 then noOverlap = 1
-						end if
-						if noOverlap = 0 then
-														
-							tempArbs_N += 1
-							redim preserve as ArbiterData_t tempArbs(tempArbs_N - 1)
-							tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)
-							tempArbs(tempArbs_N - 1).a = seg(j).a
-							tempArbs(tempArbs_N - 1).b = seg(j).b
-							seg(j).tag = tempArbs_N - 1
-
-							exit for
-						end if
-						
+			for j = 0 to dyn_seg_n - 1
+				for q = 0 to TS_GETDYN(dyn_seg, j)->getNumSegs() - 1
+					if arbiters(arb_i, i).dynamic_tag = TS_GETDYN(dyn_seg, j)->getReferenceTag(q) then
+						tempArbs_N += 1
+						redim preserve as ArbiterData_t tempArbs(tempArbs_N - 1)
+						tempArbs(tempArbs_N - 1) = arbiters(arb_i, i)	
+						TS_GETDYN(dyn_seg, j)->setTag(q, tempArbs_N - 1)
 					end if
-				end if
-			next j
-		end if		
+				next q
+			next j	
+		end if
 	next i
 	
 	arbiters_N(arb_i) = tempArbs_N
@@ -1177,28 +1213,44 @@ sub TinySpace.step_time(byval t as double)
     dim as integer scan_x, scan_y
     dim as integer start_x, start_y
     dim as integer end_x, end_y
+    dim as integer axis_i
+    dim as Vector2D dynaV
     dim as Vector2D test_p, impulse
-    dim as integer i, q, j, hasSegment
+    dim as integer i, q, j, k, hasSegment
     dim as integer v_cancel, f_cancel
     dim as double  depth, depthc, firstStep
     dim as double  cur_t, lo_t, hi_t, res_t
     dim as double  t_friction
+    dim as double  contactI, bodyI
     dim as Vector2D fric_norm
     dim as Vector2D fric_force
     dim as Vector2D reflect
     dim as Vector2D vn
     dim as double  t_tangent
+    dim as double  max_depth
+    dim as double  elapsed_t
     dim as integer hadPulse, oldArbiters_n
     dim as integer interpen, contacting
     dim as integer skipCollisionCheck
     dim as integer firstCollide, resolutions
+    dim as integer numDynaArbs
     dim as integer iterate, firstCycle
     dim as ArbiterData_t tempArbs(0 to MAX_ARBS-1)
     dim as integer numArbs, cTarget
     dim as Vector2D v_adj, f_total, f_adj, f_bias
     Redim as Vector2D normals(0)
+    Redim as integer  norm_skip(0)
     dim as Vector2D norm
     dim as integer  skipCheck, normals_N, skipSearch
+    dim as any ptr ptr curDynamics
+    dim as TinyDynamic ptr ptr ptr curDynamicsList
+    dim as integer     foundDynamics
+    dim as Vector2D    lockAxis_Adj
+    dim as Vector2D    slideDirection
+    dim as Vector2D    tempV
+    dim as integer     lockAxis_count
+    dim as integer     retryStep, retry_i
+    
     
     dim as BlockEndpointData_t segment(0 to MAX_SEGS-1)
     dim as integer             segment_n
@@ -1222,11 +1274,10 @@ sub TinySpace.step_time(byval t as double)
         test_p = c->p
         tl = Vector2D(c->p.x() - c->r * c->r_rat, c->p.y() - c->r)
         br = Vector2D(c->p.x() - c->r * c->r_rat, c->p.y() - c->r)
-        test_p = test_p + c->v * t
-        tl.setX(min(tl.x(), test_p.x() - c->r * c->r_rat))
-        tl.setY(min(tl.y(), test_p.y() - c->r))
-        br.setX(max(br.x(), test_p.x() + c->r * c->r_rat))
-        br.setY(max(br.y(), test_p.y() + c->r))
+        tl.setX(min(tl.x(), test_p.x() - c->r * c->r_rat - abs(c->v.x()) * t))
+        tl.setY(min(tl.y(), test_p.y() - c->r - abs(c->v.y()) * t))
+        br.setX(max(br.x(), test_p.x() + c->r * c->r_rat + abs(c->v.x()) * t))
+        br.setY(max(br.y(), test_p.y() + c->r + abs(c->v.y()) * t))
 
         dividePosition(tl, Vector2D(block_l, block_l))
         dividePosition(br, Vector2D(block_l, block_l))
@@ -1279,7 +1330,10 @@ sub TinySpace.step_time(byval t as double)
 				next scan_x
 			next scan_y
 			
+			foundDynamics = spacialHash.search(tl, br, curDynamicsList)
+			'foundDynamics = 0
 			
+							
 			#ifdef DEBUG
 				printlog "Found: " & str(segment_n) & ", segments."
 				for j = 0 to arbiters_n(i) - 1
@@ -1288,7 +1342,7 @@ sub TinySpace.step_time(byval t as double)
 			#endif
 
 			
-			if segment_n > 0 andAlso c->noCollide = 0 then
+			if (segment_n > 0 orElse foundDynamics > 0) andAlso (c->noCollide = 0) then
 				res_t = t
 				firstCycle = 1
 				v_adj = Vector2D(0,0)
@@ -1299,6 +1353,7 @@ sub TinySpace.step_time(byval t as double)
 				skipCollisionCheck = 0
 				firstCollide = 0
 				resolutions = 0
+				elapsed_t = 0
 				
 				while cur_t > 0 andAlso resolutions < (MAX_RESOLUTIONS+1)
 					
@@ -1306,19 +1361,27 @@ sub TinySpace.step_time(byval t as double)
 					firstStep = 0
 					iterate = 0
 					wrk = *c
-					cTarget = 0     
-					
-					
+					cTarget = 0 					
+					retry_i = 0
+
 					for q = 0 to segment_n - 1
 						segment(q).tag = -1
 					next q
-					refactorArbiters(i, segment(), segment_n)
+					for q = 0 to foundDynamics - 1
+						for j = 0 to TS_GETDYN(curDynamicsList, i)->getNumSegs() - 1
+							TS_GETDYN(curDynamicsList, i)->setTag(j, -1)
+						next j
+					next q
+					refactorArbiters(i, segment(), segment_n, curDynamicsList, foundDynamics)
 					
+					'so for all arbiters from last time, if any of the collision segs for this frame match up
+					' 	with them, give THOSE collision segs a tag pointing to the arbiter from last time
 					
 					do
 						interpen = 0
 						contacting = 0
 						numArbs = 0
+						retryStep = 0
 						
 						if skipCollisionCheck = 0 then
 							for q = 0 to segment_n - 1
@@ -1329,12 +1392,15 @@ sub TinySpace.step_time(byval t as double)
 						
 								if lineCircleCollide(segment(q).a, segment(q).b,_
 													 wrk.p, wrk.r, _
-													 depth, norm, impulse) = 1 then   
+													 depth, norm, impulse) <> 0 then   
 									
-									tempArbs(numArbs).a       = segment(q).a
-									tempArbs(numArbs).b       = segment(q).b
-									tempArbs(numArbs).depth   = depth
-									tempArbs(numArbs).impulse = impulse
+									tempArbs(numArbs).a          = segment(q).a
+									tempArbs(numArbs).b          = segment(q).b
+									tempArbs(numArbs).depth      = depth
+									tempArbs(numArbs).impulse    = impulse
+									tempArbs(numArbs).velocity   = Vector2D(0,0)
+									tempArbs(numArbs).guide_axis = segment(q).a + norm * (wrk.r - MIN_DEPTH)
+									tempArbs(numArbs).guide_dot  = norm
 													
 									if segment(q).tag <> -1 then
 										tempArbs(numArbs).new_ = 0
@@ -1355,7 +1421,9 @@ sub TinySpace.step_time(byval t as double)
 									end if
 									if ((norm * impulse) > 0) andAlso (tempArbs(numArbs).ignore = 0) then 
 										if firstStep = 0 andAlso firstCollide = 1 then		
-											if tempArbs(numArbs).new_ = 1 then cTarget = 1 
+											if tempArbs(numArbs).new_ = 1 then 
+												cTarget = 1 
+											end if
 										end if
 									
 										if depth > MIN_DEPTH then
@@ -1373,46 +1441,181 @@ sub TinySpace.step_time(byval t as double)
 									numArbs += 1
 								end if
 							next q 
+							
+							'check all of the dynamic shapes for collision
+							for q = 0 to foundDynamics - 1							
+								numDynaArbs = TS_GETDYN(curDynamicsList, q)->circleCollide(wrk.p, wrk.r,_
+																				           tempArbs(), numArbs,_
+																				           max_depth, MIN_DEPTH)
+								if numDynaArbs = -1 then
+									interpen = 1
+									exit for
+								else
+									for j = (numArbs - numDynaArbs) to numArbs - 1
+										
+										'if a returned arbiter holds a non-negative tag, this is not a new collision,
+										'	and its information is stored in the arbiter number referenced by the tag.
+										'	Otherwise, we have not been in resting contact with this segment.
+										#ifdef DEBUG
+											printlog "DYNA. Arbiter depth: " & tempArbs(j).depth
+										#endif	
+
+										if tempArbs(j).tag <> -1 then
+											tempArbs(j).new_ = 0
+											tempArbs(j).ignore = arbiters(i, tempArbs(j).tag).ignore
+											#ifdef DEBUG
+												if tempArbs(numArbs).ignore = 1 then
+													printlog "DYNA. Setting tempArb to ignore... " & str(tempArbs(j).dynamic_norm)
+												else
+													printlog "DYNA. Found previous Arbiter... " & str(tempArbs(j).dynamic_norm)
+												end if
+											#endif		
+										else
+											tempArbs(j).new_ = 1
+											tempArbs(j).ignore = 0
+											#ifdef DEBUG
+												printlog "DYNA. Flagging new arbiter... " &  tempArbs(j).dynamic_norm
+											#endif	
+										end if
+										
+										if (((tempArbs(j).dynamic_norm * tempArbs(j).impulse) > 0) andAlso _
+										    (tempArbs(j).ignore = 0)) orElse (TS_GETDYN(curDynamicsList, q)->isClosed() = 1) then 
+										    										    
+											
+											if firstStep = 0 andAlso firstCollide = 1 then		
+												if tempArbs(j).new_ = 1 then 
+													cTarget = 1 
+												end if
+											end if
+										
+											'why this is needed(applies only to dynamics):
+											'	usually, if we have a strong impulse, but are not in contact, the MIN_DEPTH window
+											'	is large enough that we will catch the system at a time where the objects start colliding.
+											'	if we are in contact here, the engine will catch the contact as "contacting on first frame"
+											'	and resolve any impulses before the step. In the case of segments whose endpoints
+											'	follow some non-constant parametric function, business is as usual if we were not in contact
+											'	with this segment on the previous resolution. However, when we contact such a segment, it is
+											'	possible that on the next frame the point of contact (if in contact) 
+											'	with the segment will be of a different velocity of the current point. When this happens, 
+											'   it is likely either that we interpenetrate at some arbitrarily small time step, or the segment 
+											'   will fluctuate within MIN_DEPTH. 
+											'
+											'	SO, when we have collision with a segment we were previously in contact with, if
+											'		we interpenetrate, compute adjustment and try time step again (does not count towards iterations)
+											'		if in contact
+											'
+											'	What do we do with our dynamic arbiters after we hit a resolution time?
+											'	(to be continued!)
+											
+											if tempArbs(j).depth > MIN_DEPTH then
+												if tempArbs(j).new_ = 1 orElse (retry_i >= MAX_RETRYS) then
+													if (retry_i >= MAX_RETRYS) then
+														#ifdef DEBUG
+															printlog "<!> ERROR, MAX NUMBER OF RETRYS EXCEEDED <!>"
+														#endif
+													end if
+													interpen = 1
+												else
+													retryStep = 1
+												end if
+												#ifdef DEBUG
+													printlog "DYNA. Arbiter interpenetrating."
+												#endif
+											elseif tempArbs(j).new_ = 1 orElse cTarget = 0 then
+												contacting = 1
+												#ifdef DEBUG
+													printlog "DYNA. Arbiter contacting."
+												#endif
+											else
+												#ifdef DEBUG
+													printlog "DYNA. Arbiter not considered contacting or interpenetrating."
+												#endif
+											end if
+											
+										else
+											tempArbs(j).ignore = 1
+											#ifdef DEBUG
+												printlog "DYNA. Ignoring arbiter... " & tempArbs(j).dynamic_norm
+											#endif
+										end if	
+										
+									next j
+									
+								end if
+								
+							next q
+								
 							#ifdef DEBUG
 								PRINTLOG "         " & skipCollisionCheck & " " & firstCollide, 1 
 								PRINTLOG " " & firstStep & " " & contacting & " " & interpen & ", " & cTarget & "," & cur_t & "," & numArbs
 								PRINTLOG "         Work p: " & wrk.p & " v: "& wrk.v & " v_adj: " & v_adj & " f_adj: " & f_adj
 							#endif
-							
-							if firstCollide = 0 then
-								' check if we are already in resting contact
-								#ifdef DEBUG
-									PRINTLOG "On first collide"
-								#endif
-								if interpen = 0 and contacting = 1 then 
-									cur_t = 0
+							if retryStep = 0 then
+								retry_i = 0
+								if firstCollide = 0 then
+									' check if we are already in resting contact
 									#ifdef DEBUG
-										PRINTLOG "Contacting on first frame, pre step"
+										PRINTLOG "On first collide"
 									#endif
-									exit do
+									if interpen = 0 and contacting = 1 then 
+										cur_t = 0
+										#ifdef DEBUG
+											PRINTLOG "Contacting on first frame, pre step"
+										#endif
+										exit do
+									end if
+								else
+									if interpen = 1 then
+										hi_t  = cur_t
+										cur_t = (hi_t + lo_t) * 0.5
+									else 
+										if firstStep = 0 then
+											#ifdef DEBUG
+												PRINTLOG "Contacting on first step OR no collision"
+											#endif
+											exit do
+										end if
+										if contacting = 0 then
+											lo_t = cur_t
+											cur_t = (hi_t + lo_t) * 0.5
+										else
+											#ifdef DEBUG
+												PRINTLOG "Contacting after resolution"
+											#endif
+											exit do
+										end if
+									end if
+									firstStep = 1
 								end if
 							else
-								if interpen = 1 then
-									hi_t  = cur_t
-									cur_t = (hi_t + lo_t) * 0.5
-								else 
-									if firstStep = 0 then
-										#ifdef DEBUG
-											PRINTLOG "Contacting on first step OR no collision"
-										#endif
-										exit do
+								retry_i += 1
+								#ifdef DEBUG
+									printlog "Running lock axis..."
+								#endif
+								'do lock axis
+								lockAxis_Adj = Vector2D(0,0)
+								axis_i = 0
+								do
+									lockAxis_count = 0
+									for j = 0 to numArbs - 1
+										
+										slideDirection = (wrk.p + lockAxis_Adj) - tempArbs(j).guide_axis
+										if (slideDirection * tempArbs(j).guide_dot) < 0 then
+											slideDirection = (slideDirection * tempArbs(j).guide_dot.perp()) * tempArbs(j).guide_dot.perp() + tempArbs(j).guide_axis
+											slideDirection = slideDirection - (wrk.p + lockAxis_Adj)
+											lockAxis_Adj = lockAxis_Adj + slideDirection + 0.1 * MIN_DEPTH * tempArbs(j).guide_dot
+										else
+											lockAxis_count += 1
+										end if
+									next j
+									axis_i += 1
+								loop until (lockAxis_count = numArbs) orElse (axis_i >= MAX_AXIS_ITERATIONS)
+								#ifdef DEBUG
+									if axis_i >= MAX_AXIS_ITERATIONS then
+										printlog "<!> ERROR, LOCK AXIS BAILING OUT <!>"
 									end if
-									if contacting = 0 then
-										lo_t = cur_t
-										cur_t = (hi_t + lo_t) * 0.5
-									else
-										#ifdef DEBUG
-											PRINTLOG "Contacting after resolution"
-										#endif
-										exit do
-									end if
-								end if
-								firstStep = 1
+									printlog "Lock axis proc returns: " & str(lockAxis_Adj)
+								#endif
 							end if
 						else
 							skipCollisionCheck = 0
@@ -1422,22 +1625,28 @@ sub TinySpace.step_time(byval t as double)
 						end if
 						
 						
-						
+						if retryStep = 0 then
+							for q = 0 to foundDynamics - 1							
+								TS_GETDYN(curDynamicsList, q)->offset_time(elapsed_t + cur_t)
+							next q
+						end if
+
 						wrk = *c
 						wrk.v = wrk.v + ((f_total + f_adj) / wrk.m) * cur_t + v_adj
 						if wrk.v.magnitude() > TERM_VEL then
 							wrk.v.normalize()
 							wrk.v = wrk.v * TERM_VEL
 						end if
-						wrk.p = wrk.p + wrk.v * cur_t
-						
+						wrk.p = wrk.p + wrk.v * cur_t + iif(retryStep = 1, lockAxis_Adj, Vector2D(0,0))
 						
 						#ifdef DEBUG
 							circle (wrk.p.x(), wrk.p.y()), wrk.r, rgba(0,255.0*(max(iterate,1))/10.0,0,32),,,wrk.r_rat,F
 						#endif
 						
-						firstCollide = 1
-						iterate += 1
+						if retryStep = 0 then
+							firstCollide = 1
+							iterate += 1
+						end if
 					loop until iterate > MAX_ITERATIONS
 					
 					
@@ -1450,29 +1659,91 @@ sub TinySpace.step_time(byval t as double)
 					hadPulse = 0
 					arbiters_n(i) = numArbs
 					numIgnore = 0
+					tempV = wrk.v
 					for q = 0 to numArbs-1
 						arbiters(i, q) = tempArbs(q)
 						if arbiters(i, q).ignore = 0 then 
 							if arbiters(i, q).new_ = 1 then hadPulse = 1
+							dynaV = vector2D(0,0)
+							if arbiters(i, q).dynamic_ = 1 then
+							
+								contactI = (arbiters(i, q).velocity * (-arbiters(i, q).impulse))
+								bodyI = (tempV * (-arbiters(i, q).impulse))
+								
+								if -contactI < 0 then
+									if -bodyI < 0 then
+										if bodyI > contactI then
+											dynaV = -contactI * arbiters(i, q).impulse
+											#ifdef DEBUG 
+												printlog "Dynamic contact velocity: body is moving towards point, point moves away, body is faster than point."
+											#endif
+										else
+											dynaV = -contactI * arbiters(i, q).impulse
+											#ifdef DEBUG 
+												printlog "Dynamic contact velocity: body is moving towards point, point moves away, body is slower than point."
+											#endif
+										end if
+									else
+										#ifdef DEBUG 
+											printlog "Dynamic contact velocity: body is moving away from point, point moves away from body."
+										#endif
+									end if
+								else
+									if -bodyI < 0 then
+										dynaV = -contactI * arbiters(i, q).impulse
+										#ifdef DEBUG 
+											printlog "Dynamic contact velocity: body is moving towards point, point moves towards body."
+										#endif
+									else
+										if abs(bodyI) > abs(contactI) then
+											#ifdef DEBUG 
+												printlog "Dynamic contact velocity: body is moving away from point, point moves towards body, body is faster than point."
+											#endif
+										else
+											dynaV = (abs(contactI) - abs(bodyI)) * arbiters(i, q).impulse
+											#ifdef DEBUG 
+												printlog "Dynamic contact velocity: body is moving away from point, point moves towards body, body is slower than point."
+											#endif
+										end if
+									end if
+								end if
+								
+								#ifdef DEBUG 
+									line (wrk.p.x(), wrk.p.y())-(wrk.p.x()+dynaV.x*30, wrk.p.y()+dynaV.y*30)
+								#endif
+								
+								'check bouncey case on point edge
+								'check point catching up to body case
+								'add friction, test moving platforms
+								'then fix jitter
+							
+							end if
+							arbiters(i, q).dynaV = dynaV
 						else
 							numIgnore += 1
 						end if
 					next q
 					normals_N = 0
+					
 
 					'by now, we have a list of all collisions, and we know if any are new
 					if arbiters_n(i) > numIgnore then
-					   
 						normals_N = 0
 						f_bias = Vector2D(0,0)
 						depthc = 0
 						redim as Vector2D normals(0)
+						Redim as integer  norm_skip(0)
 						for q = 0 to arbiters_n(i)-1
 							if arbiters(i, q).ignore = 0 then
 								normals_N += 1
 								redim preserve as Vector2D normals(normals_N - 1)
-								
+								redim preserve as integer  norm_skip(normals_N - 1)
 								normals(normals_N - 1) = arbiters(i, q).impulse
+								if arbiters(i, q).dynamic_ = 1 then
+									norm_skip(normals_N - 1) = 1
+								else
+									norm_skip(normals_N - 1) = 0
+								end if
 								if arbiters(i, q).depth > depthc then depthc = arbiters(i, q).depth
 								if arbiters(i, q).new_ = 1 then f_bias = f_bias + normals(normals_N - 1)
 								
@@ -1482,7 +1753,7 @@ sub TinySpace.step_time(byval t as double)
 						if normals_N = 0 then normals(0) = Vector2D(0,0)
 						
 						if hadPulse = 1 then
-							vectorListImpulse(normals(), wrk.v, v_adj, v_cancel)
+							vectorListImpulse(normals(), wrk.v, v_adj, v_cancel, norm_skip(), 0)
 							vn = wrk.v
 							vn.normalize()
 							if (-wrk.v * f_bias) > MIN_TRIG_ELAS_DV then
@@ -1496,10 +1767,16 @@ sub TinySpace.step_time(byval t as double)
 								v_adj = v_adj + reflect
 							end if
 						else
-							vectorListImpulse(normals(), wrk.v, v_adj, v_cancel)
+							vectorListImpulse(normals(), wrk.v, v_adj, v_cancel, norm_skip(), 0)
 						end if
-						vectorListImpulse(normals(), f_total, f_adj, f_cancel)
 						
+						for q = 0 to numArbs - 1
+							v_adj = v_adj + arbiters(i, q).dynaV
+						next q
+						
+						
+						vectorListImpulse(normals(), f_total, f_adj, f_cancel, norm_skip(), 1)
+												
 						'f_adj = normal force
 						if f_cancel = 0 then
 							t_friction = f_adj.magnitude() * wrk.friction ' * [surface friction]
@@ -1566,6 +1843,7 @@ sub TinySpace.step_time(byval t as double)
 						wrk.didCollide = 1
 					end if
 					
+					elapsed_t += cur_t
 					res_t -= cur_t
 					cur_t = res_t
 					lo_t = 0
@@ -1583,8 +1861,7 @@ sub TinySpace.step_time(byval t as double)
 							circle(c->p.x() + -normals(q).x()*c->r * c->r_rat, c->p.y() + -normals(q).y()*c->r), 3, &hff0000,,,,F
 						next q
 					#endif
-					
-					
+										
 					skipCollisionCheck = 1
 					firstCycle = 0
 					resolutions += 1
@@ -1611,8 +1888,15 @@ sub TinySpace.step_time(byval t as double)
 				
 			end if  
         end if
+		if curDynamicsList then deallocate(curDynamicsList)
+
 
         i += 1
     wend
+    
+	for i = 0 to dynamics_n - 1
+		dynamics(i)->step_time(t)
+	next i
+    
 	framesGone += 1
 end sub

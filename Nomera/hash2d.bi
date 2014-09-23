@@ -33,6 +33,7 @@ type Hash2D
         declare sub rollReset()
         declare function roll() as any ptr
         declare sub flush(clr as integer = 0)
+        declare function getSize() as integer
         
     private:
         declare function getBounds(byref a as Vector2D, byref b as Vector2D,_
@@ -41,6 +42,7 @@ type Hash2D
         
         as integer dataSizeBytes
         
+        as integer 			size
         as integer          curRollX
         as integer          curRollY
         as Hash2dNode_t ptr curRollNode
