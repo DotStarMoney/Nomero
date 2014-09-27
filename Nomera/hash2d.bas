@@ -1,6 +1,7 @@
 #include "hash2d.bi"
 #include "utility.bi"
 #include "crt.bi"
+#include "debug.bi"
 
 #define MINESCULE 0.00001
 
@@ -151,6 +152,10 @@ function Hash2D.search(a as Vector2D, b as Vector2D, byref ret_ as any ptr ptr) 
                         noCollide = 1
                     end if
                     if noCollide = 0 then
+                        
+                        #ifdef DEBUG
+							line (curNode_->a.x(), curNode_->a.y())-(curNode_->b.x(), curNode_->b.y()), rgb(32,32,32), B
+                        #endif
                         
                         if foundDataPointers.exists(cast(integer, curNode_->data_)) = 0 then
                             if retList_cap = 0 orElse (retList_cap = retList_size) then

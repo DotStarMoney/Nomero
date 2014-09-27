@@ -421,3 +421,7 @@ sub drawStringShadow(scnbuff as integer ptr,_
 	draw STRING scnbuff, (x+1, y+1), text, rgb(16,16,16)
 	draw string scnbuff, (x, y), text, col
 end sub
+
+sub vline(a as Vector2D, b as Vector2D, col as integer)
+	line (a.x, a.y)-(b.x, b.y), col
+end sub

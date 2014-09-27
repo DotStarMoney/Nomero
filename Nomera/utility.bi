@@ -1,6 +1,8 @@
 #ifndef UTILITY_BI
 #define UTILITY_BI
 
+#include "vector2d.bi"
+
 #define PI 3.14159265359
 
 declare function min overload(x as double, y as double) as double
@@ -48,5 +50,7 @@ declare sub drawStringShadow(scnbuff as integer ptr,_
 							 x as integer, y as integer,_
 							 text as string,_
 							 col as integer)
+							 
+declare sub vline(a as Vector2D, b as Vector2D, col as integer)
 
 #endif

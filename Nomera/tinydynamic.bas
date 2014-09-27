@@ -60,6 +60,7 @@ sub TinyDynamic.construct()
 end sub
 
 sub TinyDynamic.init(proto as TinyDynamic_Prototype_e)
+	dim as integer i
 	if type_ = DYNA_BASICPATH then
 		if BASICPATH.pathPoints <> 0 then
 			deallocate(BASICPATH.pathPoints)
@@ -71,21 +72,28 @@ sub TinyDynamic.init(proto as TinyDynamic_Prototype_e)
 		clearShapeData()
 		isComplete = 0
 		SFX_SPINNER.angle = 0
-		SFX_SPINNER.angle_v = PI / 180
+		SFX_SPINNER.angle_v = (PI / 180)*64
 		SFX_SPINNER.length = 480
 		pointsN = 2
 		cur_pts_p = allocate(sizeof(Vector2D) * pointsN)
 		cur_pts_v = allocate(sizeof(Vector2D) * pointsN)
+		segmentTags = allocate(sizeof(integer) * (pointsN - 1))
+		referenceTags = allocate(sizeof(integer) * (pointsN - 1))
+		for i = 0 to pointsN - 2
+			referenceTags[i] = instCount
+			instCount += 1
+		next i
 	case DYNA_BASICPATH
 		BASICPATH.pathPoints = 0
 		BASICPATH.pathPointsN = 0
 		BASICPATH.type_ = BOUNCE
 		BASICPATH.segment = 0
 		BASICPATH.segment_pos = 0
-		BASICPATH.speed = 1
+		BASICPATH.speed = 10
 		BASICPATH.path_length = 0
 		BASICPATH.toggleState = 0
 		BASICPATH.toggleTime = 0
+		pointsN = 0
 	case DYNA_PIVOTER
 		PIVOTER.angle = 0
 		PIVOTER.angle_v = (PI / 180)*4
@@ -123,9 +131,16 @@ sub TinyDynamic.importShape(pts as Vector2D ptr, ptsN as integer)
 		referenceTags[i] = instCount
 		instCount += 1
 	next i
-	if type_ <> DYNA_NONE then 
-		setup = 1
-		offset_time(0)
+	if type_ <> DYNA_BASICPATH then
+		if type_ <> DYNA_NONE then 
+			setup = 1
+			offset_time(0)
+		end if
+	else
+		if BASICPATH.pathPointsN <> 0 then
+			setup = 1
+			offset_time(0)
+		end if
 	end if
 end sub
 
@@ -200,13 +215,13 @@ sub TinyDynamic.offset_time(t as double)
 	dim as Vector2D seg_d
 	dim as double seg_dm
 	dim as double seg_dist
+	dim as double old_temp_dist
 	dim as double temp_dist
 	dim as Vector2D pathP
 	dim as integer dire
 	
 		
 	if setup = 0 then exit sub
-	
 	
 	cur_t = base_t + t
 	
@@ -218,18 +233,27 @@ sub TinyDynamic.offset_time(t as double)
 	select case type_
 	case DYNA_SFX_SPINNER
 		SFX_SPINNER.angle = wrap(cur_t * SFX_SPINNER.angle_v)
-		cur_pts_p[0].setX(cos(SFX_SPINNER.angle + PI) * SFX_SPINNER.length * 0.5)
+		cur_pts_p[0].setX(-abs(cos(SFX_SPINNER.angle + PI) * SFX_SPINNER.length * 0.5))
 		cur_pts_p[0].setY(0)
-		cur_pts_p[1].setX(cos(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5)
+		cur_pts_p[1].setX(abs(cos(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5))
 		cur_pts_p[1].setY(0)
 		cur_pts_p[0] = cur_pts_p[0] + centroid
 		cur_pts_p[1] = cur_pts_p[1] + centroid
 				
-		cur_pts_v[0] = Vector2D(sin(SFX_SPINNER.angle + PI) * SFX_SPINNER.length * 0.5 * SFX_SPINNER.angle_v, 0)
-		cur_pts_v[1] = Vector2D(sin(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5 * SFX_SPINNER.angle_v, 0)	
+		if wrap(SFX_SPINNER.angle+PI/2) >= PI then
+			cur_pts_v[0] = Vector2D(-sin(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5 * SFX_SPINNER.angle_v, 0)
+			cur_pts_v[1] = Vector2D(sin(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5 * SFX_SPINNER.angle_v, 0)
+		else
+			cur_pts_v[0] = Vector2D(sin(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5 * SFX_SPINNER.angle_v, 0)
+			cur_pts_v[1] = Vector2D(-sin(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5 * SFX_SPINNER.angle_v, 0)
+		end if
+		#ifdef DEBUG
+			line (cur_pts_p[0].x(), cur_pts_p[0].y())-(cur_pts_p[1].x(), cur_pts_p[1].y())
+		#endif
 	case DYNA_BASICPATH
 	
 		temp_dist = cur_t * BASICPATH.speed
+		
 		
 		if (BASICPATH.pathPoints[0].x <> BASICPATH.pathPoints[BASICPATH.pathPointsN - 1].x) orElse _
 		   (BASICPATH.pathPoints[0].y <> BASICPATH.pathPoints[BASICPATH.pathPointsN - 1].y) then
@@ -238,6 +262,7 @@ sub TinyDynamic.offset_time(t as double)
 			case BOUNCE
 				temp_dist = wrap(temp_dist, BASICPATH.path_length*2)
 			case SINUSOID
+				old_temp_dist = temp_dist
 				temp_dist = (sin(temp_dist) + 1) * BASICPATH.path_length
 			case TOGGLE
 				if BASICPATH.toggleState = 0 then
@@ -262,7 +287,7 @@ sub TinyDynamic.offset_time(t as double)
 					
 				end if			
 			end select
-			
+					
 			dire = 1
 			if temp_dist > BASICPATH.path_length then
 				dire = -1
@@ -277,7 +302,7 @@ sub TinyDynamic.offset_time(t as double)
 				if temp_dist < seg_dist then
 					BASICPATH.segment = i
 					BASICPATH.segment_pos = (seg_dm - (seg_dist - temp_dist))
-					pathP = centroid + seg_d * BASICPATH.segment_pos
+					pathP = centroid + BASICPATH.pathPoints[i] + seg_d * BASICPATH.segment_pos
 					exit for
 				end if
 			next i			
@@ -298,7 +323,7 @@ sub TinyDynamic.offset_time(t as double)
 				end if
 			case SINUSOID
 				for i = 0 to pointsN - 1 
-					cur_pts_v[i] = seg_d * sin(temp_dist) * BASICPATH.speed
+					cur_pts_v[i] = seg_d * sin(old_temp_dist) * BASICPATH.speed
 				next i
 			case TOGGLE
 				if BASICPATH.toggleState < 2 then
@@ -337,6 +362,12 @@ sub TinyDynamic.offset_time(t as double)
 				cur_pts_v[i] = seg_d * BASICPATH.speed
 			next i
 		end if
+	
+		#ifdef DEBUG
+			for i = 0 to pointsN - 2
+				line (cur_pts_p[i].x(), cur_pts_p[i].y())-(cur_pts_p[i+1].x(), cur_pts_p[i+1].y())
+			next i
+		#endif
 	case DYNA_PIVOTER
 		PIVOTER.angle = wrap(cur_t * PIVOTER.angle_v)
 		for i = 0 to pointsN - 1 
@@ -345,9 +376,11 @@ sub TinyDynamic.offset_time(t as double)
 			cur_pts_v[i] = Vector2D(-cur_pts_p[i].y * PIVOTER.angle_v, cur_pts_p[i].x * PIVOTER.angle_v)
 			cur_pts_p[i] = cur_pts_p[i] + centroid
 		next i		
-		for i = 0 to pointsN - 2
-			line (cur_pts_p[i].x(), cur_pts_p[i].y())-(cur_pts_p[i+1].x(), cur_pts_p[i+1].y())
-		next i
+		#ifdef DEBUG
+			for i = 0 to pointsN - 2
+				line (cur_pts_p[i].x(), cur_pts_p[i].y())-(cur_pts_p[i+1].x(), cur_pts_p[i+1].y())
+			next i
+		#endif
 	end select
 end sub
 
@@ -413,19 +446,20 @@ sub TinyDynamic.calcBB()
 						down_ = BASICPATH.pathPoints[i].y
 					end if					
 				next i	
+				tl_p = Vector2D(1000000,1000000)
+				dr_p = Vector2D(-1000000,-1000000)
 				for i = 0 to pointsN - 1
-					if cur_pts_p[i].x < tl_p.x then
-						tl_p.setX(cur_pts_p[i].x)
-					elseif cur_pts_p[i].x > dr_p.x then
-						dr_p.setX(cur_pts_p[i].x)
+					if base_pts[i].x < tl_p.x then
+						tl_p.setX(base_pts[i].x)
+					elseif base_pts[i].x > dr_p.x then
+						dr_p.setX(base_pts[i].x)
 					end if
-					if cur_pts_p[i].y < tl_p.y then
-						tl_p.setY(cur_pts_p[i].y)
-					elseif cur_pts_p[i].y > dr_p.y then
-						dr_p.setY(cur_pts_p[i].y)
+					if base_pts[i].y < tl_p.y then
+						tl_p.setY(base_pts[i].y)
+					elseif base_pts[i].y > dr_p.y then
+						dr_p.setY(base_pts[i].y)
 					end if			
 				next i	
-				
 				tl = Vector2D(tl_p.x + left_, tl_p.y + up_) + centroid
 				dr = Vector2D(dr_p.x + right_, dr_p.y + down_) + centroid
 			end if
@@ -459,6 +493,7 @@ function TinyDynamic.circleCollide(p as Vector2D, r as double,_
 	dim as double   ppmag
 	dim as double   maxDepth
 	dim as integer  foundArbs
+	dim as integer  atEndpoint
 
 	if setup = 0 then return 0
 	
@@ -471,21 +506,29 @@ function TinyDynamic.circleCollide(p as Vector2D, r as double,_
 		seg_vn = seg_v / seg_m
 		seg_v_perp = seg_vn.iperp()
 		seg_i = (seg_vn) * (p - cur_pts_p[i])
+		atEndpoint = 0
 		if seg_i < 0 then
 			seg_i = 0
+			atEndpoint = 1
 		elseif seg_i > (seg_m - 0.00001) then
 			seg_i = seg_m - 0.00001
+			atEndpoint = 1
 		end if		
 		seg_pos = cur_pts_p[i] + seg_i * seg_vn
 		proj_to_p = (p - seg_pos)
 		ppmag = proj_to_p.magnitude()
 		c_impulse = proj_to_p / ppmag
 		if ppmag >= (r + slop) then continue for
-		if proj_to_p * seg_v_perp > 0 then
-			c_depth = r - ppmag
+		if atEndpoint = 0 then
+			if proj_to_p * seg_v_perp > 0 then
+				c_depth = r - ppmag
+			else
+				c_depth = ppmag + r
+			end if
 		else
-			c_depth = ppmag + r
+			c_depth = r - ppmag
 		end if
+			
 		if c_depth > maxDepth then maxDepth = c_depth
 		curIndex += 1
 		foundArbs += 1
@@ -500,8 +543,8 @@ function TinyDynamic.circleCollide(p as Vector2D, r as double,_
 			.dynamic_tag = referenceTags[i]
 			.tag = segmentTags[i]
 			.dynamic_norm = seg_v_perp
-			.guide_dot = seg_v_perp
-			.guide_axis = cur_pts_p[i] + (r - slop) * seg_v_perp
+			.guide_dot = c_impulse
+			.guide_axis = seg_pos + r * c_impulse			
 			.ignore = 0
 			.new_ = 0
 		end with
@@ -547,15 +590,20 @@ function TinyDynamic.isClosed() as integer
 end function
 
 function TinyDynamic.exportParams() as any ptr
+	dim as any ptr ret
+	ret = 0
 	select case type_
 	case DYNA_SFX_SPINNER
-		return @SFX_SPINNER
+		ret = allocate(sizeof(TinyDynamic_SFX_SPINNER))
+		memcpy(ret, @SFX_SPINNER, sizeof(TinyDynamic_SFX_SPINNER))
 	case DYNA_BASICPATH
-		return @BASICPATH
+		ret = allocate(sizeof(TinyDynamic_BASICPATH))
+		memcpy(ret, @BASICPATH, sizeof(TinyDynamic_BASICPATH))
 	case DYNA_PIVOTER
-		return @PIVOTER
+		ret = allocate(sizeof(TinyDynamic_PIVOTER))
+		memcpy(ret, @PIVOTER, sizeof(TinyDynamic_PIVOTER))
 	end select
-	return 0
+	return ret
 end function
 
 sub TinyDynamic.activate()

@@ -18,11 +18,13 @@
 #define MIN_DEPTH 0.1
 #define TERM_VEL 800.0
 #define MAX_ITERATIONS 10
-#define MAX_AXIS_ITERATIONS 5
-#define MAX_RETRYS 3
+#define MAX_AXIS_ITERATIONS 4
+#define MAX_RETRYS 2
 #define MAX_RESOLUTIONS 3
 #define MIN_TRIG_FRIC_V 0.1
 #define MIN_TRIG_ELAS_DV 20
+#define MIN_DYNAMIC_TAN_DOT 0.5
+#define MIN_DYNAV_ADJ_DOT 0.9
 
 
 type BlockEndpointData_t
@@ -77,7 +79,8 @@ type TinySpace
                                            p as Vector2D, r as double,_
                                            byref depth as double,_
                                            norm as Vector2D,_
-                                           impulse as Vector2D) as integer
+                                           impulse as Vector2D,_
+                                           byref ppos as Vector2D) as integer
         
         declare function lineAAEllipseCollide(a as Vector2D, b as Vector2D,_
                                               p as Vector2D,_

@@ -19,6 +19,8 @@ type TinyBody
         as integer  ind
         as integer  noCollide
         as integer  didCollide
+        as Vector2D surfaceV
+        as integer  dynaID
 end type
 
 

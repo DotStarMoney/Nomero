@@ -95,10 +95,26 @@ constructor GameSpace()
     dim as integer handle
     dim as TinyDynamic ptr dynaTest = new TinyDynamic
 
-    dim as Vector2D shapeTest(0 to 2) = {Vector2D(0,0), Vector2D(480, 0), Vector2D(460, -30)}
-    dynaTest->init(DYNA_PIVOTER)
-    dynaTest->importShape(@shapeTest(0), 3)
-    dynaTest->setCentroid(Vector2D(512,562))
+    dim as Vector2D shapeTest(0 to 4) = {Vector2D(0,-30), Vector2D(25, 30), Vector2D(-25, 30), Vector2D(0, -30)}
+    dim as TinyDynamic_BASICPATH ptr pathParams
+    dim as Vector2D ptr pathPtr
+    
+    pathPtr = new Vector2D[3]
+    pathPtr[0] = Vector2D(-200, 30)
+    pathPtr[1] = Vector2D(0, 20)
+    pathPtr[2] = Vector2D(200, 30)
+       
+    dynaTest->init(DYNA_BASICPATH)
+    dynaTest->setCentroid(Vector2D(512,900))
+    pathParams = dynaTest->exportParams
+    pathParams->pathPointsN = 3
+    pathParams->pathPoints = pathPtr    
+    pathParams->speed = 50
+    pathParams->type_ = BOUNCE
+    dynaTest->importParams(pathParams)
+    deallocate(pathParams)
+    dynaTest->importShape(@shapeTest(0), 4)
+    
     dynaTest->calcBB()
     dynaTest->activate()
     
@@ -210,7 +226,9 @@ sub GameSpace.step_draw()
         camera.setY(lvlData.getHeight() * 8)
     end if
         
-    
+    camera.setX(int(camera.x()))
+    camera.setY(int(camera.y()))
+
   
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)

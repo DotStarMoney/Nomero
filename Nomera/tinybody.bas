@@ -11,6 +11,8 @@ constructor TinyBody
     friction = 0
     noCollide = 0
     didCollide = 0
+    surfaceV = Vector2D(0,0)
+    dynaID = -1
 end constructor
 
 constructor TinyBody(p_ as Vector2D, r_ as double, m_ as double)
@@ -24,6 +26,8 @@ constructor TinyBody(p_ as Vector2D, r_ as double, m_ as double)
     friction = 0
     noCollide = 0
     didCollide = 0
+    surfaceV = Vector2D(0,0)
+    dynaID = -1
 end constructor 
 
 
@@ -38,4 +42,6 @@ constructor TinyBody(p_ as Vector2D, rx_ as double, ry_ as double, m_ as double)
     friction = 0
     noCollide = 0
     didCollide = 0
+    surfaceV = Vector2D(0,0)
+    dynaID = -1
 end constructor 
