@@ -35,6 +35,8 @@ type Player
         declare sub harm(p as Vector2D, amount as integer)
         declare sub getBounds(byref p as Vector2D, size as Vector2D)
         declare sub centerToMap(byref p as Vector2D)
+        declare sub exportMovementParameters(byref dire_p as integer, byref jump_p as integer,_
+											 byref ups_p as integer, byref shift_p as integer)
         declare function beingHarmed() as integer
     
     
@@ -50,6 +52,7 @@ type Player
         air_top_speed as double
         
         as integer facing
+        top_speed_mul  as double
         groundDot      as double
         cutSpeed       as double
         stopFriction   as double
@@ -62,6 +65,11 @@ type Player
         declare function onLadder() as integer
         declare function onSpikes() as integer
         declare sub switch(ls as LevelSwitch_t)
+        
+        as integer _dire_
+        as integer _jump_
+        as integer _ups_
+        as integer _shift_
         
         as objectlink link
         as integer lastSpikes

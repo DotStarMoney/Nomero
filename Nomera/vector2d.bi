@@ -28,6 +28,8 @@ type Vector2D
         as integer isNAN
 end type
     
+declare operator <> ( byref lhs as Vector2D, byref rhs as Vector2D ) as integer
+declare operator = ( byref lhs as Vector2D, byref rhs as Vector2D ) as integer
 declare operator + ( byref lhs as Vector2D, byref rhs as Vector2D ) as Vector2D
 declare operator - ( byref lhs as Vector2D, byref rhs as Vector2D ) as Vector2D
 declare operator - ( byref lhs as Vector2D) as Vector2D

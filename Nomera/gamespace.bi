@@ -17,6 +17,7 @@
 #include "dynamiccontroller.bi"
 #include "fbgdtriggerdispatch.bi"
 #include "soundeffects.bi"
+#include "pathtracker.bi"
 
 #define FPS_TARGET 60
 
@@ -60,6 +61,7 @@ type GameSpace
         as integer switchTracks
         as integer ptr fadeoutTex
         
+        as PathTracker tracker
         as SoundEffects soundfx
         as FBGDTriggerDispatch triggers
         as OneShotEffects effects

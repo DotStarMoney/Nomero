@@ -21,6 +21,7 @@ constructor Player
     boostFrames    = 13
     boostForce     = 800
     jumpImpulse    = 150
+    top_speed_mul  = 1.5
     freeJumpFrames = 6
     lastUps = 0
     lastFire = 0
@@ -215,6 +216,14 @@ sub Player.centerToMap(byref p as Vector2D)
 	body.p = p - Vector2D(0, body.r)
 end sub
 
+sub Player.exportMovementParameters(byref dire_p as integer, byref jump_p as integer,_
+						            byref ups_p as integer, byref shift_p as integer)
+	dire_p = _dire_
+	jump_p = _jump_
+	ups_p = _ups_
+	shift_p = _shift_
+end sub
+
 sub Player.processControls(dire as integer, jump as integer,_
                            ups as integer, fire as integer,_
                            shift as integer, t as double)
@@ -224,6 +233,12 @@ sub Player.processControls(dire as integer, jump as integer,_
     dim as LevelSwitch_t ls
     dim as GameSpace ptr gsp
 	gsp = cast(GameSpace ptr, game_parent)
+	
+	
+	_dire_ = dire
+	_jump_ = jump
+	_ups_ = ups
+	_shift_ = shift
     
     
     if state <> ON_LADDER andAlso ups <> 0 andAlso (onLadder() = 1) _
@@ -286,7 +301,7 @@ sub Player.processControls(dire as integer, jump as integer,_
                 if curSpeed > this.top_speed then curSpeed = this.top_speed
                 anim.setSpeed(1)
             else
-                if curSpeed > this.top_speed*1.5 then curSpeed = this.top_speed*1.5 
+                if curSpeed > this.top_speed*top_speed_mul then curSpeed = this.top_speed*top_speed_mul
                 anim.setSpeed(2)
             end if
             addSpd = 1
@@ -307,7 +322,7 @@ sub Player.processControls(dire as integer, jump as integer,_
                 if curSpeed < -this.top_speed then curSpeed = -this.top_speed
                 anim.setSpeed(1)
             else
-                if curSpeed < -this.top_speed*1.5 then curSpeed = -this.top_speed*1.5  
+                if curSpeed < -this.top_speed*top_speed_mul then curSpeed = -this.top_speed*top_speed_mul
                 anim.setSpeed(2)
             end if
             addSpd = 1
@@ -458,6 +473,7 @@ sub Player.processControls(dire as integer, jump as integer,_
     if landedSFXFrames > 0 then landedSFXFrames -= 1
     if harmedFlashing > 0 then harmedFlashing -= 1
     anim.step_animation()
+        
     lastUps = ups
     lastFire = fire
     lastSpikes = onSpikes() 

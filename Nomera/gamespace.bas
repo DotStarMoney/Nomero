@@ -88,38 +88,13 @@ constructor GameSpace()
     foregroundSnow.setDrift(-333)
     foregroundSnow.setSpeed(700)
     
+    tracker.init(link)
+    tracker.record()
+
     scnbuff = imagecreate(640,480)
     stallTime_mili = 15
     movingFrmAvg = 0
-    
-    dim as integer handle
-    dim as TinyDynamic ptr dynaTest = new TinyDynamic
-
-    dim as Vector2D shapeTest(0 to 4) = {Vector2D(0,-30), Vector2D(25, 30), Vector2D(-25, 30), Vector2D(0, -30)}
-    dim as TinyDynamic_BASICPATH ptr pathParams
-    dim as Vector2D ptr pathPtr
-    
-    pathPtr = new Vector2D[3]
-    pathPtr[0] = Vector2D(-200, 30)
-    pathPtr[1] = Vector2D(0, 20)
-    pathPtr[2] = Vector2D(200, 30)
-       
-    dynaTest->init(DYNA_BASICPATH)
-    dynaTest->setCentroid(Vector2D(512,900))
-    pathParams = dynaTest->exportParams
-    pathParams->pathPointsN = 3
-    pathParams->pathPoints = pathPtr    
-    pathParams->speed = 50
-    pathParams->type_ = BOUNCE
-    dynaTest->importParams(pathParams)
-    deallocate(pathParams)
-    dynaTest->importShape(@shapeTest(0), 4)
-    
-    dynaTest->calcBB()
-    dynaTest->activate()
-    
-    handle = world.addDynamic(dynaTest)
-
+  
 end constructor
 
 sub GameSpace.reconnectCollision()
@@ -409,6 +384,7 @@ sub GameSpace.step_process()
 		doGameEnd()
 	end if
   
+	tracker.step_record()
   
     if isSwitching = 0 then
 		#ifdef DEBUG

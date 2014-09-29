@@ -85,6 +85,16 @@ function Vector2D.NAN() as integer
     return this.isNAN
 end function
 
+operator <> ( byref lhs as Vector2D, byref rhs as Vector2D ) as integer
+    if (lhs.x() <> rhs.x()) orElse (lhs.y() <> rhs.y()) then return 1
+	return 0
+end operator
+
+operator = ( byref lhs as Vector2D, byref rhs as Vector2D ) as integer
+    if (lhs.x() = rhs.x()) andAlso (lhs.y() = rhs.y()) then return 1
+	return 0
+end operator
+
 operator + ( byref lhs as Vector2D, byref rhs as Vector2D ) as Vector2D
     return Type(lhs.x() + rhs.x(), lhs.y() + rhs.y())
 end operator

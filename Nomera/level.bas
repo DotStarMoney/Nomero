@@ -935,7 +935,7 @@ sub level.load(filename as string)
         else
             #ifdef DEBUG
                 printlog strdata
-                stall(500)
+                stall(100)
             #endif
             tilesets[i].set_image = imgData
             bload strdata, tilesets[i].set_image

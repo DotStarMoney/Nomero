@@ -1,6 +1,7 @@
 #include "tinyspace.bi"
 #include "utility.bi"
 #include "debug.bi"
+#include "crt.bi"
 #include "printlog.bi"
 
 #define OWP_INDEX_START 56
@@ -178,6 +179,51 @@ function TinySpace.getGroundingNormal(bod as integer,_
     return ret
 end function
 
+sub TinySpace.exportLevelGeometry(byref segsPtr as Vector2D ptr, byref segsN as integer)
+	dim as integer scan_x, scan_y, i
+    dim as BlockEndpointData_t segment(0 to 513)
+    dim as integer             segment_n
+    
+    segment_n = 0
+    
+	redim as integer usedSpace(0 to block_n_cols-1, 0 to block_n_rows-1)
+	
+	
+	for scan_y = 0 to block_n_rows-1
+		for scan_x = 0 to block_n_cols-1
+			usedSpace(scan_x, scan_y) = 0
+		next scan_x
+	next scan_y
+	
+	roi_x0 = 0
+	roi_y0 = 0
+	roi_x1 = block_n_cols
+	roi_y1 = block_n_rows
+	
+	for scan_y = 0 to block_n_rows-1
+		for scan_x = 0 to block_n_cols-1
+			if usedSpace(scan_x, scan_y) = 0 then
+				
+				if getBlock(scan_x, scan_y).cModel <> EMPTY AndAlso _
+				   getBlock(scan_x, scan_y-1).cModel = EMPTY then
+ 
+					traceRing(scan_x, scan_y, _
+							  segment(), segment_n, _
+							  usedSpace())					
+				end if
+				
+			end if
+		next scan_x
+	next scan_y 
+	
+
+	segsPtr = allocate(sizeof(Vector2D) * segment_n * 2)
+	segsN = segment_n * 2
+	for i = 0 to segment_n - 1
+		segsPtr[i*2] = segment(i).a
+		segsPtr[i*2+1] = segment(i).b
+	next i
+end sub
 
 function TinySpace.lineAAEllipseCollide(a as Vector2D, b as Vector2D,_
                                         p as Vector2D,_
@@ -532,7 +578,7 @@ sub TinySpace.traceRing(      x           as integer,_
     
     startIndex = curIndx
     firstSlope = Vector2D(0,0)
-    if curIndx = MAX_SEGS then exit sub
+    'if curIndx = MAX_SEGS then exit sub
      
     xs = x
     ys = y
@@ -563,14 +609,14 @@ sub TinySpace.traceRing(      x           as integer,_
             case 0
                 block = getBlock(xs - 1, ys)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 4) > -1) then
+                   (block_getRingPoint(block.cModel, 4) > -1) andAlso (oldPt <> -1) then
                     blockChange = 1
                     newPt = 4
                     xs -= 1
                 end if
                 block = getBlock(xs - 1, ys - 1)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 8) > -1) then
+                   (block_getRingPoint(block.cModel, 8) > -1) andAlso (oldPt <> -1) then
                     blockChange = 1
                     newPt = 8
                     ys -= 1
@@ -711,7 +757,7 @@ sub TinySpace.traceRing(      x           as integer,_
                 end if
                 block = getBlock(xs - 1, ys + 1)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 4) > -1) then
+                   (block_getRingPoint(block.cModel, 4) > -1) andAlso (oldPt <> -1) then
                     blockChange = 1
                     newPt = 4
                     ys += 1
@@ -719,7 +765,7 @@ sub TinySpace.traceRing(      x           as integer,_
                 end if
                 block = getBlock(xs - 1, ys)
                 if (blockChange = 0) andAlso VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 8) > -1) then
+                   (block_getRingPoint(block.cModel, 8) > -1) andAlso (oldPt <> -1) then
                     blockChange = 1
                     newPt = 8
                     xs -= 1
@@ -727,7 +773,7 @@ sub TinySpace.traceRing(      x           as integer,_
             case 13
                 block = getBlock(xs - 1, ys)
                 if VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 7) > -1) then
+                   (block_getRingPoint(block.cModel, 7) > -1) andAlso (oldPt <> -1) then
                     blockChange = 1
                     newPt = 7
                     xs -= 1
@@ -735,7 +781,7 @@ sub TinySpace.traceRing(      x           as integer,_
             case 14
                 block = getBlock(xs - 1, ys)
                 if VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 6) > -1) then
+                   (block_getRingPoint(block.cModel, 6) > -1) andAlso (oldPt <> -1) then
                     blockChange = 1
                     newPt = 6
                     xs -= 1
@@ -743,7 +789,7 @@ sub TinySpace.traceRing(      x           as integer,_
             case 15
                 block = getBlock(xs - 1, ys)
                 if VALID_BLOCK andAlso _
-                   (block_getRingPoint(block.cModel, 5) > -1) then
+                   (block_getRingPoint(block.cModel, 5) > -1) andAlso (oldPt <> -1) then
                     blockChange = 1
                     newPt = 5
                     xs -= 1
@@ -877,7 +923,7 @@ sub TinySpace.traceRing(      x           as integer,_
             lastSwitch = 1
 
 			#ifdef DEBUG_VERBOSE
-				printlog "TRACERING: updating"
+				'printlog "TRACERING: updating"
 			#endif
         end if
 		
@@ -888,15 +934,15 @@ sub TinySpace.traceRing(      x           as integer,_
         oldPt = curPt    
         curPt = newPt
         oldSlope = curSlope
-        firstCheck = 0   
+        firstCheck = 0            
     loop until (xs = x) andAlso (ys = y) andAlso _
                (curPt = startPt) andAlso _
                ((not(sgn(firstSlope.x()) = -sgn(curSlope.x()))) or (blockChange = 0)) 
                
                
                
-    if skipOWP = 0 andAlso (usedArray(xs_o, ys_o) <> 2) then
-		b_pt = block_getPoint(curPt, Vector2D(xs_o, ys_o))
+    if skipOWP = 0 andAlso (usedArray(xs, ys) <> 2) then
+		b_pt = block_getPoint(curPt, Vector2D(xs, ys))
 		
 		segList(curIndx).a = a_pt
 		segList(curIndx).b = b_pt
@@ -926,7 +972,7 @@ sub TinySpace.traceRing(      x           as integer,_
 		#endif
 		#ifdef DEBUG_VERBOSE
 	else
-		printlog "TRACERING: ", 1
+		printlog "TRACERING: Finishing up, no final write: ", 1
 		printlog str(skipOWP) & ", " & usedArray(xs_o, ys_o) 
 		
 		#endif
