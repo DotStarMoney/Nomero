@@ -4,6 +4,7 @@
 #include "debug.bi"
 #include "gamespace.bi"
 #include "player.bi"
+#include "tracker.bi"
 
 #define VIEW_DISTANCE  300
 #define VIEW_CONE_DOT  0.85

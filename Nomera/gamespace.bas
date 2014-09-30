@@ -20,6 +20,7 @@ constructor GameSpace()
     link.dynamiccontroller_ptr = @dynControl
     link.effectcontroller_ptr = @graphicFX
     link.soundeffects_ptr = @soundFX
+    link.pathtracker_ptr = @tracker
     
     graphicFX.setLink(link)
     triggers.setLink(link)

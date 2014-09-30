@@ -20,7 +20,7 @@ end destructor
 sub PathTracker.flush()
 	dim as PathTracker_Node_t ptr curNode
 	dim as PathTracker_Edge_t ptr ptr curEdge
-
+ 
 	nodes.resetRoll()
 	do
 		curNode = nodes.roll()
@@ -323,19 +323,6 @@ sub PathTracker.step_record()
 		prev_vel = link.player_ptr->body.v
 		prev_dir = link.player_ptr->facing
 	end if
-	
-	dim as PathTracker_Edge_t ptr ptr ed
-	edges.rollReset()
-	do
-		ed = edges.roll()
-		if ed then
-			
-			vline ((*ed)->start_loc), ((*ed)->end_loc), &h00ff00
-		else
-			exit do
-		end if
-	loop
-	
 end sub
 
 sub PathTracker.startEdge(type_ as PathTracker_Path_Type_e)

@@ -61,6 +61,7 @@ type Enemy
 		declare sub processControls(dire as integer, jump as integer,_
 								    ups as integer, fire as integer,_
 								    shift as integer, t as double)
+		
 		as objectLink link    
 		as EnemyType enemy_type
 		as EnemeyThoughtState thought

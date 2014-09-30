@@ -11,9 +11,11 @@ type effectcontroller_ 		as effectcontroller
 type projectilecollection_ 	as projectilecollection
 type dynamiccontroller_ 	as dynamiccontroller
 type soundeffects_			as soundeffects
+type pathtracker_			as pathtracker_
 
 
 type ObjectLink
+	as pathtracker_ ptr			 pathtracker_ptr
 	as gamespace_ ptr            gamespace_ptr
 	as level_ ptr                level_ptr
 	as tinyspace_ ptr            tinyspace_ptr
