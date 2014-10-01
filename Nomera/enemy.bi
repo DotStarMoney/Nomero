@@ -49,7 +49,8 @@ type Enemy
         air_acc as double
         top_speed as double
         air_top_speed as double
-        
+        as integer facing
+        top_speed_mul  as double
         groundDot      as double
         cutSpeed       as double
         stopFriction   as double
@@ -70,7 +71,6 @@ type Enemy
         as integer groundedFrames
         as integer lastUps
         as EnemyPhysicalState state
-        as integer facing
         as TinySpace ptr parent
         as Level ptr level_parent
         as Player_ ptr player_parent

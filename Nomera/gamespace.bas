@@ -114,6 +114,8 @@ end sub
         
 function GameSpace.go() as integer
     dim as double startTime, totalTime
+    dim as byte ptr trackerEx
+    dim as integer  dataSize
     do
 		
         startTime = timer
@@ -136,6 +138,13 @@ function GameSpace.go() as integer
 			if stallTime_mili < 0 then stallTime_mili = 0
 		end if
 		
+		if multikey(SC_N) then
+			tracker.exportGraph(trackerEx, dataSize)
+			
+			
+			deallocate(trackerEx)
+		end if
+		
 		if multikey(SC_DOWN) then
 			sleep
 			stall(20)
@@ -155,6 +164,8 @@ sub GameSpace.step_input()
     keypress(SC_DOWN) = multikey(SC_DOWN)
     keypress(SC_Z) = multikey(SC_Z)
     keypress(SC_LSHIFT) = multikey(SC_LSHIFT) or multikey(SC_RSHIFT)
+    keypress(SC_M) = multikey(SC_M)
+    keypress(SC_N) = multikey(SC_N)
 end sub
 
 sub GameSpace.vibrateScreen()
@@ -291,6 +302,7 @@ sub GameSpace.step_draw()
       
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
+    tracker.record_draw(scnbuff)
     
     scale2sync scnbuff
 end sub

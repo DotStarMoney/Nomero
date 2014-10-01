@@ -54,6 +54,7 @@ function HashTable.roll() as any ptr
                 curRollIndx = i
                 cn = curRollNode->data_
                 curRollNode = curRollNode->next_
+                curRollIndx += 1
                 return cn
             end if
         next i

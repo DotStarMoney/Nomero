@@ -187,6 +187,7 @@ end sub
 
 function List.roll() as any ptr
     dim as ListNode_t ptr tempNode_
+	if size = 0 then return 0
     if curRollNode_ = 0 then
         return 0
     else
@@ -199,6 +200,7 @@ end function
 sub List.rollRemove()
     dim as ListNode_t ptr tempNode_
     dim as ListNode_t ptr delNode_
+
 
     if oldCurRollNode_ <> 0 then
         delNode_ = oldCurRollNode_

@@ -4,7 +4,7 @@
 #include "debug.bi"
 #include "gamespace.bi"
 #include "player.bi"
-#include "tracker.bi"
+#include "pathtracker.bi"
 
 #define VIEW_DISTANCE  300
 #define VIEW_CONE_DOT  0.85
@@ -14,6 +14,7 @@ constructor Enemy
     acc   = 500
     air_acc = 800
     top_speed = 100
+    top_speed_mul = 1.5
     air_top_speed = 160
     lastJump = 0
     isJumping = 0
@@ -91,250 +92,14 @@ sub Enemy.drawEnemy(scnbuff as uinteger ptr)
 end sub
 
 function Enemy.process(t as double) as integer
-	dim as Vector2D pt, pv, sv
-	dim as Vector2D viewM
-	dim as integer groundAhead, shouldPursue
-	dim as integer clearJump, noalert, blocked
-	dim as double dist, viewMag
-	
-	if parent->raycast(body.p + Vector2D(18, 0) * dire_, Vector2D(0, 30), pt) >= 0 then
-		groundAhead = 1
-	else
-		groundAhead = 0
-	end if
-	
-	if parent->raycast(body.p - Vector2D(0, -74), Vector2D(32,0)*dire_, pt) >= 0 then
-		clearJump = 0
-	else
-		clearJump = 1
-	end if
-	
-	if parent->raycast(body.p + Vector2D(0, 4), Vector2D(32,0)*dire_, pt) >= 0 then
-		blocked = 1
-	else
-		blocked = 0
-	end if
-	
-	select case thought
-	case IDLE
-		if groundAhead = 0 orElse blocked = 1 then
-			dire_ = -dire_
-			manditoryWalk = 10 + int(rnd * 20)
-		end if
-		if manditoryWalk = 0 then
-			if int(rnd * lazyness) = 0 then
-				if dire_ = 0 then
-					manditoryWalk = 10 + int(rnd * 40)
-					dire_ = int(rnd * 3) - 1
-				else
-					dire_ = 0
-					manditoryWalk = 10 + int(rnd * 20)
-				end if
-			end if
-		else
-			manditoryWalk -= 1
-		end if
-		viewM = player_parent->body.p - body.p
-		viewMag = viewM.magnitude()
-		if viewMag > 500 then 
-			viewM.normalize()
-			viewM = viewM * 500
-		end if
-		if sgn(viewM.x()) = sgn(facing * 2 - 1) then
-			dist = parent->raycast(body.p + Vector2D(0, -30), viewM, pt)
-			if dist = -1 then
-				if viewM.magnitude() < VIEW_DISTANCE then
-					viewM.normalize()
-					if viewM * Vector2D(facing*2 - 1,0) >= VIEW_CONE_DOT then
-						thought = CONCERNED
-						jump_ = 1
-						alertingFrames = lazyness * 0.5
-						dire_ = 0
-						body.v.setX(0)
-						alertAnim.hardSwitch(0)
-					end if
-				end if
-			end if
-		end if
-		shift_ = 0
-	case CONCERNED
-		jump_ = 0
-		shift_ = 0
-		viewM = player_parent->body.p - body.p
-		viewMag = viewM.magnitude()
-		if viewMag > 500 then 
-			viewM.normalize()
-			viewM = viewM * 500
-		end if
-		noalert = 1
-		if sgn(viewM.x()) = sgn(facing * 2 - 1) then
-			dist = parent->raycast(body.p + Vector2D(0, -30), viewM, pt)
-			if dist = -1 then
-				if viewM.magnitude() < VIEW_DISTANCE * 1 then
-					alertingFrames += 1
-					noalert = 0
-				end if
-			end if
-		end if
-		if noalert = 1 then alertingFrames -= 1
-		
-		if alertingFrames <= 0 then 
-			dire_ = int(rnd * 3) - 1
-			manditoryWalk = int(rnd * 10)
-			thought = IDLE
-		elseif alertingFrames > lazyness * 1.5 then
-			thought = PURSUIT
-			link.soundeffects_ptr->playSound(SND_ALARM)
-			alertAnim.hardSwitch(1)
-		end if
-		if (viewM.magnitude() < TOO_CLOSE_DIST) andAlso (dist = -1) then
-			thought = PURSUIT
-			link.soundeffects_ptr->playSound(SND_ALARM)
-			alertAnim.hardSwitch(1)
-		end if
-	case PURSUIT
-		viewM = player_parent->body.p - body.p
-		viewMag = viewM.magnitude()
-		if viewMag > 500 then 
-			viewM.normalize()
-			viewM = viewM * 500
-		end if		
-		noalert = 1
-		shouldPursue = 1
-		if sgn(viewM.x()) = sgn(facing * 2 - 1) then
-			dist = parent->raycast(body.p + Vector2D(0, -30), viewM, pt)
-			if dist = -1 then
-				if viewM.magnitude() < VIEW_DISTANCE * 1 then
-					alertingFrames += 2
-					if alertingFrames > 500 then alertingFrames = 500
-					noalert = 0
-					shouldPursue = 0
-				end if
-			end if
-		end if
-		shift_ = 1
-		
-		if shouldPursue = 1 then
-			if dist <> -1 then
-				if viewM.y() > 70 then
-					if searchDown = 0 then 
-						searchDown = sgn(viewM.x())
-					else
-						if blocked = 1 then
-							searchDown *= -1
-						end if
-					end if
-					dire_ = searchDown
-				else
-					searchDown = 0
-					if abs(viewM.x()) > 10 then
-						dire_ = sgn(viewM.x())
-					else
-						dire_ = 0
-					end if
-					if blocked = 1 andAlso clearJump = 1 andAlso takeJump = 0 then
-						takeJump = 20
-					end if
-				end if
-			else
-				searchDown = 0
-				dire_ = sgn(viewM.x())
-				if groundAhead = 0 then dire_ = 0
-			end if
-			burstShots = 0
-			burstTimer = 0
-			burstFrames = 1
-		else
-			dire_ = 0
-			searchDown = 0
-			if burstTimer = 0 andAlso burstShots = 0 then
-				burstShots = 5
-			end if
-			viewM = player_parent->body.p - body.p
-			viewM.normalize()
-			
-			burstFrames -= 1
-			
-			if burstFrames = 0 then
-				if burstShots > 1 then
-					burstShots -= 1
-					link.soundeffects_ptr->playSound(SND_SHOOT)
-					proj_parent->create(body.p - Vector2D(0,20) + Vector2D(10,0) * ((facing*2)-1), viewM * 500, BULLET)
-				elseif burstShots = 1 then
-					burstTimer = 5
-					burstShots -= 1
-				end if
-				if burstTimer > 0 then burstTimer -= 1
-			end if
-			
-			if burstFrames <= 0 then 
-				burstFrames = 3
-			end if
-		end if
-		
-		
-		if noalert = 1 then alertingFrames -= 1
-		if alertingFrames < lazyness * 0.5 then
-			thought = CONCERNED
-			alertAnim.hardSwitch(0)
-			dire_ = 0
-		end if
-	end select
-	
-	if takeJump > 0 then
-		takeJump -= 1
-		jump_ = 1
-	else
-		jump_ = 0
-	end if
-	
-
-	pv = body.p + anim.getOffset()
-	sv = Vector2D(anim.getWidth(), anim.getHeight())
-	proj_parent->checkDynamicCollision(pv, sv)
-	
-	if health <= 0 then
-		return 1
-	end if
+	''''
 	
 	processControls(dire_,jump_,ups_,fire_,shift_, t)
 	return 0
 end function
 
 sub Enemy.explosionAlert(p as Vector2D)
-	dim as Vector2D expM
-	dim as double kickback
-	dim as double mag
-	
-	expM = p - (body.p - Vector2D(0, 24))
-	mag = expM.magnitude()
-	if mag < 200 then
-		if thought <> PURSUIT then
-			link.soundeffects_ptr->playSound(SND_ALARM)
-			thought = PURSUIT
-			takeJump = 1
-			alertingFrames = lazyness*1.5
-			dire_ = 0
-			body.v.setX(0)
-			alertAnim.hardSwitch(1)
-		end if
-		
-		if mag < 70 then
-			kickback = (70 - mag) / 70
-			body.v = body.v - ((expM / mag) * kickback) * 250
-			health -= kickback * 200
-		end if
-	else
-		if thought <> PURSUIT then
-			thought = CONCERNED
-			facing = (sgn(expM.x()) + 1) * 0.5
-			takeJump = 1
-			alertingFrames = max(lazyness, alertingFrames)
-			dire_ = 0
-			body.v.setX(0)
-			alertAnim.hardSwitch(0)
-		end if
-	end if
+	''''
 	
 end sub
 
@@ -347,7 +112,6 @@ sub Enemy.processControls(dire as integer, jump as integer,_
     dim as GameSpace ptr gsp
 	gsp = cast(GameSpace ptr, game_parent)
     
-   
 	if parent->isGrounded(body_i, this.groundDot) then
         gtan = parent->getGroundingNormal(body_i, Vector2D(0,-1), Vector2D(dire,0), this.groundDot)
         gtan = gtan.perp()   
@@ -367,7 +131,7 @@ sub Enemy.processControls(dire as integer, jump as integer,_
                 if curSpeed > this.top_speed then curSpeed = this.top_speed
                 anim.setSpeed(1)
             else
-                if curSpeed > this.top_speed*1.5 then curSpeed = this.top_speed*1.5 
+                if curSpeed > this.top_speed*top_speed_mul then curSpeed = this.top_speed*top_speed_mul 
                 anim.setSpeed(2)
             end if
             addSpd = 1
@@ -388,7 +152,7 @@ sub Enemy.processControls(dire as integer, jump as integer,_
                 if curSpeed < -this.top_speed then curSpeed = -this.top_speed
                 anim.setSpeed(1)
             else
-                if curSpeed < -this.top_speed*1.5 then curSpeed = -this.top_speed*1.5  
+                if curSpeed < -this.top_speed*top_speed_mul then curSpeed = -this.top_speed*top_speed_mul  
                 anim.setSpeed(2)
             end if
             addSpd = 1

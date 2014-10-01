@@ -3,14 +3,28 @@
 #include "level.bi"
 #include "tinyspace.bi"
 #include "player.bi"
+#include "crt.bi"
+#include "gamespace.bi"
+#include "constants.bi"
 
 #define BOUNDINGBOX_SLOP 8
+
+'find out why splitting one node into halves
+'cant select segs from jumps, check why this is, either data is wrong
+'   or insertion into list is wrong
+
+
+'need to handle jumps that happen mid-air due to jump timer, also need to ignore landings that last for
+'   less than X frames (bounce off of edge)
  
 static as integer PathTracker.seg_count = 0
+static as integer PathTracker.edge_count = 0
 
 constructor PathTracker()
 	nodes.init(sizeof(PathTracker_Node_t))
-	edges.init(sizeof(PathTracker_Edge_t))
+	edges.init(sizeof(PathTracker_Edge_t ptr))
+	children.init(sizeof(PathTracker_Child_t))
+	oldMB = 0
 end constructor
 
 destructor PathTracker()
@@ -43,18 +57,21 @@ sub PathTracker.flush()
 	loop	
 	edges.flush()  
 	
+	spacialEdgePTRs.flush()
 	spacialNodeIDs.flush()
 end sub
 
 sub PathTracker.init(link_p as ObjectLink)
 	link = link_p
 	spacialNodeIDs.init(link.level_ptr->getWidth() * 16, link.level_ptr->getHeight() * 16, sizeof(integer))
+	spacialEdgePTRs.init(link.level_ptr->getWidth() * 16, link.level_ptr->getHeight() * 16, sizeof(PathTracker_Edge_t ptr))
 	currentNode = -1
 	enable = 0
 	onNode = 0
 	onEdge = 0
 	lastJump = -1
 	currentEdge = 0
+	interestID = 0
 	buildNodes()
 end sub
 
@@ -262,10 +279,35 @@ sub PathTracker.step_record()
 	dim as integer ptr ptr nodeList
 	dim as double d_dist
 	dim as integer d_index
+	dim as integer mx, my, mb
+	dim as PathTracker_Edge_t ptr ptr ptr edgeList
+	dim as PathTracker_Edge_t ptr highEdge
+	dim as integer high_ID
+	dim as integer numEdges
 	dim as Vector2D pos_
 	
 	nodeList = 0
 	if enable then
+		getmouse mx, my, ,mb
+		
+		numEdges = spacialEdgePTRs.search(Vector2D(mx - 2, my - 2) * 0.5 + link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5, _
+		                                  Vector2D(mx + 2, my + 2) * 0.5 + link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5, edgeList)
+		if numEdges <> 0 then beep
+		high_ID = 0
+		for i = 0 to numEdges - 1
+			if (*(edgeList[i]))->ID > high_ID then
+				high_ID = (*(edgeList[i]))->ID
+				highEdge = (*(edgeList[i]))
+			end if
+		next i
+		
+		if high_ID <> 0 andALso mb <> 0 andAlso oldMB = 0 then
+			interestID = high_ID
+		else
+			interestID = 0
+		end if
+		if numEdges then deallocate(edgeList)
+		
 		link.player_ptr->exportMovementParameters(curFrame.dire, curFrame.jump, curFrame.ups, curFrame.shift)
 		
 		if onEdge = 1 then
@@ -322,6 +364,8 @@ sub PathTracker.step_record()
 		prev_pos = link.player_ptr->body.p
 		prev_vel = link.player_ptr->body.v
 		prev_dir = link.player_ptr->facing
+		
+		oldMB = mb
 	end if
 end sub
 
@@ -364,15 +408,23 @@ sub PathTracker.endEdge()
 
 	if currentEdge = 0 then exit sub
 
-	if currentEdge->frames.getSize() > 3 then
+	if currentEdge->frames.getSize() > 3  then
 	
+		edge_count += 1
+		currentEdge->ID = edge_count
 		currentEdge->ID_end = currentNode
 		getNodeDist(link.player_ptr->body.p, currentNode, currentEdge->end_dist)
 		getNodeCoord(link.player_ptr->body.p, currentNode, currentEdge->end_loc)
+		spacialEdgePTRs.insert(currentEdge->start_loc, currentEdge->end_loc, @currentEdge)
+
+		if (currentEdge->ID_start = 0) orElse (currentEdge->ID_start > seg_count) orElse _
+			(currentEdge->end_loc = Vector2D(0,0)) orElse (currentEdge->start_loc = Vector2D(0,0))	then
+			print currentEdge->ID_start
+			stall(3000)
+		end if
 		curNode = nodes.retrieve(currentEdge->ID_start)
 		curNode->edges.push_back(@currentEdge)
 		edges.push_back(@currentEdge)
-		
 	else
 	
 		delete(currentEdge)
@@ -489,4 +541,208 @@ sub PathTracker.addNode(segs() as PathTracker_Segment_t, type_ as integer)
 	spacialNodeIDs.insert(tl, dr, @curNode.ID)
 end sub
 
+sub PathTracker.register(e_ as Enemy ptr)
+	dim as PathTracker_Child_t c
+	c.child = e_
+	c.moveState = PT_FREE
+	c.isNavigating = 0
+	c.target.node = 0
+	c.target.x = 0
+	children.insert(cast(integer, e_), @c)
+end sub
 
+sub PathTracker.exportGraph(byref data_ as byte ptr, byref data_bytes as integer)
+	#macro WRITE_ELEMENT(e, s)
+		memcpy(@(data_[curOffset]), @(e), sizeof(s))
+		curOffset += sizeof(s)
+	#endmacro
+	
+	
+	dim as PathTracker_Node_t ptr curNode
+	dim as PathTracker_Edge_t ptr ptr curEdge
+	dim as PathTracker_Inputs_t ptr curInput
+	dim as integer curOffset
+	dim as integer tempInt
+	dim as integer i
+	
+	curOffset = 0
+	
+	data_bytes = 0
+	data_bytes += sizeof(integer) 'data size
+	data_bytes += sizeof(integer) 'seg_count
+	data_bytes += sizeof(integer) 'edge_count
+	data_bytes += sizeof(integer) 'number of nodes	
+	data_bytes += (sizeof(PathTracker_Node_t) - sizeof(List) - sizeof(PathTracker_Segment_t ptr)) * nodes.getSize()
+	
+	nodes.resetRoll()
+	do
+		curNode = nodes.roll()
+		if curNode then
+			data_bytes += curNode->segments_n * sizeof(PathTracker_Segment_t)
+		else
+			exit do
+		end if
+	loop
+	
+	
+	data_bytes += sizeof(integer) 'number of edges
+	data_bytes += (sizeof(PathTracker_Edge_t) - sizeof(List)) * edges.getSize()
+	edges.rollReset()
+	
+	do
+		curEdge = edges.roll()
+		if curEdge then
+			data_bytes += (*curEdge)->frames.getSize() * sizeof(PathTracker_Inputs_t)
+		else
+			exit do
+		end if
+	loop
+	
+	data_ = allocate(sizeof(byte) * data_bytes)
+	
+	WRITE_ELEMENT(data_bytes, integer)
+	WRITE_ELEMENT(seg_count, integer)
+	WRITE_ELEMENT(edge_count, integer)
+	tempInt = nodes.getSize()
+	WRITE_ELEMENT(tempInt, integer)
+	nodes.resetRoll()
+	do
+		curNode = nodes.roll()
+		if curNode then
+			WRITE_ELEMENT(curNode->segments_n, integer)
+			for i = 0 to curNode->segments_n - 1
+				WRITE_ELEMENT(curNode->segments[i], PathTracker_Segment_t)
+			next i
+			WRITE_ELEMENT(curNode->type_, PathTracker_Node_Type_e)
+			WRITE_ELEMENT(curNode->ID, integer)
+			WRITE_ELEMENT(curNode->bb_a, Vector2D)
+			WRITE_ELEMENT(curNode->bb_b, Vector2D)
+		else
+			exit do
+		end if
+	loop
+	
+	tempInt = edges.getSize()
+	WRITE_ELEMENT(tempInt, integer)
+	edges.rollReset()
+	do
+		curEdge = edges.roll()
+		if curEdge then
+			tempInt = (*curEdge)->frames.getSize()
+			WRITE_ELEMENT(tempInt, integer)
+			
+			(*curEdge)->frames.rollReset()
+			do
+				curInput = (*curEdge)->frames.roll()
+				if curInput then
+					WRITE_ELEMENT(*curInput, PathTracker_Inputs_t)
+				else
+					exit do
+				end if
+			loop
+			
+			WRITE_ELEMENT((*curEdge)->path_type, PathTracker_Path_Type_e)
+			WRITE_ELEMENT((*curEdge)->speed_type, PathTracker_Path_Speed_e)
+			WRITE_ELEMENT((*curEdge)->startPosition, Vector2D)
+			WRITE_ELEMENT((*curEdge)->startVelocity, Vector2D)
+			WRITE_ELEMENT((*curEdge)->startDirection, integer)
+			WRITE_ELEMENT((*curEdge)->start_loc, Vector2D)
+			WRITE_ELEMENT((*curEdge)->end_loc, Vector2D)
+			WRITE_ELEMENT((*curEdge)->start_dist, double)
+			WRITE_ELEMENT((*curEdge)->end_dist, double)			
+			WRITE_ELEMENT((*curEdge)->ID_start, integer)
+			WRITE_ELEMENT((*curEdge)->ID_end, integer)	
+			WRITE_ELEMENT((*curEdge)->ID, integer)							
+		else
+			exit do
+		end if
+	loop
+end sub
+
+
+sub PathTracker.importGraph(byref data_ as byte ptr, byref data_bytes as integer)
+	#macro READ_ELEMENT(e, s)
+		memcpy(@(e), @(data_[curOffset]), sizeof(s))
+		curOffset += sizeof(s)
+	#endmacro
+	dim as integer curOffset
+	dim as integer tempInt
+	dim as integer i, q, k, numElements, numItems
+	dim as PathTracker_Node_t curNode
+	dim as PathTracker_Node_t ptr curNode_ptr
+	dim as PathTracker_Edge_t ptr curEdge
+	dim as PathTracker_Inputs_t curInput
+	
+	curOffset = 0
+	flush()
+	
+	READ_ELEMENT(tempInt, integer) 'bogus
+	READ_ELEMENT(seg_count, integer)
+	READ_ELEMENT(edge_count, integer)
+	READ_ELEMENT(numElements, integer)
+	for i = 0 to numElements - 1
+		READ_ELEMENT(curNode.segments_n, integer)
+		curNode.segments = new PathTracker_Segment_t[curNode.segments_n]
+		for q = 0 to curNode.segments_n - 1
+			READ_ELEMENT(curNode.segments[q], PathTracker_Segment_t)
+		next q
+		READ_ELEMENT(curNode.type_, PathTracker_Node_Type_e)
+		READ_ELEMENT(curNode.ID, integer)
+		READ_ELEMENT(curNode.bb_a, Vector2D)
+		READ_ELEMENT(curNode.bb_b, Vector2D)
+		curNode.edges.init(sizeof(PathTracker_Edge_t ptr))
+		nodes.insert(curNode.ID, @curNode)
+		spacialNodeIDs.insert(curNode.bb_a, curNode.bb_b, @curNode.ID)
+	next i
+	
+	READ_ELEMENT(numElements, integer)
+	for i = 0 to numElements - 1
+		curEdge = new PathTracker_Edge_t
+		curEdge->frames.init(sizeof(PathTracker_Inputs_t))
+		READ_ELEMENT(numItems, integer)
+		for q = 0 to numItems - 1
+			READ_ELEMENT(curInput, PathTracker_Inputs_t)
+			curEdge->frames.push_back(@curInput)
+		next q
+		READ_ELEMENT(curEdge->path_type, PathTracker_Path_Type_e)
+		READ_ELEMENT(curEdge->speed_type, PathTracker_Path_Speed_e)
+		READ_ELEMENT(curEdge->startPosition, Vector2D)
+		READ_ELEMENT(curEdge->startVelocity, Vector2D)
+		READ_ELEMENT(curEdge->startDirection, integer)
+		READ_ELEMENT(curEdge->start_loc, Vector2D)
+		READ_ELEMENT(curEdge->end_loc, Vector2D)
+		READ_ELEMENT(curEdge->start_dist, double)
+		READ_ELEMENT(curEdge->end_dist, double)			
+		READ_ELEMENT(curEdge->ID_start, integer)
+		READ_ELEMENT(curEdge->ID_end, integer)	
+		READ_ELEMENT(curEdge->ID, integer)
+		curNode_ptr = nodes.retrieve(curEdge->ID_start)
+		curNode_ptr->edges.push_back(@curEdge)
+		edges.push_back(@curEdge) 
+		spacialEdgePTRs.insert(curEdge->start_loc, curEdge->end_loc, @curEdge)
+	next i
+	
+end sub
+
+sub PathTracker.record_draw(scnbuff as integer ptr)
+	dim as PathTracker_Edge_t ptr ptr curEdge
+	edges.rollReset()
+	do
+		curEdge = edges.roll()
+		if curEdge then
+			if (*curEdge)->ID = interestID then
+				line scnbuff, ((*curEdge)->start_loc.x(), (*curEdge)->start_loc.y())-_
+							  ((*curEdge)->end_loc.x(), (*curEdge)->end_loc.y()), _
+							   rgb(3342*(*curEdge)->ID_start, 1928*(*curEdge)->ID_start, 8392*(*curEdge)->ID_start), B
+				line scnbuff, ((*curEdge)->start_loc.x() + 1, (*curEdge)->start_loc.y() + 1)-_
+							  ((*curEdge)->end_loc.x() - 1, (*curEdge)->end_loc.y() - 1), _
+							   rgb(3342*(*curEdge)->ID_start, 1928*(*curEdge)->ID_start, 8392*(*curEdge)->ID_start), B			   
+			end if
+			line scnbuff, ((*curEdge)->start_loc.x(), (*curEdge)->start_loc.y())-_
+					      ((*curEdge)->end_loc.x(), (*curEdge)->end_loc.y()), _
+					       rgb(3342*(*curEdge)->ID_start, 1928*(*curEdge)->ID_start, 8392*(*curEdge)->ID_start)
+		else
+			exit do
+		end if
+	loop
+end sub
