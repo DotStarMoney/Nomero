@@ -24,6 +24,7 @@ constructor TinySpace
         arbiters_n(i) = 0
     next i
     framesGone = 0
+    lockID = -1
 end constructor
 
 destructor TinySpace
@@ -45,6 +46,12 @@ function TinySpace.addBody(body_ as TinyBody ptr) as integer
     return bcount - 1
 end function
 
+sub TinySpace.setLock(id as integer)
+	lockID = id
+end sub
+sub TinySpace.setUnlock()
+	lockID = -1
+end sub
 function TinySpace.bodyN(b as integer) as integer
     dim as integer i
     for i = 0 to bodies_n - 1
@@ -1318,6 +1325,8 @@ sub TinySpace.step_time(byval t as double)
     #endif
     
     while i < bodies_n
+		if lockID <> -1 then i = lockID
+    
         c = bodies(i)
         res_t = t
 
@@ -2035,7 +2044,7 @@ sub TinySpace.step_time(byval t as double)
         end if
 		if curDynamicsList then deallocate(curDynamicsList)
 
-
+		if lockID <> -1 then exit while
         i += 1
     wend
     

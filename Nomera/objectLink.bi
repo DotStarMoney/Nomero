@@ -11,7 +11,7 @@ type effectcontroller_ 		as effectcontroller
 type projectilecollection_ 	as projectilecollection
 type dynamiccontroller_ 	as dynamiccontroller
 type soundeffects_			as soundeffects
-type pathtracker_			as pathtracker_
+type pathtracker_			as pathtracker
 
 
 type ObjectLink

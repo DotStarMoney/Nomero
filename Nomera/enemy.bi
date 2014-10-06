@@ -8,17 +8,17 @@
 #include "projectilecollection.bi"
 #include "objectlink.bi"
 
-enum EnemyPhysicalState
+#define E_LADDER_GRAB_EDGE_LENGTH 24
+#define E_CLIMBING_SPEED 82
+#define E_GROUND_FRAMES 1
+
+enum EnemyState
     E_JUMPING
     E_FREE_FALLING
     E_GROUNDED
+    E_ON_LADDER
 end enum
 
-enum EnemeyThoughtState
-	IDLE
-	CONCERNED
-	PURSUIT
-end enum
 
 enum EnemyType
 	SOLDIER_1
@@ -40,7 +40,7 @@ type Enemy
         declare function process(t as double) as integer
         declare sub loadType(type_ as EnemyType)
         declare sub drawEnemy(scnbuff as uinteger ptr)
-        declare function getState() as EnemyPhysicalState
+        declare function getState() as EnemyState
         declare sub explosionAlert(p as Vector2D)
     
         body    as TinyBody
@@ -59,18 +59,19 @@ type Enemy
         jumpImpulse    as double
         freeJumpFrames as integer
     private: 
+        declare function onLadder() as integer
+        declare function onSpikes() as integer
 		declare sub processControls(dire as integer, jump as integer,_
 								    ups as integer, fire as integer,_
 								    shift as integer, t as double)
 		
 		as objectLink link    
 		as EnemyType enemy_type
-		as EnemeyThoughtState thought
         as any ptr game_parent
         as integer groundSwitchAnimFrames
         as integer groundedFrames
         as integer lastUps
-        as EnemyPhysicalState state
+        as EnemyState state
         as TinySpace ptr parent
         as Level ptr level_parent
         as Player_ ptr player_parent
@@ -91,18 +92,7 @@ type Enemy
         as integer shift_
         
         as integer health
-        
-        as integer burstTimer
-        as integer burstShots
-        as integer burstFrames
-        as integer manditoryWalk
-        as integer lazyness
-        as integer eyeContact
-		as Animation alertAnim
-		as integer alertingFrames
-		as integer pursuitFrames
-		as integer searchDown
-		as integer takeJump
+
 End type
 
 #endif

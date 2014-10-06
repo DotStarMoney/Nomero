@@ -35,6 +35,7 @@ type SnowGenerator
         declare sub stepFlakes(cam as Vector2D, t as double)
         declare sub drawFlakes(scnbuff as uinteger ptr, cam as Vector2D)
     private:
+		static as integer ptr flakeTex
         as sgFlake_t_ ptr head_
         as integer numFlakes
         

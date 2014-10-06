@@ -4,6 +4,7 @@
 #include "debug.bi"
 #include "objectlink.bi"
 #include "windows.bi"
+#include "vbcompat.bi"
 
 using fb
 
@@ -90,7 +91,19 @@ constructor GameSpace()
     foregroundSnow.setSpeed(700)
     
     tracker.init(link)
-    tracker.record()
+    pathfile = lvlData.getName() & "_pathing.dat"
+    if fileexists(pathfile) then
+        pathFileNum = freefile
+		open pathfile for binary as #pathFileNum
+		get #pathFileNum,,pathBytes
+		pathData = new byte[pathBytes]
+		get #pathFileNum,,pathData[0],pathBytes
+		tracker.importGraph(pathData, pathBytes)
+		delete(pathData)
+		close #pathFileNum
+    end if
+    
+    tracker.pause()
 
     scnbuff = imagecreate(640,480)
     stallTime_mili = 15
@@ -127,7 +140,7 @@ function GameSpace.go() as integer
         'print spy.body.p
         locate 1,1
         movingFrmAvg = movingFrmAvg * 0.95 + 0.05 * (frameTime / (1 / FPS_TARGET) * 100)
-		print using "Engine at ##.##% load"; movingFrmAvg
+		'print using "Engine at ##.##% load"; movingFrmAvg
 		
 		stall( stallTime_mili)
 		totalTime = (timer - startTime)
@@ -138,20 +151,21 @@ function GameSpace.go() as integer
 			if stallTime_mili < 0 then stallTime_mili = 0
 		end if
 		
-		if multikey(SC_N) then
-			tracker.exportGraph(trackerEx, dataSize)
-			
-			
-			deallocate(trackerEx)
-		end if
-		
-		if multikey(SC_DOWN) then
+		if keypress(SC_P) then
 			sleep
-			stall(20)
+			stall(100)
 			sleep
 		end if
-		
     loop 
+    
+	kill pathFile
+	pathFileNum = freefile
+	open pathfile for binary as #pathFileNum
+	tracker.exportGraph(pathData, pathBytes)
+	put #pathFileNum,,pathBytes
+	put #pathFileNum,,pathData[0], pathBytes
+	close #pathFileNum
+	deallocate(pathData)
     return 0
 end function
             
@@ -166,6 +180,8 @@ sub GameSpace.step_input()
     keypress(SC_LSHIFT) = multikey(SC_LSHIFT) or multikey(SC_RSHIFT)
     keypress(SC_M) = multikey(SC_M)
     keypress(SC_N) = multikey(SC_N)
+    keypress(SC_DELETE) = multikey(SC_DELETE)
+    keypress(SC_P) = multikey(SC_P)
 end sub
 
 sub GameSpace.vibrateScreen()
@@ -247,9 +263,10 @@ sub GameSpace.step_draw()
 
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     
-      
+	
     window screen (0,0)-(SCRX-1,SCRY-1)
     
+    /'
     if spy.health > 75 then
 		put scnbuff, (8,11), hud_image, (0,18)-(151,25), TRANS
     elseif spy.health > 50 then
@@ -278,7 +295,7 @@ sub GameSpace.step_draw()
 	end if
 	
 	drawStringShadow(scnbuff, 144, 11, str(spy.bombs), rgb(200,200,200))
-
+	'/
     
     if isSwitching <> 0 then
 		line scnbuff, (0, SCRY - 1)-(SCRX - 1, SCRY - switchFrame - 1), 0, BF
@@ -342,7 +359,10 @@ sub GameSpace.step_process()
     
     dynControl.process(0.01667)
     
-
+	if keypress(SC_M) then tracker.record()
+	if keypress(SC_N) then tracker.pause()
+	
+	
 	if isSwitching <> 1 andAlso lockAction <> 1 then
     	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.01667)
     elseif lockAction = 1 then
@@ -397,7 +417,7 @@ sub GameSpace.step_process()
 		doGameEnd()
 	end if
   
-	tracker.step_record()
+	tracker.step_record(keypress(SC_DELETE))
   
     if isSwitching = 0 then
 		#ifdef DEBUG

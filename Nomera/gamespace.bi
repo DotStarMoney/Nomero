@@ -79,6 +79,11 @@ type GameSpace
         as integer   	 switchFrame
         as LevelSwitch_t pendingSwitch
         
+        as byte ptr      pathData
+        as integer       pathBytes
+        as string        pathFile
+        as integer       pathFileNum
+        
         as integer   keypress(0 to 255)
         as uinteger ptr scnbuff
 		as double movingFrmAvg

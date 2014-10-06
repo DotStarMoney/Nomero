@@ -140,15 +140,13 @@ sub DynamicController.addEnemy(sz as SpawnZone_t)
                                 sz.p.y() + sz.size.y() - newEnemy->body.r)
     newEnemy->body.friction = 2        
 	newEnemy->body_i = link.tinyspace_ptr->addBody(@(newEnemy->body))
-    
-    newEnemy->setLink(link)
-    
-    
-       
+           
 	dobj.object_type = OBJ_ENEMY
 	dobj.data_ = newEnemy
+
+	newEnemy->setLink(link)
+
 	objects.push_back(@dobj)
-	
 end sub
 
 sub DynamicController.addItem(sz as SpawnZone_t)

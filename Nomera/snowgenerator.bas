@@ -3,6 +3,8 @@
 #include "constants.bi"
 #include "debug.bi"
 
+static as integer ptr SnowGenerator.flakeTex = 0
+
 constructor SnowGenerator()
     head_ = 0
     numFlakes = 0
@@ -16,6 +18,10 @@ constructor SnowGenerator()
     w = 640
     h = 480
     speed = 200
+    if flakeTex = 0 then 
+		flakeTex = imagecreate(36,12)
+		bload "snowballs.bmp", flakeTex
+    end if
 end constructor
 
 destructor SnowGenerator()
@@ -141,12 +147,22 @@ end sub
 sub SnowGenerator.drawFlakes(scnbuff as uinteger ptr, cam as Vector2D)
     dim as sgFlake_t_ ptr np
     dim as double xp, yp
+    dim as double size
     np = head_
    
     while np <> 0
         xp = (np->p.x() - cam.x()) * (1 / np->depth) + cam.x()
         yp = (np->p.y() - cam.y()) * (1 / np->depth) + cam.y()
-        circle scnbuff, (xp, yp), 3 / np->depth, &hffffff,,,,F
+        size = 3 / np->depth
+        'circle scnbuff, (xp, yp), size, &hffffff,,,,F
+        if size < 2 then
+			put scnbuff, (xp - 6, yp - 6), flakeTex, (24, 0)-(35, 11), TRANS
+		elseif size < 5 then
+			put scnbuff, (xp - 6, yp - 6), flakeTex, (12, 0)-(23, 11), TRANS
+		else
+			put scnbuff, (xp - 6, yp - 6), flakeTex, (0, 0)-(11, 11), TRANS
+		end if
+
         np = np->next_
     wend
 end sub

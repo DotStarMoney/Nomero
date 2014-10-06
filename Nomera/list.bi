@@ -3,6 +3,25 @@
 
 #include "debug.bi"
 
+#macro BEGIN_LIST(x, y)
+	y.rollReset()
+	do
+		x = y.roll()
+		if x then
+#endmacro
+
+#macro ABORT_LIST()
+	exit do
+#endmacro
+
+#macro END_LIST()
+		else
+			exit do
+		end if
+	loop
+#endmacro
+
+
 type ListNode_t
     as any ptr data_
     as ListNode_t ptr next_

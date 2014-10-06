@@ -9,16 +9,10 @@
 
 #define BOUNDINGBOX_SLOP 8
 
-'find out why splitting one node into halves
-'cant select segs from jumps, check why this is, either data is wrong
-'   or insertion into list is wrong
-
-
-'need to handle jumps that happen mid-air due to jump timer, also need to ignore landings that last for
-'   less than X frames (bounce off of edge)
- 
 static as integer PathTracker.seg_count = 0
 static as integer PathTracker.edge_count = 0
+static as integer PathTracker.interestStatic = 0
+
 
 constructor PathTracker()
 	nodes.init(sizeof(PathTracker_Node_t))
@@ -30,6 +24,13 @@ end constructor
 destructor PathTracker()
 	flush() 
 end destructor
+
+function PathTracker.removeInterestID(data_ as any ptr) as integer 
+	dim as PathTracker_Edge_t ptr ptr curEdge
+	curEdge = data_
+	if (*curEdge)->ID = interestStatic then return 1
+	return 0
+end function
 
 sub PathTracker.flush()
 	dim as PathTracker_Node_t ptr curNode
@@ -56,12 +57,13 @@ sub PathTracker.flush()
 		end if
 	loop	
 	edges.flush()  
-	
+	children.flush()
 	spacialEdgePTRs.flush()
 	spacialNodeIDs.flush()
 end sub
 
 sub PathTracker.init(link_p as ObjectLink)
+	flush()
 	link = link_p
 	spacialNodeIDs.init(link.level_ptr->getWidth() * 16, link.level_ptr->getHeight() * 16, sizeof(integer))
 	spacialEdgePTRs.init(link.level_ptr->getWidth() * 16, link.level_ptr->getHeight() * 16, sizeof(PathTracker_Edge_t ptr))
@@ -71,6 +73,7 @@ sub PathTracker.init(link_p as ObjectLink)
 	onEdge = 0
 	lastJump = -1
 	currentEdge = 0
+	highIndex = -1
 	interestID = 0
 	buildNodes()
 end sub
@@ -138,6 +141,7 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
 	dim as integer safe
 	redim as PathTracker_Segment_t paramSegs(0)
 	dim as Vector2d d
+
 	
 	if segs(0).a.x < segs(0).b.x then
 		leftMostIndex = 0
@@ -270,7 +274,49 @@ sub PathTracker.pause()
 	enable = 0
 end sub 
 
-sub PathTracker.step_record()
+sub PathTracker.getGroundedData(body as TinyBody, body_i as integer, byref node as integer, byref p as Vector2D)
+	dim as Vector2D pos_
+	dim as Vector2D a, b
+	dim as integer nodes_n
+	dim as integer ptr ptr nodeList
+	dim as double d_dist
+	dim as integer d_index
+	dim as integer i
+	dim as Vector2D nodeP, gPos
+
+	pos_ = body.p
+	a = pos_ - (Vector2D(1,1) * body.r) - Vector2D(BOUNDINGBOX_SLOP, BOUNDINGBOX_SLOP)
+	b = pos_ + (Vector2D(1,1) * body.r) + Vector2D(BOUNDINGBOX_SLOP, BOUNDINGBOX_SLOP)
+	if link.tinyspace_ptr->isGrounded(body_i, 0) then
+		onEdgeFrames += 1
+		nodes_n = spacialNodeIDs.search(a, b, nodeList)
+		if nodes_n <> 0 then
+			d_dist = 1000
+			d_index = *nodeList[0]
+			for i = 0 to nodes_n - 1
+				getNodeCoord(pos_, *nodeList[i], nodeP)
+				if (pos_.x - body.r <= nodeP.x) andAlso _
+				   (pos_.x + body.r >  nodeP.x) then
+					if pos_.y < nodeP.y then
+						if (nodeP.y - pos_.y) < d_dist then
+							d_dist = (nodeP.y - pos_.y)
+							d_index = *nodeList[i]
+							gPos = nodeP
+						end if
+					end if
+				end if
+			next i
+			p = gPos
+			node = d_index
+			exit sub
+		end if
+	end if
+
+	node = 0
+	p = Vector2D(0,0)
+end sub
+
+sub PathTracker.step_record(del_key as integer)
 	dim as Vector2D a, b
 	dim as Vector2D nodeP
 	dim as Vector2D gPos
@@ -282,8 +328,10 @@ sub PathTracker.step_record()
 	dim as integer mx, my, mb
 	dim as PathTracker_Edge_t ptr ptr ptr edgeList
 	dim as PathTracker_Edge_t ptr highEdge
-	dim as integer high_ID
+	dim as PathTracker_Node_t ptr curNode
+	dim as integer high_ID, highIndex
 	dim as integer numEdges
+	dim as integer highIndexS
 	dim as Vector2D pos_
 	
 	nodeList = 0
@@ -292,20 +340,37 @@ sub PathTracker.step_record()
 		
 		numEdges = spacialEdgePTRs.search(Vector2D(mx - 2, my - 2) * 0.5 + link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5, _
 		                                  Vector2D(mx + 2, my + 2) * 0.5 + link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5, edgeList)
-		if numEdges <> 0 then beep
+		
 		high_ID = 0
 		for i = 0 to numEdges - 1
 			if (*(edgeList[i]))->ID > high_ID then
 				high_ID = (*(edgeList[i]))->ID
 				highEdge = (*(edgeList[i]))
+				highIndexS = i
 			end if
 		next i
 		
 		if high_ID <> 0 andALso mb <> 0 andAlso oldMB = 0 then
 			interestID = high_ID
-		else
+			highIndex = highIndexS
+			targetData = edgeList[highIndex]
+		elseif mb <> 0 andAlso oldMB = 0 then
 			interestID = 0
+			highIndex = -1
 		end if
+		
+		if (del_key) andAlso (interestID <> 0) andAlso (highIndex <> -1) then
+			spacialEdgePTRs.remove(targetData)
+			curNode = nodes.retrieve((*targetData)->ID_start)
+			interestStatic = interestID
+			curNode->edges.removeIf(@removeInterestID)
+			edges.removeIf(@removeInterestID)
+			delete((*targetData))
+			interestID = 0
+			highIndex = -1
+		end if
+		
+		
 		if numEdges then deallocate(edgeList)
 		
 		link.player_ptr->exportMovementParameters(curFrame.dire, curFrame.jump, curFrame.ups, curFrame.shift)
@@ -318,6 +383,7 @@ sub PathTracker.step_record()
 		a = pos_ - (Vector2D(1,1) * link.player_ptr->body.r) - Vector2D(BOUNDINGBOX_SLOP, BOUNDINGBOX_SLOP)
 		b = pos_ + (Vector2D(1,1) * link.player_ptr->body.r) + Vector2D(BOUNDINGBOX_SLOP, BOUNDINGBOX_SLOP)
 		if link.tinyspace_ptr->isGrounded(link.player_ptr->body_i, 0) then
+			onEdgeFrames += 1
 			nodes_n = spacialNodeIDs.search(a, b, nodeList)
 			if nodes_n <> 0 then
 				d_dist = 1000
@@ -336,14 +402,15 @@ sub PathTracker.step_record()
 					end if
 				next i
 				curNodeP = gPos
-				currentNode = d_index
-				if onEdge = 1 then
+				currentNode = d_index				
+				if onEdge = 1 andAlso (onEdgeFrames > MIN_GROUNDED_FRAMES) then
 					onEdge = 0
 					endEdge()
 				end if
 				onNode = 1
 			end if
 		else
+			onEdgeFrames = 0
 			if (onNode = 1) andAlso (onEdge = 0) then
 				onEdge = 1
 				startEdge(PT_DROP)
@@ -408,31 +475,41 @@ sub PathTracker.endEdge()
 
 	if currentEdge = 0 then exit sub
 
-	if currentEdge->frames.getSize() > 3  then
-	
+	if currentEdge->frames.getSize() > MIN_RECORD_FRAMES then
+		
 		edge_count += 1
 		currentEdge->ID = edge_count
 		currentEdge->ID_end = currentNode
+		
 		getNodeDist(link.player_ptr->body.p, currentNode, currentEdge->end_dist)
 		getNodeCoord(link.player_ptr->body.p, currentNode, currentEdge->end_loc)
-		spacialEdgePTRs.insert(currentEdge->start_loc, currentEdge->end_loc, @currentEdge)
-
-		if (currentEdge->ID_start = 0) orElse (currentEdge->ID_start > seg_count) orElse _
-			(currentEdge->end_loc = Vector2D(0,0)) orElse (currentEdge->start_loc = Vector2D(0,0))	then
-			print currentEdge->ID_start
-			stall(3000)
+		
+		if currentNode = currentEdge->ID_start then
+			if abs(currentEdge->end_dist - currentEdge->start_dist) < MIN_EDGE_DIST then
+				delete(currentEdge)
+				currentEdge = 0
+				exit sub
+			end if
 		end if
+	
+		currentEdge->bb_a.setX(iif(currentEdge->start_loc.x() < currentEdge->end_loc.x(), currentEdge->start_loc.x(), currentEdge->end_loc.x()))
+		currentEdge->bb_a.setY(iif(currentEdge->start_loc.y() < currentEdge->end_loc.y(), currentEdge->start_loc.y(), currentEdge->end_loc.y()))
+		currentEdge->bb_b.setX(iif(currentEdge->start_loc.x() > currentEdge->end_loc.x(), currentEdge->start_loc.x(), currentEdge->end_loc.x()))
+		currentEdge->bb_b.setY(iif(currentEdge->start_loc.y() > currentEdge->end_loc.y(), currentEdge->start_loc.y(), currentEdge->end_loc.y()))
+	
+		spacialEdgePTRs.insert(currentEdge->bb_a, currentEdge->bb_b, @currentEdge)
 		curNode = nodes.retrieve(currentEdge->ID_start)
 		curNode->edges.push_back(@currentEdge)
 		edges.push_back(@currentEdge)
 	else
 	
 		delete(currentEdge)
+		currentEdge = 0
 		
 	end if
 end sub
 
-sub PathTracker.getNodeCoord(p as Vector2D, node as integer, ret as Vector2D)
+sub PathTracker.getNodeCoord(p as Vector2D, node as integer, byref ret as Vector2D)
 	dim as PathTracker_Node_t ptr curNode
 	dim as Vector2D v
 	dim as double d
@@ -464,7 +541,7 @@ sub PathTracker.getNodeCoord(p as Vector2D, node as integer, ret as Vector2D)
 
 end sub
 
-sub PathTracker.getNodeDist(p as Vector2D, node as integer, ret as double)	
+sub PathTracker.getNodeDist(p as Vector2D, node as integer, byref ret as double)	
 	dim as PathTracker_Node_t ptr curNode
 	dim as Vector2D v
 	dim as double d
@@ -488,13 +565,13 @@ sub PathTracker.getNodeDist(p as Vector2D, node as integer, ret as double)
 		if (curNode->segments[i].a.x <= p.x) andAlso (curNode->segments[i].b.x() > p.x) then
 			if curNode->segments[i].a.x = curNode->segments[i].b.x then
 				for q = 0 to i - 1
-					v = curNode->segments[i].b - curNode->segments[i].a
+					v = curNode->segments[q].b - curNode->segments[q].a
 					ret += v.magnitude()
 				next q		
 				exit for
 			else
 				for q = 0 to i - 1
-					v = curNode->segments[i].b - curNode->segments[i].a
+					v = curNode->segments[q].b - curNode->segments[q].a
 					ret += v.magnitude()
 				next q
 				v = curNode->segments[i].b - curNode->segments[i].a
@@ -548,7 +625,211 @@ sub PathTracker.register(e_ as Enemy ptr)
 	c.isNavigating = 0
 	c.target.node = 0
 	c.target.x = 0
+	c.nodeTarget = 0
+	c.headingEdge = 0
+	c.edgeList.init(sizeof(integer))
 	children.insert(cast(integer, e_), @c)
+end sub
+
+sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t)
+	dim as PathTracker_Child_t ptr c
+	dim as PathTracker_Node_t ptr curNode
+	dim as PathTracker_Edge_t ptr ptr curEdge
+	dim as integer randInt
+	dim as integer curNodeID
+	dim as double direX		
+	dim as integer ptr tempInt 
+	dim as PathTracker_Inputs_t ptr curInputs
+	dim as Vector2D curPos, tempV
+	
+	c = children.retrieve(cast(integer, e_))
+	if c = 0 then exit sub
+	
+	ret.dire = 0
+	ret.jump = 0
+	ret.ups = 0
+	ret.shift = 0
+
+	getGroundedData(e_->body, e_->body_i, curNodeID, curPos)
+
+	if c->isNavigating = 0 then
+		randInt = int(nodes.getSize() * rnd) + 1
+		nodes.resetRoll()
+		do
+			curNode = nodes.roll()
+			if curNode then
+				randInt -= 1
+				if randInt = 0 then exit do
+			else
+				exit do
+			end if
+		loop	
+		c->target.node = curNode->ID
+		c->target.x = (curNode->bb_b.x - curNode->bb_a.x) * rnd
+		if curNodeID = 0 then
+			c->moveState = PT_FREE
+		else
+			c->moveState = PT_ON_NODE
+		end if
+		if curNodeID then
+			c->startNode = curNodeID
+			computePath(curNodeID, curPos.x(), c->target.node, c->target.x, c->edgeList)
+			if c->edgeList.getSize() <> 0 then c->isNavigating = 1
+		end if
+	end if
+
+	if c->isNavigating then
+		if c->moveState = PT_ON_NODE andAlso curNodeID <> 0 then
+			if curNodeID <> c->startNode then
+				c->isNavigating = 0
+			else
+				if c->headingEdge = 0 then
+					tempInt = c->edgeList.getFront()
+					curNode = nodes.retrieve(c->startNode)
+					BEGIN_LIST(curEdge, curNode->edges)
+						if (*curEdge)->ID_end = *tempInt then 
+							c->headingEdge = (*curEdge)
+							ABORT_LIST()
+						end if
+					END_LIST()		
+				end if
+				tempV = curPos - c->headingEdge->start_loc
+				if tempV.magnitude() <= 2.5 then
+					e_->body.p = c->headingEdge->startPosition
+					e_->body.v = c->headingEdge->startVelocity
+					e_->facing = c->headingEdge->startDirection
+					requestLock(e_)
+					c->headingEdge->frames.rollReset()
+					c->listBuffer = c->headingEdge->frames.bufferRoll()
+					c->moveState = PT_ON_EDGE
+				end if	
+				if curNodeID then
+					direX = c->headingEdge->start_loc.x - e_->body.p.x
+					ret.dire = sgn(direX)
+					ret.shift = 0
+				end if
+			end if
+		end if
+		if c->moveState = PT_ON_EDGE then
+			c->headingEdge->frames.setRoll(c->listBuffer)
+			curInputs = c->headingEdge->frames.roll()
+			if curInputs then
+				c->listBuffer = c->headingEdge->frames.bufferRoll()
+				ret = *curInputs
+			else
+				c->moveState = PT_ON_NODE
+				c->startNode = c->headingEdge->ID_end
+				c->headingEdge = 0
+				c->edgeList.pop_front()
+				if c->edgeList.getSize() = 0 then c->isNavigating = 0
+			end if
+		end if	
+	end if
+
+end sub
+
+
+sub PathTracker.computePath(startNode as integer, startX as double,_
+							endNode as integer, endX as double,_
+							byref edgeList as List, rand as double = 30)
+	dim as Hashtable distance
+	dim as Hashtable prevID
+	dim as Hashtable nodeX
+	dim as PathTracker_Node_t ptr tnode
+	dim as PathTracker_Edge_t ptr ptr tedge_
+	dim as PathTracker_Edge_t ptr tedge
+	
+	dim as integer ptr tempInt
+	dim as double ptr tempD
+	dim as integer curN
+	dim as integer endID
+	dim as integer temp_i
+	dim as double temp_d
+	dim as double min_d
+	dim as double min_x
+	dim as integer min_i
+	dim as Hashtable nodelist
+	dim as double alt
+	
+	distance.init(sizeof(double))
+	nodeX.init(sizeof(double))
+	prevID.init(sizeof(integer))
+	nodelist.init(sizeof(integer))
+	
+	temp_d = 0
+	distance.insert(startNode, @temp_d)
+	temp_d = startX
+	nodeX.insert(startNode, @temp_d)
+	
+	BEGIN_HASH(tnode, nodes)
+		if tnode->ID <> startNode then
+			temp_d = 1000000
+			distance.insert(tnode->ID, @temp_d)
+			temp_d = -1
+			nodeX.insert(tnode->ID, @temp_d)
+		end if	
+		temp_i = -1
+		prevID.insert(tnode->ID, @temp_i)
+		nodelist.insert(tnode->ID, @(tnode->ID))
+	END_HASH()
+	
+	while(nodelist.getSize())
+		min_d = 1000000
+		BEGIN_HASH(tempInt, nodelist)
+			curN = *tempInt
+			tempD = distance.retrieve(curN)
+			temp_d = *tempD
+			if temp_d <= min_d then
+				min_d = temp_d
+				min_i = curN
+				tempD = nodeX.retrieve(curN)
+				min_x = *tempD
+			end if
+		END_HASH()
+		if min_i = endNode then exit while
+		nodelist.remove(min_i)
+		tnode = nodes.retrieve(min_i)
+		BEGIN_LIST(tedge_, tnode->edges)
+			tedge = *tedge_
+			if nodelist.exists(tedge->ID_end) then
+				endID = tedge->ID_end
+				alt = ((rnd ^ 2) * rand) * (1/FPS_TARGET)
+				if endID = endNode then
+					alt += min_d + _
+					     (abs(min_x - tedge->start_loc.x()) * VEL_DIST_CONSTANT + _
+					      tedge->frames.getSize() + _
+					      abs(endX - tedge->end_loc.x()) * VEL_DIST_CONSTANT) * (1 / FPS_TARGET)				
+				else
+					alt += min_d + (abs(min_x - tedge->start_loc.x()) * VEL_DIST_CONSTANT + tedge->frames.getSize()) * (1 / FPS_TARGET)
+				end if
+				tempD = distance.retrieve(endID)
+				if alt < *tempD then
+					*tempD = alt
+					tempInt = prevID.retrieve(endID)
+					*tempInt = min_i
+					tempD = nodeX.retrieve(endID)
+					*tempD = tedge->end_loc.x()
+				end if
+			end if
+		END_LIST()
+	wend	
+	edgeList.flush()
+	tempInt = prevID.retrieve(endNode)
+	if *tempInt = -1 then exit sub
+	edgeList.push_back(@endNode)
+	while (*tempInt <> startNode)
+		edgeList.push_front(tempInt)
+		tempInt = prevID.retrieve(*tempInt)
+	wend
+end sub
+
+
+sub PathTracker.requestLock(e_ as Enemy ptr)
+	'e_->body.p = 
+	'''
+	link.tinyspace_ptr->setLock(e_->body_i)
+	link.tinyspace_ptr->step_time(0)
+	link.tinyspace_ptr->setUnlock()
 end sub
 
 sub PathTracker.exportGraph(byref data_ as byte ptr, byref data_bytes as integer)
@@ -586,8 +867,9 @@ sub PathTracker.exportGraph(byref data_ as byte ptr, byref data_bytes as integer
 	
 	
 	data_bytes += sizeof(integer) 'number of edges
-	data_bytes += (sizeof(PathTracker_Edge_t) - sizeof(List)) * edges.getSize()
+	data_bytes += (sizeof(PathTracker_Edge_t) - sizeof(List) + sizeof(integer)) * edges.getSize()
 	edges.rollReset()
+	
 	
 	do
 		curEdge = edges.roll()
@@ -597,6 +879,7 @@ sub PathTracker.exportGraph(byref data_ as byte ptr, byref data_bytes as integer
 			exit do
 		end if
 	loop
+	
 	
 	data_ = allocate(sizeof(byte) * data_bytes)
 	
@@ -633,14 +916,13 @@ sub PathTracker.exportGraph(byref data_ as byte ptr, byref data_bytes as integer
 			
 			(*curEdge)->frames.rollReset()
 			do
-				curInput = (*curEdge)->frames.roll()
-				if curInput then
+				curInput = (*curEdge)->frames.roll()	
+				if curInput <> 0 then
 					WRITE_ELEMENT(*curInput, PathTracker_Inputs_t)
 				else
 					exit do
 				end if
 			loop
-			
 			WRITE_ELEMENT((*curEdge)->path_type, PathTracker_Path_Type_e)
 			WRITE_ELEMENT((*curEdge)->speed_type, PathTracker_Path_Speed_e)
 			WRITE_ELEMENT((*curEdge)->startPosition, Vector2D)
@@ -652,7 +934,9 @@ sub PathTracker.exportGraph(byref data_ as byte ptr, byref data_bytes as integer
 			WRITE_ELEMENT((*curEdge)->end_dist, double)			
 			WRITE_ELEMENT((*curEdge)->ID_start, integer)
 			WRITE_ELEMENT((*curEdge)->ID_end, integer)	
-			WRITE_ELEMENT((*curEdge)->ID, integer)							
+			WRITE_ELEMENT((*curEdge)->ID, integer)	
+			WRITE_ELEMENT((*curEdge)->bb_a, Vector2D)
+			WRITE_ELEMENT((*curEdge)->bb_b, Vector2D)	
 		else
 			exit do
 		end if
@@ -716,33 +1000,46 @@ sub PathTracker.importGraph(byref data_ as byte ptr, byref data_bytes as integer
 		READ_ELEMENT(curEdge->ID_start, integer)
 		READ_ELEMENT(curEdge->ID_end, integer)	
 		READ_ELEMENT(curEdge->ID, integer)
+		READ_ELEMENT(curEdge->bb_a, Vector2D)
+		READ_ELEMENT(curEdge->bb_b, Vector2D)
 		curNode_ptr = nodes.retrieve(curEdge->ID_start)
 		curNode_ptr->edges.push_back(@curEdge)
 		edges.push_back(@curEdge) 
-		spacialEdgePTRs.insert(curEdge->start_loc, curEdge->end_loc, @curEdge)
+		spacialEdgePTRs.insert(curEdge->bb_a, curEdge->bb_b, @curEdge)
 	next i
 	
 end sub
 
 sub PathTracker.record_draw(scnbuff as integer ptr)
 	dim as PathTracker_Edge_t ptr ptr curEdge
-	edges.rollReset()
-	do
-		curEdge = edges.roll()
-		if curEdge then
-			if (*curEdge)->ID = interestID then
+	dim as integer col, bcol
+	if enable then
+		edges.rollReset()
+		do
+			curEdge = edges.roll()
+			if curEdge then
+				col = rgb(3342*(*curEdge)->ID_start, 1928*(*curEdge)->ID_start, 8392*(*curEdge)->ID_start)
 				line scnbuff, ((*curEdge)->start_loc.x(), (*curEdge)->start_loc.y())-_
-							  ((*curEdge)->end_loc.x(), (*curEdge)->end_loc.y()), _
-							   rgb(3342*(*curEdge)->ID_start, 1928*(*curEdge)->ID_start, 8392*(*curEdge)->ID_start), B
-				line scnbuff, ((*curEdge)->start_loc.x() + 1, (*curEdge)->start_loc.y() + 1)-_
-							  ((*curEdge)->end_loc.x() - 1, (*curEdge)->end_loc.y() - 1), _
-							   rgb(3342*(*curEdge)->ID_start, 1928*(*curEdge)->ID_start, 8392*(*curEdge)->ID_start), B			   
+				  ((*curEdge)->end_loc.x(), (*curEdge)->end_loc.y()), col
+							   
+				if (*curEdge)->ID = interestID then
+					if int(timer * 10) and 1 then
+						bcol = not col
+					else
+						bcol = col
+					end if
+					line scnbuff, ((*curEdge)->start_loc.x(), (*curEdge)->start_loc.y())-_
+								  ((*curEdge)->end_loc.x(), (*curEdge)->end_loc.y()), _
+								   bcol, B
+					line scnbuff, ((*curEdge)->start_loc.x() + 1, (*curEdge)->start_loc.y() + 1)-_
+								  ((*curEdge)->end_loc.x() - 1, (*curEdge)->end_loc.y() - 1), _
+								   bcol, B			   
+								   
+					draw string scnbuff, ((*curEdge)->bb_a.x(), (*curEdge)->bb_a.y() - 16), "Frames: " & str((*curEdge)->frames.getSize()), col
+				end if
+			else
+				exit do
 			end if
-			line scnbuff, ((*curEdge)->start_loc.x(), (*curEdge)->start_loc.y())-_
-					      ((*curEdge)->end_loc.x(), (*curEdge)->end_loc.y()), _
-					       rgb(3342*(*curEdge)->ID_start, 1928*(*curEdge)->ID_start, 8392*(*curEdge)->ID_start)
-		else
-			exit do
-		end if
-	loop
+		loop
+	end if
 end sub

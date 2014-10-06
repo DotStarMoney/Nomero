@@ -8,6 +8,21 @@
 
 #include "debug.bi"
 
+#macro BEGIN_HASH(x, y)
+	y.resetRoll()
+	do
+		x = y.roll()
+		if x then
+#endmacro
+
+#macro END_HASH()
+		else
+			exit do
+		end if
+	loop
+#endmacro
+
+
 enum HashNodeKeyType_e
     KEY_STRING
     KEY_INTEGER

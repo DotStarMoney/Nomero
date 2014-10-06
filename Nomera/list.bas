@@ -1,9 +1,6 @@
 #include "list.bi"
 #include "crt.bi"
 
-'#ifdef DEBUG
-    #include "utility.bi"
-'#endif
 
 
 constructor List()
@@ -95,7 +92,7 @@ end sub
 
 sub List.pop_front()
     dim as ListNode_t ptr delNode_
-    delNode_ = tail_
+    delNode_ = head_
     
     if size = 0 then
         exit sub
@@ -135,13 +132,14 @@ sub List.removeIf(test as function(data_ as any ptr) as integer)
     dim as ListNode_t ptr curNode_
     dim as ListNode_t ptr nxtNode_
     
+    if head_ = 0 then exit sub
+    
     nxtNode_ = 0
     curNode_ = head_
     while curNode_ > 0
         nxtNode_ = curNode_->next_
-    
         if test(curNode_->data_) = 1 then
-            
+                       
             if curNode_->prev_ = 0 then
                 head_ = curNode_->next_
             else
@@ -153,7 +151,7 @@ sub List.removeIf(test as function(data_ as any ptr) as integer)
             else
                 curNode_->next_->prev_ = curNode_->prev_
             end if
-            
+ 
             deallocate (curNode_->data_)
             deallocate (curNode_)
             

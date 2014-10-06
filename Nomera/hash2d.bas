@@ -206,7 +206,7 @@ sub Hash2D.remove(data_ptr as any ptr)
                     else
                         prevNode_->next_ = curNode_->next_
                     end if
-                    
+
                     deallocate(delNode_)                    
                     exit while
                 else

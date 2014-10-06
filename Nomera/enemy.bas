@@ -6,44 +6,30 @@
 #include "player.bi"
 #include "pathtracker.bi"
 
-#define VIEW_DISTANCE  300
-#define VIEW_CONE_DOT  0.85
-#define TOO_CLOSE_DIST 100
-
 constructor Enemy
-    acc   = 500
-    air_acc = 800
-    top_speed = 100
+    acc   = 3000
+    air_acc = 400
+    top_speed = 150
     top_speed_mul = 1.5
     air_top_speed = 160
     lastJump = 0
     isJumping = 0
     jumpBoostFrames = 0
     state = E_FREE_FALLING
-    thought = IDLE
     facing         = 1
     groundDot      = 0.2
     cutSpeed       = 0.5
     stopFriction   = 3
-    boostFrames    = 16
+    boostFrames    = 13
     boostForce     = 800
-    jumpImpulse    = 80
-    freeJumpFrames = 3 
+    jumpImpulse    = 150
+    freeJumpFrames = 6
     lastUps = 0
     lastFire = 0
     lastTopSpeed = 200
     groundSwitchAnimFrames = 0
-    pursuitFrames = 0
-    burstTimer = 0
-    burstShots = 0
-    burstFrames = 1 
     health = 100
     
-    searchDown = 0
-    takeJump = 0
-    alertingFrames = 0
-    lazyness = 100
-    manditoryWalk = 0
     dire_ = 0
     jump_ = 0
     ups_ = 0
@@ -51,11 +37,9 @@ constructor Enemy
     shift_ = 0
     
     anim.play()
-    alertAnim.load("alert.txt")
-    alertAnim.play()
 end constructor
 
-function Enemy.getState() as EnemyPhysicalState
+function Enemy.getState() as EnemyState
     return state    
 end function
 
@@ -82,19 +66,19 @@ end sub
 
 sub Enemy.setLink(link_ as objectLink)
 	link = link_
+	link.pathtracker_ptr->register(@this)
 end sub
 
 sub Enemy.drawEnemy(scnbuff as uinteger ptr)
     anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
-    if thought <> IDLE then
-		alertAnim.drawAnimation(scnbuff, body.p.x(), body.p.y() - 55)
-    end if
 end sub
 
 function Enemy.process(t as double) as integer
-	''''
+	dim as PathTracker_Inputs_t inputs
 	
-	processControls(dire_,jump_,ups_,fire_,shift_, t)
+	link.pathtracker_ptr->requestInputs(@this, inputs)
+	
+	processControls(inputs.dire,inputs.jump,inputs.ups,fire_,inputs.shift, t)
 	return 0
 end function
 
@@ -108,15 +92,54 @@ sub Enemy.processControls(dire as integer, jump as integer,_
                           shift as integer, t as double)
     dim as Vector2D gtan
     dim as double curSpeed, oSpeed
-    dim as integer addSpd, ptype
+    dim as integer addSpd, ptype, spikes
+    dim as LevelSwitch_t ls
     dim as GameSpace ptr gsp
 	gsp = cast(GameSpace ptr, game_parent)
-    
-	if parent->isGrounded(body_i, this.groundDot) then
+	
+
+    if state <> E_ON_LADDER andAlso ups <> 0 andAlso (onLadder() = 1) _
+       andAlso lastUps = 0 then
+        state = E_ON_LADDER
+        jumpHoldFrames = 0
+        anim.setSpeed(1)
+        anim.hardSwitch(6)
+        this.body.friction = this.stopFriction
+        this.body.v = Vector2D(0,0)
+        isJumping = 0
+    end if
+    if state = ON_LADDER then
+        groundedFrames = 0
+        if onLadder() = 1 then
+            if parent->isGrounded(body_i, this.groundDot) andAlso ups > -1 then
+                state = E_GROUNDED
+            else
+                this.body.f = -this.body.m * parent->getGravity()
+                this.body.v = Vector2D(0,0)
+                if dire = 1 then
+                    this.body.v = this.body.v + Vector2D(E_CLIMBING_SPEED,0) 
+                elseif dire = -1 then
+                    this.body.v = this.body.v - Vector2D(E_CLIMBING_SPEED,0) 
+                end if
+                if ups = -1 then
+                    this.body.v = this.body.v - Vector2D(0, E_CLIMBING_SPEED) 
+                elseif ups = 1 then
+                    this.body.v = this.body.v + Vector2D(0, E_CLIMBING_SPEED) 
+                end if
+                if ups <> 0 orElse dire <> 0 then
+                    anim.play()
+                else
+                    anim.pause()
+                end if
+            end if
+        else
+            state = E_FREE_FALLING
+        end if
+    elseif parent->isGrounded(body_i, this.groundDot) then
         gtan = parent->getGroundingNormal(body_i, Vector2D(0,-1), Vector2D(dire,0), this.groundDot)
         gtan = gtan.perp()   
         if jumpHoldFrames = 0 then state = E_GROUNDED
-
+	
         curSpeed = gtan * this.body.v
         oSpeed = curSpeed
         if dire = 1 then
@@ -131,7 +154,7 @@ sub Enemy.processControls(dire as integer, jump as integer,_
                 if curSpeed > this.top_speed then curSpeed = this.top_speed
                 anim.setSpeed(1)
             else
-                if curSpeed > this.top_speed*top_speed_mul then curSpeed = this.top_speed*top_speed_mul 
+                if curSpeed > this.top_speed*top_speed_mul then curSpeed = this.top_speed*top_speed_mul
                 anim.setSpeed(2)
             end if
             addSpd = 1
@@ -152,7 +175,7 @@ sub Enemy.processControls(dire as integer, jump as integer,_
                 if curSpeed < -this.top_speed then curSpeed = -this.top_speed
                 anim.setSpeed(1)
             else
-                if curSpeed < -this.top_speed*top_speed_mul then curSpeed = -this.top_speed*top_speed_mul  
+                if curSpeed < -this.top_speed*top_speed_mul then curSpeed = -this.top_speed*top_speed_mul
                 anim.setSpeed(2)
             end if
             addSpd = 1
@@ -170,8 +193,8 @@ sub Enemy.processControls(dire as integer, jump as integer,_
         end if
         lastTopSpeed = max(abs(curSpeed), this.top_speed)
         groundedFrames += 1
-        if groundedFrames = GROUND_FRAMES+1 then groundedFrames = GROUND_FRAMES
-        if groundedFrames = GROUND_FRAMES then freeJump = freeJumpFrames
+        if groundedFrames = E_GROUND_FRAMES+1 then groundedFrames = E_GROUND_FRAMES
+        if groundedFrames = E_GROUND_FRAMES then freeJump = freeJumpFrames
         groundSwitchAnimFrames = 3
         if jumpHoldFrames > 0 then jumpHoldFrames -= 1
     else
@@ -186,7 +209,7 @@ sub Enemy.processControls(dire as integer, jump as integer,_
             end if
             state = E_FREE_FALLING
         else
-            jumpHoldFrames = 4
+            jumpHoldFrames = 2
         end if
         curSpeed = this.body.v.x()
         oSpeed = curSpeed
@@ -237,19 +260,119 @@ sub Enemy.processControls(dire as integer, jump as integer,_
     if isJumping = 1 then
         jumpBoostFrames -= 1
         if jumpBoostFrames = 0 then isJumping = 0
+        
         this.body.f = Vector2D(0,-jumpBoostFrames*this.boostForce)
-	else
-		this.body.f = Vector2D(0,0)
+    else
+        if state <> E_ON_LADDER then this.body.f = Vector2D(0,0)
     end if
     
     if addSpd = 1 then 
         this.body.v = this.body.v + (curSpeed - oSpeed) * gtan
     end if
-      
+    
+
+	
     anim.step_animation()
-    alertAnim.step_animation()
+        
     lastUps = ups
     lastFire = fire
 end sub
 
 
+function Enemy.onSpikes() as integer
+	dim as integer x0,y0
+    dim as integer x1,y1
+    dim as integer xscan, yscan
+    
+    x0 = body.p.x() - anim.getWidth() * 0.5 - 8
+    if state <> E_JUMPING then
+		y0 = body.p.y() - anim.getHeight() * 0.5 - 16
+		y1 = y0 + anim.getHeight() - 16
+	else
+		y0 = body.p.y() - anim.getHeight() * 0.5 + 8
+		y1 = body.p.y() + anim.getHeight() * 0.5 - 20
+	end if
+    
+    x1 = x0 + anim.getWidth()
+    
+    x0 += 8
+    x1 -= 8
+    
+    x0 /= 16
+    y0 /= 16
+    x1 /= 16
+    y1 /= 16
+    if x0 < 0 then
+        x0 = 0
+    elseif x0 >= level_parent->getWidth() then
+        x0 = level_parent->getWidth() - 1
+    end if
+    if x1 < 0 then
+        x1 = 0
+    elseif x1 >= level_parent->getWidth() then
+        x1 = level_parent->getWidth() - 1
+    end if 
+    if y0 < 0 then
+        y0 = 0
+    elseif y0 >= level_parent->getHeight() then
+        y0 = level_parent->getHeight() - 1
+    end if
+    if y1 < 0 then
+        y1 = 0
+    elseif y1 >= level_parent->getHeight() then
+        y1 = level_parent->getHeight() - 1
+    end if
+    for yscan = y0 to y1
+        for xscan = x0 to x1
+            if level_parent->getCollisionBlock(xscan, yscan).cModel = 57 then
+                return 1
+            elseif level_parent->getCollisionBlock(xscan, yscan).cModel = 77 then
+				return 2
+            end if
+        next xscan
+    next yscan
+    return 0
+end function 
+   
+function Enemy.onLadder() as integer
+    dim as integer x0,y0
+    dim as integer x1,y1
+    dim as integer xscan, yscan
+    
+    x0 = body.p.x() - anim.getWidth() * 0.5 - 16
+    y0 = body.p.y() - anim.getHeight() * 0.5 - 16
+    x1 = x0 + anim.getWidth() + 16
+    y1 = y0 + anim.getHeight()
+    x0 = (x0 + E_LADDER_GRAB_EDGE_LENGTH) / 16
+    y0 = (y0 + E_LADDER_GRAB_EDGE_LENGTH) / 16
+    x1 = (x1 - E_LADDER_GRAB_EDGE_LENGTH) / 16
+    y1 = (y1 - E_LADDER_GRAB_EDGE_LENGTH) / 16
+    if x0 < 0 then
+        x0 = 0
+    elseif x0 >= level_parent->getWidth() then
+        x0 = level_parent->getWidth() - 1
+    end if
+    if x1 < 0 then
+        x1 = 0
+    elseif x1 >= level_parent->getWidth() then
+        x1 = level_parent->getWidth() - 1
+    end if 
+    if y0 < 0 then
+        y0 = 0
+    elseif y0 >= level_parent->getHeight() then
+        y0 = level_parent->getHeight() - 1
+    end if
+    if y1 < 0 then
+        y1 = 0
+    elseif y1 >= level_parent->getHeight() then
+        y1 = level_parent->getHeight() - 1
+    end if
+    for yscan = y0 to y1
+        for xscan = x0 to x1
+            if level_parent->getCollisionBlock(xscan, yscan).cModel = 22 then
+                return 1
+            end if
+        next xscan
+    next yscan
+    return 0
+end function

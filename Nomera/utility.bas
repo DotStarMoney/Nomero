@@ -111,81 +111,75 @@ sub scale2sync(img as uinteger ptr)
     dim as uinteger ptr pxlData
     dim as uinteger ptr scnptr
     dim as integer w, h
-
     imageinfo img,w,h,,,pxlData
     scnptr = screenptr
     screenlock
         asm
                 mov         esi,        [pxlData]
                 mov         edi,        [scnptr]
-                
+
                 mov         eax,        [w]
                 mov         ebx,        [h]
-                
+
                 mov         edx,        eax
-                shl         edx,        2           
-                shr         eax,        4           
-                shl         ebx,        1           
-                
+                shl         edx,        2
+                shr         eax,        4
+                shl         ebx,        1
+
             row_copy:
 
-                mov         ecx,        eax         
+                mov         ecx,        eax
 
             col_copy:
-            
-                prefetchnta 64[esi]
-                prefetchnta 96[esi]
-                
+
                 movdqa      xmm0,       0[esi]
                 movaps      xmm1,       xmm0
                 shufps      xmm0,       xmm0,       &b01010000
                 shufps      xmm1,       xmm1,       &b11111010
-                
+
                 movdqa      xmm2,       16[esi]
                 movaps      xmm3,       xmm2
                 shufps      xmm2,       xmm2,       &b01010000
                 shufps      xmm3,       xmm3,       &b11111010
-                
+
                 movdqa      xmm4,       32[esi]
                 movaps      xmm5,       xmm4
                 shufps      xmm4,       xmm4,       &b01010000
                 shufps      xmm5,       xmm5,       &b11111010
-                
+
                 movdqa      xmm6,       48[esi]
                 movaps      xmm7,       xmm6
                 shufps      xmm6,       xmm6,       &b01010000
                 shufps      xmm7,       xmm7,       &b11111010
-                
-                
-                movntdq     0[edi],     xmm0
-                movntdq     16[edi],    xmm1
-                movntdq     32[edi],    xmm2
-                movntdq     48[edi],    xmm3
-                movntdq     64[edi],    xmm4
-                movntdq     80[edi],    xmm5
-                movntdq     96[edi],    xmm6
-                movntdq     112[edi],   xmm7
-                
+
+                movdqa      0[edi],     xmm0
+                movdqa      16[edi],    xmm1
+                movdqa      32[edi],    xmm2
+                movdqa      48[edi],    xmm3
+                movdqa      64[edi],    xmm4
+                movdqa      80[edi],    xmm5
+                movdqa      96[edi],    xmm6
+                movdqa      112[edi],   xmm7
+
                 add         esi,        64
                 add         edi,        128
-            
+
                 dec         ecx
                 jnz         col_copy
-                
+
                 test        ebx, 1
                 jnz         no_reset_row
-                
-                sub         esi,        edx    
-                
+
+                sub         esi,        edx
+
             no_reset_row:
-            
+
                 dec         ebx
                 jnz         row_copy
-        
+
         end asm
     screenunlock
 end sub
-
 
 sub bitblt_FalloutMix(dest as uinteger ptr,_
                       xpos as integer, ypos as integer,_

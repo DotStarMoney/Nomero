@@ -12,7 +12,7 @@
 
 #define MAX_DYNAMICS 8
 #define MAX_BODIES 64
-#define MAX_SEGS 64
+#define MAX_SEGS 640
 #define MAX_ARBS 6
 #define DEFAULT_GRAV 620.0
 #define MIN_DEPTH 0.1
@@ -61,6 +61,8 @@ type TinySpace
 								 byref in_pt as Vector2D) as double
         declare function getGravity() as Vector2D
         declare sub exportLevelGeometry(byref segsPtr as Vector2D ptr, byref segsN as integer)
+        declare sub setLock(id as integer)
+        declare sub setUnlock()
     private:
         declare static sub dividePosition(p as Vector2D, size as Vector2D)
         declare sub refactorArbiters(arb_i as integer, seg() as BlockEndpointData_t, seg_n as integer, _
@@ -112,6 +114,8 @@ type TinySpace
         as integer       roi_y0
         as integer       roi_x1
         as integer       roi_y1
+        
+        as integer       lockID
                               
         as double        t
         as TinyBlock ptr block_data
