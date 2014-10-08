@@ -8,10 +8,10 @@
 #include "hash2d.bi"
 #include "list.bi"
 
-#define MIN_GROUNDED_FRAMES 2
+#define MIN_GROUNDED_FRAMES 3
 #define MIN_RECORD_FRAMES 3
 #define MIN_EDGE_DIST 64
-#define VEL_DIST_CONSTANT 5
+#define VEL_DIST_CONSTANT 2
 
 enum PathTracker_Node_Type_e
 	PT_STATIC
@@ -45,6 +45,12 @@ enum PathTracker_Child_Movement_e
 	PT_ON_NODE
 	PT_ON_EDGE
 	PT_FREE
+end enum
+
+enum PathTracker_Child_State_e
+	PT_IDLE
+	PT_CATATONIC
+	PT_TRACKING
 end enum
 
 'requires priority queue
@@ -86,11 +92,11 @@ type PathTracker_Child_t
 	as List                         edgeList
 	as integer                      curFrame
 	as ListNodeRoll_t               listBuffer
+	as PathTracker_Child_State_e    state
+	as integer                      sprintFrames
+	as integer                      shouldSprint
+	as integer                      reachedGoal
 	
-	'''''''
-	as integer isNavigating
-	'''''''
-
 end type
 
 type PathTracker_Node_t Field = 1

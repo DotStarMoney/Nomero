@@ -97,18 +97,17 @@ sub Enemy.processControls(dire as integer, jump as integer,_
     dim as GameSpace ptr gsp
 	gsp = cast(GameSpace ptr, game_parent)
 	
-
     if state <> E_ON_LADDER andAlso ups <> 0 andAlso (onLadder() = 1) _
        andAlso lastUps = 0 then
         state = E_ON_LADDER
         jumpHoldFrames = 0
         anim.setSpeed(1)
-        anim.hardSwitch(6)
+        'anim.hardSwitch(6)
         this.body.friction = this.stopFriction
         this.body.v = Vector2D(0,0)
         isJumping = 0
     end if
-    if state = ON_LADDER then
+    if state = E_ON_LADDER then
         groundedFrames = 0
         if onLadder() = 1 then
             if parent->isGrounded(body_i, this.groundDot) andAlso ups > -1 then
