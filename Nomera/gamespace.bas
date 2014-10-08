@@ -140,7 +140,7 @@ function GameSpace.go() as integer
         'print spy.body.p
         locate 1,1
         movingFrmAvg = movingFrmAvg * 0.95 + 0.05 * (frameTime / (1 / FPS_TARGET) * 100)
-		print using "Engine at ##.##% load"; movingFrmAvg
+		'print using "Engine at ##.##% load"; movingFrmAvg
 		
 		stall( stallTime_mili)
 		totalTime = (timer - startTime)

@@ -1,1 +1,1 @@
-Nomera "PD1_5.map"
+Nomera "PurovskyDistrict Scene 2 Outside.map"

@@ -622,15 +622,12 @@ sub PathTracker.register(e_ as Enemy ptr)
 	dim as PathTracker_Child_t c
 	c.child = e_
 	c.moveState = PT_FREE
+	c.isNavigating = 0
 	c.target.node = 0
 	c.target.x = 0
 	c.nodeTarget = 0
 	c.headingEdge = 0
-	c.state = PT_TRACKING
 	c.edgeList.init(sizeof(integer))
-	c.sprintFrames = 0
-	c.reachedGoal = 0
-	c.shouldSprint = 0
 	children.insert(cast(integer, e_), @c)
 end sub
 
@@ -642,9 +639,6 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 	dim as integer curNodeID
 	dim as double direX		
 	dim as integer ptr tempInt 
-	dim as integer playerNode
-	dim as integer shouldTrack
-	dim as Vector2D  playerPos
 	dim as PathTracker_Inputs_t ptr curInputs
 	dim as Vector2D curPos, tempV
 	
@@ -655,89 +649,51 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 	ret.jump = 0
 	ret.ups = 0
 	ret.shift = 0
-	
-	shouldTrack = 0
 
-	'add constant for random speeds, only applies to long surfaces where enemies aren't 
-	'	in speed up/slow down for node range.
-	
-	'figure out why enemies wont take certain, faster paths
-	'get enemies to prepare for fast/slow edges
-	'enemies that lose their footing need to know that they did, and recover by re-computing path
-	'enemies will continue along their pathing until you land on a new node, they wont just stand there and wait for you to land
-	'	if they also stand on a node
-	
-	getGroundedData(e_->body, e_->body_i, curNodeID, curPos)	
-	getGroundedData(link.player_ptr->body, link.player_ptr->body_i, playerNode, playerPos)
+	getGroundedData(e_->body, e_->body_i, curNodeID, curPos)
 
-	print curNodeID, playerNode
-	
-	if c->moveState <> PT_ON_EDGE then
-		if curNodeID then
-			c->moveState = PT_ON_NODE
-		else
-			c->moveState = PT_FREE
-		end if
-	end if
-	
-	/'
-	if c->sprintFrames <= 0 then
-		if int(rnd * 2) then 
-			c->shouldSprint = 1
-		else
-			c->shouldSprint = 0
-		end if
-		c->sprintFrames = int(rnd * 20) + 1
-	end if
-	c->sprintFrames -= 1
-	if c->shouldSprint then ret.shift = 1
-	'/
-	
-	select case c->state
-	case PT_TRACKING
-		if curNodeID <> playerNode orElse c->moveState = PT_ON_EDGE then
-			if c->target.node <> playerNode then
-				if curNodeID andAlso playerNode then
-					c->target.node = playerNode
-					c->target.x = playerPos.x
-					c->startNode = curNodeID
-					c->edgeList.flush()
-					c->headingEdge = 0
-					c->reachedGoal = 0
-					if c->moveState = PT_ON_EDGE then c->moveState = PT_ON_NODE
-					computePath(curNodeID, curPos.x(), c->target.node, c->target.x, c->edgeList, 0)
-				end if
-			end if
-			if playerNode orElse (c->edgeList.getSize() > 0) then shouldTrack = 1
-		else			
-			shouldTrack = 0
-			if playerNode = 0 then
-				direX = link.player_ptr->body.p.x - e_->body.p.x
+	if c->isNavigating = 0 then
+		randInt = int(nodes.getSize() * rnd) + 1
+		nodes.resetRoll()
+		do
+			curNode = nodes.roll()
+			if curNode then
+				randInt -= 1
+				if randInt = 0 then exit do
 			else
-				direX = playerPos.x - e_->body.p.x
+				exit do
 			end if
-			if abs(direX) >= 8 then
-				ret.dire = sgn(direX)
-				c->reachedGoal = 1
-			end if
+		loop	
+		c->target.node = curNode->ID
+		c->target.x = (curNode->bb_b.x - curNode->bb_a.x) * rnd
+		if curNodeID = 0 then
+			c->moveState = PT_FREE
+		else
+			c->moveState = PT_ON_NODE
 		end if
-	end select
-	
-	
-	if shouldTrack then
+		if curNodeID then
+			c->startNode = curNodeID
+			computePath(curNodeID, curPos.x(), c->target.node, c->target.x, c->edgeList)
+			if c->edgeList.getSize() <> 0 then c->isNavigating = 1
+		end if
+	end if
+
+	if c->isNavigating then
 		if c->moveState = PT_ON_NODE andAlso curNodeID <> 0 then
-			if c->headingEdge = 0 andAlso c->edgeList.getSize() > 0 then
-				tempInt = c->edgeList.getFront()
-				curNode = nodes.retrieve(c->startNode)
-				BEGIN_LIST(curEdge, curNode->edges)
-					if (*curEdge)->ID_end = *tempInt then 
-						c->headingEdge = (*curEdge)
-						ABORT_LIST()
-					end if
-				END_LIST()		
-			end if
-			if c->edgeList.getSize() > 0 andAlso c->headingEdge then
-				tempV = Vector2D(curPos.x - c->headingEdge->start_loc.x, 0)
+			if curNodeID <> c->startNode then
+				c->isNavigating = 0
+			else
+				if c->headingEdge = 0 then
+					tempInt = c->edgeList.getFront()
+					curNode = nodes.retrieve(c->startNode)
+					BEGIN_LIST(curEdge, curNode->edges)
+						if (*curEdge)->ID_end = *tempInt then 
+							c->headingEdge = (*curEdge)
+							ABORT_LIST()
+						end if
+					END_LIST()		
+				end if
+				tempV = curPos - c->headingEdge->start_loc
 				if tempV.magnitude() <= 2.5 then
 					e_->body.p = c->headingEdge->startPosition
 					e_->body.v = c->headingEdge->startVelocity
@@ -751,11 +707,7 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 					direX = c->headingEdge->start_loc.x - e_->body.p.x
 					ret.dire = sgn(direX)
 					ret.shift = 0
-					print "here"
 				end if
-			else
-				direX = c->target.x - e_->body.p.x
-				ret.dire = sgn(direX)
 			end if
 		end if
 		if c->moveState = PT_ON_EDGE then
@@ -769,10 +721,11 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 				c->startNode = c->headingEdge->ID_end
 				c->headingEdge = 0
 				c->edgeList.pop_front()
+				if c->edgeList.getSize() = 0 then c->isNavigating = 0
 			end if
 		end if	
 	end if
-	
+
 end sub
 
 
