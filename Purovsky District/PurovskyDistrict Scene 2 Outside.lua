@@ -1464,19 +1464,6 @@ return {
           }
         },
         {
-          name = "Bridge Enemy",
-          type = "Spawn",
-          shape = "rectangle",
-          x = 1488,
-          y = 224,
-          width = 160,
-          height = 80,
-          visible = true,
-          properties = {
-            ["spawn"] = "soldier 1"
-          }
-        },
-        {
           name = "Ice Shimmer 16",
           type = "Effect",
           shape = "rectangle",

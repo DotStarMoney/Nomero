@@ -47,7 +47,7 @@ sub PathTracker.flush()
 	loop	
 	nodes.flush()  
 	
-	edges.rollReset()
+	edges.resetRoll()
 	do
 		curEdge = edges.roll()
 		if curEdge then
@@ -363,8 +363,10 @@ sub PathTracker.step_record(del_key as integer)
 			spacialEdgePTRs.remove(targetData)
 			curNode = nodes.retrieve((*targetData)->ID_start)
 			interestStatic = interestID
+			
 			curNode->edges.removeIf(@removeInterestID)
-			edges.removeIf(@removeInterestID)
+			
+			edges.remove(interestID)
 			delete((*targetData))
 			interestID = 0
 			highIndex = -1
@@ -442,11 +444,13 @@ sub PathTracker.startEdge(type_ as PathTracker_Path_Type_e)
 	currentEdge->path_type = type_
 		
 	if abs(link.player_ptr->body.v.x()) = abs(link.player_ptr->top_speed) then
-		currentEdge->speed_type = PT_FULLSPEED
-	elseif abs(link.player_ptr->body.v.x()) = abs(link.player_ptr->top_speed) * link.player_ptr->top_speed_mul then
 		currentEdge->speed_type = PT_SLOWSPEED
-	else
+	elseif abs(link.player_ptr->body.v.x()) = abs(link.player_ptr->top_speed) * link.player_ptr->top_speed_mul then
+		currentEdge->speed_type = PT_FULLSPEED
+	elseif abs(link.player_ptr->body.v.x()) > abs(link.player_ptr->top_speed) then
 		currentEdge->speed_type = PT_INTERMEDIATE
+	else
+		currentEdge->speed_type = PT_STOPPING
 	end if
 	currentEdge->frames.init(sizeof(PathTracker_Inputs_t))
 	if type_ = PT_DROP then
@@ -500,7 +504,7 @@ sub PathTracker.endEdge()
 		spacialEdgePTRs.insert(currentEdge->bb_a, currentEdge->bb_b, @currentEdge)
 		curNode = nodes.retrieve(currentEdge->ID_start)
 		curNode->edges.push_back(@currentEdge)
-		edges.push_back(@currentEdge)
+		edges.insert(currentEdge->ID,@currentEdge)
 	else
 	
 		delete(currentEdge)
@@ -613,7 +617,6 @@ sub PathTracker.addNode(segs() as PathTracker_Segment_t, type_ as integer)
 	curNode.bb_a = tl
 	curNode.bb_b = dr
 	curNode.edges.init(sizeof(PathTracker_Edge_t ptr))
-
 	nodes.insert(curNode.ID, @curNode)
 	spacialNodeIDs.insert(tl, dr, @curNode.ID)
 end sub
@@ -631,6 +634,7 @@ sub PathTracker.register(e_ as Enemy ptr)
 	c.sprintFrames = 0
 	c.reachedGoal = 0
 	c.shouldSprint = 0
+	c.runningStart = 0
 	children.insert(cast(integer, e_), @c)
 end sub
 
@@ -642,11 +646,16 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 	dim as integer curNodeID
 	dim as double direX		
 	dim as integer ptr tempInt 
-	dim as integer playerNode
+	dim as integer tempPlayerNode
 	dim as integer shouldTrack
 	dim as Vector2D  playerPos
 	dim as PathTracker_Inputs_t ptr curInputs
-	dim as Vector2D curPos, tempV
+	dim as Vector2D curPos
+	dim as integer correctSpeed
+	dim as double runDir
+	dim as double farEdge
+	dim as integer shouldSprint
+	dim as double speedStandoff
 	
 	c = children.retrieve(cast(integer, e_))
 	if c = 0 then exit sub
@@ -657,20 +666,13 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 	ret.shift = 0
 	
 	shouldTrack = 0
-
-	'add constant for random speeds, only applies to long surfaces where enemies aren't 
-	'	in speed up/slow down for node range.
-	
-	'figure out why enemies wont take certain, faster paths
-	'get enemies to prepare for fast/slow edges
-	'enemies that lose their footing need to know that they did, and recover by re-computing path
-	'enemies will continue along their pathing until you land on a new node, they wont just stand there and wait for you to land
-	'	if they also stand on a node
 	
 	getGroundedData(e_->body, e_->body_i, curNodeID, curPos)	
-	getGroundedData(link.player_ptr->body, link.player_ptr->body_i, playerNode, playerPos)
-
-	print curNodeID, playerNode
+	getGroundedData(link.player_ptr->body, link.player_ptr->body_i, tempPlayerNode, playerPos)
+	if tempPlayerNode <> 0 then 
+		playerNode = tempPlayerNode
+		bodyP = link.player_ptr->body.p
+	end if
 	
 	if c->moveState <> PT_ON_EDGE then
 		if curNodeID then
@@ -680,23 +682,19 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 		end if
 	end if
 	
-	/'
-	if c->sprintFrames <= 0 then
-		if int(rnd * 2) then 
-			c->shouldSprint = 1
-		else
-			c->shouldSprint = 0
-		end if
-		c->sprintFrames = int(rnd * 20) + 1
-	end if
-	c->sprintFrames -= 1
-	if c->shouldSprint then ret.shift = 1
-	'/
-	
+	select case c->state 
+	case PT_IDLE
+		shouldSprint = 0
+	case PT_CATATONIC
+		shouldSprint = 0
+	case PT_TRACKING
+		shouldSprint = 0
+	end select
+				
 	select case c->state
 	case PT_TRACKING
 		if curNodeID <> playerNode orElse c->moveState = PT_ON_EDGE then
-			if c->target.node <> playerNode then
+			if (c->target.node <> playerNode) orElse (c->startNode <> curNodeID) then
 				if curNodeID andAlso playerNode then
 					c->target.node = playerNode
 					c->target.x = playerPos.x
@@ -705,40 +703,106 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 					c->headingEdge = 0
 					c->reachedGoal = 0
 					if c->moveState = PT_ON_EDGE then c->moveState = PT_ON_NODE
-					computePath(curNodeID, curPos.x(), c->target.node, c->target.x, c->edgeList, 0)
+					computePath(curNodeID, curPos.x(), c->target.node, c->target.x, c->edgeList, 30)			
 				end if
 			end if
-			if playerNode orElse (c->edgeList.getSize() > 0) then shouldTrack = 1
+			if (c->edgeList.getSize() > 0) then shouldTrack = 1
 		else			
+			c->headingEdge = 0
+			c->runningStart = 0
+			c->edgeList.flush()
+			c->target.node = 0
 			shouldTrack = 0
-			if playerNode = 0 then
-				direX = link.player_ptr->body.p.x - e_->body.p.x
-			else
-				direX = playerPos.x - e_->body.p.x
-			end if
+			direX = bodyP.x - e_->body.p.x
 			if abs(direX) >= 8 then
 				ret.dire = sgn(direX)
 				c->reachedGoal = 1
 			end if
+			ret.shift = shouldSprint
 		end if
 	end select
 	
 	
 	if shouldTrack then
 		if c->moveState = PT_ON_NODE andAlso curNodeID <> 0 then
+			
+			
 			if c->headingEdge = 0 andAlso c->edgeList.getSize() > 0 then
 				tempInt = c->edgeList.getFront()
 				curNode = nodes.retrieve(c->startNode)
-				BEGIN_LIST(curEdge, curNode->edges)
-					if (*curEdge)->ID_end = *tempInt then 
-						c->headingEdge = (*curEdge)
-						ABORT_LIST()
-					end if
-				END_LIST()		
+				
+				c->headingEdge = *cast(PathTracker_Edge_t ptr ptr, edges.retrieve(*tempInt))
+				
 			end if
 			if c->edgeList.getSize() > 0 andAlso c->headingEdge then
-				tempV = Vector2D(curPos.x - c->headingEdge->start_loc.x, 0)
-				if tempV.magnitude() <= 2.5 then
+				correctSpeed = 0
+
+				if curNodeID then
+					curNode = nodes.retrieve(curNodeID)
+					select case c->headingEdge->speed_type
+					case PT_SLOWSPEED
+						speedStandoff = SPEED_STANDOFF_SLOW 
+					case PT_FULLSPEED
+						speedStandoff = SPEED_STANDOFF_FAST
+					case PT_INTERMEDIATE
+						speedStandoff = SPEED_STANDOFF_INTER
+					end select
+						
+					runDir = -sgn(c->headingEdge->startVelocity.x)
+					direX = c->headingEdge->start_loc.x - e_->body.p.x
+					if runDir = 1 then
+						farEdge = min(c->headingEdge->start_loc.x + speedStandoff, curNode->bb_b.x - PATH_RUN_PINCH)
+					elseif runDir = -1 then
+						farEdge = max(c->headingEdge->start_loc.x - speedStandoff, curNode->bb_a.x + PATH_RUN_PINCH)
+					end if
+					if c->headingEdge->speed_type <> PT_STOPPING then
+						if sgn(direX) = -runDir then
+						
+							if (e_->body.p.x*runDir) < (farEdge*runDir) then
+								if (c->runningStart = 0) then
+									ret.dire = -sgn(direX)
+									ret.shift = shouldSprint 
+								else
+									ret.dire = sgn(direX)
+									select case c->headingEdge->speed_type
+									case PT_SLOWSPEED
+										ret.shift = 0 
+									case PT_FULLSPEED
+										ret.shift = 1 
+									case PT_INTERMEDIATE
+										if abs(e_->body.v.x) < abs(c->headingEdge->startVelocity.x) then
+											ret.shift = 1
+										else
+											ret.shift = 0
+										end if
+									end select
+									correctSpeed = 1
+								end if
+							else
+								ret.dire = sgn(direX)
+								ret.shift = shouldSprint
+								c->runningStart = 1
+							end if
+						else
+							if c->runningStart = 1 then correctSpeed = 1
+							c->runningStart = 0
+							'walk to other side of point
+							ret.dire = sgn(direX)
+							ret.shift = shouldSprint 'based on how much in a hurry we are
+						end if
+					else
+						if abs(curPos.x - c->headingEdge->start_loc.x) < 20 then
+							ret.shift = 0
+							ret.dire = sgn(direX)
+						else
+							ret.shift = shouldSprint
+							ret.dire = sgn(direX)
+						end if
+						correctSpeed = 1
+					end if
+				end if
+					
+				if (abs(curPos.x - c->headingEdge->start_loc.x) <= JESUS_TAKE_THE_WHEEL_DIST) andAlso (correctSpeed) then
 					e_->body.p = c->headingEdge->startPosition
 					e_->body.v = c->headingEdge->startVelocity
 					e_->facing = c->headingEdge->startDirection
@@ -747,17 +811,13 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 					c->listBuffer = c->headingEdge->frames.bufferRoll()
 					c->moveState = PT_ON_EDGE
 				end if	
-				if curNodeID then
-					direX = c->headingEdge->start_loc.x - e_->body.p.x
-					ret.dire = sgn(direX)
-					ret.shift = 0
-					print "here"
-				end if
-			else
+			elseif curNodeID = playerNode then
 				direX = c->target.x - e_->body.p.x
 				ret.dire = sgn(direX)
+				ret.shift = shouldSprint
 			end if
 		end if
+		
 		if c->moveState = PT_ON_EDGE then
 			c->headingEdge->frames.setRoll(c->listBuffer)
 			curInputs = c->headingEdge->frames.roll()
@@ -768,6 +828,7 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 				c->moveState = PT_ON_NODE
 				c->startNode = c->headingEdge->ID_end
 				c->headingEdge = 0
+				c->runningStart = 0
 				c->edgeList.pop_front()
 			end if
 		end if	
@@ -845,7 +906,7 @@ sub PathTracker.computePath(startNode as integer, startX as double,_
 					alt += min_d + _
 					     (abs(min_x - tedge->start_loc.x()) * VEL_DIST_CONSTANT + _
 					      tedge->frames.getSize() + _
-					      abs(endX - tedge->end_loc.x()) * VEL_DIST_CONSTANT) * (1 / FPS_TARGET)				
+					      abs(endX - tedge->end_loc.x()) * VEL_DIST_CONSTANT) * (1 / FPS_TARGET)	
 				else
 					alt += min_d + (abs(min_x - tedge->start_loc.x()) * VEL_DIST_CONSTANT + tedge->frames.getSize()) * (1 / FPS_TARGET)
 				end if
@@ -853,7 +914,7 @@ sub PathTracker.computePath(startNode as integer, startX as double,_
 				if alt < *tempD then
 					*tempD = alt
 					tempInt = prevID.retrieve(endID)
-					*tempInt = min_i
+					*tempInt = tedge->ID
 					tempD = nodeX.retrieve(endID)
 					*tempD = tedge->end_loc.x()
 				end if
@@ -863,11 +924,12 @@ sub PathTracker.computePath(startNode as integer, startX as double,_
 	edgeList.flush()
 	tempInt = prevID.retrieve(endNode)
 	if *tempInt = -1 then exit sub
-	edgeList.push_back(@endNode)
-	while (*tempInt <> startNode)
+	do 		
 		edgeList.push_front(tempInt)
-		tempInt = prevID.retrieve(*tempInt)
-	wend
+		tedge_ = edges.retrieve(*tempInt)
+		tedge = *tedge_
+		tempInt = prevID.retrieve(tedge->ID_start)
+	loop until tedge->ID_start = startNode
 end sub
 
 
@@ -915,7 +977,7 @@ sub PathTracker.exportGraph(byref data_ as byte ptr, byref data_bytes as integer
 	
 	data_bytes += sizeof(integer) 'number of edges
 	data_bytes += (sizeof(PathTracker_Edge_t) - sizeof(List) + sizeof(integer)) * edges.getSize()
-	edges.rollReset()
+	edges.resetRoll()
 	
 	
 	do
@@ -954,7 +1016,7 @@ sub PathTracker.exportGraph(byref data_ as byte ptr, byref data_bytes as integer
 	
 	tempInt = edges.getSize()
 	WRITE_ELEMENT(tempInt, integer)
-	edges.rollReset()
+	edges.resetRoll()
 	do
 		curEdge = edges.roll()
 		if curEdge then
@@ -1051,7 +1113,7 @@ sub PathTracker.importGraph(byref data_ as byte ptr, byref data_bytes as integer
 		READ_ELEMENT(curEdge->bb_b, Vector2D)
 		curNode_ptr = nodes.retrieve(curEdge->ID_start)
 		curNode_ptr->edges.push_back(@curEdge)
-		edges.push_back(@curEdge) 
+		edges.insert(curEdge->ID, @curEdge) 
 		spacialEdgePTRs.insert(curEdge->bb_a, curEdge->bb_b, @curEdge)
 	next i
 	
@@ -1061,7 +1123,7 @@ sub PathTracker.record_draw(scnbuff as integer ptr)
 	dim as PathTracker_Edge_t ptr ptr curEdge
 	dim as integer col, bcol
 	if enable then
-		edges.rollReset()
+		edges.resetRoll()
 		do
 			curEdge = edges.roll()
 			if curEdge then

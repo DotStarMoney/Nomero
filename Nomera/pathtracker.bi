@@ -12,6 +12,15 @@
 #define MIN_RECORD_FRAMES 3
 #define MIN_EDGE_DIST 64
 #define VEL_DIST_CONSTANT 2
+#define RANDOM_SPRINT_TIME_LO 10
+#define RANDOM_SPRINT_TIME_HI 60
+#define PATH_RUN_PINCH 20
+#define JESUS_TAKE_THE_WHEEL_DIST 4
+#define JESUS_TAKE_THE_WHEEL_VEL 4
+#define SPEED_STANDOFF_FAST 25
+#define SPEED_STANDOFF_SLOW 10
+#define SPEED_STANDOFF_INTER 15
+
 
 enum PathTracker_Node_Type_e
 	PT_STATIC
@@ -28,6 +37,7 @@ enum PathTracker_Path_Speed_e
 	PT_FULLSPEED
 	PT_SLOWSPEED
 	PT_INTERMEDIATE
+	PT_STOPPING
 end enum
 
 type PathTracker_Segment_t Field = 1
@@ -53,8 +63,9 @@ enum PathTracker_Child_State_e
 	PT_TRACKING
 end enum
 
+'navigate destroyed platforms
+'navigate toggle platforms
 'requires priority queue
-'for now, just manually tell it where to go,
 'add priority queue with hunting logic next
 
 type PathTracker_Node_Location_t
@@ -96,7 +107,7 @@ type PathTracker_Child_t
 	as integer                      sprintFrames
 	as integer                      shouldSprint
 	as integer                      reachedGoal
-	
+	as integer                      runningStart
 end type
 
 type PathTracker_Node_t Field = 1
@@ -138,7 +149,7 @@ type PathTracker
 		declare static function removeInterestID(data_ as any ptr) as integer 
 		
 		as ObjectLink link
-		as List      edges
+		as Hashtable edges
 		as Hashtable nodes
 		as Hash2d    spacialNodeIDs
 		as Hash2d    spacialEdgePTRs
@@ -162,6 +173,8 @@ type PathTracker
 		as integer oldMB
 		as integer onEdgeFrames
 		as integer highIndex
+		as integer playerNode
+		as Vector2d bodyP
 		as PathTracker_Edge_t ptr ptr targetData
 
 		
