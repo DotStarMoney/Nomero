@@ -4,6 +4,7 @@
 #include "vector2d.bi"
 #include "list.bi"
 #include "objectlink.bi"
+#include "item.bi"
 
 enum DynamicObjectType_e
 	OBJ_ENEMY
@@ -54,18 +55,18 @@ type DynamicController
 		declare sub process(t as double)
 		declare sub drawDynamics(scnbuff as integer ptr)
 		declare sub flush()
+		declare sub addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer)
 		
 	private:
-		declare sub addEnemy(sz as SpawnZone_t)
-		declare sub addItem(sz as SpawnZone_t)
-	
 		static as NamesTypes_t ptr namesTypesTable
 		static as integer          hasFilledTable
+		
+		declare sub addEnemy(sz as SpawnZone_t)
+		declare sub addItem(sz as SpawnZone_t)
 		
 		as ObjectLink link
 		as List objects
 		as List spawnZones
-		
 end type
 	
 	

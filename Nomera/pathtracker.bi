@@ -63,6 +63,7 @@ enum PathTracker_Child_State_e
 	PT_TRACKING
 end enum
 
+'stuck on ladders and not completing edges that touch down on some platforms
 'navigate destroyed platforms
 'navigate toggle platforms
 'requires priority queue

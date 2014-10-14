@@ -3,8 +3,9 @@
 #include "enemy.bi"
 #include "utility.bi"
 #include "soundeffects.bi"
+#include "item.bi"
 
-#define N_OBJ_TYPES 3
+#define N_OBJ_TYPES 4
 
 dim as NamesTypes_t ptr DynamicController.namesTypesTable = 0
 dim as integer          DynamicController.hasFilledTable = 0
@@ -113,6 +114,20 @@ sub DynamicController.addSpawnZone(objectName as string,_
 								   
 end sub
 
+sub DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer)
+	dim as Item ptr curItem
+	dim as DynamicObjectType_t dobj
+
+	curItem = new Item
+	curItem->init(link, itemType_, itemFlavor_)
+	curItem->setPos(position)
+	
+	dobj.object_type = OBJ_ITEM
+	dobj.data_ = curItem
+	
+	objects.push_back(@dobj)
+end sub
+
 sub DynamicController.addEnemy(sz as SpawnZone_t)
 	dim as string objName
 	dim as Enemy ptr newEnemy
@@ -125,6 +140,7 @@ sub DynamicController.addEnemy(sz as SpawnZone_t)
 	                    link.projectilecollection_ptr,_
 	                    link.gamespace_ptr,_
 	                    link.player_ptr)            
+	
 	select case objName
 	case "SOLDIER 1"
 		newEnemy->loadType(SOLDIER_1)
@@ -157,6 +173,7 @@ sub DynamicController.process(t as double)
 	dim as SpawnZone_t ptr szptr
 	dim as DynamicObjectType_t ptr dobj
 	dim as Enemy ptr enemyDelete
+	dim as Item ptr curItem
 	dim as integer spawnOne, shouldDelete, i
 	dim as ListNodeRoll_t lnr
 
@@ -205,7 +222,12 @@ sub DynamicController.process(t as double)
 				end if
 				
 			elseif dobj->object_type = OBJ_ITEM then
-				'process items
+				curItem = dobj->data_
+				shouldDelete = curItem->process(t)
+				if shouldDelete then
+					delete (cast(Item ptr, dobj->data_))
+					objects.rollRemove()
+				end if
 			end if
 		else
 			exit do
@@ -225,7 +247,7 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr)
 			if dobj->object_type = OBJ_ENEMY then
 				cast(Enemy ptr, dobj->data_)->drawEnemy(scnbuff)
 			elseif dobj->object_type = OBJ_ITEM then
-				'draw items
+				cast(Item ptr, dobj->data_)->drawItem(scnbuff)
 			end if
 		else
 			exit do

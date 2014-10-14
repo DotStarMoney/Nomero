@@ -81,7 +81,8 @@ end sub
 sub PathTracker.buildNodes()
 	dim as Vector2D ptr segs
 	dim as integer      segs_n
-	dim as integer      i
+	dim as integer      i, q
+	dim as integer		falseAlarm
 	dim as Vector2D     a, b	
 	redim as PathTracker_Segment_t objectSegs(0)
 	dim as integer                 objectSegs_N
@@ -110,14 +111,27 @@ sub PathTracker.buildNodes()
 				dumpStaticShape(objectSegs())
 				objectSegs_N = 0
 			else
+				falseAlarm = 0
+				
 				if a <> objectSegs(objectSegs_N - 1).b then
-					dumpStaticShape(objectSegs())
-					objectSegs_N = 1
+					for q = 0 to objectSegs_N - 2 
+						if a = objectSegs(q).b then 
+							falseAlarm = 1
+							exit for
+						end if
+					next q
+				else
+					falseAlarm = 1
+				end if
+				
+				if falseAlarm then
+					objectSegs_N += 1
 					redim preserve as PathTracker_Segment_t objectSegs(objectSegs_N - 1)
 					objectSegs(objectSegs_N - 1).a = a
 					objectSegs(objectSegs_N - 1).b = b
 				else
-					objectSegs_N += 1
+					dumpStaticShape(objectSegs())
+					objectSegs_N = 1
 					redim preserve as PathTracker_Segment_t objectSegs(objectSegs_N - 1)
 					objectSegs(objectSegs_N - 1).a = a
 					objectSegs(objectSegs_N - 1).b = b
@@ -141,7 +155,6 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
 	dim as integer safe
 	redim as PathTracker_Segment_t paramSegs(0)
 	dim as Vector2d d
-
 	
 	if segs(0).a.x < segs(0).b.x then
 		leftMostIndex = 0
@@ -713,7 +726,18 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 			c->edgeList.flush()
 			c->target.node = 0
 			shouldTrack = 0
-			direX = bodyP.x - e_->body.p.x
+			curNode = nodes.retrieve(playerNode)
+			if playerNode <> 0 then
+				if bodyP.x <= (curNode->bb_a.x() + PATH_RUN_PINCH) then
+					direX = (curNode->bb_a.x() + PATH_RUN_PINCH) - e_->body.p.x
+				elseif bodyP.x > (curNode->bb_b.x() - PATH_RUN_PINCH) then
+					direX = (curNode->bb_b.x() - PATH_RUN_PINCH) - e_->body.p.x
+				else
+					direX = bodyP.x - e_->body.p.x
+				end if
+			else
+				direX = 0
+			end if
 			if abs(direX) >= 8 then
 				ret.dire = sgn(direX)
 				c->reachedGoal = 1

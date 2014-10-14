@@ -286,10 +286,11 @@ sub Player.processControls(dire as integer, jump as integer,_
 			landedSFXFrames = 8
 			link.soundeffects_ptr->playSound(SND_LAND)
 		end if
-
+		
         curSpeed = gtan * this.body.v
         oSpeed = curSpeed
-        if dire = 1 then
+        
+        if dire = 1 andalso ups <> 1 then
             curSpeed = curSpeed + this.acc * t
             if this.body.v.y() < 0 then
                 if jumpHoldFrames = 0 then anim.hardSwitch(3)
@@ -308,7 +309,7 @@ sub Player.processControls(dire as integer, jump as integer,_
             facing = 1
 
             this.body.friction = 0
-        elseif dire = -1 then
+        elseif dire = -1 andalso ups <> 1 then
             facing = 0
             if this.body.v.y() < 0 then
                 if jumpHoldFrames = 0 then anim.hardSwitch(2)
@@ -328,15 +329,25 @@ sub Player.processControls(dire as integer, jump as integer,_
             addSpd = 1
             this.body.friction = 0
         else
+			if this.body.v.y() < 0 then
+                if jumpHoldFrames = 0 andAlso ups <> 1 then anim.switch(facing)
+            else
+                if ups <> 1 then anim.switch(facing)
+                jumpHoldFrames = 0
+            end if
+            
+			if ups = 1 then
+				if facing = 1 then
+					anim.switch(10)
+				else
+					anim.switch(9)
+				end if 
+			end if
+        
             curSpeed = curSpeed * this.cutSpeed
             addSpd = 0
             this.body.friction = this.stopFriction
-            if this.body.v.y() < 0 then
-                if jumpHoldFrames = 0 then anim.switch(facing)
-            else
-                anim.switch(facing)
-                jumpHoldFrames = 0
-            end if
+           
         end if
         lastTopSpeed = max(abs(curSpeed), this.top_speed)
         groundedFrames += 1
