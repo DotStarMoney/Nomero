@@ -332,6 +332,121 @@ sub bitblt_FalloutToFalloutMix(dest as uinteger ptr,_
     end asm
 end sub
 
+sub bitblt_alphaBlend(dest as uinteger ptr,_
+					  xpos as integer, ypos as integer,_
+					  src  as uinteger ptr,_
+                      src_x0 as integer, src_y0 as integer,_
+                      src_x1 as integer, src_y1 as integer)
+                      
+    #macro MIX_STEP()
+		movdqa		xmm0,		[esi]
+		movhlps		xmm1,		xmm0    
+		
+		pmovzxbw	xmm2,		xmm0
+		pmovzxbw	xmm3,		xmm1
+		
+		pshufb		xmm0,		populate_alpha
+		pshufb		xmm1,		populate_alpha
+		
+		movdqa		xmm4,		[edi]
+		movhlps		xmm5,		xmm4    
+
+		pmovzxbw	xmm6,		xmm4
+		pmovzxbw	xmm7,		xmm5
+		
+		psubsb		xmm2,		xmm6
+		psubsb		xmm3,		xmm7
+		
+		pmulhw		xmm2,		xmm0
+		pmulhw		xmm3,		xmm1
+		
+		paddsb		xmm2,		xmm6
+		paddsb		xmm3,		xmm7
+		
+		packuswb	xmm2, 		xmm3	
+    #endmacro
+    
+    static as integer populate_alpha(4) = {&h03ff03ff, &hffff03ff, &h07ff07ff, &hffff07ff}    
+    
+    dim as integer ptr dest_pxls, src_pxls
+    dim as integer     dest_w, dest_h
+    dim as integer     src_w, src_h
+    dim as integer     target_w, target_h
+    dim as integer     dest_row_adv, src_row_adv
+    imageinfo dest,dest_w,dest_h,,,dest_pxls
+    imageinfo src,src_w,src_h,,,src_pxls
+    
+    dest_pxls += xpos + ypos * dest_w
+    src_pxls += src_x0 + src_y0 * src_w
+    
+    target_w = (src_x1 - src_x0 + 1)
+    target_h = (src_y1 - src_y0 + 1)
+    
+    dest_row_adv = (dest_w - target_w) shl 2
+    src_row_adv = (src_w - target_w) shl 2
+	
+	asm
+		mov         esi,        [src_pxls]
+		mov         edi,        [dest_pxls]
+		
+		mov         eax,        [dest_w]
+		mov         ebx,        [dest_h]
+		
+		bitblt_ab_rows:
+            
+                mov         ecx,        eax
+                
+        bitblt_ab_cols:
+            
+				MIX_STEP()	
+				
+				movdqa		[edi],		xmm2
+               
+                add         esi,        16
+                add         edi,        16
+           
+                cmp         ecx,		4
+                jl			bitblt_ab_oddrow
+                
+                sub			ecx,		4
+                
+                jmp         bitblt_ab_cols
+                
+        bitblt_ab_oddrow:
+        
+                test        ecx,        2
+                jz          bitblt_ab_skip2
+                
+                MIX_STEP()
+				
+				movq		[edi],		xmm2
+				
+                add         esi,        8
+                add         edi,        8
+        bitblt_ab_skip2:
+        
+				test        ecx,        1
+                jz          bitblt_ab_skip1
+                
+                MIX_STEP()
+        				
+				movd		[edi],		xmm2
+				
+				add			esi,		4
+				add			edi,		4
+        
+        bitblt_ab_skip1:     
+                 
+                add         esi,        [src_row_adv]
+                add         edi,        [dest_row_adv]
+                
+                dec         ebx
+                jnz         bitblt_ab_rows
+               	
+	end asm
+                                     
+end sub
+
 function trimwhite(s as string) as string
 	while (left(s, 1) = " ") or (left(s, 1) = "\t")
 		s = right(s, len(s)-1)
@@ -385,7 +500,7 @@ function circleBox(px as double, py as double, rad as double,_
     elseif x>x2 then
         x=x2
         c = 1
-    endif
+    end if
     x = x - px: x *= x
     dy = y1 - py: dy *= dy
     if x+dy<rad then return 1
@@ -398,7 +513,7 @@ function circleBox(px as double, py as double, rad as double,_
     elseif y>y2 then
         y=y2
         c=1
-    endif
+    end if
     y = y - py: y *= y
     dx = x1 - px: dx *= dx
     if y+dx<rad then return 1

@@ -5,6 +5,7 @@
 #include "objectlink.bi"
 #include "windows.bi"
 #include "vbcompat.bi"
+#include "fbpng.bi"
 
 using fb
 

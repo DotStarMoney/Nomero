@@ -3,6 +3,7 @@
 #include "vector2d.bi"
 #include "dir.bi"
 #include "file.bi"
+#include "fbpng.bi"
 ' -exx list.bas hashtable.bas vector2d.bas
 
 Enum MaskResult_e
@@ -854,15 +855,19 @@ dim as integer tileNum, curSet, newRTile
 rotatedTiles.init(sizeof(integer))
 
 for i = 0 to N_tilesets - 1
-    setImages(i) = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
-    bload tilesets(i).set_filename, setImages(i)
+    if right(tilesets(i).set_filename, 3) = ".bmp" then
+        setImages(i) = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
+        bload tilesets(i).set_filename, setImages(i)
+    else
+        setImages(i) = png_load(tilesets(i).set_filename)
+    end if
 next i
 N_tilesets += 1
 setImages(N_tilesets - 1) = imagecreate(320, curRotatedHeight)
 redim preserve as set_t tilesets(0 to N_tilesets-1)
 
 tilesets(N_tilesets - 1).set_name     = map_name + "_rotated"
-tilesets(N_tilesets - 1).set_filename = map_name + "_rotated.bmp"
+tilesets(N_tilesets - 1).set_filename = map_name + "_rotated.png"
 tilesets(N_tilesets - 1).set_firstID  = highTileValue
 tilesets(N_tilesets - 1).tilePropList = 0
 tilesets(N_tilesets - 1).set_width = 320
@@ -998,7 +1003,7 @@ for i = 0 to N_layers - 1
 next i
 '32x21
 if foundOneRotated = 0 then 
-    imagedestroy setImages(N_tilesets - 1)
+    imagedestroy(setImages(N_tilesets - 1))
     N_tilesets -= 1
 else
     tilesets(N_tilesets - 1).set_width = 320
@@ -1007,7 +1012,7 @@ else
     tilesets(N_tilesets - 1).used = 0
     tempRotatedImg = imagecreate(320, curRotatedHeight)
     put tempRotatedImg,(0,0), setImages(N_tilesets - 1), (0,0)-(319, curRotatedHeight - 1), PSET
-    imagedestroy setImages(N_tilesets - 1)
+    imagedestroy(setImages(N_tilesets - 1))
     setImages(N_tilesets - 1) = tempRotatedImg
     highTileValue += 20 * int(curRotatedHeight / 16)
 end if
@@ -1088,9 +1093,16 @@ tilesetListHashes.init(sizeof(auxTable_t ptr))
 print "Loading external tilesets..."
 curfile = Dir("tilesets\*", fbNormal )
 Do
-    if right(curfile, 11) = "_merged.bmp" then
+    if left(right(curfile, 11), 7) = "_merged" then
+        if right(curfile, 3) = "png" then
+            curAtlas = png_load("tilesets\" & curfile)
+        else
+            curAtlas = imagecreate(320,4096)
+            bload "tilesets\" & curfile, curAtlas
+        end if
+        
         tileA = 0
-        bload "tilesets\" & curfile, curAtlas
+        
         tempTable = new auxTable_t
         tempTable->set_width = 320
         tempTable->set_firstID = highTileValue
@@ -1140,7 +1152,8 @@ Do
         
         tempTable->set_num = N_tilesets - 1
         tilesetListHashes.push_back(@tempTable)
-
+        
+        imagedestroy(curAtlas)
     end if
     curfile = Dir( )
 Loop While Len( curfile ) > 0
@@ -1527,7 +1540,7 @@ if N_merges > 0 then
     redim preserve as set_t tilesets(N_tilesets - 1)
     with tilesets(N_tilesets - 1)
         .set_name = map_name + "_merged"
-        .set_filename = map_name + "_merged.bmp"
+        .set_filename = map_name + "_merged.png"
         .set_width = 320
         .set_height = (int(N_merges / 20) + 1) * 16
         .set_firstID = highTileValue
@@ -1535,7 +1548,7 @@ if N_merges > 0 then
         .tilePropList = 0
         tempImg = imagecreate(.set_width, .set_height)
         put tempImg, (0,0), mergedTiles, (0,0)-(.set_width-1,.set_height-1), PSET
-        bsave "tilesets\" & .set_filename, tempImg
+        png_save("tilesets\" & .set_filename, tempImg)
         imageDestroy(tempImg)
     end with
 end if
@@ -1566,9 +1579,15 @@ for i = 0 to N_tilesets - 1
             next j
         else
             if not FileExists("tilesets\" & tilesets(i).set_filename) then
-                tempTilesetCopy = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
-                bload tilesets(i).set_filename, tempTilesetCopy
-                bsave "tilesets\" & tilesets(i).set_filename, tempTilesetCopy
+                
+                if right(tilesets(i).set_filename, 3) = "bmp" then
+                    tempTilesetCopy = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
+                    bload tilesets(i).set_filename, tempTilesetCopy
+                else
+                    tempTilesetCopy = png_load(tilesets(i).set_filename)
+                end if
+                    
+                png_save("tilesets\" & tilesets(i).set_filename, tempTilesetCopy)
                 imagedestroy tempTilesetCopy
             end if
             totalSets += 1
