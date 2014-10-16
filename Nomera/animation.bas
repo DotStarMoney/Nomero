@@ -1,6 +1,7 @@
 #include "animation.bi"
 #include "utility.bi"
 #include "debug.bi"
+#include "fbpng.bi"
 
 dim as HashTable Animation.animHash
 dim as integer Animation.initAnimHash = 0
@@ -72,8 +73,12 @@ sub Animation.load(filename as string)
                         *(.imgName) = imageName
                         .w = val(pieces(0))
                         .h = val(pieces(1))
-                        .image = imagecreate(.w, .h)
-                        bload imageName, .image
+                        if right(imageName, 3) = "bmp" then
+							.image = imagecreate(.w, .h)
+							bload imageName, .image
+						else
+							.image = png_load(imageName)
+						end if
                         readStep += 1
                     case 2
                         .animations_n = val(lne)

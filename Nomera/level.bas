@@ -7,6 +7,7 @@
 #include "projectilecollection.bi"
 #include "player.bi"
 #include "soundeffects.bi"
+#include "fbpng.bi"
 
 dim as integer ptr Level.falloutTex = 0
 #ifdef DEBUG
@@ -27,8 +28,7 @@ constructor level
     destroyedBlockMemory.init(sizeof(destroyedBlocks_t))
     portalZonesNum = 0
     if falloutTex = 0 then
-        falloutTex = imagecreate(128,128)
-        bload "falloutdisk96.bmp", falloutTex
+		falloutTex = png_load("falloutdisk96.png")
     end if
     foreground_layer.init(sizeof(integer))
     background_layer.init(sizeof(integer))
@@ -37,8 +37,7 @@ constructor level
     reconnect = 0
     #ifdef DEBUG
 		if collisionBlox = 0 then
-			collisionBlox = imagecreate(336, 64)
-			bload "CShapes.bmp", collisionBlox
+			collisionBlox = png_load("CShapes.png")
 		end if
 	#endif
 end constructor
@@ -837,7 +836,6 @@ sub level.load(filename as string)
     dim as uinteger blockNumber, layerInt
     dim as string  strdata_n
     dim as ZString * 128 strdata
-    dim as integer ptr imgData
     dim as Level_VisBlock ptr lvb
     redim as ushort setFirstIds(0)
     dim as Level_EffectData tempEffect
@@ -922,25 +920,19 @@ sub level.load(filename as string)
         
         tilesets[i].row_count = (tilesets[i].set_width / 16)  
         tilesets[i].count = (tilesets[i].set_width / 16) * (tilesets[i].set_height / 16)
-        
-        imgData = 0
-        imgData = imagecreate(tilesets[i].set_width, tilesets[i].set_height)
-    
-        if imgData = 0 then
-            #ifdef DEBUG
-                printlog "panic 1" & ", " & tilesets[i].set_width & ", " & tilesets[i].set_height
-                stall(100)
-            #endif
-            tilesets[i].set_image = 0
-        else
-            #ifdef DEBUG
-                printlog strdata
-                stall(100)
-            #endif
-            tilesets[i].set_image = imgData
-            bload strdata, tilesets[i].set_image
-        end if
-        
+      
+		#ifdef DEBUG
+			printlog strdata
+			stall(100)
+		#endif
+		
+		if right(strdata, 3) = "bmp" then
+			tilesets[i].set_image =  imagecreate(tilesets[i].set_width, tilesets[i].set_height)
+			bload strdata, tilesets[i].set_image
+		else
+			tilesets[i].set_image = png_load(strdata)
+		end if
+
         get #f,,setFirstIds(i)
         get #f,,numAnims
         

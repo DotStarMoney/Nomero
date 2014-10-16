@@ -855,7 +855,7 @@ dim as integer tileNum, curSet, newRTile
 rotatedTiles.init(sizeof(integer))
 
 for i = 0 to N_tilesets - 1
-    if right(tilesets(i).set_filename, 3) = ".bmp" then
+    if right(tilesets(i).set_filename, 3) = "bmp" then
         setImages(i) = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
         bload tilesets(i).set_filename, setImages(i)
     else
@@ -1085,7 +1085,6 @@ dim as string setname
 dim f2 as integer = freefile
 dim as integer ptr curTilePtr
 
-curAtlas = imagecreate(320,4096)
 curTilePtr = imagecreate(16,16)
 
 tilesetListHashes.init(sizeof(auxTable_t ptr))
@@ -1157,7 +1156,6 @@ Do
     end if
     curfile = Dir( )
 Loop While Len( curfile ) > 0
-imagedestroy curAtlas
 
 print "Computing optimal layers and merges..."
 
@@ -1534,7 +1532,7 @@ next i
 print "Deleted " & str(deletedLayers) & " of " & str(N_layers) & " layers."
 
 
-dim as integer ptr tempImg
+dim as integer ptr tempImg, alphaImg
 if N_merges > 0 then
     N_tilesets += 1
     redim preserve as set_t tilesets(N_tilesets - 1)
@@ -1548,6 +1546,10 @@ if N_merges > 0 then
         .tilePropList = 0
         tempImg = imagecreate(.set_width, .set_height)
         put tempImg, (0,0), mergedTiles, (0,0)-(.set_width-1,.set_height-1), PSET
+        alphaImg = imagecreate(.set_width, .set_height)
+        line alphaImg, (0,0)-(.set_width-1, .set_height-1), &hff000000, BF
+        put tempImg, (0,0), alphaImg, OR
+        imagedestroy(alphaImg)
         png_save("tilesets\" & .set_filename, tempImg)
         imageDestroy(tempImg)
     end with
