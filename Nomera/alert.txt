@@ -2,6 +2,8 @@
 "alert.bmp"
       #IMAGE SIZE
 96,32
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 2
       #DEFAULT ANIMATION

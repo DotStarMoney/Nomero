@@ -202,7 +202,7 @@ sub bitblt_FalloutMix(dest as uinteger ptr,_
     
     dest_row_adv = (dest_w - target_w) shl 2
     src_row_adv = (src_w - target_w) shl 2
-    
+        
     asm
         
                 mov         esi,        [src_pxls]
@@ -332,41 +332,56 @@ sub bitblt_FalloutToFalloutMix(dest as uinteger ptr,_
     end asm
 end sub
 
-sub bitblt_alphaBlend(dest as uinteger ptr,_
-					  xpos as integer, ypos as integer,_
-					  src  as uinteger ptr,_
-                      src_x0 as integer, src_y0 as integer,_
-                      src_x1 as integer, src_y1 as integer)
-                      
+sub bitblt_alphaGlow(dest as uinteger ptr,_
+					 xpos as integer, ypos as integer,_
+					 src  as uinteger ptr,_
+                     src_x0 as integer, src_y0 as integer,_
+                     src_x1 as integer, src_y1 as integer,_
+                     colOffset as integer = &h00000000)
+
     #macro MIX_STEP()
-		movdqa		xmm0,		[esi]
-		movhlps		xmm1,		xmm0    
+
 		
-		pmovzxbw	xmm2,		xmm0
+		movdqu		xmm0,		[esi]			
+		
+		movdqu		xmm6,		[col_offset]	
+		psubusb		xmm0,		xmm6
+				
+		movhlps		xmm1,		xmm0    		
+				
+		pmovzxbw	xmm2,		xmm0			
 		pmovzxbw	xmm3,		xmm1
 		
-		pshufb		xmm0,		populate_alpha
-		pshufb		xmm1,		populate_alpha
+		movdqu		xmm7,		[populate_alpha]   
+		pshufb		xmm0,		xmm7			
+		pshufb		xmm1,		xmm7	
 		
-		movdqa		xmm4,		[edi]
-		movhlps		xmm5,		xmm4    
+		movdqu		xmm4,		[edi]			
+		movhlps		xmm5,		xmm4    		
 
-		pmovzxbw	xmm6,		xmm4
+		pmovzxbw	xmm6,		xmm4			
 		pmovzxbw	xmm7,		xmm5
 		
-		psubsb		xmm2,		xmm6
-		psubsb		xmm3,		xmm7
+		psubsw		xmm2,		xmm6
+		psubsw		xmm3,		xmm7
 		
-		pmulhw		xmm2,		xmm0
-		pmulhw		xmm3,		xmm1
+		psrlw		xmm0,		1
+		psrlw		xmm1,		1
+		pmullw		xmm2,		xmm0			
+		pmullw		xmm3,		xmm1
+		psraw		xmm2, 		7
+		psraw		xmm3,		7
 		
-		paddsb		xmm2,		xmm6
-		paddsb		xmm3,		xmm7
+		paddsw		xmm2,		xmm6
+		paddsw		xmm3,		xmm7
+
+		packuswb	xmm2,		xmm3			
 		
-		packuswb	xmm2, 		xmm3	
     #endmacro
     
-    static as integer populate_alpha(4) = {&h03ff03ff, &hffff03ff, &h07ff07ff, &hffff07ff}    
+    static as integer populate_alpha(0 to 3) = {&hff03ff03, &hff03ff03, &hff07ff07, &hff07ff07}    
+    static as integer col_offset(0 to 3)
+    
     
     dim as integer ptr dest_pxls, src_pxls
     dim as integer     dest_w, dest_h
@@ -384,38 +399,49 @@ sub bitblt_alphaBlend(dest as uinteger ptr,_
     
     dest_row_adv = (dest_w - target_w) shl 2
     src_row_adv = (src_w - target_w) shl 2
+    
+    colOffset = ((&hff - ((colOffset shr 16) and &hff)) shl 16) or _
+                ((&hff - ((colOffset shr 08) and &hff)) shl 08) or _
+                (&hff - (colOffset and &hff))
+	
+	col_offset(0) = colOffset
+	col_offset(1) = colOffset
+	col_offset(2) = colOffset
+	col_offset(3) = colOffset
+	
+	if target_w and 3 then target_w -= 4 
 	
 	asm
-		mov         esi,        [src_pxls]
-		mov         edi,        [dest_pxls]
-		
-		mov         eax,        [dest_w]
-		mov         ebx,        [dest_h]
-		
-		bitblt_ab_rows:
+				mov         esi,        [src_pxls]
+				mov         edi,        [dest_pxls]
+				
+				mov         eax,        [target_w]
+				mov         ebx,        [target_h]
+					
+		bitblt_ag_rows:
             
                 mov         ecx,        eax
                 
-        bitblt_ab_cols:
+        bitblt_ag_cols:
             
 				MIX_STEP()	
 				
-				movdqa		[edi],		xmm2
+				movdqu		[edi],		xmm2
                
                 add         esi,        16
                 add         edi,        16
-           
+        				
                 cmp         ecx,		4
-                jl			bitblt_ab_oddrow
+                jle			bitblt_ag_oddrow
                 
                 sub			ecx,		4
                 
-                jmp         bitblt_ab_cols
+                jmp         bitblt_ag_cols
                 
-        bitblt_ab_oddrow:
+        bitblt_ag_oddrow:
         
                 test        ecx,        2
-                jz          bitblt_ab_skip2
+                jz          bitblt_ag_skip2
                 
                 MIX_STEP()
 				
@@ -423,10 +449,10 @@ sub bitblt_alphaBlend(dest as uinteger ptr,_
 				
                 add         esi,        8
                 add         edi,        8
-        bitblt_ab_skip2:
+        bitblt_ag_skip2:
         
 				test        ecx,        1
-                jz          bitblt_ab_skip1
+                jz          bitblt_ag_skip1
                 
                 MIX_STEP()
         				
@@ -435,14 +461,13 @@ sub bitblt_alphaBlend(dest as uinteger ptr,_
 				add			esi,		4
 				add			edi,		4
         
-        bitblt_ab_skip1:     
+        bitblt_ag_skip1:     
                  
                 add         esi,        [src_row_adv]
                 add         edi,        [dest_row_adv]
                 
                 dec         ebx
-                jnz         bitblt_ab_rows
-               	
+                jnz         bitblt_ag_rows
 	end asm
                                      
 end sub

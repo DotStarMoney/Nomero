@@ -2,6 +2,8 @@
 "teleportershield.bmp"
       #IMAGE SIZE
 80,54
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 1
       #DEFAULT ANIMATION

@@ -55,7 +55,8 @@ declare sub bitblt_alphaGlow(dest as uinteger ptr,_
 							 xpos as integer, ypos as integer,_
 							 src  as uinteger ptr,_
                              src_x0 as integer, src_y0 as integer,_
-                             src_x1 as integer, src_y1 as integer)
+                             src_x1 as integer, src_y1 as integer,_
+                             colOffset as integer = &h00000000)
 							 
 							 
 declare sub vline(a as Vector2D, b as Vector2D, col as integer)

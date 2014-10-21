@@ -114,19 +114,22 @@ sub DynamicController.addSpawnZone(objectName as string,_
 								   
 end sub
 
-sub DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer)
+function DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer) as Item ptr
 	dim as Item ptr curItem
 	dim as DynamicObjectType_t dobj
 
 	curItem = new Item
-	curItem->init(link, itemType_, itemFlavor_)
+	curItem->setLink(link)
+	curItem->init(itemType_, itemFlavor_)
 	curItem->setPos(position)
 	
 	dobj.object_type = OBJ_ITEM
 	dobj.data_ = curItem
 	
 	objects.push_back(@dobj)
-end sub
+	
+	return dobj.data_
+end function
 
 sub DynamicController.addEnemy(sz as SpawnZone_t)
 	dim as string objName
@@ -223,7 +226,11 @@ sub DynamicController.process(t as double)
 				
 			elseif dobj->object_type = OBJ_ITEM then
 				curItem = dobj->data_
+				
+				lnr = objects.bufferRoll()
 				shouldDelete = curItem->process(t)
+				objects.setRoll(lnr)
+
 				if shouldDelete then
 					delete (cast(Item ptr, dobj->data_))
 					objects.rollRemove()
@@ -237,7 +244,7 @@ sub DynamicController.process(t as double)
 	
 end sub
 
-sub DynamicController.drawDynamics(scnbuff as integer ptr)
+sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = 0)
 	dim as DynamicObjectType_t ptr dobj
 	
 	objects.rollReset()
@@ -245,9 +252,15 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr)
 		dobj = objects.roll()
 		if dobj <> 0 then
 			if dobj->object_type = OBJ_ENEMY then
-				cast(Enemy ptr, dobj->data_)->drawEnemy(scnbuff)
+				if order = 0 then
+					cast(Enemy ptr, dobj->data_)->drawEnemy(scnbuff)
+				end if
 			elseif dobj->object_type = OBJ_ITEM then
-				cast(Item ptr, dobj->data_)->drawItem(scnbuff)
+				if order = 0 then
+					cast(Item ptr, dobj->data_)->drawItem(scnbuff)
+				else
+					cast(Item ptr, dobj->data_)->drawItemTop(scnbuff)
+				end if
 			end if
 		else
 			exit do

@@ -2,6 +2,8 @@
 "soldier.bmp"
       #IMAGE SIZE
 333,128
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 6
       #DEFAULT ANIMATION

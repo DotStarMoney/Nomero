@@ -2,6 +2,8 @@
 "bullet.bmp"
       #IMAGE SIZE
 16,8
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 1
       #DEFAULT ANIMATION

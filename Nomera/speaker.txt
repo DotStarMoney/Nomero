@@ -2,6 +2,8 @@
 "speaker.bmp"
       #IMAGE SIZE
 128,32
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 2
       #DEFAULT ANIMATION

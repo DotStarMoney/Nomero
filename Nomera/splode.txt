@@ -2,6 +2,8 @@
 "splode.bmp"
       #IMAGE SIZE
 160,32
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 1
       #DEFAULT ANIMATION

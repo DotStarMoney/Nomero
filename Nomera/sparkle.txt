@@ -2,6 +2,8 @@
 "sparkle.bmp"
       #IMAGE SIZE
 32,8
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 1
       #DEFAULT ANIMATION

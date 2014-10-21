@@ -7,6 +7,7 @@
 #include "animation.bi"
 #include "projectilecollection.bi"
 #include "objectlink.bi"
+#Include "item.bi"
 
 #define LADDER_GRAB_EDGE_LENGTH 24
 #define CLIMBING_SPEED 82
@@ -27,7 +28,10 @@ type Player
         declare sub setLink(link_ as objectlink)
         declare sub processControls(dire as integer, jump as integer,_
                                     ups as integer, fire as integer,_
-                                    shift as integer, t as double)
+                                    shift as integer, numbers() as integer,_
+                                    t as double)
+        declare sub processItems(t as double)
+        declare sub drawItems(scnbuff as uinteger ptr)
         declare sub loadAnimations(filename as string)
         declare sub drawPlayer(scnbuff as uinteger ptr)
         declare function getState() as PlayerState
@@ -38,6 +42,7 @@ type Player
         declare sub exportMovementParameters(byref dire_p as integer, byref jump_p as integer,_
 											 byref ups_p as integer, byref shift_p as integer)
         declare function beingHarmed() as integer
+        declare sub removeItemReference(data_ as integer)
     
     
 		bombs   as integer
@@ -61,15 +66,21 @@ type Player
         jumpImpulse    as double
         harmedFlashing as integer
         freeJumpFrames as integer
+        as PlayerState state
     private: 
         declare function onLadder() as integer
         declare function onSpikes() as integer
         declare sub switch(ls as LevelSwitch_t)
         
+        as HashTable items
+        
         as integer _dire_
         as integer _jump_
         as integer _ups_
         as integer _shift_
+        
+        as integer lastNumbers(0 to 9)
+        as integer hasBomb(0 to 9)
         
         as objectlink link
         as integer lastSpikes
@@ -77,7 +88,6 @@ type Player
         as integer groundSwitchAnimFrames
         as integer groundedFrames
         as integer lastUps
-        as PlayerState state
         as PlayerState lastState
         as TinySpace ptr parent
         as Level ptr level_parent

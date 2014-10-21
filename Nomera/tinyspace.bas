@@ -2004,9 +2004,11 @@ sub TinySpace.step_time(byval t as double)
 						PRINTLOG "Current P,V: " & c->p & c->v
 						PRINTLOG "Frames: " & str(framesGone)
 						PRINTLOG "Energy: " & (1/2 * c->m * (c->v.magnitude()^2))
-						for q = 0 to ubound(normals)
-							circle(c->p.x() + -normals(q).x()*c->r * c->r_rat, c->p.y() + -normals(q).y()*c->r), 3, &hff0000,,,,F
-						next q
+						if arbiters_n(i) <> 0 then
+							for q = 0 to ubound(normals)
+								circle(c->p.x() + -normals(q).x()*c->r * c->r_rat, c->p.y() + -normals(q).y()*c->r), 3, &hff0000,,,,F
+							next q
+						end if
 					#endif
 										
 					skipCollisionCheck = 1
@@ -2022,7 +2024,7 @@ sub TinySpace.step_time(byval t as double)
 						printlog "DETATCH!"
 					#endif
 				end if
-		
+				arbiters_n(i) = 0
 		
 				cur_t = t
 				c->v = c->v + (f_total / c->m) * cur_t            

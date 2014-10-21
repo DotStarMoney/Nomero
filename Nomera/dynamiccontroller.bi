@@ -53,9 +53,9 @@ type DynamicController
 								 time_ as integer = 0)
 		declare sub explosionAlert(p as Vector2D)
 		declare sub process(t as double)
-		declare sub drawDynamics(scnbuff as integer ptr)
+		declare sub drawDynamics(scnbuff as integer ptr, order as integer = 0)
 		declare sub flush()
-		declare sub addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer)
+		declare function addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer) as Item ptr
 		
 	private:
 		static as NamesTypes_t ptr namesTypesTable

@@ -2,6 +2,8 @@
 "smoke.bmp"
       #IMAGE SIZE
 156,26
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 1
       #DEFAULT ANIMATION

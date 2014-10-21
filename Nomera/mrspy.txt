@@ -2,6 +2,8 @@
 "mrspy.bmp"
       #IMAGE SIZE
 288,320
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 11
       #DEFAULT ANIMATION

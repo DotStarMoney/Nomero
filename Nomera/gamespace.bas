@@ -109,7 +109,6 @@ constructor GameSpace()
     scnbuff = imagecreate(640,480)
     stallTime_mili = 15
     movingFrmAvg = 0
-  
 end constructor
 
 sub GameSpace.reconnectCollision()
@@ -140,8 +139,8 @@ function GameSpace.go() as integer
         if keypress(SC_ESCAPE) then exit do
         'print spy.body.p
         locate 1,1
-        movingFrmAvg = movingFrmAvg * 0.95 + 0.05 * (frameTime / (1 / FPS_TARGET) * 100)
-		print using "Engine at ##.##% load"; movingFrmAvg
+        movingFrmAvg = movingFrmAvg * 0.25 + 0.75 * (frameTime / (1 / FPS_TARGET) * 100)
+		'print using "Engine at ##.##% load"; movingFrmAvg
 		
 		stall( stallTime_mili)
 		totalTime = (timer - startTime)
@@ -183,10 +182,20 @@ sub GameSpace.step_input()
     keypress(SC_N) = multikey(SC_N)
     keypress(SC_DELETE) = multikey(SC_DELETE)
     keypress(SC_P) = multikey(SC_P)
+    keypress(SC_0) = multikey(SC_0)
+    keypress(SC_1) = multikey(SC_1)
+    keypress(SC_2) = multikey(SC_2)
+    keypress(SC_3) = multikey(SC_3)
+    keypress(SC_4) = multikey(SC_4)
+    keypress(SC_5) = multikey(SC_5)
+    keypress(SC_6) = multikey(SC_6)
+    keypress(SC_7) = multikey(SC_7)
+    keypress(SC_8) = multikey(SC_8)
+    keypress(SC_9) = multikey(SC_9)
 end sub
 
 sub GameSpace.vibrateScreen()
-    vibcount = 3
+    vibcount = 4
 end sub
 
 sub GameSpace.hardSwitchMusic(filename as string)
@@ -240,13 +249,8 @@ sub GameSpace.step_draw()
     line scnbuff, (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5), 0, BF
     
-
-    
-    
-      
-    
     if vibcount > 0 then
-        shake = ((vibcount mod 2) * 2 - 1) * 4
+        shake = ((vibcount mod 2) * 2 - 1) * 5
     else
         shake = 0
     end if
@@ -257,12 +261,15 @@ sub GameSpace.step_draw()
     graphicFX.drawEffects(scnbuff, camera, ACTIVE)
     dynControl.drawDynamics(scnbuff)
     spy.drawPlayer(scnbuff)
+    spy.drawItems(scnbuff)
     projectiles.draw_collection(scnbuff)
     effects.draw_effects(scnbuff)
 
     lvlData.drawLayers(scnbuff, FOREGROUND, camera.x(), camera.y(), Vector2D(0, shake))
 
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
+    
+    dynControl.drawDynamics(scnbuff, 1)
     
 	
     window screen (0,0)-(SCRX-1,SCRY-1)
@@ -314,21 +321,22 @@ sub GameSpace.step_draw()
 			end if
 		end if
 		put scnbuff, (0,0), fadeoutTex, ALPHA, min(255, bailFrame+1)
-		bailFrame += 3
-		
+		bailFrame += 3	
 	end if
-      
+	   
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
     tracker.record_draw(scnbuff)
-    
+
     scale2sync scnbuff
+    
 end sub
     
 
 
 sub GameSpace.step_process()
     dim as integer i, dire, jump, ups, fire
+    dim as integer numbers(0 to 9)
     
     
     if keypress(SC_RIGHT) then
@@ -356,6 +364,17 @@ sub GameSpace.step_process()
         fire = 0
     end if
     
+    numbers(0) = keypress(SC_1)
+    numbers(1) = keypress(SC_2)
+    numbers(2) = keypress(SC_3)
+    numbers(3) = keypress(SC_4)
+    numbers(4) = keypress(SC_5)
+    numbers(5) = keypress(SC_6)
+    numbers(6) = keypress(SC_7)
+    numbers(7) = keypress(SC_8)
+    numbers(8) = keypress(SC_9)
+    numbers(9) = keypress(SC_0)
+    
     vibcount -= 1
     
     dynControl.process(0.01667)
@@ -363,13 +382,12 @@ sub GameSpace.step_process()
 	if keypress(SC_M) then tracker.record()
 	if keypress(SC_N) then tracker.pause()
 	
-	
 	if isSwitching <> 1 andAlso lockAction <> 1 then
-    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), 0.01667)
+    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), numbers(), 0.01667)
     elseif lockAction = 1 then
-    	spy.processControls(0, 0, 0, 0, 0, 0.01667)
+    	spy.processControls(0, 0, 0, 0, 0, numbers(), 0.01667)
     end if
-    
+    spy.processItems(0.01667)
     if lvlData.usesSnow() = 1 then 
         backgroundSnow.stepFlakes(camera, 0.01667)
         foregroundSnow.stepFlakes(camera, 0.01667)

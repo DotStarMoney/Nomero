@@ -3,9 +3,11 @@
 #include "utility.bi"
 #include "debug.bi"
 #include "gamespace.bi"
+#include "dynamiccontroller.bi"
 
 
 constructor Player
+	dim as integer i
     acc   = 3000
     air_acc = 400
     top_speed = 150
@@ -33,6 +35,10 @@ constructor Player
     charge = 0
     bombs = 10
     anim.play()
+    items.init(sizeof(Item ptr))
+    for i = 0 to 9
+		hasBomb(i) = 0
+	next i
 end constructor
 
 function Player.getState() as PlayerState
@@ -226,10 +232,13 @@ end sub
 
 sub Player.processControls(dire as integer, jump as integer,_
                            ups as integer, fire as integer,_
-                           shift as integer, t as double)
+                           shift as integer, numbers() as integer, _
+                           t as double)
     dim as Vector2D gtan
     dim as double curSpeed, oSpeed
     dim as integer addSpd, ptype, spikes
+    dim as integer i
+    dim as Item ptr newItem
     dim as LevelSwitch_t ls
     dim as GameSpace ptr gsp
 	gsp = cast(GameSpace ptr, game_parent)
@@ -484,6 +493,24 @@ sub Player.processControls(dire as integer, jump as integer,_
     if landedSFXFrames > 0 then landedSFXFrames -= 1
     if harmedFlashing > 0 then harmedFlashing -= 1
     anim.step_animation()
+       
+    print parent->isGrounded(body_i, this.groundDot), (parent->getArbiterN(body_i) > 0)
+    for i = 0 to 9
+		if numbers(i)  andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) then
+			if parent->isGrounded(body_i, this.groundDot) andAlso (parent->getArbiterN(body_i) > 0) then 
+				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, 0)
+				newItem->setData0(i + 1)
+				hasBomb(i) = cast(integer, newItem)
+				items.insert(hasBomb(i), @newItem)
+			end if
+		elseif numbers(i) andAlso hasBomb(i) andAlso (lastNumbers(i) = 0) then
+			newItem = *cast(Item ptr ptr, items.retrieve(hasBomb(i)))
+			newItem->setData1(1)
+			items.remove(hasBomb(i))
+			hasBomb(i) = 0
+		end if
+		lastNumbers(i) = numbers(i)  
+    next i
         
     lastUps = ups
     lastFire = fire
@@ -492,3 +519,20 @@ sub Player.processControls(dire as integer, jump as integer,_
     lastVel = body.v
 end sub
 
+sub Player.removeItemReference(data_ as integer)
+	items.remove(data_)
+end sub
+
+sub Player.drawItems(scnbuff as uinteger ptr)
+	dim as Item ptr curItem
+	BEGIN_HASH(curItem, items)
+		curItem->drawItem(scnbuff)
+	END_HASH()
+end sub
+
+sub Player.processItems(t as double)
+	dim as Item ptr curItem
+	BEGIN_HASH(curItem, items)
+		curItem->process(t)
+	END_HASH()	
+end sub

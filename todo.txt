@@ -1,0 +1,5 @@
+damage blocks slow you down
+fix path tracking dingus manuevers
+draw other layers
+do a second fallout texture
+move objects into foreground for levels

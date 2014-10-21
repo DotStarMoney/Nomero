@@ -2,6 +2,8 @@
 "bomb.bmp"
       #IMAGE SIZE
 128,32
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 4
       #DEFAULT ANIMATION

@@ -18,6 +18,12 @@ enum ANIM_RELEASE_TYPE
     ANIM_JUMP_TO_RELEASE_THEN_REVERSE
 end enum
 
+enum Anim_DrawType_e
+	ANIM_GLOW
+	ANIM_ALPHA
+	ANIM_TRANS
+end enum
+
 type FrameData_t
     as Vector2D offset
     as integer  delay
@@ -50,6 +56,7 @@ type AnimationData_t
     as integer ptr image
     as integer w
     as integer h
+    as Anim_DrawType_e drawMode
     as integer defaultAnim
 end type
 
@@ -69,14 +76,16 @@ type Animation
         declare function done() as integer
         
         declare sub setSpeed(s as integer)
-        
-        declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer)
+        declare sub setGlow(glow as integer)
+ 
+        declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0))
         
         declare sub step_animation()
         declare function getWidth() as integer
         declare function getHeight() as integer 
         declare function getOffset() as Vector2D
         declare function getFrame() as integer
+        declare function getGlow() as integer
     private:
         declare sub init()
         declare sub applySwitch()
@@ -87,7 +96,8 @@ type Animation
         declare sub advance()
     
         as AnimationData_t ptr data_
-        
+               
+        as integer glowValue
         as integer completed
         as integer reachedEnd
         as integer currentAnim

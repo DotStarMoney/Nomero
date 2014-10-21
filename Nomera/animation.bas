@@ -2,6 +2,7 @@
 #include "utility.bi"
 #include "debug.bi"
 #include "fbpng.bi"
+#include "gamespace.bi"
 
 dim as HashTable Animation.animHash
 dim as integer Animation.initAnimHash = 0
@@ -23,6 +24,7 @@ sub Animation.init()
     if initAnimHash = 0 then Animation.animHash.init(sizeof(AnimationData_t ptr))    
     initAnimHash = 1
     data_ = 0
+    glowValue = rgb(255, 255, 255)
     delayCounter = 0
     currentFrame = 0
     isPaused = 1
@@ -35,6 +37,15 @@ end sub
 function Animation.done() as integer
     return completed
 end function
+
+sub Animation.setGlow(glow as integer)
+	glowValue = glow
+end sub
+
+function Animation.getGlow() as integer
+	return glowValue
+end function
+
 
 sub Animation.load(filename as string)
     dim as integer  f, readStep, i
@@ -79,7 +90,17 @@ sub Animation.load(filename as string)
 						else
 							.image = png_load(imageName)
 						end if
-                        readStep += 1
+                        readStep = 200
+                    case 200
+						curText = mid(lne, 2, len(lne)-2)
+						if curText = "TRANS" then
+							.drawMode = ANIM_TRANS
+						elseif curText = "ALPHA" then
+							.drawMode = ANIM_ALPHA						
+						elseif curText = "GLOW" then
+							.drawMode = ANIM_GLOW							
+						end if
+						readStep = 2
                     case 2
                         .animations_n = val(lne)
                         .animations = allocate(sizeof(Animation_t) * .animations_n)
@@ -498,9 +519,12 @@ sub Animation.setSpeed(s as integer)
     speed = s
 end sub
 
-sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer)
+sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0))
     Dim as Vector2D off
     dim as integer start_x, start_y
+    dim as integer a_x, a_y
+    dim as integer b_x, b_y
+    dim as integer pos_x, pos_y
     with data_->animations[currentAnim]
         off = .frame_offset
         start_x = ((.frame_startCell + drawFrame) * .frame_width) mod data_->w
@@ -508,7 +532,16 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer)
         if .frame_hasData = 1 then
             off += .frame_data[drawFrame].offset
         end if
-        put scnbuff, (x + off.x, y + off.y), data_->image, (start_x, start_y)-(start_x + .frame_width - 1, start_y + .frame_height - 1), TRANS
+        
+        select case data_->drawMode
+        case ANIM_TRANS
+			put scnbuff, (x + off.x, y + off.y), data_->image, (start_x, start_y)-(start_x + .frame_width - 1, start_y + .frame_height - 1), TRANS
+		case ANIM_GLOW
+			off = off - (cam - Vector2D(SCRX * 0.5, SCRY * 0.5))
+	        if screenclip(x + off.x, y + off.y, .frame_width, .frame_height, pos_x, pos_y, a_x, a_y, b_x, b_y) then
+				bitblt_alphaGlow(scnbuff, pos_x, pos_y, data_->image, start_x + a_x, start_y + a_y, start_x + b_x, start_y + b_y, glowValue)
+			end if
+		end select
     end with    
 end sub
 

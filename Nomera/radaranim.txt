@@ -2,6 +2,8 @@
 "radarping.bmp"
       #IMAGE SIZE
 896,128
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 1
       #DEFAULT ANIMATION

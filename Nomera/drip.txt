@@ -2,6 +2,8 @@
 "waterdrip.bmp"
       #IMAGE SIZE
 64,16
+      #DRAW MODE
+"TRANS"
       #NUMBER OF ANIMATIONS
 2
       #DEFAULT ANIMATION
