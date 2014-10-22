@@ -104,11 +104,12 @@ type Level
         dim as List foreground_layer
         dim as List background_layer
         dim as List active_layer
+        dim as List activeCover_layer
         
         dim as EffectController_ ptr graphicFX_
         
         dim as Hash2D falloutZones
-        static as integer ptr falloutTex
+        static as integer ptr falloutTex(0 to 1)
         
         #ifdef DEBUG
 			static as integer ptr collisionBlox

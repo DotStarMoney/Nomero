@@ -434,6 +434,19 @@ sub Player.processControls(dire as integer, jump as integer,_
         if state <> ON_LADDER then this.body.f = Vector2D(0,0)
     end if
     
+    spikes = onSpikes()
+	if spikes = 1 then 
+		harm(Vector2D(-1000,-1000), 1)
+		this.body.v *= 0.8
+		curSpeed *= 0.2
+		oSpeed *= 0.2
+	elseif spikes = 2 then
+		harm(Vector2D(-1000,-1000), 100)
+	end if
+	if lastSpikes = 0 andAlso spikes <> 0 then
+		link.soundeffects_ptr->playSound(SND_HURT)
+	end if
+    
     if addSpd = 1 then 
         this.body.v = this.body.v + (curSpeed - oSpeed) * gtan
     end if
@@ -481,25 +494,17 @@ sub Player.processControls(dire as integer, jump as integer,_
 		pendingSwitch = 0
 	end if
 	
-	spikes = onSpikes()
-	if spikes = 1 then 
-		harm(Vector2D(-1000,-1000), 1)
-	elseif spikes = 2 then
-		harm(Vector2D(-1000,-1000), 100)
-	end if
-	if lastSpikes = 0 andAlso spikes <> 0 then
-		link.soundeffects_ptr->playSound(SND_HURT)
-	end if
+
     if landedSFXFrames > 0 then landedSFXFrames -= 1
     if harmedFlashing > 0 then harmedFlashing -= 1
     anim.step_animation()
        
-    print parent->isGrounded(body_i, this.groundDot), (parent->getArbiterN(body_i) > 0)
     for i = 0 to 9
 		if numbers(i)  andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) then
 			if parent->isGrounded(body_i, this.groundDot) andAlso (parent->getArbiterN(body_i) > 0) then 
 				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, 0)
 				newItem->setData0(i + 1)
+				newItem->setData2(hasBomb(i))
 				hasBomb(i) = cast(integer, newItem)
 				items.insert(hasBomb(i), @newItem)
 			end if
@@ -520,7 +525,13 @@ sub Player.processControls(dire as integer, jump as integer,_
 end sub
 
 sub Player.removeItemReference(data_ as integer)
-	items.remove(data_)
+	dim as integer i
+	if items.exists(data_) then 
+		for i = 0 to 9
+			if hasBomb(i) = data_ then hasBomb(i) = 0
+		next i
+		items.remove(data_)
+	end if
 end sub
 
 sub Player.drawItems(scnbuff as uinteger ptr)

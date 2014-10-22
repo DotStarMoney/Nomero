@@ -37,28 +37,40 @@ sub OneShotEffects.create(p_ as Vector2D, fx as EffectType_ = EXPLODE, _
     this.head_->data_.p = p_
     this.head_->data_.v = d_
     select case fx
+    case FLASH
+		''
     case EXPLODE
         this.head_->data_.anim.load("splode.txt")
+        this.head_->data_.anim.play()
+		this.head_->data_.anim.setSpeed(s_)
     case SMOKE
         this.head_->data_.anim.load("smokeanim.txt")
+        this.head_->data_.anim.play()
+		this.head_->data_.anim.setSpeed(s_)
     case SPARKLE
         this.head_->data_.anim.load("sparkle.txt")
+        this.head_->data_.anim.play()
+		this.head_->data_.anim.setSpeed(s_)
     case RADAR
         this.head_->data_.anim.load("radaranim.txt")
+        this.head_->data_.anim.play()
+		this.head_->data_.anim.setSpeed(s_)
     case FALLOUT_EXPLODE
 	    this.head_->data_.anim.load("splode.txt")
 	    level_parent->addFallout(p_.x(), p_.y())
 	    GS = cast(GameSpace ptr, parent)
 	    GS->vibrateScreen()
+	   	this.head_->data_.anim.play()
+		this.head_->data_.anim.setSpeed(s_)
 	case WATER_SPLASH
 	    this.head_->data_.anim.load("drip.txt")
 	    this.head_->data_.anim.hardSwitch(1)
+		this.head_->data_.anim.play()
+		this.head_->data_.anim.setSpeed(s_)
     end select
     this.head_->data_.fx = fx
-    this.head_->data_.anim.play()
-    this.head_->data_.anim.setSpeed(s_)
     this.head_->data_.firstDraw = 1
-    
+    this.head_->data_.endIt = 0
     
     this.numNodes += 1
 end sub
@@ -73,9 +85,11 @@ sub OneShotEffects.proc_effects(t as double)
         cur = curNode->data_
         
         curNode->data_.p = curNode->data_.p + curNode->data_.v
+        curNode->data_.endIt += 1
+        
         curNode->data_.anim.step_animation()
         
-        if curNode->data_.anim.done() = 1 then 
+        if curNode->data_.anim.done() = 1 orElse (curNode->data_.fx = FLASH andAlso curNode->data_.endIt = 4) then 
             if curNode->prev_ <> 0 then curNode->prev_->next_ = curNode->next_
             if curNode->next_ <> 0 then curNode->next_->prev_ = curNode->prev_
             if curNode = this.head_ then head_ = curNode->next_
@@ -105,10 +119,15 @@ sub OneShotEffects.draw_effects(scnbuff as uinteger ptr)
     while curNode <> 0
         cur = curNode->data_
         
-        if (cur.fx = EXPLODE or cur.fx = FALLOUT_EXPLODE) andAlso cur.firstDraw = 1 then
-            circle scnbuff, (cur.p.x(), cur.p.y()), 30, rgb(255,200,64),,,,F            
-        end if
-        cur.anim.drawAnimation(scnbuff, cur.p.x(), cur.p.y())
+        if cur.fx <> FLASH then 
+			cur.anim.drawAnimation(scnbuff, cur.p.x(), cur.p.y())
+		else
+			if cur.endIt < 2 then
+				circle scnbuff, (cur.p.x(), cur.p.y()), 40, rgb(255,255,0),,,,F   
+			else
+				circle scnbuff, (cur.p.x(), cur.p.y()), 20, rgb(0,0,0),,,,F   
+			end if     
+		end if
 
         curNode->data_.firstDraw = 0
         curNode = curNode->next_

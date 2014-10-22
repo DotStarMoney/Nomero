@@ -7,7 +7,7 @@
 #include "animation.bi"
 
 #define BOMB_STICKYNESS 0
-
+#define MINE_FREEFALL_MAX 30
 
 enum Item_Type_e
 	ITEM_KEY
@@ -32,6 +32,10 @@ type Item
 		declare sub drawItemTop(scnbuff as integer ptr)
 		declare sub setData0(d as integer)
 		declare sub setData1(d as integer)
+		declare sub setData2(d as integer)
+		declare function getData0() as integer
+		declare function getData1() as integer
+		declare function getData2() as integer
 		declare function process(t as double) as integer
 		declare sub flush()
 		declare sub setLink(link_ as objectLink)
@@ -42,12 +46,14 @@ type Item
 		as integer     itemFlavor
 		as TinyBody    body
 		as integer     body_i
+		as integer     freeFallingFrames
 		as integer     orientation
 		as ObjectLink  link
 		as integer       anims_n
 		as Animation ptr anims
-		as integer     data0
-		as integer     data1
+		as integer     	data0
+		as integer     	data1
+		as integer		data2
 end type
 
 

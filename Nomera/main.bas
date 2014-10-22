@@ -14,7 +14,7 @@
 	'flip
 #endmacro
 
-'FSOUND_Init(44100, 16, 0)
+FSOUND_Init(44100, 16, 0)
 
 #ifdef INTRO
 	#ifndef DEBUG 

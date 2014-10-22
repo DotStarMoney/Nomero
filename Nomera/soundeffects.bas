@@ -7,7 +7,8 @@ constructor SoundEffects()
 end constructor
 
 sub SoundEffects.init()
-	sounds(SND_EXPLODE)	 	= FSOUND_SAMPLE_Load(FSOUND_FREE,"explode.wav",0,0,0)
+	sounds(SND_EXPLODE_1)	= FSOUND_SAMPLE_Load(FSOUND_FREE,"explode1.wav",0,0,0)
+	sounds(SND_EXPLODE_2)	= FSOUND_SAMPLE_Load(FSOUND_FREE,"explode2.wav",0,0,0)
 	sounds(SND_JUMP) 		= FSOUND_SAMPLE_Load(FSOUND_FREE,"jump.wav",0,0,0)
 	sounds(SND_FULLCHARGE) 	= FSOUND_SAMPLE_Load(FSOUND_FREE,"fullcharge.wav",0,0,0)
 	sounds(SND_LAND) 		= FSOUND_SAMPLE_Load(FSOUND_FREE,"land.wav",0,0,0)
@@ -25,5 +26,16 @@ sub SoundEffects.setLink(link_ as objectLink)
 end sub
 
 sub SoundEffects.playSound(s as SoundEffect_e)
-	FSOUND_PlaySound (FSOUND_FREE, sounds(s))
+	dim as integer chnl
+	if s = SND_EXPLODE then
+		if int(rnd * 2) = 0 then
+			chnl = FSOUND_PlaySound(FSOUND_FREE, sounds(SND_EXPLODE_1))
+		else
+			chnl = FSOUND_PlaySound(FSOUND_FREE, sounds(SND_EXPLODE_2))
+		end if		
+		FSOUND_SetLoopMode(chnl, FSOUND_LOOP_OFF)
+	else
+		chnl = FSOUND_PlaySound(FSOUND_FREE, sounds(s))
+		FSOUND_SetLoopMode(chnl, FSOUND_LOOP_OFF)
+	end if
 end sub

@@ -4,10 +4,11 @@
 
 #include "objectlink.bi"
 
-#define NUM_SOUNDS 11
+#define NUM_SOUNDS 12
 
 enum SoundEffect_e
-	SND_EXPLODE
+	SND_EXPLODE_1
+	SND_EXPLODE_2
 	SND_FULLCHARGE
 	SND_JUMP
 	SND_LAND
@@ -18,6 +19,7 @@ enum SoundEffect_e
 	SND_DRIP
 	SND_HURT
 	SND_DEATH
+	SND_EXPLODE
 end enum
 
 type SoundEffects
@@ -30,7 +32,6 @@ type SoundEffects
 	private:
 		as ObjectLink link
 		as integer ptr sounds(0 to NUM_SOUNDS - 1)
-		
 end type
 	
 

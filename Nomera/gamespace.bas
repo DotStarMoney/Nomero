@@ -69,7 +69,7 @@ constructor GameSpace()
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    FSOUND_Stream_Play currentMusic, music(currentMusic)
+    'FSOUND_Stream_Play currentMusic, music(currentMusic)
     FSOUND_SetVolumeAbsolute(currentMusic, 255)
         
     switchTracks = 0
@@ -259,17 +259,19 @@ sub GameSpace.step_draw()
     if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
     graphicFX.drawEffects(scnbuff, camera, ACTIVE)
-    dynControl.drawDynamics(scnbuff)
     spy.drawPlayer(scnbuff)
     spy.drawItems(scnbuff)
-    projectiles.draw_collection(scnbuff)
-    effects.draw_effects(scnbuff)
+	dynControl.drawDynamics(scnbuff, ACTIVE)
 
+	lvlData.drawLayers(scnbuff, ACTIVE_COVER, camera.x(), camera.y(), Vector2D(0, shake))
+	dynControl.drawDynamics(scnbuff, ACTIVE_COVER)
     lvlData.drawLayers(scnbuff, FOREGROUND, camera.x(), camera.y(), Vector2D(0, shake))
+    effects.draw_effects(scnbuff)
+    projectiles.draw_collection(scnbuff)
 
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     
-    dynControl.drawDynamics(scnbuff, 1)
+    dynControl.drawDynamics(scnbuff, FOREGROUND)
     
 	
     window screen (0,0)-(SCRX-1,SCRY-1)

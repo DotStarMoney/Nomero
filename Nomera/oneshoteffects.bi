@@ -12,6 +12,7 @@ enum EffectType_
     SMOKE
     RADAR
     WATER_SPLASH
+    FLASH
 end enum
 
 type Effect_t
@@ -20,6 +21,7 @@ type Effect_t
     as Animation anim
     as integer firstDraw
     as EffectType_ fx
+    as integer endIt
 end type
 
 type EffectNode_t

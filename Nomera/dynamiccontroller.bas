@@ -252,13 +252,13 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = 0)
 		dobj = objects.roll()
 		if dobj <> 0 then
 			if dobj->object_type = OBJ_ENEMY then
-				if order = 0 then
+				if order = 1 then
 					cast(Enemy ptr, dobj->data_)->drawEnemy(scnbuff)
 				end if
 			elseif dobj->object_type = OBJ_ITEM then
-				if order = 0 then
+				if order = 2 then
 					cast(Item ptr, dobj->data_)->drawItem(scnbuff)
-				else
+				elseif order = 0 then
 					cast(Item ptr, dobj->data_)->drawItemTop(scnbuff)
 				end if
 			end if

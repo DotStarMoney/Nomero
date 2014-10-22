@@ -597,6 +597,10 @@ do
                         layers(N_layers - 1).inRangeSet = FOREGROUND
                     elseif left(lcase(item_tag), 10) = "background" then
                         layers(N_layers - 1).inRangeSet = BACKGROUND
+                    elseif left(lcase(item_tag), 12) = "active cover" then
+                        layers(N_layers - 1).inRangeSet = ACTIVE_COVER
+                    elseif left(lcase(item_tag), 6) = "active" then
+                        layers(N_layers - 1).inRangeSet = ACTIVE
                     elseif left(lcase(item_tag), 12) = "destructible" then
                         layers(N_layers - 1).isDestructible = 1
                     elseif left(lcase(item_tag), 7) = "fallout" then
@@ -698,10 +702,10 @@ do
                         curObjDepth = FOREGROUND
                     elseif left(lcase(item_tag), 10) = "background" then 
                         curObjDepth = BACKGROUND
-                    elseif left(lcase(item_tag), 6) = "active" then 
-                        curObjDepth = ACTIVE
                     elseif left(lcase(item_tag), 12) = "active cover" then 
                         curObjDepth = ACTIVE_COVER
+                    elseif left(lcase(item_tag), 6) = "active" then 
+                        curObjDepth = ACTIVE
                     end if
                 end if
             end if

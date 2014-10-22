@@ -9,7 +9,7 @@
 #include "soundeffects.bi"
 #include "fbpng.bi"
 
-dim as integer ptr Level.falloutTex = 0
+dim as integer ptr Level.falloutTex(0 to 1) = {0, 0}
 #ifdef DEBUG
 	dim as integer ptr Level.collisionBlox = 0
 #endif
@@ -27,12 +27,16 @@ constructor level
     blocks = 0
     destroyedBlockMemory.init(sizeof(destroyedBlocks_t))
     portalZonesNum = 0
-    if falloutTex = 0 then
-		falloutTex = png_load("falloutdisk96.png")
+    if falloutTex(0) = 0 then
+		falloutTex(0) = png_load("falloutdisk96_1.png")
     end if
+    if falloutTex(1) = 0 then
+		falloutTex(1) = png_load("falloutdisk96_2.png")
+    end if    
     foreground_layer.init(sizeof(integer))
     background_layer.init(sizeof(integer))
     active_layer.init(sizeof(integer))
+    activeCover_layer.init(sizeof(integer))
     pendingPortalSwitch = 0
     reconnect = 0
     #ifdef DEBUG
@@ -109,7 +113,10 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
         curList = @active_layer
     case FOREGROUND
         curList = @foreground_layer
+    case ACTIVE_COVER
+		curList = @activeCover_layer
     end select
+
     
     curList->rollReset()
     do
@@ -118,6 +125,7 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
             i = *curLayer
             x = 0
             y = 0
+
             if layerData[i].parallax < 255 then
                 parallaxAdjust(x, y,_
                                cam_x, cam_y,_
@@ -135,11 +143,11 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
             tl_y = ((ocy - y - SCRY * 0.5) ) / 16 - 1
             br_x = ((ocx - x + SCRX * 0.5) ) / 16
             br_y = ((ocy - y + SCRY * 0.5) ) / 16
-              
+        
+            
             window screen (ocx - SCRX * 0.5, ocy - SCRY * 0.5)-_
                           (ocx + SCRX * 0.5, ocy + SCRY * 0.5)
-                          
-            
+                                      
             if layerData[i].isFallout <> 65535 then
                 if falloutBlend = 0 then
                     falloutBlend = imagecreate(640,480)
@@ -171,7 +179,7 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                             if cur->cachedImage = 0 then
                                 bitblt_FalloutMix(falloutBlend,_
                                                   npx, npy, _
-                                                  falloutTex,_
+                                                  falloutTex(cur->flavor),_
                                                   sx0, sy0, sx1, sy1)
                             else
                                 
@@ -192,7 +200,6 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                 put scnbuff, (ocx - SCRX*0.5,ocy - SCRY*0.5), falloutBlend, TRANS
                 
             else
-				
                 drawLayer(scnbuff, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
             end if
         else
@@ -262,7 +269,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     end if
     
     rand = rnd
-    
+	
     for yscan = tl_y to br_y
         for xscan = tl_x to br_x
             block = blocks[lyr][yscan * lvlWidth + xscan]
@@ -485,7 +492,8 @@ end sub
   
 destructor level
     flush()
-    imagedestroy(falloutTex)
+    imagedestroy(falloutTex(0))
+    imagedestroy(falloutTex(1))
 end destructor
 
 function Level.usesSnow() as integer
@@ -684,10 +692,10 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
         
         
         fallout.cachedImage = imagecreate(imgW, imgH, &hffffffff)
-        
+        fallout.flavor = int(rnd * 2)
         bitblt_FalloutToFalloutMix(fallout.cachedImage,_
                                    x - fallout.a.x() - 64, y - fallout.a.y() - 64,_
-                                   falloutTex,_
+                                   falloutTex(fallout.flavor),_
                                    0, 0, 127, 127)
         
         for i = 0 to num - 1
@@ -713,7 +721,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
                     bitblt_FalloutToFalloutMix(fallout.cachedImage,_
                                                .a.x() - fallout.a.x(),_
                                                .a.y() - fallout.a.y(),_
-                                               falloutTex,_
+                                               falloutTex(.flavor),_
                                                0, 0,_
                                                127, 127)
                     
@@ -785,6 +793,7 @@ sub level.flush()
         if layerData <> 0 then deallocate(layerData)
         background_layer.flush()
         active_layer.flush()
+        activeCover_layer.flush()
         foreground_layer.flush()
         falloutZones.rollReset()
         do
@@ -1013,6 +1022,8 @@ sub level.load(filename as string)
                 active_layer.push_back(@layerInt)
             case FOREGROUND
                 foreground_layer.push_back(@layerInt)
+            case ACTIVE_COVER
+				activeCover_layer.push_back(@layerInt)
             end select
             
             lvb = 0

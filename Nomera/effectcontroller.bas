@@ -3,6 +3,7 @@
 #include "oneshoteffects.bi"
 #include "utility.bi"
 #include "soundeffects.bi"
+#include "gamespace.bi"
 
 constructor EffectController()
     ''
@@ -140,6 +141,7 @@ end sub
 
 function EffectController.processEffect(byref effect_p as ObjectEffect_t) as integer
     dim as Vector2D e_loc
+    dim as integer i
     do
         e_loc = Vector2D(effect_p.size.x() * rnd, effect_p.size.y() * rnd)
         e_loc = e_loc - effect_p.size * 0.5
@@ -182,10 +184,10 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
             oneshots->create(e_loc, SPARKLE, Vector2D(0, 0))
         end if
     case STEAM
-        if int(rnd * effect_p.density * 50) = 0 then
-            oneshots->create(e_loc, SMOKE, Vector2D(0, -2.5))
+        if int(rnd * effect_p.density * 25) = 0 then
+			oneshots->create(e_loc, SMOKE, Vector2D(0, -2.5))
         end if
-    case ONE_SHOT_SMOKE
+    case ONE_SHOT_SMOKE 
 		if effect_p.counter = 0 then
 			effect_p.counter = 1 + int(rnd * 16)
 		else
@@ -201,7 +203,19 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
 		else
 			effect_p.counter -= 1
 			if effect_p.counter = 1 then
-				oneshots->create(effect_p.p + effect_p.size*0.5, FALLOUT_EXPLODE, Vector2D(0,0))
+			
+				link.oneshoteffects_ptr->create(e_loc + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
+				link.oneshoteffects_ptr->create(e_loc + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
+				link.oneshoteffects_ptr->create(e_loc + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
+				link.soundeffects_ptr->playSound(SND_EXPLODE)
+
+				for i = 1 to 3
+					link.projectilecollection_ptr->create(e_loc, Vector2D(rnd*2 - 1, rnd*2 - 1) * (1 + rnd*700), DETRITIS)
+				next i
+			
+				link.level_ptr->addFallout(e_loc.x(), e_loc.y())
+				link.gamespace_ptr->vibrateScreen()	
+				
 				link.soundeffects_ptr->playSound(SND_EXPLODE)
 				return 1
 			end if

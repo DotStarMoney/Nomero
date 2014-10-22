@@ -32,7 +32,18 @@ end sub
 sub Item.setData1(d as integer)
 	data1 = d
 end sub
-
+sub Item.setData2(d as integer)
+	data2 = d
+end sub
+function Item.getData0() as integer
+	return data0
+end function
+function Item.getData1() as integer
+	return data1
+end function
+function Item.getData2() as integer
+	return data2
+end function
 sub Item.setLink(link_ as objectLink)
 	link = link_
 end sub
@@ -45,7 +56,7 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
 		body = TinyBody(Vector2D(0,0), 8, 10)
 		orientation = (itemFlavor_ and &h11000) shr 3
 		itemFlavor = (itemFlavor_ and &b111)
-		body.f = Vector2D(0, -10 * DEFAULT_GRAV)
+		'body.f = Vector2D(0, -10 * DEFAULT_GRAV)
 		data0 = 0
 		data1 = 0
 		anims_n = 3
@@ -121,7 +132,15 @@ function Item.process(t as double) as integer
 		anims[0].step_animation()
 		anims[1].step_animation()
 		anims[2].step_animation()
-		if data1 <> 0 then
+		if link.tinyspace_ptr->getArbiterN(body_i) = 0 then
+			freeFallingFrames += 1
+		else
+			freeFallingFrames = 0
+		end if
+		if (data1 <> 0) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
+			link.player_ptr->removeItemReference(cast(integer, @this))
+		
+			link.oneshoteffects_ptr->create(body.p, FLASH,,1)
 			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
 			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
 			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
