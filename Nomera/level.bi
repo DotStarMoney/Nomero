@@ -56,7 +56,7 @@ type Level
         declare sub resetBlock(x as integer, y as integer, lyr as integer)
         declare sub setCollision(x as integer, y as integer, v as integer)
         declare sub flush()
-        declare sub addFallout(x as integer, y as integer, flavor as integer = 0)
+        declare sub addFallout(x as integer, y as integer, flavor as integer = -1)
         declare function usesSnow() as integer
         declare function mustReconnect() as integer
         
@@ -109,7 +109,7 @@ type Level
         dim as EffectController_ ptr graphicFX_
         
         dim as Hash2D falloutZones
-        static as integer ptr falloutTex(0 to 1)
+        static as integer ptr falloutTex(0 to 2)
         
         #ifdef DEBUG
 			static as integer ptr collisionBlox

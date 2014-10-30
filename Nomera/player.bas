@@ -38,6 +38,8 @@ constructor Player
     items.init(sizeof(Item ptr))
     for i = 0 to 9
 		hasBomb(i) = 0
+		bombData(i).isSwitching = 0
+		bombData(i).curState = TOO_CLOSE
 	next i
 end constructor
 
@@ -241,6 +243,7 @@ sub Player.processControls(dire as integer, jump as integer,_
     dim as Item ptr newItem
     dim as LevelSwitch_t ls
     dim as GameSpace ptr gsp
+    dim as Vector2D d, bombPos, a_bound, b_bound
 	gsp = cast(GameSpace ptr, game_parent)
 	
 	
@@ -506,6 +509,26 @@ sub Player.processControls(dire as integer, jump as integer,_
 				newItem->setData0(i + 1)
 				newItem->setData2(hasBomb(i))
 				hasBomb(i) = cast(integer, newItem)
+				
+				bombPos = newItem->getPos()
+				d = bombPos - (body.p - Vector2D(0, 13))
+				if d.magnitude() > (BOMB_TRANS_DIST + i*2) then
+					newItem->getBounds(a_bound, b_bound)
+					if(boxbox(link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 - Vector2D(1,1) * SCREEN_IND_BOUND, _
+							  link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 + Vector2D(1,1) * SCREEN_IND_BOUND, _
+							  a_bound, b_bound)) then
+						bombData(i).nextState = PLAYER_ARROW
+					else			
+						bombData(i).nextState = SCREEN_ARROW
+					end if
+				else
+					bombData(i).nextState = TOO_CLOSE
+				end if
+				bombData(i).curState = TOO_CLOSE
+				bombData(i).switchFrame = BOMB_TRANS_FRAMES
+				bombData(i).isSwitching = 1
+				bombData(i).animating = 1
+				
 				items.insert(hasBomb(i), @newItem)
 			end if
 		elseif numbers(i) andAlso hasBomb(i) andAlso (lastNumbers(i) = 0) then
@@ -513,6 +536,9 @@ sub Player.processControls(dire as integer, jump as integer,_
 			newItem->setData1(1)
 			items.remove(hasBomb(i))
 			hasBomb(i) = 0
+			bombData(i).isSwitching = 1
+			bombData(i).switchFrame = BOMB_TRANS_FRAMES
+			bombData(i).nextState = TOO_CLOSE
 		end if
 		lastNumbers(i) = numbers(i)  
     next i
@@ -534,16 +560,168 @@ sub Player.removeItemReference(data_ as integer)
 	end if
 end sub
 
-sub Player.drawItems(scnbuff as uinteger ptr)
+sub Player.drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
 	dim as Item ptr curItem
-	BEGIN_HASH(curItem, items)
-		curItem->drawItem(scnbuff)
+	dim as Item ptr ptr curItem_
+	dim as Vector2D center
+	dim as Vector2D bombPos
+	dim as Vector2d scnPos
+	dim as Vector2D d, arrow, a_bound, b_bound
+	dim as Vector2D p(0 to 2)
+	dim as double ang
+	dim as double shrink
+	dim as integer i, col
+	
+	center = -link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5
+	for i = 0 to 9
+		if bombData(i).animating then
+			curItem = cast(Item ptr, hasBomb(i))
+			if hasBomb(i) then
+				bombPos = curItem->getPos()
+				bombData(i).bombP = bombPos
+			else
+				bombPos = bombData(i).bombP
+			end if
+			d = bombPos - (body.p - Vector2D(0, 13))
+			ang = d.angle()
+			if bombData(i).nextState = PLAYER_ARROW orElse bombData(i).curState = PLAYER_ARROW then
+				if bombData(i).isSwitching then
+					if bombData(i).nextState = PLAYER_ARROW then
+						shrink = 1.5 - bombData(i).switchFrame / BOMB_TRANS_FRAMES
+					else
+						shrink = (bombData(i).switchFrame / BOMB_TRANS_FRAMES) * 1.8
+					end if
+				else
+					shrink = 1
+				end if
+				arrow = body.p - Vector2D(0, 13) + offset
+				if shrink <> 0 then
+					p(0) = arrow+Vector2D(cos(ang),sin(ang)) * (34 + (5 + i*2)*shrink)
+					p(1) = arrow+Vector2D(cos(ang + (0.15 - (i*0.005)) * shrink),sin(ang + (0.15 - (i*0.005)) * shrink)) * (34 + (-4 + i*2)*shrink)
+					p(2) = arrow+Vector2D(cos(ang - (0.15 + (i*0.005)) * shrink),sin(ang - (0.15 + (i*0.005)) * shrink)) * (34 + (-4 + i*2)*shrink)
+					col = Item.getIndicatorColor(i)
+					center = center - offset
+					vTriangle scnbuff, p(0) + center, p(1) + center, p(2) + center, col
+					center = center + offset
+					subColor(col, &h484848)
+					vline scnbuff, p(0), p(1), col
+					vline scnbuff, p(1), p(2), col
+					vline scnbuff, p(2), p(0), col
+				end if
+			end if
+			if bombData(i).nextState = SCREEN_ARROW orElse bombData(i).curState = SCREEN_ARROW then
+				if bombData(i).isSwitching then
+					if bombData(i).nextState = PLAYER_ARROW then
+						shrink = bombData(i).switchFrame / BOMB_TRANS_FRAMES
+					else
+						shrink = 1.5 - (bombData(i).switchFrame / BOMB_TRANS_FRAMES) '* 1.8
+					end if
+				else
+					shrink = 1
+				end if
+				
+				scnPos = bombPos
+				a_bound = link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 + Vector2D(1,1) * (BOMB_SCREEN_IND_RAD + i*3)
+				b_bound = link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 - Vector2D(1,1) * (BOMB_SCREEN_IND_RAD + i*3)
+				if scnPos.x < a_bound.x then 
+					scnPos.setX(a_bound.x)
+				elseif scnPos.x > b_bound.x then
+					scnPos.setX(b_bound.x)
+				end if
+				if scnPos.y < a_bound.y then 
+					scnPos.setY(a_bound.y)
+				elseif scnPos.y > b_bound.y then
+					scnPos.setY(b_bound.y)
+				end if	
+				d = bombPos - scnPos
+				ang = d.angle()
+				col = Item.getIndicatorColor(i)
+				subColor(col, &h484848)		
+				circle scnbuff, (scnPos.x, scnPos.y), (BOMB_SCREEN_IND_RAD-12) * shrink, Item.getIndicatorColor(i),,,,F
+				circle scnbuff, (scnPos.x, scnPos.y), (BOMB_SCREEN_IND_RAD-12) * shrink, col
+				p(0) = scnPos + Vector2D(cos(ang), sin(ang)) * BOMB_SCREEN_IND_RAD * shrink
+				p(1) = scnPos + Vector2D(cos(ang + PI/2), sin(ang + PI/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink
+				p(2) = scnPos + Vector2D(cos(ang - PI/2), sin(ang - PI/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink
+				center = center - offset
+				if shrink <> 0 then vTriangle scnbuff, p(0) + center, p(1) + center, p(2) + center, Item.getIndicatorColor(i)
+				center = center + offset
+				vline scnbuff, p(0), p(1), col
+				vline scnbuff, p(0), p(2), col
+				col = Item.getIndicatorColor(i)
+				addColor(col, &h404040)
+				if shrink = 1 then drawStringShadow scnbuff, scnPos.x - 3, scnPos.y - 4, iif(i < 9, str(i + 1), "0"), col
+			end if
+
+			'make screen border triangles animated
+			'make these "bomb hints" toggle-able
+		
+		end if
+	next i
+	
+	BEGIN_HASH(curItem_, items)
+		curItem = *curItem_
+		if curItem->getType() <> ITEM_BOMB then
+			curItem->drawItem(scnbuff)
+		end if
 	END_HASH()
 end sub
 
 sub Player.processItems(t as double)
 	dim as Item ptr curItem
-	BEGIN_HASH(curItem, items)
+	dim as Item ptr ptr curItem_
+	dim as integer bombNumber
+	dim as Vector2D bombPos
+	dim as Vector2D d, a_bound, b_bound
+	
+	for bombNumber = 0 to 9
+		if bombData(bombNumber).animating then
+			
+			
+			if bombData(bombNumber).isSwitching then
+				if bombData(bombNumber).switchFrame > 0 then
+					bombData(bombNumber).switchFrame -= 1
+				else
+					bombData(bombNumber).isSwitching = 0
+					bombData(bombNumber).curState = bombData(bombNumber).nextState
+					if hasBomb(bombNumber) = 0 then
+						bombData(bombNumber).animating = 0
+					end if
+				end if
+			elseif hasBomb(bombNumber) then
+				curItem = cast(Item ptr, hasBomb(bombNumber))
+				bombPos = curItem->getPos()
+				d = bombPos - (body.p - Vector2D(0, 13))
+				if d.magnitude() > (BOMB_TRANS_DIST + bombNumber*2) then
+					curItem->getBounds(a_bound, b_bound)
+					if (boxbox(link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 - Vector2D(1,1) * SCREEN_IND_BOUND, _
+							  link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 + Vector2D(1,1) * SCREEN_IND_BOUND, _
+							  a_bound, b_bound)) then
+						if (bombData(bombNumber).curState <> PLAYER_ARROW) then
+							bombData(bombNumber).nextState = PLAYER_ARROW
+							bombData(bombNumber).isSwitching = 1
+							bombData(bombNumber).switchFrame = BOMB_TRANS_FRAMES
+						end if
+					elseif (bombData(bombNumber).curState <> SCREEN_ARROW) then	
+						bombData(bombNumber).nextState = SCREEN_ARROW
+						bombData(bombNumber).isSwitching = 1
+						bombData(bombNumber).switchFrame = BOMB_TRANS_FRAMES
+					end if
+				elseif (bombData(bombNumber).curState <> TOO_CLOSE) then	
+					bombData(bombNumber).nextState = TOO_CLOSE
+					bombData(bombNumber).isSwitching = 1
+					bombData(bombNumber).switchFrame = BOMB_TRANS_FRAMES
+				end if
+			end if
+			
+		
+	
+		end if
+	next bombNumber
+	
+	
+	BEGIN_HASH(curItem_, items)
+		curItem = *curItem_
 		curItem->process(t)
+
 	END_HASH()	
 end sub

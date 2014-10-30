@@ -78,9 +78,7 @@ type GameSpace
         as integer   	 isSwitching
         as integer   	 switchFrame
         as LevelSwitch_t pendingSwitch
-        
-        as Animation testImg
-        
+                
         as byte ptr      pathData
         as integer       pathBytes
         as string        pathFile

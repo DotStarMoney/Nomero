@@ -9,7 +9,7 @@
 #include "soundeffects.bi"
 #include "fbpng.bi"
 
-dim as integer ptr Level.falloutTex(0 to 1) = {0, 0}
+dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
 #ifdef DEBUG
 	dim as integer ptr Level.collisionBlox = 0
 #endif
@@ -33,6 +33,10 @@ constructor level
     if falloutTex(1) = 0 then
 		falloutTex(1) = png_load("falloutdisk96_2.png")
     end if    
+    if falloutTex(2) = 0 then
+		falloutTex(2) = png_load("falloutdisk96_3.png")
+    end if    
+       
     foreground_layer.init(sizeof(integer))
     background_layer.init(sizeof(integer))
     active_layer.init(sizeof(integer))
@@ -268,6 +272,11 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
     end if
     
+    if layerData[lyr].coverage = 1 then
+
+
+    end if 
+    
     rand = rnd
 	
     for yscan = tl_y to br_y
@@ -494,6 +503,7 @@ destructor level
     flush()
     imagedestroy(falloutTex(0))
     imagedestroy(falloutTex(1))
+    imagedestroy(falloutTex(2))
 end destructor
 
 function Level.usesSnow() as integer
@@ -618,7 +628,7 @@ sub Level.modBlockDestruct(lyr as integer, xs as integer, ys as integer)
 	end if
 end sub
 
-sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
+sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
     dim as Level_FalloutType fallout
     dim as Level_FalloutType ptr ptr list
     dim as integer num, i
@@ -634,7 +644,15 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
     
     fallout.a = Vector2D(x,y) - Vector2D(64, 64)
     fallout.b = Vector2D(x,y) + Vector2D(64, 64)
+    if flavor = -1 then
+		if int(rnd * 5000) = 0 then
+			flavor = 2
+		else
+			flavor = int(rnd * 2)
+		end if
+    end if
     
+	fallout.flavor = flavor
     
     tl_x = fallout.a.x() / 16
     tl_y = fallout.a.y() / 16
@@ -657,7 +675,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
 			d = sqr(xp*xp + yp*yp)
 			if d <= 48 then
 				splodeBlockReact(xs, ys)
-				if noVisuals = 0 then
+				if noVisuals = 0 andAlso fallout.flavor <> 2 then
 					for i = 0 to blocks_N - 1
 						if (layerData[i].isFallout = 1) andAlso d <= 12 then
 							resetBlock(xs, ys, i)
@@ -692,7 +710,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = 0)
         
         
         fallout.cachedImage = imagecreate(imgW, imgH, &hffffffff)
-        fallout.flavor = int(rnd * 2)
+        
         bitblt_FalloutToFalloutMix(fallout.cachedImage,_
                                    x - fallout.a.x() - 64, y - fallout.a.y() - 64,_
                                    falloutTex(fallout.flavor),_

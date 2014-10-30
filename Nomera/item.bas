@@ -26,6 +26,10 @@ destructor Item()
 	link.tinyspace_ptr->removeBody(body_i)
 end destructor
 
+function Item.getIndicatorColor(i as integer) as integer
+	return BOMB_COLORS[i]
+end function
+
 sub Item.setData0(d as integer)
 	data0 = d
 end sub
@@ -91,6 +95,23 @@ sub Item.setPos(v as Vector2D)
 	body.p = v
 end sub
 
+function Item.getPos() as Vector2D
+	return body.p
+end function
+
+sub Item.getBounds(byref a as Vector2D, byref b as Vector2D)
+	select case itemType
+	case ITEM_BOMB
+		select case itemFlavor
+		case 0
+			a = anims[0].getOffset() + body.p
+			b = a + Vector2D(anims[0].getWidth(), anims[0].getHeight())
+		end select
+	case else
+	
+	end select	
+end sub
+
 sub Item.drawItem(scnbuff as integer ptr)
 	dim as integer orBits
 	select case itemType
@@ -106,6 +127,7 @@ end sub
 
 sub Item.drawItemTop(scnbuff as integer ptr)
 	dim as integer orBits
+	dim as integer col
 	select case itemType
 	case ITEM_BOMB
 		select case itemFlavor
@@ -115,6 +137,9 @@ sub Item.drawItemTop(scnbuff as integer ptr)
 				anims[1].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
 			end if
 			anims[2].drawAnimation(scnbuff, body.p.x - 3, body.p.y - 16, link.gamespace_ptr->camera)
+			col = BOMB_COLORS[data0 - 1]
+			addColor col, &h101010
+			drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col
 		end select
 	case else
 	
@@ -124,6 +149,14 @@ end sub
 sub Item.flush()
 	if anims then delete(anims)
 end sub
+
+function Item.getFlavor() as integer
+	return itemFlavor
+end function
+
+function Item.getType() as Item_Type_e
+	return itemType
+end function
 
 function Item.process(t as double) as integer
 	dim as integer i

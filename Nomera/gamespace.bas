@@ -260,7 +260,6 @@ sub GameSpace.step_draw()
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
     graphicFX.drawEffects(scnbuff, camera, ACTIVE)
     spy.drawPlayer(scnbuff)
-    spy.drawItems(scnbuff)
 	dynControl.drawDynamics(scnbuff, ACTIVE)
 
 	lvlData.drawLayers(scnbuff, ACTIVE_COVER, camera.x(), camera.y(), Vector2D(0, shake))
@@ -270,6 +269,8 @@ sub GameSpace.step_draw()
     projectiles.draw_collection(scnbuff)
 
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
+    spy.drawItems(scnbuff, Vector2D(0, shake))
+
     
     dynControl.drawDynamics(scnbuff, FOREGROUND)
     

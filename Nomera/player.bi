@@ -12,6 +12,10 @@
 #define LADDER_GRAB_EDGE_LENGTH 24
 #define CLIMBING_SPEED 82
 #define GROUND_FRAMES 1
+#define BOMB_TRANS_DIST 64
+#define BOMB_TRANS_FRAMES 8.0
+#define BOMB_SCREEN_IND_RAD 18
+#define SCREEN_IND_BOUND 0
 
 enum PlayerState
     ON_LADDER
@@ -19,6 +23,21 @@ enum PlayerState
     FREE_FALLING
     GROUNDED
 end enum
+
+enum Player_BombIndicateState
+	TOO_CLOSE
+	PLAYER_ARROW
+	SCREEN_ARROW
+end enum
+
+type Player_bombData
+	as Player_BombIndicateState curState
+	as Player_BombIndicateState nextState
+	as integer isSwitching
+	as integer switchFrame
+	as Vector2D bombP
+	as integer animating
+end type
 
 type Player
     public:
@@ -31,7 +50,7 @@ type Player
                                     shift as integer, numbers() as integer,_
                                     t as double)
         declare sub processItems(t as double)
-        declare sub drawItems(scnbuff as uinteger ptr)
+        declare sub drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
         declare sub loadAnimations(filename as string)
         declare sub drawPlayer(scnbuff as uinteger ptr)
         declare function getState() as PlayerState
@@ -81,6 +100,7 @@ type Player
         
         as integer lastNumbers(0 to 9)
         as integer hasBomb(0 to 9)
+        as Player_bombData bombData(0 to 9)
         
         as objectlink link
         as integer lastSpikes

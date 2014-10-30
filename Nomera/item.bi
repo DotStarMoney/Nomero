@@ -28,14 +28,19 @@ type Item
 		declare destructor()
 		declare sub init(itemType_ as Item_Type_e, itemFlavor_ as integer)
 		declare sub setPos(v as Vector2D)
+		declare function getPos() as Vector2D
+		declare sub getBounds(byref a as Vector2D, byref b as Vector2D)
 		declare sub drawItem(scnbuff as integer ptr)
 		declare sub drawItemTop(scnbuff as integer ptr)
 		declare sub setData0(d as integer)
 		declare sub setData1(d as integer)
 		declare sub setData2(d as integer)
+		declare static function getIndicatorColor(i as integer) as integer
 		declare function getData0() as integer
 		declare function getData1() as integer
 		declare function getData2() as integer
+		declare function getFlavor() as integer
+		declare function getType() as Item_Type_e
 		declare function process(t as double) as integer
 		declare sub flush()
 		declare sub setLink(link_ as objectLink)
