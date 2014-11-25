@@ -1,3 +1,181 @@
+#include "fbgfx.bi"
+
+#define DEMO
+using fb
+
+#define SCRX 8192
+#define SCRY 6144
+
+dim shared as integer ACCESSES = 0
+
+Sub triangle_Scan(dest as integer ptr = 0,_
+                  x1 as double, y1 as double,_
+                  x2 as double, y2 as double,_
+                  x3 as double, y3 as double,_
+                  tc as integer)
+
+    dim as integer LO,LI
+    dim as double PX(1 to 3)
+    dim as double PY(1 to 3)
+    dim as integer TFLAG
+    dim as uinteger ptr pp
+    dim as integer IL1,IL2,SLICE
+    dim as double XP1,XP2
+    dim as double XI1,XI2
+    dim as double TEMPX,TEMPY
+    dim as uinteger ptr BUFFER
+    dim as integer XRES, YRES
+    
+    /'
+    if dest = 0 then
+        screeninfo xres, yres
+        buffer = screenptr
+    else
+        imageinfo dest, xres, yres,,,buffer
+    end if
+    '/
+    XRES = SCRX
+    YRES = SCRY
+    buffer = dest
+    
+    TFLAG=0
+    PX(1)= X1
+    PX(2)= X2
+    PX(3)= X3
+       
+    PY(1)= Y1
+    PY(2)= Y2
+    PY(3)= Y3
+    
+    FOR LO = 1 TO 2
+        FOR LI =1 TO 2    
+            IF PY(LI+1) <= PY(LI) THEN
+            TEMPX = PX(LI) : TEMPY = PY(LI)
+            PX(LI) = PX(LI+1)
+            PY(LI) = PY(LI+1)
+            PX(LI+1) = TEMPX
+            PY(LI+1) = TEMPY
+            END IF  
+        NEXT LI
+    NEXT LO
+
+
+    IF PY(1)<PY(2) AND PY(2)<PY(3) or (PY(2) = PY(3)) THEN
+        TFLAG=1
+        XP1 = PX(1)
+        XP2 = PX(1)
+        XI1 = (PX(1)-PX(2)) / (PY(2) - PY(1))
+        XI2 = (PX(1)-PX(3)) / (PY(3) - PY(1))
+
+        FOR LO = PY(1) TO PY(2)-1
+            IF LO>=0 AND LO<YRES THEN
+            
+                IF XP1<=XP2 THEN
+                    IL1=XP1
+                    IL2=XP2
+                ELSE
+                    IL1=XP2
+                    IL2=XP1
+                END IF
+               
+                IF IL2>XRES THEN IL2=XRES
+                IF IL1<0 THEN IL1=0
+            
+                SLICE = IL2-IL1
+                IF SLICE>0 THEN
+                    ACCESSES += 1
+                    PP = @BUFFER[IL1+(LO*XRES)]  
+                    /'
+                    asm
+                        mov eax,dword ptr[TC]
+                        mov ecx, [slice]
+                        mov edi, [PP]
+                        rep stosd
+                    end asm  
+                    '/
+                END IF
+            
+            END IF
+            
+            XP1=XP1-XI1
+            XP2=XP2-XI2
+        NEXT LO
+
+        XI1 = (PX(2)-PX(3)) / (PY(3) - PY(2))
+        XP1 = PX(2)
+
+        FOR LO = PY(2) TO PY(3)
+            IF LO>=0 AND LO<YRES THEN
+                IF XP1<=XP2 THEN
+                    IL1=XP1
+                    IL2=XP2
+                ELSE
+                    IL1=XP2
+                    IL2=XP1
+                END IF
+
+                IF IL2>XRES THEN IL2=XRES
+                IF IL1<0 THEN IL1=0
+
+                SLICE = IL2-IL1
+                IF SLICE>0 THEN
+                    PP = @BUFFER[IL1+(LO*XRES)]  
+                    ACCESSES += 1
+                    /'
+                    asm
+                        mov eax,dword ptr[TC]
+                        mov ecx, [slice]
+                        mov edi, [PP]
+                        rep stosd
+                    end asm  
+                    '/
+                END IF
+            END IF
+            XP1=XP1-XI1
+            XP2=XP2-XI2
+        NEXT LO
+
+    END IF
+    
+    IF TFLAG=0 AND PY(1) = PY(2) THEN
+
+        TFLAG=1
+        XP1 = PX(1)
+        XP2 = PX(2)
+        XI1 = (PX(1)-PX(3)) / (PY(3) - PY(1))
+        XI2 = (PX(2)-PX(3)) / (PY(3) - PY(2))
+        FOR LO = PY(1) TO PY(3)
+            IF LO>=0 AND LO<YRES THEN
+                IF XP1<=XP2 THEN
+                    IL1=XP1
+                    IL2=XP2
+                ELSE
+                    IL1=XP2
+                    IL2=XP1
+                END IF
+               
+                IF IL2>XRES THEN IL2=XRES
+                IF IL1<0 THEN IL1=0
+               
+                SLICE = IL2-IL1
+                IF SLICE>0 THEN
+                    PP = @BUFFER[IL1+(LO*XRES)]  
+                    ACCESSES += 1
+                    /'
+                    asm
+                        mov eax,dword ptr[TC]
+                        mov ecx, [slice]
+                        mov edi, [PP]
+                        rep stosd
+                    end asm  
+                    '/
+                END IF
+            END IF
+            XP1=XP1-XI1
+            XP2=XP2-XI2
+        NEXT LO
+    END IF
+END SUB
 
 sub triangle_AHS(dest as integer ptr = 0,_
                  x0 as double, y0 as double,_
@@ -11,8 +189,15 @@ sub triangle_AHS(dest as integer ptr = 0,_
     #define FIX_BITS_VALUE (1 shl FIX_BITS)
     #define MIN_BLOCK_X 8
     #define MIN_BLOCK_y 8
-    #define MAX_BLOCK_X 64
-    #define MAX_BLOCK_Y 32
+    
+    #define MAX_BLOCK_X 1024
+    #define MAX_BLOCK_Y 1024
+    #define START_MASK &b111111
+    #define GET_SIZE_X(x) 1 shl (((x) and &b000111) + 3)
+    #define GET_SIZE_Y(x) 1 shl (((x) shr 3) + 3)
+    #define splitX(x) iif(((x) and &b000111) = 0, -1, ((x) and &b111000) or (((x) and &b000111) - 1))
+    #define splitY(x) iif(((x) and &b111000) = 0, -1, ((x) and &b000111) or (((((x) shr 3) - 1)) shl 3))
+    
     #define _0_   0
     #define _1_   4
     #define _2_   8
@@ -45,8 +230,7 @@ sub triangle_AHS(dest as integer ptr = 0,_
     #define _pblockQAB2_ 400
     #define _bcol_ 416
     
-    #define GET_SIZE_X(x) 1 shl (((x) and &h03) + 3)
-    #define GET_SIZE_Y(x) 1 shl (((x) shr &h02) + 3)
+    
 
     #macro EXPAND(x, y)
         x[y + 1] = x[y]
@@ -54,7 +238,7 @@ sub triangle_AHS(dest as integer ptr = 0,_
         x[y + 3] = x[y]
     #endmacro
     
-    #define STACK_SIZE 16
+    #define STACK_SIZE 64
     
     #macro PUSH_BLOCK()
         stackPtr += 1
@@ -206,12 +390,6 @@ sub triangle_AHS(dest as integer ptr = 0,_
     dim as integer splitMask
     dim as integer crnr(0 to 2)
     dim as integer crnrMask
-    dim as integer splitX(0 to 11) = { -1,   0,   1,   2,_
-                                       -1,   4,   5,   6,_
-                                       -1,   8,   9,  10}
-    dim as integer splitY(0 to 11) = { -1,  -1,  -1,  -1,_
-                                        0,   1,   2,   3,_
-                                        4,   5,   6,   7}
 
     dim as integer ptr dstPxls
     dim as integer ptr startLoc
@@ -235,12 +413,18 @@ sub triangle_AHS(dest as integer ptr = 0,_
     dim as integer ptr alligned_
     dim as integer ptr alligned_base
     
+    /'
     if dest <> 0 then
         imageinfo dest, dst_w, dst_h, , ,dstPxls
     else
         screeninfo dst_w, dst_h
         dstPxls = screenptr
     end if
+    '/
+    dst_w = SCRX
+    dst_h = SCRY
+    dstPxls = dest
+    
     sdst_w = dst_w shl FIX_BITS
     sdst_h = dst_h shl FIX_BITS
 
@@ -449,16 +633,21 @@ sub triangle_AHS(dest as integer ptr = 0,_
     for y = tl_y to br_y step MAX_BLOCK_Y
         for x = tl_x to br_x step MAX_BLOCK_X
             
-            splitMask = 11
+            splitMask = START_MASK
             scx = x
             scy = y
             PUSH_BLOCK()
             
             while(stackPtr > -1)
                 POP_BLOCK()
+
                 curBlockW = GET_SIZE_X(splitMask)
-                curBlockH = GET_SIZE_Y(splitMask)       
-                                
+                curBlockH = GET_SIZE_Y(splitMask) 
+     
+                #ifdef DEMO
+                    'line (scx, scy)-(scx + curBlockW-1, scy + curBlockH-1), &h7f7f7f, B
+                #endif
+                  
                 cxy[_0_ + 0] = scx shl FIX_BITS
                 cxy[_0_ + 1] = scy shl FIX_BITS
                 cxy[_0_ + 2] = (scx + curBlockW - 1) shl FIX_BITS
@@ -538,118 +727,125 @@ sub triangle_AHS(dest as integer ptr = 0,_
                     
                     if (crnr(0) <> 0) andAlso (crnr(1) <> 0) andAlso (crnr(2) <> 0) then
                         if (crnr(0) = &hFFFFFFFF) andAlso (crnr(1) = &hFFFFFFFF) andAlso (crnr(2) = &hFFFFFFFF) then
-                            
                             startLoc = @dstPxls[(scy * dst_w) + scx]
                             stride = dst_w shl 2
-                            select case as const splitMask
-                            case 0
-                                FAST_STEP_INIT()
-                                FAST_STEP_8()
-                            case 1
-                                FAST_STEP_INIT()
-                                FAST_STEP_16()
-                            case 2
-                                FAST_STEP_INIT()
-                                FAST_STEP_32()
-                            case 3
-                                FAST_STEP_INIT()
-                                FAST_STEP_64()
-                            case 4
-                                FAST_STEP_INIT()
-                                asm
-                                        mov     edx,        2
-                                    dtAHS_block4_loop:
-                                end asm
-                                FAST_STEP_8()
-                                asm
-                                        dec     edx
-                                        jnz     dtAHS_block4_loop
-                                end asm
-                            case 5
-                                FAST_STEP_INIT()
-                                asm
-                                        mov     edx,        2
-                                    dtAHS_block5_loop:
-                                end asm
-                                FAST_STEP_16()
-                                asm
-                                        dec     edx
-                                        jnz     dtAHS_block5_loop
-                                end asm
-                            case 6
-                                FAST_STEP_INIT()
-                                asm
-                                        mov     edx,        2
-                                    dtAHS_block6_loop:
-                                end asm
-                                FAST_STEP_32()
-                                asm
-                                        dec     edx
-                                        jnz     dtAHS_block6_loop
-                                end asm
-                            case 7
-                                FAST_STEP_INIT()
-                                asm
-                                        mov     edx,        2
-                                    dtAHS_block7_loop:
-                                end asm
-                                FAST_STEP_64()
-                                asm
-                                        dec     edx
-                                        jnz     dtAHS_block7_loop
-                                end asm 
-                            case 8
-                                FAST_STEP_INIT()
-                                asm
-                                        mov     edx,        4
-                                    dtAHS_block8_loop:
-                                end asm
-                                FAST_STEP_8()
-                                asm
-                                        dec     edx
-                                        jnz     dtAHS_block8_loop
-                                end asm 
-                            case 9
-                                FAST_STEP_INIT()
-                                asm
-                                        mov     edx,        4
-                                    dtAHS_block9_loop:
-                                end asm
-                                FAST_STEP_16()
-                                asm
-                                        dec     edx
-                                        jnz     dtAHS_block9_loop
-                                end asm 
-                            case 10
-                                FAST_STEP_INIT()
-                                asm
-                                        mov     edx,        4
-                                    dtAHS_block10_loop:
-                                end asm
-                                FAST_STEP_32()
-                                asm
-                                        dec     edx
-                                        jnz     dtAHS_block10_loop
-                                end asm 
-                            case 11
-                                FAST_STEP_INIT()
-                                asm
-                                        mov     edx,        4
-                                    dtAHS_block11_loop:
-                                end asm
-                                FAST_STEP_64()
-                                asm
-                                        dec     edx
-                                        jnz     dtAHS_block11_loop
-                                end asm 
-                            end select
+                            #ifndef DEMO
+                                select case as const splitMask
+                                case 0
+                                    FAST_STEP_INIT()
+                                    FAST_STEP_8()
+                                case 1
+                                    FAST_STEP_INIT()
+                                    FAST_STEP_16()
+                                case 2
+                                    FAST_STEP_INIT()
+                                    FAST_STEP_32()
+                                case 3
+                                    FAST_STEP_INIT()
+                                    FAST_STEP_64()
+                                case 4
+                                    FAST_STEP_INIT()
+                                    asm
+                                            mov     edx,        2
+                                        dtAHS_block4_loop:
+                                    end asm
+                                    FAST_STEP_8()
+                                    asm
+                                            dec     edx
+                                            jnz     dtAHS_block4_loop
+                                    end asm
+                                case 5
+                                    FAST_STEP_INIT()
+                                    asm
+                                            mov     edx,        2
+                                        dtAHS_block5_loop:
+                                    end asm
+                                    FAST_STEP_16()
+                                    asm
+                                            dec     edx
+                                            jnz     dtAHS_block5_loop
+                                    end asm
+                                case 6
+                                    FAST_STEP_INIT()
+                                    asm
+                                            mov     edx,        2
+                                        dtAHS_block6_loop:
+                                    end asm
+                                    FAST_STEP_32()
+                                    asm
+                                            dec     edx
+                                            jnz     dtAHS_block6_loop
+                                    end asm
+                                case 7
+                                    FAST_STEP_INIT()
+                                    asm
+                                            mov     edx,        2
+                                        dtAHS_block7_loop:
+                                    end asm
+                                    FAST_STEP_64()
+                                    asm
+                                            dec     edx
+                                            jnz     dtAHS_block7_loop
+                                    end asm 
+                                case 8
+                                    FAST_STEP_INIT()
+                                    asm
+                                            mov     edx,        4
+                                        dtAHS_block8_loop:
+                                    end asm
+                                    FAST_STEP_8()
+                                    asm
+                                            dec     edx
+                                            jnz     dtAHS_block8_loop
+                                    end asm 
+                                case 9
+                                    FAST_STEP_INIT()
+                                    asm
+                                            mov     edx,        4
+                                        dtAHS_block9_loop:
+                                    end asm
+                                    FAST_STEP_16()
+                                    asm
+                                            dec     edx
+                                            jnz     dtAHS_block9_loop
+                                    end asm 
+                                case 10
+                                    FAST_STEP_INIT()
+                                    asm
+                                            mov     edx,        4
+                                        dtAHS_block10_loop:
+                                    end asm
+                                    FAST_STEP_32()
+                                    asm
+                                            dec     edx
+                                            jnz     dtAHS_block10_loop
+                                    end asm 
+                                case 11
+                                    FAST_STEP_INIT()
+                                    asm
+                                            mov     edx,        4
+                                        dtAHS_block11_loop:
+                                    end asm
+                                    FAST_STEP_64()
+                                    asm
+                                            dec     edx
+                                            jnz     dtAHS_block11_loop
+                                    end asm 
+                                end select
+                            #else
+                                'line (scx+1,scy+1)-(scx+curBlockW-2, scy+curBlockH-2), &h0000ff, BF
+                                ACCESSES += 1
+                            #endif
                         else
                             if splitX(splitMask) = -1 then
                                 if splitY(splitMask) = -1 then
                                     cyx[_0_ + 0] =  cxy[_0_ + 1]
                                     EXPAND(cxy, _0_)
                                     EXPAND(cyx, _0_)
-                                    
+                                    #ifdef DEMO
+                                        ACCESSES += 0'64                                    
+                                    #endif
+                                    /'
                                     asm
                                         
                                             mov         ecx,                [alligned_base]
@@ -747,7 +943,7 @@ sub triangle_AHS(dest as integer ptr = 0,_
                                             jnz         dtAHS_slow_rows
                                             
                                     end asm
-
+                                    '/
                                 else
                                     SPLIT_BLOCK_H()
                                 end if
@@ -762,7 +958,11 @@ sub triangle_AHS(dest as integer ptr = 0,_
                                 elseif crnrMask = 5 orElse crnrMask = 10 then
                                     SPLIT_BLOCK_V()
                                 else
-                                    SPLIT_BLOCK_H()
+                                    if curBlockW > curBlockH then
+                                        SPLIT_BLOCK_V()
+                                    else
+                                        SPLIT_BLOCK_H()
+                                    end if
                                 end if
                             end if
                         end if
@@ -775,35 +975,38 @@ sub triangle_AHS(dest as integer ptr = 0,_
     deallocate(alligned_)
 end sub
 
-#define SCRX 640
-#define SCRY 480
+
 type vect2
     as double x, y
 end type
 
-screenres SCRX,SCRY,32,2
-screenset 0,1
+'screenres SCRX,SCRY,32,2
+'screenset 1,0
 randomize 13
 
 dim as vect2 pts(0 to 2)
 dim as integer i, cursel, dsel, button
 dim as integer old_button, click
-dim as integer mx, my
+dim as integer mx, my, mode
+dim as integer f, fps
+dim as integer toggle, o_toggle
+dim as double t
 dim as double dist, bdist
 dim as double dmag, x
+dim as integer ptr image = allocate(SCRX*SCRY + 8)
 
-pts(0).x = rnd * SCRX
-pts(0).y = rnd * SCRY
-pts(1).x = rnd * SCRX
-pts(1).y = rnd * SCRY
-pts(2).x = rnd * SCRX
-pts(2).y = rnd * SCRY
-
+pts(0).x = 0
+pts(0).y = 0
+pts(1).x = SCRX - 1
+pts(1).y = 0
+pts(2).x = 0
+pts(2).y = SCRY - 1
+mode = 0
 x=0
+t = timer
 do 
-    cls
-    
-    
+    'cls
+    /'
     getmouse mx, my,, button
     if (old_button <> button) and (button > 0) then click = 1
     old_button = button
@@ -823,15 +1026,38 @@ do
         pts(cursel).x = mx
         pts(cursel).y = my
     end if
+    '/
     
-    x += 0.1
-    triangle_AHS ,pts(0).x + x, pts(0).y, pts(1).x + x, pts(1).y, pts(2).x + x, pts(2).y, &h00ff00
-    
-    click = 0
-    flip
-    sleep 20
-loop until multikey(1)
+    o_toggle = toggle 
+    if multikey(SC_SPACE) then
+        toggle = 1
+    else
+        toggle = 0
+    end if
+    if o_toggle = 0 andAlso toggle = 1 then mode = 1 - mode
+    ACCESSES = 0
+    if mode = 0 then
+        triangle_Scan image,pts(0).x + x, pts(0).y, pts(1).x + x, pts(1).y, pts(2).x + x, pts(2).y, &he52b50
+    else
+        triangle_AHS image,pts(0).x + x, pts(0).y, pts(1).x + x, pts(1).y, pts(2).x + x, pts(2).y, &h6495ed
+    end if
 
+
+    
+    f += 1
+    if timer - t >= 1 then
+        fps = f
+        f = 0
+        t = timer
+        print "FPS: " & str(fps)
+        print "Block Transfers: " & str(ACCESSES)
+
+    end if
+    /'
+    click = 0
+    '/
+loop until multikey(1)
+deallocate(image)
 
 end 
 

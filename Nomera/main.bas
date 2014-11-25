@@ -1,10 +1,12 @@
+
+
+#include "constants.bi"
 #include "gamespace.bi"
 
-#ifdef DEBUG
-    screenres SCRX*2,SCRY*2,32
+#ifdef SCALE_2X
+	screenres SCRX*2,SCRY*2,32
 #else
-    screenres SCRX*2,SCRY*2,32',2
-	'screenset 1,0 
+	screenres SCRX, SCRY, 32
 #endif
 
 #macro sync()

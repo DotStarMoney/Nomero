@@ -650,6 +650,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
 		else
 			flavor = int(rnd * 2)
 		end if
+		'flavor = 2
     end if
     
 	fallout.flavor = flavor

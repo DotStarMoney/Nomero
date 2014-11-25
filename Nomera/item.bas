@@ -172,12 +172,13 @@ function Item.process(t as double) as integer
 		end if
 		if (data1 <> 0) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
 			link.player_ptr->removeItemReference(cast(integer, @this))
-		
-			link.oneshoteffects_ptr->create(body.p, FLASH,,1)
+			
 			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
 			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
-			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
-			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
+			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+			link.oneshoteffects_ptr->create(body.p, FLASH,,1)
+
 			link.soundeffects_ptr->playSound(SND_EXPLODE)
 
 			for i = 1 to 5

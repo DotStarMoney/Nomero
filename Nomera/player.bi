@@ -36,6 +36,10 @@ type Player_bombData
 	as integer isSwitching
 	as integer switchFrame
 	as Vector2D bombP
+	as Vector2D indicatorP
+	as double   angle
+	as double   shrink
+	as Vector2D offset
 	as integer animating
 end type
 
@@ -97,6 +101,7 @@ type Player
         as integer _jump_
         as integer _ups_
         as integer _shift_
+        as integer drawArrow
         
         as integer lastNumbers(0 to 9)
         as integer hasBomb(0 to 9)

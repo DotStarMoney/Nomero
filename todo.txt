@@ -1,12 +1,15 @@
 tinyspace bug STILL something to do with OWP corners
-fix path tracking dingus manuevers
-teach enemies to walk on moving platforms and destroyed platforms 
 explode all button
 deactivate all button
 SSE implementation of fallout
 rotation in blitters for orientation mod
+fix animation bug (seems to get triggered when you die)
+mine indicators should lock to screen wiggle
 
-cover layers
+cover layers <- next!
+fix path tracking dingus manuevers
+teach enemies to walk on moving platforms and destroyed platforms 
+
 add foreground cover layer for effects like smoke
 make destructible owp
 make smoke look/behave better for cover
@@ -15,6 +18,5 @@ create directional destructible chain blocks
 bomb position indicators
 	when you're on a different map
 		just indicators on the top of the screen
-
 
 add bomb memory between maps

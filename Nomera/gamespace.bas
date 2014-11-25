@@ -69,7 +69,7 @@ constructor GameSpace()
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    'FSOUND_Stream_Play currentMusic, music(currentMusic)
+    FSOUND_Stream_Play currentMusic, music(currentMusic)
     FSOUND_SetVolumeAbsolute(currentMusic, 255)
         
     switchTracks = 0
@@ -271,10 +271,8 @@ sub GameSpace.step_draw()
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     spy.drawItems(scnbuff, Vector2D(0, shake))
 
-    
     dynControl.drawDynamics(scnbuff, FOREGROUND)
     
-	
     window screen (0,0)-(SCRX-1,SCRY-1)
     
     /'
@@ -331,8 +329,12 @@ sub GameSpace.step_draw()
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
     tracker.record_draw(scnbuff)
 
-    scale2sync scnbuff
-    
+	#ifndef SCALE_2X
+	    window screen (0,0)-(SCRX-1,SCRY-1)
+		put (0,0), scnbuff, PSET
+	#else
+		scale2sync scnbuff
+    #endif
 end sub
     
 

@@ -3,6 +3,7 @@
 
 #include "debug.bi"
 
+'#define SCALE_2X
 #define SCRX 640
 #define SCRY 480
 

@@ -20,6 +20,7 @@ constructor Player
     groundDot      = 0.2
     cutSpeed       = 0.5
     stopFriction   = 3
+    drawArrow 	= 0
     boostFrames    = 13
     boostForce     = 800
     jumpImpulse    = 150
@@ -565,15 +566,20 @@ sub Player.drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0)
 	dim as Item ptr ptr curItem_
 	dim as Vector2D center
 	dim as Vector2D bombPos
-	dim as Vector2d scnPos
+	dim as Vector2d scnPos, offsetV
 	dim as Vector2D d, arrow, a_bound, b_bound
+	dim as Vector2D as_bound, bs_bound
 	dim as Vector2D p(0 to 2)
-	dim as double ang
-	dim as double shrink
-	dim as integer i, col
-	
+	dim as double ang, rd
+	dim as double shrink, colSin
+	dim as integer i, col, col2, q
+
 	center = -link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5
-	for i = 0 to 9
+	as_bound = link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 
+	bs_bound = link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 
+	
+	
+	for i = 0 to 9 
 		if bombData(i).animating then
 			curItem = cast(Item ptr, hasBomb(i))
 			if hasBomb(i) then
@@ -584,7 +590,7 @@ sub Player.drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0)
 			end if
 			d = bombPos - (body.p - Vector2D(0, 13))
 			ang = d.angle()
-			if bombData(i).nextState = PLAYER_ARROW orElse bombData(i).curState = PLAYER_ARROW then
+			if bombData(i).nextState = PLAYER_ARROW orElse bombData(i).curState = PLAYER_ARROW andAlso (drawArrow = 1) then
 				if bombData(i).isSwitching then
 					if bombData(i).nextState = PLAYER_ARROW then
 						shrink = 1.5 - bombData(i).switchFrame / BOMB_TRANS_FRAMES
@@ -619,10 +625,9 @@ sub Player.drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0)
 				else
 					shrink = 1
 				end if
-				
 				scnPos = bombPos
-				a_bound = link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 + Vector2D(1,1) * (BOMB_SCREEN_IND_RAD + i*3)
-				b_bound = link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 - Vector2D(1,1) * (BOMB_SCREEN_IND_RAD + i*3)
+				a_bound = as_bound + Vector2D(1,1) * BOMB_SCREEN_IND_RAD 
+				b_bound = bs_bound - Vector2D(1,1) * BOMB_SCREEN_IND_RAD 
 				if scnPos.x < a_bound.x then 
 					scnPos.setX(a_bound.x)
 				elseif scnPos.x > b_bound.x then
@@ -633,28 +638,56 @@ sub Player.drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0)
 				elseif scnPos.y > b_bound.y then
 					scnPos.setY(b_bound.y)
 				end if	
-				d = bombPos - scnPos
+				
+				bombData(i).offset = Vector2D(0,0)
+				for q = 0 to i-1
+					if bombData(q).animating andAlso bombData(q).nextState = SCREEN_ARROW orElse bombData(q).curState = SCREEN_ARROW then
+						d = (bombData(q).indicatorP + bombData(q).offset) - (scnPos + bombData(i).offset)
+						rd = d.magnitude
+						if rd <= (BOMB_SCREEN_IND_RAD*1.5) then
+							d = (link.gamespace_ptr->camera) - (scnPos + bombData(i).offset)
+							d.normalize()
+							bombData(i).offset += d * (BOMB_SCREEN_IND_RAD*1.5 - rd) * 0.5
+						end if
+					end if
+				next q
+				
+				d = bombPos - (scnPos + bombData(i).offset)
 				ang = d.angle()
+				bombData(i).bombP = bombPos
+				bombData(i).angle = ang
+				bombData(i).indicatorP = scnPos
+				bombData(i).shrink = shrink
+			end if
+		end if
+	next i
+	
+	for i = 9 to 0 step -1
+		if bombData(i).animating then
+			if bombData(i).nextState = SCREEN_ARROW orElse bombData(i).curState = SCREEN_ARROW then
+				shrink = bombData(i).shrink
+				scnPos = bombData(i).indicatorP
+				ang = bombData(i).angle
+				offsetV = bombData(i).offset
 				col = Item.getIndicatorColor(i)
+				col2 = col
+				colSin = 24*(sin(timer*8 + i * PI/10)+1)
+				subColor(col2, RGB(colSin, colSin, colSin))
 				subColor(col, &h484848)		
-				circle scnbuff, (scnPos.x, scnPos.y), (BOMB_SCREEN_IND_RAD-12) * shrink, Item.getIndicatorColor(i),,,,F
-				circle scnbuff, (scnPos.x, scnPos.y), (BOMB_SCREEN_IND_RAD-12) * shrink, col
-				p(0) = scnPos + Vector2D(cos(ang), sin(ang)) * BOMB_SCREEN_IND_RAD * shrink
-				p(1) = scnPos + Vector2D(cos(ang + PI/2), sin(ang + PI/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink
-				p(2) = scnPos + Vector2D(cos(ang - PI/2), sin(ang - PI/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink
+				circle scnbuff, (scnPos.x + offsetV.x, scnPos.y + offsetV.y), (BOMB_SCREEN_IND_RAD-12) * shrink, col2,,,,F
+				circle scnbuff, (scnPos.x + offsetV.x, scnPos.y + offsetV.y), (BOMB_SCREEN_IND_RAD-12) * shrink, col
+				p(0) = scnPos + Vector2D(cos(ang), sin(ang)) * (BOMB_SCREEN_IND_RAD) * shrink
+				p(1) = scnPos + Vector2D(cos(ang + PI/2), sin(ang + PI/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink + offsetV
+				p(2) = scnPos + Vector2D(cos(ang - PI/2), sin(ang - PI/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink + offsetV
 				center = center - offset
-				if shrink <> 0 then vTriangle scnbuff, p(0) + center, p(1) + center, p(2) + center, Item.getIndicatorColor(i)
+				if shrink <> 0 then vTriangle scnbuff, p(0) + center, p(1) + center, p(2) + center, col2
 				center = center + offset
 				vline scnbuff, p(0), p(1), col
 				vline scnbuff, p(0), p(2), col
 				col = Item.getIndicatorColor(i)
-				addColor(col, &h404040)
-				if shrink = 1 then drawStringShadow scnbuff, scnPos.x - 3, scnPos.y - 4, iif(i < 9, str(i + 1), "0"), col
+				addColor(col, &h606060)
+				if shrink = 1 then drawStringShadow scnbuff, scnPos.x - 3 + offsetV.x, scnPos.y - 4 + offsetV.y, iif(i < 9, str(i + 1), "0"), col
 			end if
-
-			'make screen border triangles animated
-			'make these "bomb hints" toggle-able
-		
 		end if
 	next i
 	
