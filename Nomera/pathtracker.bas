@@ -614,6 +614,7 @@ sub PathTracker.addNode(segs() as PathTracker_Segment_t, type_ as integer)
 	curNode.segments = new PathTracker_Segment_t[curNode.segments_n]
 	tl = segs(0).a
 	dr = segs(0).b
+	
 	for i = 0 to ubound(segs)
 		if segs(i).a.x() < tl.x() then tl.setX(segs(i).a.x())
 		if segs(i).b.x() < tl.x() then tl.setX(segs(i).b.x())

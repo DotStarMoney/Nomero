@@ -1112,5 +1112,10 @@
     <property name="effect" value="SHIMMER"/>
    </properties>
   </object>
+  <object name="Second Enemy" type="Spawn" x="1504" y="224" width="128" height="80">
+   <properties>
+    <property name="spawn" value="soldier 1"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

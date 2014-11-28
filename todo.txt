@@ -1,22 +1,41 @@
+PHASE 1 - start Dec 12/14
+
 tinyspace bug STILL something to do with OWP corners
 explode all button
 deactivate all button
 SSE implementation of fallout
-rotation in blitters for orientation mod
+rotation in blitters for sprite orientation mod
 fix animation bug (seems to get triggered when you die)
 mine indicators should lock to screen wiggle
-
-cover layers <- next!
-fix path tracking dingus manuevers
+player should not get stuck when out of bounds, should just fall
+cover layers
+	player has computed visibility
+	cover blocks fade out a bit
+fix path tracking dingus manuevers, enemies getting stuck
+fix path tracker crash when deleting edges mid-record
+add tinydynamic level importing, implement two versions.
+verify tinydynamic toggle platforms
+add conveyer belts and slippery blocks
 teach enemies to walk on moving platforms and destroyed platforms 
-
+add second enemy type, add different input types for enemies, including those that are stationary.
+program group thinking for enemies
+	enemies react and are damaged by bombs and level hazards
+	enemies think together to activate switches to cross gaps
+	enemies alert each other to sightings and call for help
+	enemies hunt the player, take different paths.
+program enemy death animation
 add foreground cover layer for effects like smoke
-make destructible owp
-make smoke look/behave better for cover
-create directional destructible chain blocks
-(hold down bomb number to deactivate)
-bomb position indicators
-	when you're on a different map
-		just indicators on the top of the screen
-
+make smoke look/behave better for cover, new smoke animation
+create directional destructible chain blocks that don't get blown up unless an adjacent block blows up.
+program new destructible blocks
+hold down bomb number to deactivate
+bomb indicators when you're on a different map
 add bomb memory between maps
+add crouch to place bomb, and bomb placement scheme, bombs on walls unstick if moved or destroyed
+new jump animation
+add money items and add when enemy killed
+spline, electric shock cgi
+
+Phase 2
+Add other bomb types
+ 
