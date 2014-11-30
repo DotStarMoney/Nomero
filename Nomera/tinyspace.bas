@@ -1675,9 +1675,11 @@ sub TinySpace.step_time(byval t as double)
 										slideDirection = (wrk.p + lockAxis_Adj) - tempArbs(j).guide_axis
 										
 										#ifdef DEBUG
-											vline tempArbs(j).guide_axis + tempArbs(j).guide_dot.perp *  100, _
-												  tempArbs(j).guide_axis + tempArbs(j).guide_dot.perp * -100,_
-												  &h00ffaa
+											dim as Vector2D a, b
+											a = tempArbs(j).guide_axis + tempArbs(j).guide_dot.perp *  100
+											b = tempArbs(j).guide_axis + tempArbs(j).guide_dot.perp * -100
+											line (a.x, a.y)-(b.x, b.y), &h00ffaa
+											
 										#endif
 										
 										tempV = tempArbs(j).guide_axis - wrk.p

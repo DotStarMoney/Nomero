@@ -978,14 +978,19 @@ for i = 0 to N_layers - 1
                         end select
                         ypos = ytn
                         oldCol = ppos(byCol)
+                        
+                        dim as integer test = 0
+                        
                         while ppos(byRow) <> pdes(byRow)
                             ppos(byCol) = oldCol
                             xpos = xtn
                             while ppos(byCol) <> pdes(byCol)
                                 
-                                col = setImages(curSet)[8 + xpos + ypos*tilesets(curSet).set_width]
+                                col = point(xpos, ypos, setImages(curSet))'setImages(curSet)[8 + xpos + ypos*tilesets(curSet).set_width]
+             
                                 if col <> &hffff00ff then 
                                     setImages(N_tilesets - 1)[8 + ppos(X_) + ppos(Y_) * 320] = col
+                                    
                                 end if
                                 ppos(byCol) += pdir(byCol)
                                 xpos += 1
@@ -993,6 +998,7 @@ for i = 0 to N_layers - 1
                             ppos(byRow) += pdir(byRow)
                             ypos += 1
                         wend
+                    
                     end if  
                     newRTile = highTileValue + N_rotated
                     rotatedTiles.insert(layers(i).layer_data[q], @newRTile)
@@ -1001,6 +1007,7 @@ for i = 0 to N_layers - 1
                 else
                     layers(i).layer_data[q] = *cast(integer ptr, rotatedTiles.retrieve(layers(i).layer_data[q]))
                 end if
+                
             end if
         next q
     end if

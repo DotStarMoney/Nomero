@@ -1267,45 +1267,6 @@ return {
       properties = {},
       objects = {
         {
-          name = "Enemy 1",
-          type = "Spawn",
-          shape = "rectangle",
-          x = 288,
-          y = 416,
-          width = 224,
-          height = 64,
-          visible = true,
-          properties = {
-            ["spawn"] = "soldier 1"
-          }
-        },
-        {
-          name = "Enemy 2",
-          type = "Spawn",
-          shape = "rectangle",
-          x = 464,
-          y = 240,
-          width = 128,
-          height = 64,
-          visible = true,
-          properties = {
-            ["spawn"] = "soldier 1"
-          }
-        },
-        {
-          name = "Enemy 3",
-          type = "Spawn",
-          shape = "rectangle",
-          x = 608,
-          y = 240,
-          width = 128,
-          height = 64,
-          visible = true,
-          properties = {
-            ["spawn"] = "soldier 1"
-          }
-        },
-        {
           name = "Shimmer 1",
           type = "Effect",
           shape = "rectangle",
