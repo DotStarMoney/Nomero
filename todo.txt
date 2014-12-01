@@ -1,9 +1,9 @@
 PHASE 1 - start Dec 12/14
 
 TODO:
-collision with pain blocks should be circle to box
 explode all button
 deactivate all button
+remove dependence on sse3
 SSE implementation of fallout
 rotation in blitters for sprite orientation mod
 fix animation bug (seems to get triggered when you die)
@@ -35,6 +35,7 @@ program new destructible blocks
 hold down bomb number to deactivate
 bomb indicators when you're on a different map
 add bomb memory between maps
+add deactivation effect for mines
 add crouch to place bomb, and bomb placement scheme, bombs on walls unstick if moved or destroyed
 new jump animation
 add money items and add when enemy killed
