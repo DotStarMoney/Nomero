@@ -56,7 +56,7 @@ sub Animation.load(filename as string)
     if animHash.exists(filename) = 1 then
         data_ = *cast(AnimationData_t ptr ptr, animHash.retrieve(filename))
     else
-        data_ = allocate(sizeof(AnimationData_t))
+        data_ = new AnimationData_t 'allocate(sizeof(AnimationData_t))
         with *data_
             .animName = allocate(len(filename) + 1)
             *(.animName) = filename
@@ -103,7 +103,7 @@ sub Animation.load(filename as string)
 						readStep = 2
                     case 2
                         .animations_n = val(lne)
-                        .animations = allocate(sizeof(Animation_t) * .animations_n)
+                        .animations = new Animation_t[.animations_n] 'allocate(sizeof(Animation_t) * .animations_n)
                         curAnim = -1
                         readStep = 100
                     case 100
@@ -111,6 +111,8 @@ sub Animation.load(filename as string)
                         readStep = 3
                     case 3
                         curAnim += 1
+                        .animations[curAnim].rotatedGroupFrames.init(sizeof(RotatedGroup_t ptr))
+                        .animations[curAnim].nonTransCountFrames.init(sizeof(NonTransCount_t ptr))
                         split(lne,",",-1,pieces())
                         for i = 0 to ubound(pieces)
                             pieces(i) = ucase(mid(pieces(i), 2, len(pieces(i))-2))
@@ -236,7 +238,7 @@ sub Animation.switch(next_anim as integer)
 end sub
 
 function Animation.getFrame() as integer
-    return currentFrame
+    return drawFrame
 end function
 
 sub Animation.hardSwitch(next_anim as integer)
@@ -519,29 +521,163 @@ sub Animation.setSpeed(s as integer)
     speed = s
 end sub
 
-sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0))
+function Animation.getFramePixelCount(rotatedFlags as integer = 0) as integer
+	dim as NonTransCount_t ptr tempGroup
+	dim as integer i
+	dim as integer drawW, drawH
+    dim as integer ptr drawImg
+    dim as Vector2D off
+    dim as integer start_x, start_y
+    dim as integer count
+    
+	with data_->animations[currentAnim]
+		
+		if .nonTransCountFrames.exists(drawFrame) then
+			tempGroup = *cast(NonTransCount_t ptr ptr, .nonTransCountFrames.retrieve(drawFrame))	
+		else
+			tempGroup = new NonTransCount_t
+			for i = 0 to 7
+				tempGroup->countPerRotatedGroup(i) = 0
+			next i
+			.nonTransCountFrames.insert(drawFrame, @tempGroup)
+		end if
+		
+		if tempGroup->countPerRotatedGroup(rotatedFlags) = 0 then
+			fetchImageData currentAnim, drawFrame, rotatedFlags, drawImg, drawW, drawH, off, start_x, start_y
+			tempGroup->countPerRotatedGroup(rotatedFlags) = countTrans(drawImg, start_x, start_y,_
+																	   start_x + drawW - 1, start_y + drawH - 1)
+		end if
+		
+		return tempGroup->countPerRotatedGroup(rotatedFlags)
+	
+	end with
+
+end function
+
+sub Animation.getFrameImageData(byref img as uinteger ptr, byref xpos as integer, byref ypos as integer, byref w as integer, byref h as integer)
+	dim as Vector2D THISONEDOESDUMMY
+	fetchImageData currentAnim, drawFrame, 0, img, w, h, THISONEDOESDUMMY, xpos, ypos
+end sub
+        
+        
+sub Animation.fetchImageData(animNum as integer, frameNum as integer, rotatedFlag as integer,_
+				             byref imgdata as uinteger ptr, byref drawW as integer, byref drawH as integer, byref offset as Vector2D,_
+				             byref start_x as integer, byref start_y as integer)
+	dim as RotatedGroup_t ptr tempRotGroup
+	dim as integer i
+	dim as integer newW, newH
+
+	with data_->animations[animNum]
+	
+        offset = .frame_offset
+		start_x = ((.frame_startCell + frameNum) * .frame_width) mod data_->w
+		start_y = (((.frame_startCell + frameNum) * .frame_width) \ data_->w) * .frame_height
+		if .frame_hasData = 1 then
+            offset += .frame_data[frameNum].offset
+        end if
+        drawW = .frame_width
+		drawH = .frame_height
+		
+		
+			   
+		if (rotatedFlag = 0) orElse (rotatedFlag > 7) then
+			imgdata = data_->image
+		else
+			if .rotatedGroupFrames.exists(frameNum) then
+				tempRotGroup = *cast(RotatedGroup_t ptr ptr,.rotatedGroupFrames.retrieve(frameNum))
+			else
+				tempRotGroup = new RotatedGroup_t
+				.rotatedGroupFrames.insert(frameNum, @tempRotGroup)
+				tempRotGroup->rotatedGroup = new integer ptr[8]
+				for i = 0 to 7
+					tempRotGroup->rotatedGroup[i] = 0
+				next i
+			end if
+			if tempRotGroup->rotatedGroup[rotatedFlag] = 0 then
+				newW = drawW
+				newH = drawH
+				if (rotatedFlag and 1) then	swap newW, newH
+				tempRotGroup->rotatedGroup[rotatedFlag] = imagecreate(newW, newH)
+				copyImageRotate(data_->image, tempRotGroup->rotatedGroup[rotatedFlag], rotatedFlag, start_x, start_y, drawW, drawH, 0, 0) 
+				drawW = newW
+				drawH = newH
+				imgdata = tempRotGroup->rotatedGroup[rotatedFlag]
+			else
+				imgdata = tempRotGroup->rotatedGroup[rotatedFlag]
+				imageinfo imgdata, drawW, drawH
+			end if
+
+			start_x = 0
+			start_y = 0
+		end if
+	end with	   
+end sub
+
+function Animation.getAnimation() as integer
+	return currentAnim
+end function
+
+sub Animation.drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as integer,_
+								    anim as integer, frame as integer,_
+								    cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)					    
     Dim as Vector2D off
     dim as integer start_x, start_y
     dim as integer a_x, a_y
     dim as integer b_x, b_y
     dim as integer pos_x, pos_y
+    dim as integer drawW, drawH
+    dim as integer ptr drawImg
+    with data_->animations[anim]
+		
+        fetchImageData anim, frame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
+                
+        select case data_->drawMode
+        case ANIM_TRANS
+		
+			put scnbuff, (x + off.x, y + off.y), drawImg, (start_x, start_y)-(start_x + drawW - 1, start_y + drawH - 1), TRANS
+			
+		case ANIM_GLOW
+			'put scnbuff, (0, 0), drawImg, ALPHA
+			off = off - (cam - Vector2D(SCRX * 0.5, SCRY * 0.5))
+			off.setX(off.x() + x)
+			off.setY(off.y() + y)
+			
+	        if screenclip(off.x, off.y, drawW, drawH, pos_x, pos_y, a_x, a_y, b_x, b_y) then
+
+				bitblt_alphaGlow(scnbuff, pos_x, pos_y, drawImg, start_x + a_x, start_y + a_y, start_x + b_x, start_y + b_y, glowValue)
+			end if
+			
+		end select
+		
+    end with    								    
+								    
+end sub
+        
+
+sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
+    Dim as Vector2D off
+    dim as integer start_x, start_y
+    dim as integer a_x, a_y
+    dim as integer b_x, b_y
+    dim as integer pos_x, pos_y
+    dim as integer drawW, drawH
+    dim as integer ptr drawImg
     with data_->animations[currentAnim]
-        off = .frame_offset
-        start_x = ((.frame_startCell + drawFrame) * .frame_width) mod data_->w
-        start_y = (((.frame_startCell + drawFrame) * .frame_width) \ data_->w) * .frame_height
-        if .frame_hasData = 1 then
-            off += .frame_data[drawFrame].offset
-        end if
+		
+        fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
         
         select case data_->drawMode
         case ANIM_TRANS
-			put scnbuff, (x + off.x, y + off.y), data_->image, (start_x, start_y)-(start_x + .frame_width - 1, start_y + .frame_height - 1), TRANS
+		
+			put scnbuff, (x + off.x, y + off.y), drawImg, (start_x, start_y)-(start_x + drawW - 1, start_y + drawH - 1), TRANS
+			
 		case ANIM_GLOW
 			off = off - (cam - Vector2D(SCRX * 0.5, SCRY * 0.5))
-	        if screenclip(x + off.x, y + off.y, .frame_width, .frame_height, pos_x, pos_y, a_x, a_y, b_x, b_y) then
-				bitblt_alphaGlow(scnbuff, pos_x, pos_y, data_->image, start_x + a_x, start_y + a_y, start_x + b_x, start_y + b_y, glowValue)
+	        if screenclip(x + off.x, y + off.y, drawW, drawH, pos_x, pos_y, a_x, a_y, b_x, b_y) then
+				bitblt_alphaGlow(scnbuff, pos_x, pos_y, drawImg, start_x + a_x, start_y + a_y, start_x + b_x, start_y + b_y, glowValue)
 			end if
 		end select
+		
     end with    
 end sub
 

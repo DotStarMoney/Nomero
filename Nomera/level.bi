@@ -67,6 +67,10 @@ type Level
         declare sub flushDestroyedBlockMemory()
         declare function checkDestroyedBlocks(x as integer, y as integer) as integer
        
+		declare function getCoverageLayerBlocks(x0 as integer, y0 as integer,_
+												x1 as integer, y1 as integer,_
+												byref data_ as Level_CoverageBlockInfo_t ptr) as integer
+       
         dim as integer justLoaded
     private:
         declare sub putDispatch(scnbuff as integer ptr,_

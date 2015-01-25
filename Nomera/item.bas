@@ -170,7 +170,7 @@ function Item.process(t as double) as integer
 		else
 			freeFallingFrames = 0
 		end if
-		if (data1 <> 0) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
+		if (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
 			link.player_ptr->removeItemReference(cast(integer, @this))
 			
 			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
@@ -188,6 +188,12 @@ function Item.process(t as double) as integer
 			link.gamespace_ptr->vibrateScreen()
 	
 			link.level_ptr->addFallout(body.p.x(), body.p.y())
+			
+			return 1
+		elseif (data1 = 2) then
+			link.player_ptr->removeItemReference(cast(integer, @this))
+
+			'puff o' smoke and deactivate effect
 			
 			return 1
 		end if

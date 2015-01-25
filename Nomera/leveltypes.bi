@@ -34,6 +34,17 @@ enum EffectType_t
     NONE
 end enum
 
+type Level_CoverageBlockInfo_t
+	as integer ptr img
+	as integer l
+	as integer x0
+	as integer y0
+	as integer x1
+	as integer y1
+	as integer rpx
+	as integer rpy
+end type
+
 type Level_FalloutType
     as Vector2D a
     as Vector2D b

@@ -52,6 +52,7 @@ type Player
         declare sub processControls(dire as integer, jump as integer,_
                                     ups as integer, fire as integer,_
                                     shift as integer, numbers() as integer,_
+                                    explodeAll as integer, deactivateAll as integer,_
                                     t as double)
         declare sub processItems(t as double)
         declare sub drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
@@ -66,7 +67,14 @@ type Player
 											 byref ups_p as integer, byref shift_p as integer)
         declare function beingHarmed() as integer
         declare sub removeItemReference(data_ as integer)
-    
+		
+		explodeAllHoldFrames as integer
+		deactivateHoldFrames as integer
+		
+		explodeAllHoldFrames_time as integer
+		deactivateHoldFrames_time as integer
+		
+		as integer deactivateGroupFlag(0 to 9)
     
 		bombs   as integer
 		health  as integer
@@ -90,9 +98,11 @@ type Player
         harmedFlashing as integer
         freeJumpFrames as integer
         as PlayerState state
+        
     private: 
         declare function onLadder() as integer
         declare function onSpikes() as integer
+        declare sub computeCoverage()
         declare sub switch(ls as LevelSwitch_t)
         
         as HashTable items
@@ -107,6 +117,9 @@ type Player
         as integer hasBomb(0 to 9)
         as Player_bombData bombData(0 to 9)
         
+        as double  coverValue
+        as double  covered
+        as integer lastGrounded
         as objectlink link
         as integer lastSpikes
         as any ptr game_parent
@@ -118,10 +131,16 @@ type Player
         as Level ptr level_parent
         as ProjectileCollection ptr proj_parent
         as integer lastJump
+        as integer lastJumpMemory
+        as integer lastJumpMemoryFrames
         as integer isJumping
         as integer jumpBoostFrames
         as integer freeJump
+        
         as Animation anim
+        as Animation silhouette
+        as integer revealSilo
+        
         as integer lastFire 
         as double lastTopSpeed
         as integer jumpHoldFrames

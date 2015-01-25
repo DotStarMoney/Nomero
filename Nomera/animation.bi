@@ -24,12 +24,22 @@ enum Anim_DrawType_e
 	ANIM_TRANS
 end enum
 
+
+
 type FrameData_t
     as Vector2D offset
     as integer  delay
 end type
 
-type Animation_t
+type RotatedGroup_t
+	as integer ptr ptr rotatedGroup
+end type
+
+type NonTransCount_t
+	as integer countPerRotatedGroup(0 to 7)
+end type
+
+type Animation_t field = 1
     as ANIM_TYPE         anim_type
     as ANIM_RELEASE_TYPE anim_release_type
     as integer           usePerFrameDelay
@@ -46,6 +56,9 @@ type Animation_t
     as integer         frame_endCell
     as integer         frame_loopPoint
     as Vector2D        frame_offset
+    
+    as HashTable       rotatedGroupFrames
+    as HashTable	   nonTransCountFrames
 end type
 
 type AnimationData_t
@@ -78,20 +91,29 @@ type Animation
         declare sub setSpeed(s as integer)
         declare sub setGlow(glow as integer)
  
-        declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0))
+        declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
+        declare sub drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as integer, anim as integer, frame as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
         
         declare sub step_animation()
+        declare function getAnimation() as integer
         declare function getWidth() as integer
         declare function getHeight() as integer 
         declare function getOffset() as Vector2D
         declare function getFrame() as integer
         declare function getGlow() as integer
+        
+        declare function getFramePixelCount(rotatedFlags as integer = 0) as integer
+        declare sub getFrameImageData(byref img as uinteger ptr, byref xpos as integer, byref ypos as integer, byref w as integer, byref h as integer)
+
     private:
         declare sub init()
         declare sub applySwitch()
         declare sub step_OneShot()
         declare sub step_Loop()
         declare sub step_Still()
+        declare sub fetchImageData(animNum as integer, frameNum as integer, rotatedFlag as integer,_
+				                   byref imgdata as uinteger ptr, byref drawW as integer, byref drawH as integer, byref offset as Vector2D,_
+				                   byref start_x as integer, byref start_y as integer)
         
         declare sub advance()
     

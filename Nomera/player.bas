@@ -4,6 +4,7 @@
 #include "debug.bi"
 #include "gamespace.bi"
 #include "dynamiccontroller.bi"
+#include "leveltypes.bi"
 
 
 constructor Player
@@ -15,6 +16,8 @@ constructor Player
     lastJump = 0
     isJumping = 0
     jumpBoostFrames = 0
+    lastJumpMemoryFrames = 6
+    lastJumpMemory = 0
     state = FREE_FALLING
     facing         = 1
     groundDot      = 0.2
@@ -26,6 +29,7 @@ constructor Player
     jumpImpulse    = 150
     top_speed_mul  = 1.5
     freeJumpFrames = 6
+    lastGrounded   = 0
     lastUps = 0
     lastFire = 0
     lastTopSpeed = 200
@@ -35,12 +39,22 @@ constructor Player
     chargeFlicker = 0
     charge = 0
     bombs = 10
+    revealSilo = 0
+    coverValue = 0.65
+
+    loadAnimations("mrspy.txt")
+	
     anim.play()
     items.init(sizeof(Item ptr))
+    explodeAllHoldFrames_time = 60
+    deactivateHoldFrames_time = 60
+    explodeAllHoldFrames = 0
+    deactivateHoldFrames = 0
     for i = 0 to 9
 		hasBomb(i) = 0
 		bombData(i).isSwitching = 0
 		bombData(i).curState = TOO_CLOSE
+		deactivateGroupFlag(i) = 0
 	next i
 end constructor
 
@@ -63,6 +77,7 @@ end sub
 
 sub Player.loadAnimations(filename as string)
     anim.load(filename)
+    silhouette.load(left(filename, len(filename) - 4) & "_s.txt")
 end sub
 
 sub Player.drawPlayer(scnbuff as uinteger ptr)
@@ -80,6 +95,38 @@ function Player.beingHarmed() as integer
 		return 0
 	end if
 end function
+
+sub Player.computeCoverage()
+	dim as integer pposx, pposy
+	dim as integer numBlocks
+	dim as integer ptr comptex
+	dim as integer i
+	dim as integer ptr playerImg
+	dim as integer xpos, ypos, w, h
+	dim as Level_CoverageBlockInfo_t ptr blocks
+	
+	pposx = body.p.x() + anim.getOffset().x
+	pposy = body.p.y() + anim.getOffset().y	
+	comptex = imagecreate((int((anim.getWidth() - 1) shr 4) + 1) shl 4, (int((anim.getHeight() - 1) shr 4) + 1) shl 4)
+	
+	numBlocks = link.level_ptr->getCoverageLayerBlocks(pposx, pposy,_
+													   pposx+anim.getWidth()-1,pposy+anim.getHeight()-1,_
+													   blocks)
+													   
+	for i = 0 to numBlocks - 1
+		put comptex, (blocks[i].rpx - pposx, blocks[i].rpy - pposy), blocks[i].img, (blocks[i].x0, blocks[i].y0)-(blocks[i].x1, blocks[i].y1), TRANS
+	next i
+	
+	
+	anim.getFrameImageData(playerImg, xpos, ypos, w, h)
+	
+	'only works because character is a multiple of 16
+	covered = compareTrans(comptex, 0, 0, playerImg, xpos, ypos, w, h) / anim.getFramePixelCount()
+	
+	if blocks then deallocate blocks
+	imagedestroy comptex
+end sub
+
 function Player.onSpikes() as integer
 	dim as integer x0,y0
     dim as integer x1,y1
@@ -236,10 +283,12 @@ end sub
 sub Player.processControls(dire as integer, jump as integer,_
                            ups as integer, fire as integer,_
                            shift as integer, numbers() as integer, _
+                           explodeAll as integer, deactivateAll as integer,_
                            t as double)
     dim as Vector2D gtan
     dim as double curSpeed, oSpeed
     dim as integer addSpd, ptype, spikes
+    dim as integer deactivateGroup
     dim as integer i
     dim as Item ptr newItem
     dim as LevelSwitch_t ls
@@ -264,6 +313,15 @@ sub Player.processControls(dire as integer, jump as integer,_
         this.body.v = Vector2D(0,0)
         isJumping = 0
     end if
+    
+    if jump = 1 andAlso lastJump = 0 then
+		lastJumpMemory = lastJumpMemoryFrames
+    else
+        if jump = 0 then 
+			isJumping = 0
+		end if
+    end if
+    
     if state = ON_LADDER then
         groundedFrames = 0
         if onLadder() = 1 then
@@ -292,9 +350,10 @@ sub Player.processControls(dire as integer, jump as integer,_
             state = FREE_FALLING
         end if
     elseif parent->isGrounded(body_i, this.groundDot) then
+		
         gtan = parent->getGroundingNormal(body_i, Vector2D(0,-1), Vector2D(dire,0), this.groundDot)
         gtan = gtan.perp()   
-        if jumpHoldFrames = 0 then state = GROUNDED
+        if jumpHoldFrames = 0 orElse (lastGrounded = 0) then state = GROUNDED
 		if lastState <> GROUNDED andAlso lastVel.magnitude() > 300 andAlso landedSFXFrames = 0 then
 			landedSFXFrames = 8
 			link.soundeffects_ptr->playSound(SND_LAND)
@@ -304,6 +363,7 @@ sub Player.processControls(dire as integer, jump as integer,_
         oSpeed = curSpeed
         
         if dire = 1 andalso ups <> 1 then
+			
             curSpeed = curSpeed + this.acc * t
             if this.body.v.y() < 0 then
                 if jumpHoldFrames = 0 then anim.hardSwitch(3)
@@ -322,6 +382,7 @@ sub Player.processControls(dire as integer, jump as integer,_
             facing = 1
 
             this.body.friction = 0
+            
         elseif dire = -1 andalso ups <> 1 then
             facing = 0
             if this.body.v.y() < 0 then
@@ -368,8 +429,10 @@ sub Player.processControls(dire as integer, jump as integer,_
         if groundedFrames = GROUND_FRAMES then freeJump = freeJumpFrames
         groundSwitchAnimFrames = 3
         if jumpHoldFrames > 0 then jumpHoldFrames -= 1
+        lastGrounded = 1
     else
         groundedFrames = 0
+
         if state <> JUMPING andAlso jumpHoldFrames = 0 then 
             if groundSwitchAnimFrames = 0 then 
                 if facing = 0 then
@@ -409,24 +472,27 @@ sub Player.processControls(dire as integer, jump as integer,_
         end if
         if freeJump > 0 then freeJump -=1
         if groundSwitchAnimFrames > 0 then groundSwitchAnimFrames -= 1
+        lastGrounded = 0
     end if   
     
-    if jump = 1 and lastJump = 0 then
-        if freeJump > 0 and isJumping = 0 then
-            state = JUMPING
-            link.soundeffects_ptr->playSound(SND_JUMP)
-            isJumping = 1
-            jumpBoostFrames = this.boostFrames
-            if facing = 0 then 
-                anim.hardSwitch(4)
-            else
-                anim.hardSwitch(5)
-            end if
-            this.body.v = Vector2D(this.body.v.x(),0) - Vector2D(0, this.jumpImpulse)
-        end if
-    else
-        if jump = 0 then isJumping = 0
-    end if
+    if lastJumpMemory > 0 then
+		if freeJump > 0 andAlso isJumping = 0 then
+			freeJump = 0
+			lastJumpMemory = 0
+			state = JUMPING
+			link.soundeffects_ptr->playSound(SND_JUMP)
+			isJumping = 1
+			jumpBoostFrames = this.boostFrames
+			if facing = 0 then 
+				anim.hardSwitch(4)
+			else
+				anim.hardSwitch(5)
+			end if
+			this.body.v = Vector2D(this.body.v.x(),0) - Vector2D(0, this.jumpImpulse)
+		end if
+	end if
+    if lastJumpMemory > 0 then lastJumpMemory -= 1
+
     lastJump = jump
     
     if isJumping = 1 then
@@ -476,7 +542,14 @@ sub Player.processControls(dire as integer, jump as integer,_
 	end if
 	
 	chargeFlicker = (chargeFlicker + 1) mod 8
-	
+	computeCoverage()
+	if covered > coverValue then
+		revealSilo += 8
+		if revealSilo > 255 then revealSilo = 255
+	else
+		revealSilo -= 8
+		if revealSilo < 0 then revealSilo = 0
+	end if
         
 	if pendingSwitch = 0 then
 		ptype = level_parent->processPortalCoverage(this.body.p + this.anim.getOffset(), anim.getWidth(), anim.getHeight(), ls)
@@ -497,14 +570,82 @@ sub Player.processControls(dire as integer, jump as integer,_
 		gsp->centerCamera(body.p)
 		pendingSwitch = 0
 	end if
+		
+	if deactivateAll then
+		explodeAll = 0
+		if deactivateHoldFrames < deactivateHoldFrames_time then
+			deactivateHoldFrames += 1
+		end if
+		for i = 0 to 9
+			if numbers(i) then 
+				numbers(i) = 0
+				deactivateGroupFlag(i) = 1
+			end if
+		next i
+	else
+		if deactivateHoldFrames = deactivateHoldFrames_time then
+			deactivateGroup = 0
+			for i = 0 to 9
+				if deactivateGroupFlag(i) andAlso hasBomb(i) then 
+					deactivateGroup = 1
+					newItem = *cast(Item ptr ptr, items.retrieve(hasBomb(i)))
+					newItem->setData1(2)
+					items.remove(hasBomb(i))
+					hasBomb(i) = 0
+					bombData(i).isSwitching = 1
+					bombData(i).switchFrame = BOMB_TRANS_FRAMES
+					bombData(i).nextState = TOO_CLOSE
+				end if
+			next i
+			if deactivateGroup = 0 then
+				for i = 0 to 9
+					numbers(i) = 0
+					if hasBomb(i) then 
+						newItem = *cast(Item ptr ptr, items.retrieve(hasBomb(i)))
+						newItem->setData1(2)
+						items.remove(hasBomb(i))
+						hasBomb(i) = 0
+						bombData(i).isSwitching = 1
+						bombData(i).switchFrame = BOMB_TRANS_FRAMES
+						bombData(i).nextState = TOO_CLOSE
+					end if
+				next i
+			end if
+			
+			deactivateHoldFrames = 0
+		elseif deactivateHoldFrames > 0 then
+			deactivateHoldFrames -= 1
+			
+		end if
+		for i = 0 to 9
+			deactivateGroupFlag(i) = 0
+		next i
+	end if
 	
-
+	if explodeAll then
+		if explodeAllHoldFrames < explodeAllHoldFrames_time then
+			explodeAllHoldFrames += 1
+		end if
+	else
+		if explodeAllHoldFrames = explodeAllHoldFrames_time then
+			for i = 0 to 9
+				numbers(i) = 0
+				if hasBomb(i) then 
+					numbers(i) = -1
+				end if
+			next i
+			explodeAllHoldFrames = 0
+		elseif explodeAllHoldFrames > 0 then
+			explodeAllHoldFrames -= 1
+		end if
+	end if
+	
     if landedSFXFrames > 0 then landedSFXFrames -= 1
     if harmedFlashing > 0 then harmedFlashing -= 1
     anim.step_animation()
        
     for i = 0 to 9
-		if numbers(i)  andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) then
+		if numbers(i) andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) then
 			if parent->isGrounded(body_i, this.groundDot) andAlso (parent->getArbiterN(body_i) > 0) then 
 				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, 0)
 				newItem->setData0(i + 1)
@@ -697,6 +838,10 @@ sub Player.drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0)
 			curItem->drawItem(scnbuff)
 		end if
 	END_HASH()
+	
+	
+	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
+	silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera)	
 end sub
 
 sub Player.processItems(t as double)

@@ -52,7 +52,8 @@ constructor GameSpace()
                        
     spy.body_i = world.addBody(@(spy.body))
     spy.body.friction = 2
-    spy.loadAnimations("mrspy.txt")
+
+	
 	projectiles.setLink(link)
     effects.setParent(@this, @lvlData)
     projectiles.setParent(@world, @lvlData, @this)
@@ -62,14 +63,14 @@ constructor GameSpace()
     
     hud_image = imagecreate(154, 65)
 	bload "hud.bmp", hud_image
-
+	
 	currentMusic = 0
     music(0) = 0
     music(1) = 0
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    FSOUND_Stream_Play currentMusic, music(currentMusic)
+    'FSOUND_Stream_Play currentMusic, music(currentMusic)
     FSOUND_SetVolumeAbsolute(currentMusic, 255)
         
     switchTracks = 0
@@ -92,6 +93,7 @@ constructor GameSpace()
     foregroundSnow.setSpeed(700)
     
     tracker.init(link)
+    
     pathfile = lvlData.getName() & "_pathing.dat"
     if fileexists(pathfile) then
         pathFileNum = freefile
@@ -105,10 +107,11 @@ constructor GameSpace()
     end if
     
     tracker.pause()
-
+	
     scnbuff = imagecreate(640,480)
     stallTime_mili = 15
     movingFrmAvg = 0
+    
 end constructor
 
 sub GameSpace.reconnectCollision()
@@ -166,6 +169,7 @@ function GameSpace.go() as integer
 	put #pathFileNum,,pathData[0], pathBytes
 	close #pathFileNum
 	deallocate(pathData)
+
     return 0
 end function
             
@@ -192,6 +196,8 @@ sub GameSpace.step_input()
     keypress(SC_7) = multikey(SC_7)
     keypress(SC_8) = multikey(SC_8)
     keypress(SC_9) = multikey(SC_9)
+    keypress(SC_Q) = multikey(SC_Q)
+    keypress(SC_W) = multikey(SC_W)
 end sub
 
 sub GameSpace.vibrateScreen()
@@ -241,8 +247,8 @@ sub GameSpace.step_draw()
         
     camera.setX(int(camera.x()))
     camera.setY(int(camera.y()))
-
-  
+	
+	
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
                   
@@ -310,7 +316,7 @@ sub GameSpace.step_draw()
 		line scnbuff, (0, SCRY - 1)-(SCRX - 1, SCRY - switchFrame - 1), 0, BF
     end if
     
-    triggers.draw_(scnbuff)
+    'triggers.draw_(scnbuff)
     
     if shouldBail > 0 then
 		if fadeoutTex = 0 then 
@@ -340,10 +346,11 @@ end sub
 
 
 sub GameSpace.step_process()
-    dim as integer i, dire, jump, ups, fire
+    dim as integer i, dire, jump, ups, fire, explodeAll, deactivateAll
     dim as integer numbers(0 to 9)
     
-    
+    window
+
     if keypress(SC_RIGHT) then
         dire = 1
     elseif keypress(SC_LEFT) then
@@ -380,17 +387,20 @@ sub GameSpace.step_process()
     numbers(8) = keypress(SC_9)
     numbers(9) = keypress(SC_0)
     
+    explodeAll = keypress(SC_W)
+    deactivateAll = keypress(SC_Q)
+    
     vibcount -= 1
     
     dynControl.process(0.01667)
-    
+       
 	if keypress(SC_M) then tracker.record()
 	if keypress(SC_N) then tracker.pause()
 	
 	if isSwitching <> 1 andAlso lockAction <> 1 then
-    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), numbers(), 0.01667)
+    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), numbers(), explodeAll, deactivateAll, 0.01667)
     elseif lockAction = 1 then
-    	spy.processControls(0, 0, 0, 0, 0, numbers(), 0.01667)
+    	spy.processControls(0, 0, 0, 0, 0, numbers(), 0, 0, 0.01667)
     end if
     spy.processItems(0.01667)
     if lvlData.usesSnow() = 1 then 

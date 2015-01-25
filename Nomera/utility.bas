@@ -2,6 +2,11 @@
 #include "constants.bi"
 #include "debug.bi"
 
+'need put PSET style rotation blitter
+'need put ALPHA style rotation blitter
+
+'could either do real time, or generate rotation maps <- faster and easier, lets do that in animation
+
 function min overload(x as double, y as double) as double
     if x < y then 
         return x
@@ -104,6 +109,131 @@ end sub
 
 sub roundDbl(byref v as double, r as integer)
     v = int(v / cdbl(r)) * r
+end sub
+
+sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
+					flipFlags as integer,_
+					src_x as integer, src_y as integer,_
+					img_width as integer, img_height as integer,_
+					dest_x as integer, dest_y as integer)
+	
+	#define X_ 0
+	#define Y_ 1
+	
+	dim as integer ppos(0 to 1)
+	dim as integer pdes(0 to 1)
+	dim as integer pdir(0 to 1)
+	dim as integer ptr ptile(0 to 1)
+	dim as integer byCol, byRow, oldCol
+	dim as integer xpos, ypos, w
+	dim as integer rt, xtn, ytn
+	dim as integer xpn, ypn, col
+	dim as integer pitchSrc, pitchDest
+	dim as byte ptr dataSrc, dataDest
+	
+	rt  = flipFlags 
+	xtn = src_x     
+	ytn = src_y     
+	xpn = dest_x    
+	ypn = dest_y    
+
+	if rt = 0 then
+		put dest, (xpn, ypn), src, (xtn, ytn)-(xtn+img_width-1, ytn+img_height-1), PSET
+	else
+		imageinfo src,,,,pitchSrc, dataSrc
+		imageinfo dest,,,,pitchDest, dataDest
+		
+		ptile(X_) = @xtn
+		ptile(Y_) = @ytn
+		ppos(X_) = xpn
+		ppos(Y_) = ypn
+		pdes(X_) = xpn
+		pdes(Y_) = ypn
+		select case rt
+		case 7
+			byRow = X_
+			byCol = Y_
+			ppos(byRow) += (img_height - 1)
+			ppos(byCol) += (img_width - 1)
+			pdes(byRow) += -1
+			pdes(byCol) += -1
+			pdir(byRow) = -1
+			pdir(byCol) = -1
+		case 2
+			byRow = Y_
+			byCol = X_
+			ppos(byRow) += (img_height - 1)
+			ppos(byCol) += 0
+			pdes(byRow) += -1
+			pdes(byCol) += img_width
+			pdir(byRow) = -1
+			pdir(byCol) = 1
+		case 3
+			byRow = X_
+			byCol = Y_
+			ppos(byRow) += 0
+			ppos(byCol) += (img_width - 1)
+			pdes(byRow) += img_height
+			pdes(byCol) += -1
+			pdir(byRow) = 1
+			pdir(byCol) = -1
+		case 4
+			byRow = Y_
+			byCol = X_
+			ppos(byRow) += 0
+			ppos(byCol) += (img_width - 1)
+			pdes(byRow) += img_height
+			pdes(byCol) += -1
+			pdir(byRow) = 1
+			pdir(byCol) = -1
+		case 5
+			byRow = X_
+			byCol = Y_
+			ppos(byRow) += (img_height - 1)
+			ppos(byCol) += 0
+			pdes(byRow) += -1
+			pdes(byCol) += img_width
+			pdir(byRow) = -1
+			pdir(byCol) = 1
+		case 6
+			byRow = Y_
+			byCol = X_
+			ppos(byRow) += (img_height - 1)
+			ppos(byCol) += (img_width - 1)
+			pdes(byRow) += -1
+			pdes(byCol) += -1
+			pdir(byRow) = -1
+			pdir(byCol) = -1
+		case 1
+			byRow = X_
+			byCol = Y_
+			ppos(byRow) += 0
+			ppos(byCol) += 0
+			pdes(byRow) += img_height
+			pdes(byCol) += img_width
+			pdir(byRow) = 1
+			pdir(byCol) = 1
+		end select
+		ypos = ytn
+		oldCol = ppos(byCol)
+				
+		while ppos(byRow) <> pdes(byRow)
+			ppos(byCol) = oldCol
+			xpos = xtn
+			while ppos(byCol) <> pdes(byCol)
+				
+				col = *cast(integer ptr, @dataSrc[xpos*4 + ypos*pitchSrc])  
+				*cast(integer ptr, @dataDest[ppos(X_)*4 + ppos(Y_)*pitchDest]) = col
+				
+				ppos(byCol) += pdir(byCol)
+				xpos += 1
+			wend
+			ppos(byRow) += pdir(byRow)
+			ypos += 1
+		wend
+	end if			
+		
+					
 end sub
 
 
@@ -340,30 +470,33 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
                      colOffset as integer = &h00000000)
 
     #macro MIX_STEP()
-
-		
+				
 		movdqu		xmm0,		[esi]			
 		
-		movdqu		xmm6,		[col_offset]	
-		psubusb		xmm0,		xmm6
+		movdqu		xmm4,		[col_offset]	
+		psubusb		xmm0,		xmm4
 				
-		movhlps		xmm1,		xmm0    		
-				
-		pmovzxbw	xmm2,		xmm0			
-		pmovzxbw	xmm3,		xmm1
+		movhlps		xmm1,		xmm0    
 		
-		movdqu		xmm7,		[populate_alpha]   
-		pshufb		xmm0,		xmm7			
-		pshufb		xmm1,		xmm7	
+		punpcklbw 	xmm0, 		xmm6
+		punpcklbw 	xmm1, 		xmm6
+		movdqu		xmm2,		xmm0
+		movdqu		xmm3,		xmm1
+	
+		pshufhw		xmm0,		xmm0,				&hff
+		pshuflw		xmm0,		xmm0,				&hff
 		
+		pshufhw		xmm1,		xmm1,				&hff
+		pshuflw		xmm1,		xmm1,				&hff
+
 		movdqu		xmm4,		[edi]			
 		movhlps		xmm5,		xmm4    		
-
-		pmovzxbw	xmm6,		xmm4			
-		pmovzxbw	xmm7,		xmm5
 		
-		psubsw		xmm2,		xmm6
-		psubsw		xmm3,		xmm7
+		punpcklbw 	xmm4, 		xmm6
+		punpcklbw 	xmm5, 		xmm6
+		
+		psubsw		xmm2,		xmm4
+		psubsw		xmm3,		xmm5
 		
 		psrlw		xmm0,		1
 		psrlw		xmm1,		1
@@ -372,16 +505,15 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
 		psraw		xmm2, 		7
 		psraw		xmm3,		7
 		
-		paddsw		xmm2,		xmm6
-		paddsw		xmm3,		xmm7
+		paddsw		xmm2,		xmm4
+		paddsw		xmm3,		xmm5
 
 		packuswb	xmm2,		xmm3			
 		
     #endmacro
     
-    static as integer populate_alpha(0 to 3) = {&hff03ff03, &hff03ff03, &hff07ff07, &hff07ff07}    
+	static as integer zeroReg(0 to 3) = {&h00000000, &h00000000, &h00000000, &h00000000}    
     static as integer col_offset(0 to 3)
-    
     
     dim as integer ptr dest_pxls, src_pxls
     dim as integer     dest_w, dest_h
@@ -400,7 +532,8 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
     dest_row_adv = (dest_w - target_w) shl 2
     src_row_adv = (src_w - target_w) shl 2
     
-    colOffset = ((&hff - ((colOffset shr 16) and &hff)) shl 16) or _
+    colOffset = ((&hff - ((colOffset shr 24) and &hff)) shl 24) or _
+				((&hff - ((colOffset shr 16) and &hff)) shl 16) or _
                 ((&hff - ((colOffset shr 08) and &hff)) shl 08) or _
                 (&hff - (colOffset and &hff))
 	
@@ -414,6 +547,8 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
 	if target_w >= 4 then
 		
 		asm
+					movdqu		xmm6,		[zeroReg]
+
 					mov         esi,        [src_pxls]
 					mov         edi,        [dest_pxls]
 					
@@ -471,9 +606,12 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
 					dec         ebx
 					jnz         bitblt_ag_rows
 		end asm
-	else
-		
+	elseif target_w > 1 then
+		/'
+		drawStringShadow dest, 200, 500, str(target_w), &hffffffff
 		asm
+					'movdqu		xmm6,		[zeroReg]
+
 					mov         esi,        [src_pxls]
 					mov         edi,        [dest_pxls]
 					
@@ -518,8 +656,99 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
 					dec         ebx
 					jnz         bitblt_ag_2rows
 		end asm	
+		'/
 	end if         
 end sub
+
+function countTrans(src as uinteger ptr,_
+					src_x0 as integer, src_y0 as integer,_
+                    src_x1 as integer, src_y1 as integer) as integer
+	dim as integer w, h, w_init
+	dim as integer pitch
+	dim as integer count
+	dim as integer ptr data_
+	w_init = src_x1 - src_x0 + 1
+	h = src_y1 - src_y0 + 1
+	imageinfo src, , , , pitch, data_
+	pitch shr= 2
+	data_ += src_x0 + src_y0 * pitch 
+	pitch = (pitch - w_init)
+	count = 0
+	while h > 0
+		w = w_init
+		while w > 0
+			if *data_ <> &hffff00ff then count += 1
+			data_ += 1
+			w -= 1
+		wend
+		data_ += pitch
+		h -= 1
+	wend
+	return count
+end function
+
+function compareTrans(src0 as uinteger ptr,_
+					  src0_x as integer, src0_y as integer,_
+					  src1 as uinteger ptr,_
+					  src1_x as integer, src1_y as integer,_
+					  w as integer, h as integer) as integer
+	dim as integer pitch0, pitch1
+	dim as integer count
+	dim as integer const_one
+	dim as integer ptr data0_, data1_
+	imageinfo src0, , , , pitch0, data0_
+	imageinfo src1, , , , pitch1, data1_
+	pitch0 shr= 2
+	pitch1 shr= 2
+
+	data0_ += src0_x + src0_y * pitch0
+	data1_ += src1_x + src1_y * pitch1
+	
+	pitch0 = (pitch0 - w) shl 2
+	pitch1 = (pitch1 - w) shl 2
+	
+	const_one = 1
+	
+	asm
+		mov 	esi,					[data0_]
+		mov		edi,					[data1_]
+		mov		ecx,					&h00
+		
+		ct_rows:
+		
+		mov		edx,					[w]
+
+		ct_cols:
+		
+		mov		eax,					&h00
+		mov		ebx,					&h00
+		
+		cmp		dword ptr [esi],		&hffff00ff
+		cmovne	eax,					[const_one]
+		cmp		dword ptr [edi],		&hffff00ff
+		cmovne	ebx,					[const_one]
+		
+		and		eax,					ebx	
+		add		ecx,					eax
+		
+		add		esi,					&h04
+		add		edi,					&h04
+		dec		edx
+		
+		jnz		ct_cols
+		
+		add		esi,					[pitch0]
+		add		edi,					[pitch1]
+		
+		dec		dword ptr [h]
+		
+		jnz		ct_rows
+		
+		mov		[count],				ecx
+	end asm
+	
+	return count				  
+end function
 
 function trimwhite(s as string) as string
 	while (left(s, 1) = " ") or (left(s, 1) = "\t")

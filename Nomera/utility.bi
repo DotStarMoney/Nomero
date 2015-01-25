@@ -58,6 +58,17 @@ declare sub bitblt_alphaGlow(dest as uinteger ptr,_
                              src_x1 as integer, src_y1 as integer,_
                              colOffset as integer = &h00000000)
                              
+declare function countTrans(src as uinteger ptr,_
+							src_x0 as integer, src_y0 as integer,_
+                            src_x1 as integer, src_y1 as integer) as integer
+
+declare function compareTrans(src0 as uinteger ptr,_
+							  src0_x as integer, src0_y as integer,_
+							  src1 as uinteger ptr,_
+							  src1_x as integer, src1_y as integer,_
+							  w as integer, h as integer) as integer
+
+                             
 declare sub triangle_AHS(dest as integer ptr = 0,_
 						 x0 as double, y0 as double,_
 						 x1 as double, y1 as double,_
@@ -74,5 +85,11 @@ declare sub vLine(scnbuff as integer ptr, a as Vector2D, b as Vector2D, col as i
 
 declare sub addColor(byref a as integer, byref b as integer)
 declare sub subColor(byref ac as integer, byref bc as integer)
+
+declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
+					        flipFlags as integer,_
+					        src_x as integer, src_y as integer,_
+					        img_width as integer, img_height as integer,_
+					        dest_x as integer, dest_y as integer)
 
 #endif

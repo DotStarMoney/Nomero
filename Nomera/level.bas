@@ -267,7 +267,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     if tl_y <             0 then tl_y = 0
     if br_y > lvlHeight - 1 then br_y = lvlHeight - 1    
     
-    if layerData[lyr].parallax < 5 then
+    if layerData[lyr].parallax < 8 then
         x = (cam_x - (lvlWidth * 0.5 * 16)) * (1-layerData[lyr].depth)
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
     end if
@@ -352,6 +352,8 @@ sub Level.putDispatch(scnbuff as integer ptr,_
     #define X_ 0
     #define Y_ 1
     
+    'lol this is in here twice... y lol...
+    
     dim as uinteger ptr src
     dim as integer ppos(0 to 1)
     dim as integer pdes(0 to 1)
@@ -366,6 +368,7 @@ sub Level.putDispatch(scnbuff as integer ptr,_
     if block.rotatedType = 0 then
         put scnbuff, (x, y), src, (tilePos_x, tilePos_y)-(tilePos_x + 15, tilePos_y + 15), TRANS
     else
+		/'
         x -= (cam_x - SCRX*0.5)
         y -= (cam_y - SCRY*0.5)
         ptile(X_) = @tilePos_x
@@ -494,7 +497,7 @@ sub Level.putDispatch(scnbuff as integer ptr,_
             ppos(byRow) += pdir(byRow)
             ypos += 1
         wend
-    
+		'/
     end if
                  
 end sub
@@ -627,6 +630,62 @@ sub Level.modBlockDestruct(lyr as integer, xs as integer, ys as integer)
 		
 	end if
 end sub
+
+function Level.getCoverageLayerBlocks(x0 as integer, y0 as integer,_
+									  x1 as integer, y1 as integer,_
+									  byref data_ as Level_CoverageBlockInfo_t ptr) as integer
+	dim as integer ptr layer_i
+	dim as integer tl_x, tl_y
+	dim as integer br_x, br_y
+	dim as integer xscan, yscan
+	dim as integer listSize, row_c
+	dim as integer tilePosX, tilePosY
+	dim as Level_VisBlock block
+	
+	listSize = 0
+	data_ = 0
+
+	tl_x = x0 shr 4
+	tl_y = y0 shr 4
+	br_x = x1 shr 4
+	br_y = y1 shr 4		
+	
+	if tl_x < 0 then tl_x = 0
+	if tl_y < 0 then tl_y = 0
+	if br_x >= lvlWidth then br_x = lvlWidth - 1
+	if br_y >= lvlHeight then br_y = lvlHeight - 1
+	
+	BEGIN_LIST(layer_i, activeCover_layer)
+		
+		for yscan = tl_y to br_y
+			for xscan = tl_x to br_x
+				block = blocks[*layer_i][yscan * lvlWidth + xscan]
+				if block.tileset < 65535 then
+                
+					row_c = tilesets[block.tileset].row_count
+					tilePosX = ((block.tileNum - 1) mod row_c) * 16
+					tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
+					
+					listSize += 1
+					data_ = reallocate(data_, sizeof(Level_CoverageBlockInfo_t)*listSize)
+					with data_[listSize - 1]
+						.img = tilesets[block.tileset].set_image
+						.l = *layer_i
+						.x0 = tilePosX
+						.y0 = tilePosY
+						.x1 = .x0 + 15
+						.y1 = .y0 + 15
+						.rpx = xscan * 16
+						.rpy = yscan * 16
+					end with
+
+				end if
+			next xscan
+		next yscan
+		
+	END_LIST()				
+	return listSize
+end function
 
 sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
     dim as Level_FalloutType fallout

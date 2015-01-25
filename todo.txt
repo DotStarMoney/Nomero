@@ -1,17 +1,6 @@
-PHASE 1 - start Dec 12/14
+- PHASE 1 - start 1/15/15
 
 TODO:
-collision with pain blocks should be circle to box
-explode all button
-deactivate all button
-SSE implementation of fallout
-rotation in blitters for sprite orientation mod
-fix animation bug (seems to get triggered when you die)
-mine indicators should lock to screen wiggle
-player should not get stuck when out of bounds, should just fall
-cover layers
-	player has computed visibility
-	cover blocks fade out a bit
 fix path tracking dingus manuevers, enemies getting stuck
 fix path tracker crash when deleting edges mid-record
 pathtracker needs to split nodes if there are objects in the way.
@@ -19,6 +8,7 @@ pathtracker saves recordings for enemy property groups, switchable during record
 add tinydynamic level importing, implement two versions.
 verify tinydynamic toggle platforms
 add conveyer belts and slippery blocks
+player loses momentum when dying
 teach enemies to walk on moving platforms and destroyed platforms 
 add second enemy type, add different input types for enemies, including those that are stationary.
 program group thinking for enemies
@@ -26,13 +16,21 @@ program group thinking for enemies
 	enemies think together to activate switches to cross gaps
 	enemies alert each other to sightings and call for help
 	enemies hunt the player, take different paths.
+optimized light cast routine with bump support (diffuse and specular map textures) 
+player and objects contained by "items" are drawn in silouhette
 program enemy death animation
+fix jump mid-air direction, facillitate through animation class
+bombs should be more damaging to the player
+get elliott to utilize flipped owp
+many mr. spy fixes:
+	hat flattens during jump, jump is silly to begin with
+	run needs an improvement
 add foreground cover layer for effects like smoke
-make smoke look/behave better for cover, new smoke animation
+make smoke look/behave better for cover, new steam and smoke animation
 create directional destructible chain blocks that don't get blown up unless an adjacent block blows up.
 create various owp destructible blocks that match non-owp destructibles
 program new destructible blocks
-hold down bomb number to deactivate
+deactivated bombs play sound and show effect
 bomb indicators when you're on a different map
 add bomb memory between maps
 add crouch to place bomb, and bomb placement scheme, bombs on walls unstick if moved or destroyed
@@ -40,11 +38,43 @@ new jump animation
 add money items and add when enemy killed
 spline, electric shock cgi
 
+________________________________________________________________________________________________________________
+
+MODIFIED:
+rotation in blitters - computes rotation and caches, faster and easier
+
+POSTPONED:
+animation bug: sliding after death - can't reproduce
+tinyspace bug: sticking, STILL something to do with OWP corners - cannot reproduce
+
+IGNORED:
+SSE implementation of fallout - doubtful the speed benefit is worth it
+bug in alpha blend routine causing jaggies across screen when mines towards edge - commented out < 4 case 
+
+NON-ISSUE:
+collision with pain blocks should be circle to box - tried, but seems to make more sense visually when box to box
 
 COMPLETED:
-tinyspace bug STILL something to do with OWP corners
+explode all button (must release to activate)
+deactivate all button (must release to activate), press number to deactivate just that one
+remove SSE4 dependence - now requires minimum SSE2
+Jumping forgives pressing jump early before hitting surface by a few frames
+animation bug: quick touchdowns starting walk which is not cancelled during free fall - fixed
+mine indicators should lock to screen wiggle
+player should not get stuck when out of bounds, should just fall
+cover layers
+	player has computed visibility
+		animation caches non-transparent per frame, count non transparent matches in region, divide by total
 
+KNOWN ODDITIES:
+in Player.computeCoverage, sprite comparison requires that character be a multiple of 16 for now
 
-Phase 2
+- PHASE 2 -
 Add other bomb types
- 
+door indicators
+door keys
+if holding crouch and jumping, landing causes funny little animation glitch
+mask out fully covered squares for speed
+effects reacting to bombs and other triggers
+remove old ass code (like fbtriggers, "parent" pointers where should be link, 
+change look `of cover silhouette
