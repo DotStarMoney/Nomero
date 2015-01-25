@@ -1,6 +1,20 @@
 - PHASE 1 - start 1/15/15
 
 TODO:
+<<<<<<< HEAD
+=======
+explode all button
+deactivate all button
+remove dependence on sse3
+SSE implementation of fallout
+rotation in blitters for sprite orientation mod
+fix animation bug (seems to get triggered when you die)
+mine indicators should lock to screen wiggle
+player should not get stuck when out of bounds, should just fall
+cover layers
+	player has computed visibility
+	cover blocks fade out a bit
+>>>>>>> origin/master
 fix path tracking dingus manuevers, enemies getting stuck
 fix path tracker crash when deleting edges mid-record
 pathtracker needs to split nodes if there are objects in the way.
@@ -33,6 +47,7 @@ program new destructible blocks
 deactivated bombs play sound and show effect
 bomb indicators when you're on a different map
 add bomb memory between maps
+add deactivation effect for mines
 add crouch to place bomb, and bomb placement scheme, bombs on walls unstick if moved or destroyed
 new jump animation
 add money items and add when enemy killed
