@@ -1,20 +1,6 @@
 - PHASE 1 - start 1/15/15
 
 TODO:
-<<<<<<< HEAD
-=======
-explode all button
-deactivate all button
-remove dependence on sse3
-SSE implementation of fallout
-rotation in blitters for sprite orientation mod
-fix animation bug (seems to get triggered when you die)
-mine indicators should lock to screen wiggle
-player should not get stuck when out of bounds, should just fall
-cover layers
-	player has computed visibility
-	cover blocks fade out a bit
->>>>>>> origin/master
 fix path tracking dingus manuevers, enemies getting stuck
 fix path tracker crash when deleting edges mid-record
 pathtracker needs to split nodes if there are objects in the way.
@@ -83,6 +69,11 @@ cover layers
 
 KNOWN ODDITIES:
 in Player.computeCoverage, sprite comparison requires that character be a multiple of 16 for now
+Landing on a slope after a jump and releasing forward and immediately jumping afterword can really boost your speed
+Landing on a slope after a jump up it and immediately jumping afterword can give you a super jump
+
+
+
 
 - PHASE 2 -
 Add other bomb types
@@ -92,4 +83,4 @@ if holding crouch and jumping, landing causes funny little animation glitch
 mask out fully covered squares for speed
 effects reacting to bombs and other triggers
 remove old ass code (like fbtriggers, "parent" pointers where should be link, 
-change look `of cover silhouette
+super speed jump should still work, but remove slowdown that occurs if pressing forward during superjump
