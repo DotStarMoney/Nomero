@@ -1,14 +1,17 @@
 - PHASE 1 - start 1/15/15
 
 TODO:
-fix path tracking dingus manuevers, enemies getting stuck
+optimized light cast routine with bump support (diffuse and specular map textures) 
 fix path tracker crash when deleting edges mid-record
 pathtracker needs to split nodes if there are objects in the way.
+get player friction right
+fix path tracking dingus manuevers, enemies getting stuck
 pathtracker saves recordings for enemy property groups, switchable during record
 add tinydynamic level importing, implement two versions.
 verify tinydynamic toggle platforms
 add conveyer belts and slippery blocks
 player loses momentum when dying
+remove ladder jumps
 teach enemies to walk on moving platforms and destroyed platforms 
 add second enemy type, add different input types for enemies, including those that are stationary.
 program group thinking for enemies
@@ -16,8 +19,6 @@ program group thinking for enemies
 	enemies think together to activate switches to cross gaps
 	enemies alert each other to sightings and call for help
 	enemies hunt the player, take different paths.
-optimized light cast routine with bump support (diffuse and specular map textures) 
-player and objects contained by "items" are drawn in silouhette
 program enemy death animation
 fix jump mid-air direction, facillitate through animation class
 bombs should be more damaging to the player
@@ -66,6 +67,7 @@ player should not get stuck when out of bounds, should just fall
 cover layers
 	player has computed visibility
 		animation caches non-transparent per frame, count non transparent matches in region, divide by total
+make sure path tracker isn't splitting long nodes - fixed by implementing proper in place array shift
 
 KNOWN ODDITIES:
 in Player.computeCoverage, sprite comparison requires that character be a multiple of 16 for now
@@ -81,6 +83,7 @@ door indicators
 door keys
 if holding crouch and jumping, landing causes funny little animation glitch
 mask out fully covered squares for speed
+cache segment measurements for speed
 effects reacting to bombs and other triggers
 remove old ass code (like fbtriggers, "parent" pointers where should be link, 
 super speed jump should still work, but remove slowdown that occurs if pressing forward during superjump

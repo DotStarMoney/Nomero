@@ -6,6 +6,7 @@
 #include "windows.bi"
 #include "vbcompat.bi"
 #include "fbpng.bi"
+#include "cpurender.bi"
 
 using fb
 
@@ -93,7 +94,8 @@ constructor GameSpace()
     foregroundSnow.setSpeed(700)
     
     tracker.init(link)
-    
+            
+   
     pathfile = lvlData.getName() & "_pathing.dat"
     if fileexists(pathfile) then
         pathFileNum = freefile

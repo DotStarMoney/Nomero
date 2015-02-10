@@ -91,12 +91,13 @@ sub PathTracker.buildNodes()
 	nodes.init(sizeof(PathTracker_Node_t))
 	
 	link.tinySpace_ptr->exportLevelGeometry(segs, segs_n)
-	
-	if segs_n = 0 then exit sub
 
+	if segs_n = 0 then exit sub
+   
 	for i = 0 to (segs_n*0.5) - 1 
 		a = segs[i*2]
 		b = segs[i*2 + 1]
+
 		if objectSegs_N = 0 then		
 			objectSegs_N += 1
 			redim preserve as PathTracker_Segment_t objectSegs(objectSegs_N - 1)
@@ -108,21 +109,17 @@ sub PathTracker.buildNodes()
 				redim preserve as PathTracker_Segment_t objectSegs(objectSegs_N - 1)
 				objectSegs(objectSegs_N - 1).a = a
 				objectSegs(objectSegs_N - 1).b = b
-				dumpStaticShape(objectSegs())
+                dumpStaticShape(objectSegs())
 				objectSegs_N = 0
 			else
-				falseAlarm = 0
-				
-				if a <> objectSegs(objectSegs_N - 1).b then
-					for q = 0 to objectSegs_N - 2 
-						if a = objectSegs(q).b then 
-							falseAlarm = 1
-							exit for
-						end if
-					next q
-				else
-					falseAlarm = 1
-				end if
+            
+				falseAlarm = 0	
+                for q = 0 to objectSegs_N - 1
+                    if a = objectSegs(q).b orElse b = objectSegs(q).b then 
+                        falseAlarm = 1
+                        exit for
+                    end if
+                next q
 				
 				if falseAlarm then
 					objectSegs_N += 1
@@ -146,7 +143,8 @@ sub PathTracker.buildNodes()
 end sub
 
 sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
-	dim as integer i, q
+	dim as integer i, q, j, shiftAmount
+    dim as integer boundA, boundB
 	dim as integer leftMostIndex
 	dim as integer endSplit
 	dim as integer lastSplit
@@ -156,22 +154,69 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
 	redim as PathTracker_Segment_t paramSegs(0)
 	dim as Vector2d d
 	
+    /'
+    dim as integer col = rnd * &h7e7e7e + &h7f7f7f
+    for i = 0 to ubound(segs)
+        draw string (segs(i).a.x()*0.5, segs(i).a.y()*0.5), str(i), col
+        line (segs(i).a.x()*0.5, segs(i).a.y()*0.5)-(segs(i).b.x()*0.5, segs(i).b.y()*0.5), col
+    next i
+    sleep
+    '/
+    
 	if segs(0).a.x < segs(0).b.x then
-		leftMostIndex = 0
+        leftMostIndex = 0
+        while leftMostIndex <= ubound(segs)
+            if (segs(leftMostIndex).a.x = segs(leftMostIndex).b.x) then
+                leftMostIndex += 1
+            else
+                exit while
+            end if
+        wend
 		for i = 1 to ubound(segs)
-			if segs(i).a.x < segs(leftMostIndex).a.x then
+			if segs(i).a.x < segs(leftMostIndex).a.x andALso (segs(i).a.x <> segs(i).b.x) then
 				leftMostIndex = i
 			end if
 		next i
-		if leftMostIndex <> 0 then
-			i = leftMostIndex
-			q = 0
-			do
-				swap segs(q), segs(i)
-				q += 1
-				i = (i + 1) mod (ubound(segs)+1)
-			loop until q = leftMostIndex
+        /'
+        line (segs(leftMostIndex).a.x()*0.5, segs(leftMostIndex).a.y()*0.5)-(segs(leftMostIndex).b.x()*0.5, segs(leftMostIndex).b.y()*0.5), &hffffff
+        circle (segs(leftMostIndex).a.x()*0.5, segs(leftMostIndex).a.y()*0.5), 5
+        circle (segs(leftMostIndex).b.x()*0.5, segs(leftMostIndex).b.y()*0.5), 5
+        '/
+        shiftAmount = leftMostIndex
+		if shiftAmount <> 0 then
+			i = shiftAmount
+            q = ubound(segs) + 1 - i
+            while i <> q
+                if i < q then
+                    boundA = shiftAmount - i
+                    boundB = shiftAmount + q - i
+                    for j = 0 to i-1
+                        swap segs(boundA + j), segs(boundB + j)
+                    next j
+                    q -= i
+                else
+                    boundA = shiftAmount - i
+                    boundB = shiftAmount
+                    for j = 0 to q-1
+                        swap segs(boundA + j), segs(boundB + j)
+                    next j 
+                    i -= q
+                end if
+            wend
+            boundA = shiftAmount - i
+            boundB = shiftAmount
+            for j = 0 to i-1
+                swap segs(boundA + j), segs(boundB + j)
+            next j 
 		end if
+        /'
+        print leftMostIndex
+        for i = 0 to ubound(segs)
+            draw string (segs(i).a.x()*0.5 + 5, segs(i).a.y()*0.5 - 10), str(i)
+            line (segs(i).a.x()*0.5, segs(i).a.y()*0.5)-(segs(i).b.x()*0.5, segs(i).b.y()*0.5), col
+        next i
+        sleep
+        '/
 		lastSplit = 0 
 		old_safe = 0
 		safe = 0
@@ -218,21 +263,50 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
 			addNode(paramSegs(), PT_STATIC)
 		end if
 	else
-		leftMostIndex = 0
+        leftMostIndex = 0
+        while leftMostIndex <= ubound(segs)
+            if (segs(leftMostIndex).a.x = segs(leftMostIndex).b.x) then
+                leftMostIndex += 1
+            else
+                exit while
+            end if
+        wend
 		for i = 1 to ubound(segs)
-			if segs(i).a.x > segs(leftMostIndex).a.x then
+			if segs(i).a.x > segs(leftMostIndex).a.x andALso (segs(i).a.x <> segs(i).b.x) then
 				leftMostIndex = i
 			end if
 		next i
-		if leftMostIndex <> 0 then
-			i = leftMostIndex
-			q = 0
-			do
-				swap segs(q), segs(i)
-				q += 1
-				i = (i + 1) mod (ubound(segs)+1)
-			loop until q = leftMostIndex
+        
+        shiftAmount = leftMostIndex
+		if shiftAmount <> 0 then
+			i = shiftAmount
+            q = ubound(segs) + 1 - i
+            while i <> q
+                if i < q then
+                    boundA = shiftAmount - i
+                    boundB = shiftAmount + q - i
+                    for j = 0 to i-1
+                        swap segs(boundA + j), segs(boundB + j)
+                    next j
+                    q -= i
+                else
+                    boundA = shiftAmount - i
+                    boundB = shiftAmount
+                    for j = 0 to q-1
+                        swap segs(boundA + j), segs(boundB + j)
+                    next j 
+                    i -= q
+                end if
+            wend
+            boundA = shiftAmount - i
+            boundB = shiftAmount
+            for j = 0 to i-1
+                swap segs(boundA + j), segs(boundB + j)
+            next j 
 		end if
+        
+        
+        
 		lastSplit = 0 
 		old_safe = 0
 		safe = 0
@@ -280,6 +354,45 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
 		end if
 	end if
 end sub
+
+
+
+sub PathTracker.addNode(segs() as PathTracker_Segment_t, type_ as integer)
+	dim as PathTracker_Node_t curNode
+	dim as integer i
+	dim as Vector2D tl, dr
+	
+	seg_count += 1
+	
+	curNode.segments_n = ubound(segs) + 1
+	curNode.segments = new PathTracker_Segment_t[curNode.segments_n]
+	tl = segs(0).a
+	dr = segs(0).b
+    'locate 1,1: print seg_count
+	for i = 0 to ubound(segs)
+        'line (segs(i).a.x*0.5,segs(i).a.y*0.5)-(segs(i).b.x*0.5,segs(i).b.y*0.5)
+        if segs(i).a.x() < tl.x() then tl.setX(segs(i).a.x())
+		if segs(i).b.x() < tl.x() then tl.setX(segs(i).b.x())
+		if segs(i).a.y() < tl.y() then tl.setY(segs(i).a.y())
+		if segs(i).b.y() < tl.y() then tl.setY(segs(i).b.y())		
+		if segs(i).a.x() > dr.x() then dr.setX(segs(i).a.x())
+		if segs(i).b.x() > dr.x() then dr.setX(segs(i).b.x())
+		if segs(i).a.y() > dr.y() then dr.setY(segs(i).a.y())
+		if segs(i).b.y() > dr.y() then dr.setY(segs(i).b.y())		
+		curNode.segments[i] = segs(i)
+	next i
+	curNode.type_ = type_
+	curNode.ID = seg_count
+	curNode.bb_a = tl
+	curNode.bb_b = dr
+	curNode.edges.init(sizeof(PathTracker_Edge_t ptr))
+	nodes.insert(curNode.ID, @curNode)
+	spacialNodeIDs.insert(tl, dr, @curNode.ID)
+    
+    'sleep
+    
+end sub
+
 sub PathTracker.record()
 	enable = 1
 end sub 
@@ -603,37 +716,6 @@ sub PathTracker.getNodeDist(p as Vector2D, node as integer, byref ret as double)
 end sub	
 
 
-sub PathTracker.addNode(segs() as PathTracker_Segment_t, type_ as integer)
-	dim as PathTracker_Node_t curNode
-	dim as integer i
-	dim as Vector2D tl, dr
-	
-	seg_count += 1
-	
-	curNode.segments_n = ubound(segs) + 1
-	curNode.segments = new PathTracker_Segment_t[curNode.segments_n]
-	tl = segs(0).a
-	dr = segs(0).b
-	
-	for i = 0 to ubound(segs)
-		if segs(i).a.x() < tl.x() then tl.setX(segs(i).a.x())
-		if segs(i).b.x() < tl.x() then tl.setX(segs(i).b.x())
-		if segs(i).a.y() < tl.y() then tl.setY(segs(i).a.y())
-		if segs(i).b.y() < tl.y() then tl.setY(segs(i).b.y())		
-		if segs(i).a.x() > dr.x() then dr.setX(segs(i).a.x())
-		if segs(i).b.x() > dr.x() then dr.setX(segs(i).b.x())
-		if segs(i).a.y() > dr.y() then dr.setY(segs(i).a.y())
-		if segs(i).b.y() > dr.y() then dr.setY(segs(i).b.y())		
-		curNode.segments[i] = segs(i)
-	next i
-	curNode.type_ = type_
-	curNode.ID = seg_count
-	curNode.bb_a = tl
-	curNode.bb_b = dr
-	curNode.edges.init(sizeof(PathTracker_Edge_t ptr))
-	nodes.insert(curNode.ID, @curNode)
-	spacialNodeIDs.insert(tl, dr, @curNode.ID)
-end sub
 
 sub PathTracker.register(e_ as Enemy ptr)
 	dim as PathTracker_Child_t c

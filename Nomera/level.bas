@@ -956,7 +956,7 @@ sub level.load(filename as string)
     open filename for binary as #f
     get #f,,strdata
     lvlName = strdata
-
+    
     get #f,,lvlWidth
     get #f,,lvlHeight
     get #f,,snowfall
@@ -1190,8 +1190,7 @@ sub level.load(filename as string)
 													 tempSingleField)
         end select
     next i
-    
-    
+
     #ifdef DEBUG
         printlog str(blocks_N) & ", " & tilesets_N
         stall(100)
@@ -1218,6 +1217,7 @@ sub level.load(filename as string)
 			splodeBlockReact(i mod lvlWidth, i / lvlWidth)
 		end if
 	next i
+
 	noVisuals = 0
     falloutZones.init(lvlWidth*16, lvlHeight*16, sizeof(Level_FalloutType))
     pendingPortalSwitch = 0
