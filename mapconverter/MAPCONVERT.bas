@@ -4,7 +4,7 @@
 #include "dir.bi"
 #include "file.bi"
 #include "fbpng.bi"
-' -exx list.bas hashtable.bas vector2d.bas
+
 
 Enum MaskResult_e
     SUBSET

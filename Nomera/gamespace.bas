@@ -71,7 +71,7 @@ constructor GameSpace()
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    FSOUND_Stream_Play currentMusic, music(currentMusic)
+    'FSOUND_Stream_Play currentMusic, music(currentMusic)
     FSOUND_SetVolumeAbsolute(currentMusic, 64)
         
     switchTracks = 0
@@ -144,8 +144,8 @@ function GameSpace.go() as integer
         if keypress(SC_ESCAPE) then exit do
         'print spy.body.p
         locate 1,1
-        movingFrmAvg = movingFrmAvg * 0.25 + 0.75 * (frameTime / (1 / FPS_TARGET) * 100)
-		'print using "Engine at ##.##% load"; movingFrmAvg
+        movingFrmAvg = movingFrmAvg * 0.90 + 0.10 * (frameTime / (1 / FPS_TARGET) * 100)
+		print using "Engine at ##.##% load"; movingFrmAvg
 		
 		stall( stallTime_mili)
 		totalTime = (timer - startTime)

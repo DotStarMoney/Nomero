@@ -29,13 +29,14 @@ function Hash2D.getSize() as integer
 	return size
 end function
 
-sub Hash2D.init(spaceWidth as double, spaceHeight as double, dataSizeBytes as integer)
+sub Hash2D.init(spaceWidth as double, spaceHeight as double, dataSizeBytes as integer,_
+                cell_w as integer = CELL_WIDTH, cell_h as integer = CELL_HEIGHT)
     dim as integer i
     if spacialHash <> 0 then deallocate(spacialHash)
     this.spaceWidth  = spaceWidth
     this.spaceHeight = spaceHeight
-    this.cellWidth  = CELL_WIDTH
-    this.cellHeight = CELL_HEIGHT
+    this.cellWidth  = cell_w
+    this.cellHeight = cell_h
     this.cellCols_N = int(spaceWidth  / this.cellWidth) + 1
     this.cellRows_N = int(spaceHeight / this.cellHeight) + 1
     this.dataSizeBytes = dataSizeBytes

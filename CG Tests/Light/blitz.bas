@@ -119,7 +119,7 @@ sub transBumpDiffSpecBlit(dest as any ptr, posx as integer, posy as integer,_
                 if ((lvx and lightWMask) or (lvy and lightHMask)) = 0 then
                     lightPLoc = lvy shl shiftLightW + lvx
                     normCol = fbDiffSrc[lightPLoc]
-                    hiCol = 0'fbSpecSrc[lightPLoc]
+                    hiCol = fbSpecSrc[lightPLoc]
                     
                     lightCol = addsatColors(normCol, ambientLight)
                     pcol = addsatColors(mulmixColors(scol, lightCol), hiCol)

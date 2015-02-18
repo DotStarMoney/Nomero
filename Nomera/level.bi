@@ -73,6 +73,8 @@ type Level
        
         dim as integer justLoaded
     private:
+        
+    
         declare sub putDispatch(scnbuff as integer ptr,_
                                 block as Level_VisBlock,_
                                 x as integer, y as integer,_
@@ -81,6 +83,9 @@ type Level
                                 
         declare sub splodeBlockReact(xs as integer, ys as integer)
         declare sub modBlockDestruct(lyr as integer, xs as integer, ys as integer)
+        declare sub computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
+                                                       x1 as integer, y1 as integer)
+        
         dim as integer reconnect
         dim as ushort ptr coldata
         dim as string lvlName

@@ -8,6 +8,21 @@
 #define CELL_WIDTH 128
 #define CELL_HEIGHT 128
 
+#macro BEGIN_HASH2D(x, y)
+	y.rollReset()
+	do
+		x = y.roll()
+		if x then
+#endmacro
+
+#macro END_HASH2D()
+		else
+			exit do
+		end if
+	loop
+#endmacro
+
+
 type Hash2dData_t
     as any ptr data_
     as List parentNodesList
@@ -24,7 +39,8 @@ type Hash2D
         declare constructor()
         declare destructor()
         
-        declare sub init(spaceWidth as double, spaceHeight as double, dataSizeBytes as integer)
+        declare sub init(spaceWidth as double, spaceHeight as double, dataSizeBytes as integer,_
+                         cell_w as integer = CELL_WIDTH, cell_h as integer = CELL_HEIGHT)
         declare function insert(a as Vector2D, b as Vector2D, data_ as any ptr) as any ptr
         declare function search(a as Vector2D, b as Vector2D,_
                                 byref ret_ as any ptr ptr) as integer

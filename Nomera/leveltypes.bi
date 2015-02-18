@@ -1,6 +1,7 @@
 #ifndef LEVELTYPES_BI
 #define LEVELTYPES_BI
 
+#include "hash2d.bi"
 #include "hashtable.bi"
 #include "constants.bi"
 
@@ -70,12 +71,24 @@ type Level_Tileset
     as HashTable tileEffect
 end type
 
+type Level_SquareMask
+    as Vector2D tl, br
+    as integer x0, y0, x1, y1
+end type
+
+type Level_SquareMaskList
+    declare constructor(lvlWidth as double, lvlHeight as double)
+    declare destructor()
+    as Hash2D squares 'a 2d hash of pointers to square masks
+end type
+
 type Level_VisBlock
     as ushort tileset
     as ushort tileNum
-    as short frameDelay
+    as short  frameDelay
     as ushort usesAnim
     as ushort rotatedType
+    as ushort NoTransparency
 end type
 
 Type Level_LayerData
@@ -88,6 +101,8 @@ Type Level_LayerData
     as ubyte  ambientLevel
     as ushort coverage
     as single depth
+    as Level_SquareMaskList ptr visibilitySquares
+    as Level_SquareMaskList ptr maskSquares
 end type
 
 enum PortalDirection_t
