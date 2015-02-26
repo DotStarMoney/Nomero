@@ -16,7 +16,7 @@ dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
 
 #define NEW_SQUARE_MASK() new Level_SquareMaskList(lvlWidth*16, lvlHeight*16)
 constructor Level_SquareMaskList(lvlWidth as double, lvlHeight as double)
-    squares.init(lvlWidth, lvlHeight, sizeof(Level_SquareMask), 64, 64)
+    squares.init(lvlWidth, lvlHeight, sizeof(Level_SquareMask), 256, 256)
 end constructor
 destructor Level_SquareMaskList()
     'dim as any ptr ptr curSquare
@@ -157,8 +157,7 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
             tl_y = ((ocy - y - SCRY * 0.5) ) / 16 - 1
             br_x = ((ocx - x + SCRX * 0.5) ) / 16
             br_y = ((ocy - y + SCRY * 0.5) ) / 16
-        
-            
+ 
             window screen (ocx - SCRX * 0.5, ocy - SCRY * 0.5)-_
                           (ocx + SCRX * 0.5, ocy + SCRY * 0.5)
                                       
@@ -281,11 +280,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
         x = (cam_x - (lvlWidth * 0.5 * 16)) * (1-layerData[lyr].depth)
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
     end if
-    
-    if layerData[lyr].coverage = 1 then
 
-
-    end if 
     
     rand = rnd
 	
@@ -349,9 +344,10 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
 
             end if
         next xscan
-    next yscan
- 
+    next yscan 
 end sub
+
+
 
 sub Level.putDispatch(scnbuff as integer ptr,_
                       block as Level_VisBlock,_
@@ -878,6 +874,7 @@ sub level.flush()
             if blocks[i] <> 0 then deallocate(blocks[i])
             delete(layerData[i].visibilitySquares)
             delete(layerData[i].maskSquares)
+            delete(layerData[i].aggregateBlockingRegions)
         next i
         if blocks <> 0 then deallocate(blocks)
         if layerData <> 0 then deallocate(layerData)
@@ -928,6 +925,180 @@ function Level.getDefaultPos() as Vector2D
 end function
 
 
+sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
+                                             x1 as integer, y1 as integer)
+
+    #macro SET_NT_VALUE(BLOCK_INDEX)
+    
+        NTvalue = 0
+        if compStep = NT_MASK then
+            tset = blocks[lyr][BLOCK_INDEX].tileset
+            if tset <> 65535 then
+                if tilesets[tset].NoTransparencyIDs.exists(blocks[lyr][BLOCK_INDEX].tileNum - 1) then
+                    NTvalue = 1
+                end if
+            end if    
+        elseif compStep = DRAW_MASK then
+            if blocks[lyr][BLOCK_INDEX].tileset <> 65535 then
+                NTvalue = 1
+            end if
+        end if
+    
+    #endmacro
+    #define NT_MASK 0
+    #define DRAW_MASK 1
+                                             
+    dim as Level_SquareMask newSquare
+    dim as integer xscan, yscan, windowSize, tset
+    dim as integer i, j, findLowLimit
+    dim as integer offX, offY, largestArea
+    dim as integer best_x0, best_y0, best_x1, best_y1, area
+    dim as integer last_x0, last_y0, last_x1, last_y1, row
+    dim as integer leftLo, leftHi, rightLo, rightHi
+    dim as integer invalidLeft, invalidRight, leftExArea, rightExArea
+    dim as integer NTvalue
+    dim as integer ptr searchMask
+    dim as integer compStep
+    
+    subtractSquareMasks((*layerData[lyr].maskSquares), x0*16, y0*16, (x1 + 1)*16, (y1 + 1)*16)
+    subtractSquareMasks((*layerData[lyr].visibilitySquares), x0*16, y0*16, (x1 + 1)*16, (y1 + 1)*16)
+  
+    windowSize = (x1 - x0 + 1)
+    for compStep = NT_MASK to DRAW_MASK
+        searchMask = callocate(windowSize * (y1 - y0 + 1), sizeof(integer))
+        offY = 0
+        yscan = y0
+        while yscan <= y1
+            offX = 0
+            xscan = x0
+            while xscan <= x1
+            
+                SET_NT_VALUE(yscan * lvlWidth + xscan)
+                
+                if NTvalue = 1 andAlso (searchMask[offX + offY * windowSize] = 0) then
+                    
+                    last_x0 = offX
+                    last_x1 = offX
+                    last_y0 = offY
+                    last_y1 = last_y0
+                    
+                    while(last_y1 < (y1 - y0))
+                        SET_NT_VALUE((y0 + last_y1 + 1)*lvlWidth + (x0 + last_x0))
+                        if (NTvalue = 0) orElse (searchMask[(last_y1 + 1)*windowSize + last_x0] = 1) then exit while
+                        last_y1 += 1
+                    wend
+                    
+                    largestArea = 0 
+                    invalidLeft = 0
+                    invalidRight = 0
+                    do
+                        area = (last_x1 - last_x0 + 1) * (last_y1 - last_y0 + 1)
+
+                        if area > largestArea then
+                            largestArea = area
+                            best_x0 = last_x0
+                            best_y0 = last_y0
+                            best_x1 = last_x1
+                            best_y1 = last_y1
+                        end if
+                        if last_y0 > last_y1 then exit do
+              
+                        if invalidLeft = 0 then
+                            leftLo = last_y0
+                            leftHi = last_y1
+                            if last_x0 > 0 then
+                                findLowLimit = 1
+                                for row = last_y0 to last_y1
+                                    SET_NT_VALUE((y0 + row)*lvlWidth + (x0 + last_x0 - 1))
+                                    if (NTvalue = 0) orElse (searchMask[row*windowSize + last_x0 - 1] = 1) then 
+                                        if findLowLimit = 1 then
+                                            leftLo += 1
+                                        else
+                                            leftHi = row - 1
+                                            exit for
+                                        end if
+                                    else
+                                        findLowLimit = 0
+                                    end if
+                                next row      
+                            else
+                                invalidLeft = 1
+                            end if
+                            if leftLo > leftHi then invalidLeft = 1
+                        end if
+                        
+                        if invalidRight = 0 then
+                            rightLo = last_y0
+                            rightHi = last_y1
+                            if last_x1 < (x1 - x0) then
+                                findLowLimit = 1
+                                for row = last_y0 to last_y1
+                                    SET_NT_VALUE((y0 + row)*lvlWidth + (x0 + last_x1 + 1))
+                                    if (NTvalue = 0) orElse (searchMask[row*windowSize + last_x1 + 1] = 1) then 
+                                        if findLowLimit = 1 then
+                                            rightLo += 1
+                                        else
+                                            rightHi = row - 1
+                                            exit for
+                                        end if
+                                    else
+                                        findLowLimit = 0
+                                    end if
+                                next row      
+                            else
+                                invalidRight = 1
+                            end if
+                            if rightLo > rightHi then invalidRight = 1
+                        end if
+                        
+                        if (invalidLeft = 1) andAlso (invalidRight = 1) then exit do
+                        
+                        leftExArea = (leftHi - leftLo + 1) * (last_x1 - last_x0 + 2)
+                        rightExArea = (rightHi - rightLo + 1) * (last_x1 - last_x0 + 2)
+                        
+                        if ((leftExArea > rightExArea) orElse (invalidRight = 1)) andAlso (invalidLeft = 0) then
+                            last_y0 = leftLo
+                            last_y1 = leftHi
+                            last_x0 -= 1
+                        else
+                            last_y0 = rightLo
+                            last_y1 = rightHi
+                            last_x1 += 1                    
+                        end if
+                    loop
+                    
+                    for i = best_y0 to best_y1
+                        for j = best_x0 to best_x1
+                            searchMask[i*windowSize + j] = 1
+                        next j
+                    next i
+                   
+                    newSquare.tl = Vector2D(best_x0, best_y0) * 16
+                    newSquare.br = Vector2D(best_x1 + 1, best_y1 + 1) * 16
+                    
+                    if compStep = NT_MASK then
+                        (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                    elseif compStep = DRAW_MASK then
+                        (*layerData[lyr].visibilitySquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                    end if
+                    
+                    if last_y0 = yscan then 
+                        offX += 1
+                        xscan += 1
+                    end if
+                else
+                    offX += 1
+                    xscan += 1
+                end if
+            wend
+            offY += 1
+            yscan += 1
+        wend
+        deallocate(searchMask)
+    next compStep
+    
+end sub
+
 sub level.load(filename as string)
     dim as integer f, i, q, j, s, x, y, xscan, yscan, skipCheck
     dim as TinyBlock block
@@ -945,6 +1116,7 @@ sub level.load(filename as string)
     dim as PortalType_t tempPortal
     dim as single tempSingleField
     dim as destroyedBlocks_t tempDblocks
+    dim as Hashtable ptr NoTransLookup
     
     f = freefile
  
@@ -1018,6 +1190,9 @@ sub level.load(filename as string)
         get #f,,tilesets[i].set_width
         get #f,,tilesets[i].set_height
         
+        tilesets[i].NoTransparencyIDs.init(sizeof(integer))
+        
+        
         tilesets[i].row_count = (tilesets[i].set_width / 16)  
         tilesets[i].count = (tilesets[i].set_width / 16) * (tilesets[i].set_height / 16)
       
@@ -1050,7 +1225,18 @@ sub level.load(filename as string)
             tilesets[i].tileEffect.insert(tempEffect.tilenum, @tempEffect)
         next j
 
+        for j = 0 to tilesets[i].count - 1    
+            row_c = tilesets[i].row_count
+            tilePosX = (j mod row_c) * 16
+            tilePosY = (j \ row_c) * 16
+            transPxls = countTrans(tilesets[i].set_image, tilePosX, tilePosY, tilePosX+15, tilePosY+15)            
+            if transPxls = 256 then tilesets[i].NoTransparencyIDs.insert(j, @j)
+        next j
+        
     next i
+    
+
+                            
     
     get #f,,blocks_N
     blocks_N -= 1
@@ -1077,6 +1263,7 @@ sub level.load(filename as string)
 			blocks[i] = 0
 		next i
 	end if
+    
     
     for i = 0 to blocks_N
         get #f,,strdata
@@ -1119,6 +1306,9 @@ sub level.load(filename as string)
             
             layerData[lyr].visibilitySquares = NEW_SQUARE_MASK()
             layerData[lyr].maskSquares       = NEW_SQUARE_MASK()
+            
+            layerData[lyr].frameDrawRegions.init(sizeof(Level_SquareMask))
+            layerData[lyr].aggregateBlockingRegions = new Level_SquareMaskList(SCRX, SCRY)
 
             lvb = 0
             lvb = allocate(sizeof(Level_VisBlock) * lvlWidth * lvlHeight)
@@ -1139,7 +1329,6 @@ sub level.load(filename as string)
                 blocks[lyr][j].tileset = 65535
                 blocks[lyr][j].tilenum = 65535
                 blocks[lyr][j].rotatedType = blockNumber shr 29
-                blocks[lyr][j].NoTransparency = 0
                 
                 
                 blockNumber = blockNumber and FLIPPED_MASK
@@ -1155,16 +1344,6 @@ sub level.load(filename as string)
                       
                         if tilesets[q].tileEffect.exists(blocks[lyr][j].tilenum) = 1 then
                             blocks[lyr][j].usesAnim = 1
-                        else
-                          
-                            row_c = tilesets[q].row_count
-                            tilePosX = ((blocks[lyr][j].tilenum - 1) mod row_c) * 16
-                            tilePosY = ((blocks[lyr][j].tilenum - 1) \ row_c  ) * 16
-                            transPxls = countTrans(tilesets[q].set_image, tilePosX, tilePosY, tilePosX+15, tilePosY+15)
-
-                            if transPxls = 256 then
-                                blocks[lyr][j].NoTransparency = 1
-                            end if
                         end if
                         
                         exit for
@@ -1174,7 +1353,11 @@ sub level.load(filename as string)
                 
             next j
             
+            computeSquareMasks(i, 0, 0, lvlWidth-1, lvlHeight-1)
+            
         end if
+        
+        
     next i
     
     get #f,,numObjs
@@ -1262,75 +1445,456 @@ sub Level.overrideCurrentMusicFile(filename as string)
 	loadedMusic = filename
 end sub
 
-sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
-                                             x1 as integer, y1 as integer)
 
-    dim as Level_SquareMask square
-    dim as integer xscan, yscan, cutStyle, windowSize
-    dim as integer neighbors_N, i, j, doneExpanding
+sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vector2D)
+    #define MAX_SLICES 64
+
+    dim as integer layerList
+    dim as integer squares_N
+    dim as integer i, j, q, u, t
+    dim as double x, y
+    dim as double ocx, ocy
+    dim as Vector2D tl, br
+    dim as Vector2D center
     dim as Level_SquareMask ptr ptr squares
     dim as Level_SquareMask ptr curSquare
-    dim as Level_SquareMask newSquare
-    dim as integer offX, offY, xOccupied, yOccupied
-    dim as integer x0_e, y0_e, x1_e, y1_e
-    dim as integer xexp, yexp, xlook, foundStop, ylook
-    dim as integer ptr searchMask
+    dim as Level_SquareMask squareInst
+    dim as Level_SquareMaskList ptr aggregateMask
+    dim as Level_SquareMask ptr ptr coverSquares
+    dim as integer coverSquares_N, numNew
+    dim as Level_SquareMask ptr curCoverSquare
+    dim as integer ptr curLayer
+    dim as List ptr curList
+    dim as Level_SquareMask drawSlices(0 to MAX_SLICES - 1)
+    dim as integer drawSlices_N, oldDrawSlices_N
     
-    if x1 < 0 then exit sub
-    if y1 < 0 then exit sub
-    if x0 >= lvlWidth then exit sub
-    if y0 >= lvlHeight then exit sub
-   
-    if x0 < 0 then x0 = 0
-    if y0 < 0 then y0 = 0
-    if x1 >= lvlWidth then x1 = lvlWidth - 1
-    if y1 >= lvlHeight then y1 = lvlHeight - 1
-    
-    x0_e = x0
-    y0_e = y0
-    x1_e = x1
-    y1_e = y1
-   
-    if x0_e > 0 then x0_e -= 1
-    if y0_e > 0 then y0_e -= 1
-    if x1_e < (lvlWidth - 1) then x1_e += 1
-    if y1_e < (lvlHeight - 1) then y1_e += 1
 
-    'computes full mask squares first, deez are squares whose union are exclusively the full covering squares
-    neighbors_N = (*layerData[lyr].maskSquares).squares.search(Vector2D(x0, y0)*16, Vector2D(x1, y1)*16, squares)
+    
+    aggregateMask = new Level_SquareMaskList(SCRX, SCRY)
+    
+    for layerList = 0 to 3
+        select case layerList
+        case 0
+            curList = @foreground_layer
+        case 1
+            curList = @activeCover_layer
+        case 2
+            curList = @active_layer
+        case 3
+            curList = @background_layer
+        end select
+        BEGIN_LIST_REVERSE(curLayer, (*curList))
+            x = 0
+            y = 0
+            i = *curLayer
+            if layerData[i].parallax < 255 then
+                parallaxAdjust(x, y,_
+                               cam_x, cam_y,_
+                               lvlWidth * 16, lvlHeight * 16,_
+                               layerData[i].depth)
+                ocx = cam_x
+                ocy = cam_y
+            else
+                ocx = cam_x + adjust.x()
+                ocy = cam_y + adjust.y()
+            end if
+            center = Vector2D(ocx - x, ocy - y)
+            layerData[i].frameCenter = center
+            tl = center - Vector2D(SCRX, SCRY)*0.5
+            br = center + Vector2D(SCRX, SCRY)*0.5
+            
+            'lots of nested loops but more often than not these will be run once, maybe twice
+            layerData[i].frameDrawRegions.flush()
+            squares_N = layerData[i].visibilitySquares->squares.search(tl, br, squares)
+            for j = 0 to squares_N - 1
+                
+                squareInst = *(squares[j])
+                
+                if squareInst.tl.x < tl.x then squareInst.tl.setX(tl.x)
+                if squareInst.tl.y < tl.y then squareInst.tl.setY(tl.y) 
+                if squareInst.br.x > br.x then squareInst.br.setX(br.x)
+                if squareInst.br.y > br.y then squareInst.br.setY(br.y)
+                squareInst.tl = squareInst.tl - tl
+                squareInst.br = squareInst.br - tl
+                  
+                drawSlices_N = 1
+                drawSlices(0) = squareInst
+              
+                'if i = blocks_N - 6 then
+                '    print "square to be chopped"
+                '    line (drawSlices(0).tl.x*2, drawSlices(0).tl.y*2)-(drawSlices(0).br.x*2, drawSlices(0).br.y*2), rgb(255, 0, 0), BF
+                '    sleep
+                'end if
+                
+                coverSquares_N = aggregateMask->squares.search(drawSlices(0).tl, drawSlices(0).br, coverSquares)
+                for q = 0 to coverSquares_N - 1      
+                    curCoverSquare = coverSquares[q]
+                    'if i = blocks_N - 6 then
+                    '    print "square that covers"
+                    '    line (curCoverSquare->tl.x*2, curCoverSquare->tl.y*2)-(curCoverSquare->br.x*2, curCoverSquare->br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
+                    '    sleep
+                    'end if
+                    
+                    u = 0
+                    oldDrawSlices_N = drawSlices_N
+                    while u < oldDrawSlices_N
+                    
+                        'if i = blocks_N - 6 then print "current list of chopped up squares", drawSlices_N
+                        'for t = 0 to drawSlices_N - 1
+                        '    if i = blocks_N - 6 then 
+                        '        line (drawSlices(t).tl.x*2, drawSlices(t).tl.y*2)-(drawSlices(t).br.x*2, drawSlices(t).br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
+                        '        'print "printing..."
+                        '        sleep
+                        '    end if
+                        'next t
+                        
+                            
+                        numNew = subtractSquareMasksList(drawSlices(u), *curCoverSquare, drawSlices(), drawSlices_N)
+                        
+                        'loop through and draw all before after?
+                        'if i = blocks_N - 6 then 
+                        '    print "numNew: "; numNew, u
+                        '    sleep
+                        'end if
+                        
+                        if numNew > -2 then
+                            if numNew = 0 then
+                                oldDrawSlices_N -= 1
+                                drawSlices_N -= 1
+                                drawSlices(u) = drawSlices(drawSlices_N)
+                            else
+                                drawSlices_N += numNew - 1
+                                drawSlices(u) = drawSlices(drawSlices_N)
+                                u += 1
+                            end if
+                        else
+                            u += 1
+                        end if
+                        
+                        
+                    wend  
+                    
+                    'if i = blocks_N - 6 then print "final list of chopped up squares", drawSlices_N
+                    'for t = 0 to drawSlices_N - 1
+                    '    if i = blocks_N - 6 then 
+                    '        line (drawSlices(t).tl.x*2, drawSlices(t).tl.y*2)-(drawSlices(t).br.x*2, drawSlices(t).br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
+                    '        'print "printing..."
+                    '        sleep
+                    '    end if
+                    'next t
+                    
+                next q
+                deallocate(coverSquares)
+                
+                
+                'add whatever we have in drawSlices to the draw regions list
+                'if i = blocks_N - 6 then print "final squares"
+                for q = 0 to drawSlices_N - 1
+                    layerData[i].frameDrawRegions.push_back(@(drawSlices(q)))
+                    if i = blocks_N - 7 then 
+                        'line (drawSlices(q).tl.x*2, drawSlices(q).tl.y*2)-(drawSlices(q).br.x*2, drawSlices(q).br.y*2), rgb(0, 255, 0), BF       
+                       ' line (drawSlices(q).tl.x*2, drawSlices(q).tl.y*2)-(drawSlices(q).br.x*2, drawSlices(q).br.y*2), rgb(0, 64, 0), B                        
+                        
+                    end if
+                next q
+                'if i = blocks_N - 6 then sleep
+            next j
+            deallocate(squares)
+            
+            
+            'merge the square mask squares in this layer's blocking buffer to the aggregate
+            coverSquares_N = layerData[i].maskSquares->squares.search(tl, br, coverSquares)
+            for j = 0 to coverSquares_N - 1
+                squareInst = *(coverSquares[j])
+                if squareInst.tl.x < tl.x then squareInst.tl.setX(tl.x)
+                if squareInst.tl.y < tl.y then squareInst.tl.setY(tl.y) 
+                if squareInst.br.x > br.x then squareInst.br.setX(br.x)
+                if squareInst.br.y > br.y then squareInst.br.setY(br.y)
+                squareInst.tl = squareInst.tl - tl
+                squareInst.br = squareInst.br - tl
+                subtractSquareMasks(*aggregateMask, squareInst.tl.x, squareInst.tl.y, squareInst.br.x, squareInst.br.y)                
+                aggregateMask->squares.insert(squareInst.tl, squareInst.br, @squareInst)
+            next j
+            deallocate(coverSquares)
+            
+        END_LIST()
+    next layerList
+    delete(aggregateMask)
+end sub
+
+function Level.subtractSquareMasksList(squareA as Level_SquareMask,_
+                                       squareB as Level_SquareMask,_
+                                       outSquares() as Level_SquareMask, offset as integer) as integer
+    dim as double x0, y0, x1, y1
+    dim as Level_SquareMask newSquare
+    dim as integer cutStyle
+    'B cuts A
+    x0 = squareB.tl.x
+    y0 = squareB.tl.y
+    x1 = squareB.br.x
+    y1 = squareB.br.y
+    
+    if (squareA.tl.x >= x0) andAlso (squareA.br.x <= x1) andAlso _
+       (squareA.tl.y >= y0) andAlso (squareA.br.y <= y1) then
+        return 0
+    elseif (squareA.br.x > x0) andAlso (squareA.br.y > y0) andALso _
+           (squareA.tl.x < x1) andAlso (squareA.tl.y < y1) then
+        cutStyle = 0
+        with squareA
+            if .tl.x < x0 then
+                if .tl.y < y0 then
+                    if .br.y <= y1 then
+                        if .br.x <= x1 then
+                            cutStyle = 1
+                        else 
+                            cutStyle = 2
+                        end if
+                    else
+                         if .br.x <= x1 then
+                            cutStyle = 3
+                        else 
+                            cutStyle = 15
+                        end if
+                    end if
+                else
+                    if .br.y <= y1 then
+                        if .br.x <= x1 then
+                            cutStyle = 4
+                        else
+                            cutStyle = 5
+                        end if
+                    else
+                        if .br.x <= x1 then
+                            cutStyle = 6
+                        else
+                            cutStyle = 7
+                        end if  
+                    end if
+                end if
+            else
+                if .tl.y < y0 then
+                    if .br.y <= y1 then
+                        if .br.x <= x1 then
+                            cutStyle = 10
+                        else
+                            cutStyle = 8
+                        end if
+                    else
+                        if .br.x <= x1 then
+                            cutStyle = 9
+                        else
+                            cutStyle = 11
+                        end if
+                    end if
+                else
+                    if .br.y <= y1 then
+                        cutStyle = 12
+                    else
+                        if .br.x <= x1 then
+                            cutStyle = 13
+                        else
+                            cutStyle = 14
+                        end if
+                    end if
+                end if
+            end if
+        end with
+        'print cutStyle
+        select case cutStyle
+        case 1
+            newSquare = squareA
+            newSquare.br.setX(x0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x0)
+            newSquare.br.setY(y0)
+            outSquares(offset + 1) = newSquare
+            return 2
+        case 2
+            newSquare = squareA
+            newSquare.br.setX(x0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x0)
+            newSquare.br.setY(y0)
+            outSquares(offset + 1) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x1)
+            newSquare.tl.setY(y0)
+            outSquares(offset + 2) = newSquare
+            return 3
+        case 3
+            newSquare = squareA
+            newSquare.br.setY(y0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setY(y0)
+            newSquare.br.setX(x0)
+            outSquares(offset + 1) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x0)
+            newSquare.tl.setY(y1)
+            outSquares(offset + 2) = newSquare
+            return 3
+        case 4
+            newSquare = squareA
+            newSquare.br.setX(x0)
+            outSquares(offset + 0) = newSquare
+            return 1
+        case 5
+            newSquare = squareA
+            newSquare.br.setX(x0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x1)
+            outSquares(offset + 1) = newSquare
+            return 2
+        case 6
+            newSquare = squareA
+            newSquare.br.setX(x0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x0)
+            newSquare.tl.setY(y1)
+            outSquares(offset + 1) = newSquare
+            return 2
+        case 7
+            newSquare = squareA
+            newSquare.br.setX(x0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x0)
+            newSquare.tl.setY(y1)
+            outSquares(offset + 1) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x1)
+            newSquare.br.setY(y1)
+            outSquares(offset + 2) = newSquare
+            return 3
+        case 8
+            newSquare = squareA
+            newSquare.br.setY(y0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x1)
+            newSquare.tl.setY(y0)
+            outSquares(offset + 1) = newSquare
+            return 2
+        case 9
+            newSquare = squareA
+            newSquare.br.setY(y0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setY(y1)
+            outSquares(offset + 1) = newSquare
+            return 2
+        case 10
+            newSquare = squareA
+            newSquare.br.setY(y0)
+            outSquares(offset + 0) = newSquare
+            return 1
+        case 11
+            newSquare = squareA
+            newSquare.br.setY(y0)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x1)
+            newSquare.tl.setY(y0)
+            outSquares(offset + 1) = newSquare
+            newSquare = squareA
+            newSquare.tl.setY(y1)
+            newSquare.br.setX(x1)
+            outSquares(offset + 2) = newSquare
+            return 3
+        case 12
+            newSquare = squareA
+            newSquare.tl.setX(x1)
+            outSquares(offset + 0) = newSquare
+            return 1
+        case 13
+            newSquare = squareA
+            newSquare.tl.setY(y1)
+            outSquares(offset + 0) = newSquare
+            return 1
+        case 14
+            newSquare = squareA
+            newSquare.tl.setX(x1)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setY(y1)
+            newSquare.br.setX(x1)
+            outSquares(offset + 1) = newSquare
+            return 2
+        case 15
+            newSquare = squareA
+            newSquare.br.setY(y0)
+            newSquare.br.setX(x1)
+            outSquares(offset + 0) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x1)
+            newSquare.br.setY(y1)
+            outSquares(offset + 1) = newSquare
+            newSquare = squareA
+            newSquare.tl.setX(x0)
+            newSquare.tl.setY(y1)
+            outSquares(offset + 2) = newSquare
+            newSquare = squareA
+            newSquare.tl.setY(y0)
+            newSquare.br.setX(x0)
+            outSquares(offset + 3) = newSquare
+            return 4
+        case else
+            return -2
+        end select   
+    end if         
+    return -2
+end function
+
+sub Level.subtractSquareMasks(byref squaresList as Level_SquareMaskList,_
+                              x0 as double, y0 as double,_
+                              x1 as double, y1 as double)
+    
+    dim as integer neighbors_N, i, cutStyle
+    dim as Level_SquareMask ptr ptr foundSquares
+    dim as Level_SquareMask ptr curSquare    
+    dim as Level_SquareMask newSquare
+    
+    neighbors_N = squaresList.squares.search(Vector2D(x0, y0), Vector2D(x1, y1), foundSquares)
     for i = 0 to neighbors_N - 1
-        curSquare = squares[i]
-        if (curSquare->x0 >= x0) andAlso (curSquare->x1 <= x1) andAlso _
-           (curSquare->y0 >= y0) andAlso (curSquare->y1 <= y1) then
-            (*layerData[lyr].maskSquares).squares.remove(curSquare)
-        elseif (curSquare->x1 >= x0) andAlso (curSquare->y1 >= y0) andALso _
-               (curSquare->x0 <= x1) andAlso (curSquare->y0 <= y1) then
+        curSquare = foundSquares[i]
+        
+        if (curSquare->tl.x >= x0) andAlso (curSquare->br.x <= x1) andAlso _
+           (curSquare->tl.y >= y0) andAlso (curSquare->br.y <= y1) then
+            squaresList.squares.remove(curSquare)
+        elseif (curSquare->br.x > x0) andAlso (curSquare->br.y > y0) andALso _
+               (curSquare->tl.x < x1) andAlso (curSquare->tl.y < y1) then
             cutStyle = 0
+            '' may not be correct...
             with *curSquare
-                if .x0 < x0 then
-                    if .y0 < y0 then
-                        if .y1 <= y1 then
-                            if .x1 <= x1 then
+                if .tl.x < x0 then
+                    if .tl.y < y0 then
+                        if .br.y <= y1 then
+                            if .br.x <= x1 then
                                 cutStyle = 1
                             else 
                                 cutStyle = 2
                             end if
                         else
-                             if .x1 <= x1 then
+                             if .br.x <= x1 then
                                 cutStyle = 3
                             else 
                                 cutStyle = 15
                             end if
                         end if
                     else
-                        if .y1 <= y1 then
-                            if .x1 <= x1 then
+                        if .br.y <= y1 then
+                            if .br.x <= x1 then
                                 cutStyle = 4
                             else
                                 cutStyle = 5
                             end if
                         else
-                            if .x1 <= x1 then
+                            if .br.x <= x1 then
                                 cutStyle = 6
                             else
                                 cutStyle = 7
@@ -1338,25 +1902,25 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
                         end if
                     end if
                 else
-                    if .y0 < y0 then
-                        if .y1 <= y1 then
-                            if .x1 <= x1 then
-                                cutStyle = 8
+                    if .tl.y < y0 then
+                        if .br.y <= y1 then
+                            if .br.x <= x1 then
+                                cutStyle = 10
                             else
-                                cutStyle = 9
+                                cutStyle = 8
                             end if
                         else
-                            if .x1 <= x1 then
-                                cutStyle = 10
+                            if .br.x <= x1 then
+                                cutStyle = 9
                             else
                                 cutStyle = 11
                             end if
                         end if
                     else
-                        if .y1 <= y1 then
+                        if .br.y <= y1 then
                             cutStyle = 12
                         else
-                            if .x1 <= x1 then
+                            if .br.x <= x1 then
                                 cutStyle = 13
                             else
                                 cutStyle = 14
@@ -1368,241 +1932,140 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
             select case cutStyle
             case 1
                 newSquare = *curSquare
-                newSquare.br.setX(x0 * 16)
-                newSquare.x1 = x0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setX(x0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX(x0 * 16)
-                newSquare.br.setY(y0 * 16)
-                newSquare.y1 = y0 - 1
-                newSquare.x0 = x0
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x0)
+                newSquare.br.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 2
                 newSquare = *curSquare
-                newSquare.br.setX(x0 * 16)
-                newSquare.x1 = x0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setX(x0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX(x0 * 16)
-                newSquare.br.setY(y0 * 16)
-                newSquare.y1 = y0 - 1
-                newSquare.x0 = x0
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x0)
+                newSquare.br.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX((x1 + 1) * 16)
-                newSquare.tl.setY(y0 * 16)
-                newSquare.x0 = x1 + 1
-                newSquare.y0 = y0
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x1)
+                newSquare.tl.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 3
                 newSquare = *curSquare
-                newSquare.br.setY(y0 * 16)
-                newSquare.y1 = y0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setY(y0 * 16)
-                newSquare.br.setX(x0 * 16)
-                newSquare.y0 = y0
-                newSquare.x1 = x0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setY(y0)
+                newSquare.br.setX(x0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX(x0 * 16)
-                newSquare.tl.setY((y1 + 1) * 16)
-                newSquare.x0 = x0
-                newSquare.y0 = y1 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x0)
+                newSquare.tl.setY(y1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 4
                 newSquare = *curSquare
-                newSquare.br.setX(x0 * 16)
-                newSquare.x1 = x0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setX(x0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 5
                 newSquare = *curSquare
-                newSquare.br.setX(x0 * 16)
-                newSquare.x1 = x0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setX(x0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX((x1 + 1) * 16)
-                newSquare.x0 = x0 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 6
                 newSquare = *curSquare
-                newSquare.br.setX(x0 * 16)
-                newSquare.x1 = x0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setX(x0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX(x0 * 16)
-                newSquare.tl.setY((y1 + 1) * 16)
-                newSquare.x0 = x0
-                newSquare.y0 = y1 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x0)
+                newSquare.tl.setY(y1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 7
                 newSquare = *curSquare
-                newSquare.br.setX(x0 * 16)
-                newSquare.x1 = x0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setX(x0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX(x0 * 16)
-                newSquare.tl.setY((y1 + 1) * 16)
-                newSquare.x0 = x0
-                newSquare.y0 = y1 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x0)
+                newSquare.tl.setY(y1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX((x1 + 1) * 16)
-                newSquare.br.setY((y1 + 1) * 16)
-                newSquare.x0 = x0 + 1
-                newSquare.y1 = y1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x1)
+                newSquare.br.setY(y1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 8
                 newSquare = *curSquare
-                newSquare.br.setY(y0 * 16)
-                newSquare.y1 = y0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare = *curSquare
+                newSquare.tl.setX(x1)
+                newSquare.tl.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 9
                 newSquare = *curSquare
-                newSquare.br.setX(y0 * 16)
-                newSquare.y1 = y0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX((x1 + 1) * 16)
-                newSquare.tl.setY(y0 * 16)
-                newSquare.x0 = x1 + 1
-                newSquare.y0 = y0
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setY(y1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 10
                 newSquare = *curSquare
-                newSquare.br.setY(y0 * 16)
-                newSquare.y1 = y0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
-                newSquare = *curSquare
-                newSquare.tl.setY((y1 + 1) * 16)
-                newSquare.y0 = y1 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 11
                 newSquare = *curSquare
-                newSquare.br.setY(y0 * 16)
-                newSquare.y1 = y0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX((x1 + 1) * 16)
-                newSquare.tl.setY(y0 * 16)
-                newSquare.x0 = x1 + 1
-                newSquare.y0 = y0
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x1)
+                newSquare.tl.setY(y0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setY((y1 + 1) * 16)
-                newSquare.br.setX((x1 + 1) * 16)
-                newSquare.y0 = y1 + 1
-                newSquare.x1 = x1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setY(y1)
+                newSquare.br.setX(x1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 12
                 newSquare = *curSquare
-                newSquare.tl.setX(x0 * 16)
-                newSquare.x0 = x1 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 13
                 newSquare = *curSquare
-                newSquare.tl.setY((y1 + 1) * 16)
-                newSquare.y0 = y1 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setY(y1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 14
                 newSquare = *curSquare
-                newSquare.tl.setX((x1 + 1) * 16)
-                newSquare.x0 = x1 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setY((y1 + 1) * 16)
-                newSquare.br.setX((x1 + 1) * 16)
-                newSquare.y0 = y1 + 1
-                newSquare.x1 = x1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setY(y1)
+                newSquare.br.setX(x1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
             case 15
                 newSquare = *curSquare
-                newSquare.br.setY(y0 * 16)
-                newSquare.br.setX((x1 + 1) * 16)
-                newSquare.y1 = y0 - 1
-                newSquare.x1 = x1 
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.br.setY(y0)
+                newSquare.br.setX(x1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX((x1 + 1) * 16)
-                newSquare.br.setY((y1 + 1) * 16)
-                newSquare.x0 = x1 + 1
-                newSquare.y1 = y1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x1)
+                newSquare.br.setY(y1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setX(x0 * 16)
-                newSquare.tl.setY((y1 + 1) * 16)
-                newSquare.x0 = x0
-                newSquare.y0 = y1 + 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setX(x0)
+                newSquare.tl.setY(y1)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
                 newSquare = *curSquare
-                newSquare.tl.setY(y0 * 16)
-                newSquare.br.setX(x0 * 16)
-                newSquare.y0 = y0
-                newSquare.x1 = x0 - 1
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                newSquare.tl.setY(y0)
+                newSquare.br.setX(x0)
+                squaresList.squares.insert(newSquare.tl, newSquare.br, @newSquare)
+            case else
+                exit for
             end select
-            (*layerData[lyr].maskSquares).squares.remove(curSquare)
+            squaresList.squares.remove(curSquare)
         end if
     next i
-    
-    windowSize = (x1 - x0 + 1)
-    searchMask = callocate(windowSize * (y1 - y0 + 1), sizeof(integer))
-    offX = 0
-    offY = 0
-    for yscan = y0 to y1
-        for xscan = x0 to x1
-            if (blocks[lyr][yscan * lvlWidth + xscan].NoTransparency = 1) andAlso (searchMask[offX + offY * windowSize] = 0) then
-                searchMask[offX + offY * windowSize] = 1
-                xexp = 0
-                yexp = 0
-                xOccupied = 0
-                yOccupied = 0
-                do
-                    if (offX + xexp) < x1 andAlso xOccupied = 0 then
-                        for ylook = offY to offY+yexp
-                            if (blocks[lyr][(y0 + ylook)*lvlWidth + (x0 + xexp + 1)].NoTransparency = 0) orElse (searchMask[ylook*windowSize + (offX + xexp + 1)] = 1) then
-                                xOccupied = 1
-                                exit while
-                            end if    
-                        next ylook
-                        xexp += 1
-                    else
-                        xOccupied = 1
-                    end if 
-                    if (offY + yexp) < y1 andAlso yOccupied = 0 then
-                        for xlook = offX to offX+xexp
-                            if (blocks[lyr][(y0 + yexp + 1)*lvlWidth + (x0 + xlook)].NoTransparency = 0) orElse (searchMask[(offY + yexp + 1)*windowSize + xlook] = 1) then
-                                yOccupied = 1
-                                exit while
-                            end if    
-                        next xlook
-                        yexp += 1
-                    else    
-                        yOccupied = 1
-                    end if 
-                loop until xOccupied = 1 andAlso yOccupied = 1
-                for ylook = offY to offY+yexp
-                    for xlook = offX to offX+xexp
-                        searchMask[xlook + ylook * windowSize] = 1
-                    next xlook
-                next ylook
-                newSquare.tl = Vector2D(xscan, yscan) * 16
-                newSquare.br = Vector2D(xscan + xexp + 1, yscan + yexp + 1) * 16
-                newSquare.x0 = xscan
-                newSquare.y0 = yscan
-                newSquare.x1 = xscan + xexp
-                newSquare.y1 = yscan + yexp
-                (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
-            end if
-            offX += 1
-        next xscan
-        offY += 1
-    next yscan
-    
-    
-    
-end sub
+    deallocate(foundSquares)
+end sub 
+                                                  
                                                        
 sub Level.repositionFromPortal(l as levelSwitch_t, _
                                byref p as TinyBody)

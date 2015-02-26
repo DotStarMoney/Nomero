@@ -55,7 +55,7 @@ type Player
                                     explodeAll as integer, deactivateAll as integer,_
                                     t as double)
         declare sub processItems(t as double)
-        declare sub drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
+        declare sub drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
         declare sub loadAnimations(filename as string)
         declare sub drawPlayer(scnbuff as uinteger ptr)
         declare function getState() as PlayerState
@@ -137,6 +137,7 @@ type Player
         as integer jumpBoostFrames
         as integer freeJump
         
+        as Animation hudspinner
         as Animation anim
         as Animation silhouette
         as integer revealSilo

@@ -1,16 +1,6 @@
-#include "fbgfx.bi"
+#include "effects3d.bi"
+#include "utility.bi"
 
-using fb
-
-type BasicViewport3D
-    Z_PLANE as double
-    center_x as double
-    center_y as double
-    cam_x as double
-    cam_y as double
-    cam_z as double
-end type                       
-                                 
 
 sub drawXQuad3D(scnptr as integer ptr, vp as BasicViewport3D,_
                                        z0 as double, z1 as double,_
@@ -39,7 +29,6 @@ sub drawXQuad3D(scnptr as integer ptr, vp as BasicViewport3D,_
     lvx = x1 - x0
     lvz = z1 - z0
     
-    if lvx = 0 then exit sub
     
     imageinfo tex,,,,pitch_src,pxls
     imageinfo scnptr,,,,pitch_dest,dest_pxls
@@ -55,6 +44,8 @@ sub drawXQuad3D(scnptr as integer ptr, vp as BasicViewport3D,_
     scn_x1   = (x1 - vp.cam_x) * zdepth
     scn_y1_l = ((-yd*0.5) - vp.cam_y) * zdepth
     scn_y1_h = (( yd*0.5) - vp.cam_y) * zdepth
+    
+    if scn_x0 = scn_x1 then exit sub
         
     C(0) = (vp.cam_x - x0) * vp.Z_PLANE * (tex_w - 1)
     C(1) = (z0 - vp.cam_z) * (tex_w - 1)
@@ -191,17 +182,6 @@ sub drawXQuad3D(scnptr as integer ptr, vp as BasicViewport3D,_
     
 end sub
 
-'------------------- FROM UTILITY -------------------
-function wrap(v as double, v_w as double = 6.28318530718) as double
-	if v >= v_w then 
-		v -= int(v / v_w) * v_w
-	elseif v < 0 then
-		v += (1 + int(abs(v) / v_w)) * v_w
-	end if
-    return v
-end function
-'------------------------------------------------------
-
 sub drawHexPrism(scnptr as integer ptr, x as integer, y as integer,_
                  angle as double, r as double, h as double,_
                  tex as integer ptr, img_w as integer, img_h as integer,_
@@ -235,7 +215,9 @@ sub drawHexPrism(scnptr as integer ptr, x as integer, y as integer,_
     next i
     
     face = int((-angle - 0.5236) / 1.0472)
-    if face < 0 then face += 6
+    while face < 0 
+        face += 6
+    wend
 
     bitNum = 0   
     
@@ -246,6 +228,8 @@ sub drawHexPrism(scnptr as integer ptr, x as integer, y as integer,_
     for i = 1 to 3
         nFace = face + 1
         if nFace >= 6 then nFace -= 6
+        
+        
         a = wrap(angle + (nFace - 2)*1.0472)
         r_x_pos = cos(a)*r
         r_z_pos = sin(a)*r
@@ -269,64 +253,3 @@ sub drawHexPrism(scnptr as integer ptr, x as integer, y as integer,_
     next i
     
 end sub
-
-
-screenres 640,480,32
-
-dim as BasicViewport3D v
-dim as integer ptr image, buffer
-dim as double angle, angleTarget, angleAcc, angleV
-dim as integer leftRelease, rightRelease
-
-v.Z_PLANE = 256
-v.center_x = 320
-v.center_y = 240
-
-image = imagecreate(288, 96)
-buffer = imagecreate(640,480, 0)
-bload "HUD turnstyle.bmp", image
-angle = 0
-do
-    'cls
-    line buffer, (0,0)-(639, 479), 0, BF
-    
-    drawHexPrism buffer, 320, 29, angle, 46, 43, image, 48, 48, &b0000000000111111
-
-    put (0,0), buffer, PSET
-    
-    if multikey(SC_W) then
-        if leftRelease = 1 then
-            angleTarget -= 1.0472
-        end if
-        leftRelease = 0
-    else
-        leftRelease = 1
-    end if
-
-    if multikey(SC_Q) then
-        if rightRelease = 1 then
-            angleTarget += 1.0472
-        end if
-        rightRelease = 0
-    else
-        rightRelease = 1
-    end if
-   
-    angleAcc += sqr(abs(angleTarget - angle)) * sgn(angleTarget - angle) * 0.05 - angleV * 0.40
-    angleV += angleAcc
-    angleV *= 0.4
-    angle += angleAcc
-    if (abs(angleTarget - angle) < 0.01) andAlso (abs(angleAcc) < 0.01) then
-        angleAcc = 0
-        angleV = 0
-        angle = angleTarget 
-    end if
-    
-    sleep 16
-loop until multikey(1)
-
-sleep
-end
-
-
-

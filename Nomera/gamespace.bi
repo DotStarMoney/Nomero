@@ -72,6 +72,7 @@ type GameSpace
         as DynamicController dynControl
         as uinteger ptr music(0 to 1)
         as integer currentMusic
+        as integer shake
         as TinySpace world
         as Player    spy
         as Level     lvlData

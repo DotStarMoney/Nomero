@@ -91,5 +91,21 @@ declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					        src_x as integer, src_y as integer,_
 					        img_width as integer, img_height as integer,_
 					        dest_x as integer, dest_y as integer)
+                            
+'add linked list merge sort
+                            
+type SegList_t
+    as integer x0, y0, x1, y1
+    as SegList_t ptr next_
+end type
+declare function sortSegList(list as SegList_t ptr) as SegList_t ptr
+enum Cardinal
+    N = 1
+    S = 2
+    E = 4
+    W = 8
+end enum
+declare function extractOrthoBoundsCheck(A as integer ptr, w as integer, h as integer, x as integer, y as integer) as integer
+declare function extractOrthoSegs(A as integer ptr, w as integer, h as integer) as SegList_t ptr
 
-#endif
+#endif 

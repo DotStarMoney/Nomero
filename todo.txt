@@ -39,6 +39,7 @@ add crouch to place bomb, and bomb placement scheme, bombs on walls unstick if m
 new jump animation
 add money items and add when enemy killed
 spline, electric shock cgi
+mr.spy silhouette looks odd
 
 ________________________________________________________________________________________________________________
 
@@ -68,6 +69,7 @@ cover layers
 	player has computed visibility
 		animation caches non-transparent per frame, count non transparent matches in region, divide by total
 make sure path tracker isn't splitting long nodes - fixed by implementing proper in place array shift
+added HUD spinner
 
 KNOWN ODDITIES:
 in Player.computeCoverage, sprite comparison requires that character be a multiple of 16 for now
@@ -87,3 +89,5 @@ cache segment measurements for speed
 effects reacting to bombs and other triggers
 remove old ass code (like fbtriggers, "parent" pointers where should be link, 
 super speed jump should still work, but remove slowdown that occurs if pressing forward during superjump
+background tiles that trees are above don't look so good
+fix snow bunching in corner and allow amount to be varried. 

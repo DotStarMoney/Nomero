@@ -2,10 +2,6 @@
 #include "constants.bi"
 #include "debug.bi"
 
-'need put PSET style rotation blitter
-'need put ALPHA style rotation blitter
-
-'could either do real time, or generate rotation maps <- faster and easier, lets do that in animation
 
 function min overload(x as double, y as double) as double
     if x < y then 
@@ -1095,6 +1091,7 @@ sub triangle_AHS(dest as integer ptr = 0,_
     alligned_ = allocate((sizeof(integer) * PACKED_DATA_SIZE) + (sizeof(byte) * (ALLIGNMENT - 1)))
     alligned_base = cast(integer ptr, (cast(integer, alligned_) + ALLIGNMENT) _
                     and (not (ALLIGNMENT - 1)))
+                    
     hconst     = @alligned_base[0]
     dx         = @alligned_base[12]
     dy         = @alligned_base[24]
@@ -1648,3 +1645,278 @@ end sub
 sub vline(scnbuff as integer ptr, a as Vector2D, b as Vector2D, col as integer)
 	line scnbuff, (a.x, a.y)-(b.x, b.y), col
 end sub
+
+function sortSegList(list as SegList_t ptr) as SegList_t ptr
+    dim as SegList_t ptr p, q, e, tail
+    dim as integer insize, nmerges, psize, qsize
+    dim as integer i, qdist, pdist
+    
+    if (list = 0) then exit function
+    
+    insize = 1
+    
+    do
+        p = list
+        list = 0
+        tail = 0
+        
+        nmerges = 0
+        while p <> 0
+            nmerges += 1
+            
+            q = p
+            psize = 0
+            for i = 0 to insize - 1
+                psize += 1
+                q = q->next_
+                if q = 0 then exit for
+            next i
+            
+            qsize = insize
+            
+            while (psize > 0) orElse ((qsize > 0) andAlso (q <> 0))
+                if psize = 0 then
+                    e = q
+                    q = q->next_
+                    qsize -= 1
+                elseif (qsize = 0) orElse (q = 0) then
+                    e = p
+                    p = p->next_
+                    psize -= 1
+                else
+                    qdist = iif(q->x0 = q->x1, abs(q->y1 - q->y0), abs(q->x1 - q->x0))
+                    pdist = iif(p->x0 = p->x1, abs(p->y1 - p->y0), abs(p->x1 - p->x0))
+                    if pdist <= qdist then
+                        e = p
+                        p = p->next_
+                        psize -= 1
+                    else
+                        e = q
+                        q = q->next_
+                        qsize -= 1
+                    end if
+                end if
+                
+                if tail <> 0 then
+                    tail->next_ = e
+                else
+                    list = e
+                end if
+                tail = e
+                
+            wend
+            
+            p = q
+          
+        wend
+    
+        tail->next_ = 0
+        if nmerges <= 1 then return list
+
+        insize *= 2
+    
+    loop
+
+end function
+
+function extractOrthoBoundsCheck(A as integer ptr, w as integer, h as integer, x as integer, y as integer) as integer
+    if x <  0 then return 0
+    if x >= w then return 0
+    if y <  0 then return 0
+    if y >= h then return 0
+    
+    if A[y*w + x] <> 0 then return 1    
+    return 0
+end function
+
+function extractOrthoSegs(A as integer ptr, w as integer, h as integer) as SegList_t ptr
+
+    #define s_at(X,Y) extractOrthoBoundsCheck(A,w,h,X,Y)
+    #macro new_seg(a,b,c,d) 
+        lastSeg->next_ = new SegList_t
+        lastSeg = lastSeg->next_                     
+        lastSeg->next_ = 0                           
+        lastSeg->x0 = a                              
+        lastSeg->y0 = b                                  
+        lastSeg->x1 = c                                  
+        lastSeg->y1 = d   
+    #endmacro
+	
+	dim as SegList_t ptr segs
+	dim as SegList_t ptr lastSeg
+	dim as integer       xScan
+	dim as integer       yScan
+	dim as integer       xStart
+	dim as integer       yStart
+	dim as Cardinal      dire
+	dim as Cardinal      side
+	dim as integer ptr   aTrace
+	dim as integer       i
+
+	aTrace = new integer[h*w]
+    for i = 0 to w*h-1
+        aTrace[i] = 0
+    next i
+    
+	segs = 0
+    side = N
+	
+	for yScan = 0 to h-1
+		for xScan = 0 to w-1
+            if ((A[yScan*w + xScan] <> 0) andAlso (aTrace[yScan*w + xScan] = 0) andAlso (s_at(xScan, yScan-1) = 0)) then
+				side = N
+				dire = E
+				if (segs = 0) then
+					segs = new SegList_t 
+					lastSeg = segs
+				else
+					lastSeg->next_ = new SegList_t
+					lastSeg = lastSeg->next_
+				end if
+				lastSeg->x0    = xScan
+				lastSeg->y0    = yScan
+				lastSeg->x1    = xScan+1
+				lastSeg->y1    = yScan
+				lastSeg->next_ = 0 
+				xStart = xScan
+				yStart = yScan
+				do
+					if side = N then aTrace[yScan*w + xScan] = 1
+					select case side
+                    case N:
+                        if dire = W then
+                            if (s_at(xScan-1,yScan-1) <> 0) then
+                                xScan -= 1
+                                yScan -= 1
+                                side = E
+                                dire = N
+                                new_seg(xScan+1,yScan+1,xScan+1,yScan)
+                            elseif (s_at(xScan-1,yScan) <> 0) then 
+                                xScan -= 1
+                                lastSeg->x0 -= 1
+                            else
+                                side = W
+                                dire = S
+                                new_seg(xScan,yScan,xScan,yScan+1)
+                            end if
+                        else 'dire == E
+                            if (s_at(xScan+1,yScan-1) <> 0) then
+                                xScan += 1
+                                yScan -=1
+                                side = W
+                                dire = N		
+                                new_seg(xScan,yScan+1,xScan,yScan)
+                            elseif (s_at(xScan+1,yScan) <> 0) then
+                                xScan += 1
+                                lastSeg->x1 += 1
+                            else
+                                side = E
+                                dire = S
+                                new_seg(xScan+1,yScan,xScan+1,yScan+1)
+                            end if
+                        end if
+                    case E:
+                        if (dire = N) then
+                            if (s_at(xScan+1,yScan-1) <> 0) then 
+                                xScan += 1
+                                yScan -=1
+                                side = S
+                                dire = E
+                                new_seg(xScan,yScan+1,xScan+1,yScan+1)
+                            elseif (s_at(xScan,yScan-1) <> 0) then
+                                yScan -= 1 
+                                lastSeg->y0 -= 1
+                            else
+                                side = N
+                                dire = W
+                                new_seg(xScan+1,yScan,xScan,yScan)
+                            end if
+                        else ' // dire == S
+                            if (s_at(xScan+1,yScan+1) <> 0) then
+                                xScan += 1
+                                yScan +=1
+                                side = N
+                                dire = E
+                                new_seg(xScan,yScan,xScan+1,yScan)
+                            elseif (s_at(xScan,yScan+1) <> 0) then
+                                yScan += 1 
+                                lastSeg->y1 += 1
+                            else
+                                side = S
+                                dire = W
+                                new_seg(xScan+1,yScan+1,xScan,yScan+1)
+                            end if
+                        end if
+                    case S:
+                        if (dire = E) then
+                            if (s_at(xScan+1,yScan+1) <> 0) then
+                                xScan += 1
+                                yScan +=1
+                                side = W
+                                dire = S
+                                new_seg(xScan,yScan,xScan,yScan+1)
+                            elseif (s_at(xScan+1,yScan) <> 0) then
+                                xScan += 1 
+                                lastSeg->x0 -= 1
+                            else
+                                side = E
+                                dire = N
+                                new_seg(xScan+1,yScan+1,xScan+1,yScan)
+                            end if
+                        else' // dire == W
+                            if (s_at(xScan-1,yScan+1) <> 0) then
+                                xScan -= 1
+                                yScan +=1
+                                side = E
+                                dire = S
+                                new_seg(xScan+1,yScan,xScan+1,yScan+1)
+                            elseif (s_at(xScan-1,yScan) <> 0) then
+                                xScan -= 1 
+                                lastSeg->x1 -= 1
+                            else
+                                side = W
+                                dire = N
+                                new_seg(xScan,yScan+1,xScan,yScan)
+                            end if
+                        end if
+                    case W:
+                        if (dire = S) then
+                            if (s_at(xScan-1,yScan+1) <> 0) then
+                                xScan -= 1
+                                yScan +=1
+                                side = N
+                                dire = W
+                                new_seg(xScan+1,yScan,xScan,yScan)
+                            elseif (s_at(xScan,yScan+1) <> 0) then
+                                yScan += 1 
+                                lastSeg->y0 += 1
+                            else
+                                side = S
+                                dire = E
+                                new_seg(xScan,yScan+1,xScan+1,yScan+1)
+                            end if
+                        else' // dire == N
+                            if (s_at(xScan-1,yScan-1) <> 0) then
+                                xScan -= 1
+                                yScan -=1
+                                side = S
+                                dire = W
+                                new_seg(xScan+1,yScan+1,xScan,yScan+1)
+                            elseif (s_at(xScan,yScan-1) <> 0) then
+                                yScan -= 1
+                                lastSeg->y1 -= 1
+                            else
+                                side = N
+                                dire = E
+                                new_seg(xScan,yScan,xScan+1,yScan)
+                            end if
+                        end if
+					end select
+				loop while((xScan <> xStart) orElse (yScan <> yStart) orElse (side <> N))
+			end if
+		next xscan
+	next yscan
+    
+	delete(aTrace)
+	return segs
+end function

@@ -10,6 +10,13 @@
 		if x then
 #endmacro
 
+#macro BEGIN_LIST_REVERSE(x, y)
+	y.rollBackReset()
+	do
+		x = y.rollBack()
+		if x then
+#endmacro
+
 #macro ABORT_LIST()
 	exit do
 #endmacro
@@ -51,6 +58,10 @@ type List
         
         declare sub flush() 
         declare function roll() as any ptr
+        
+        declare function rollBack() as any ptr
+        declare sub rollBackReset()
+
         declare sub rollRemove()
         declare sub rollReset()
         declare function bufferRoll() as ListNodeRoll_t

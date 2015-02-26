@@ -5,6 +5,7 @@
 #include "gamespace.bi"
 #include "dynamiccontroller.bi"
 #include "leveltypes.bi"
+#include "effects3d.bi"
 
 
 constructor Player
@@ -78,6 +79,7 @@ end sub
 sub Player.loadAnimations(filename as string)
     anim.load(filename)
     silhouette.load(left(filename, len(filename) - 4) & "_s.txt")
+    hudspinner.load("hudspinner.txt")
 end sub
 
 sub Player.drawPlayer(scnbuff as uinteger ptr)
@@ -702,7 +704,7 @@ sub Player.removeItemReference(data_ as integer)
 	end if
 end sub
 
-sub Player.drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
+sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
 	dim as Item ptr curItem
 	dim as Item ptr ptr curItem_
 	dim as Vector2D center
@@ -834,14 +836,20 @@ sub Player.drawItems(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0)
 	
 	BEGIN_HASH(curItem_, items)
 		curItem = *curItem_
-		if curItem->getType() <> ITEM_BOMB then
-			curItem->drawItem(scnbuff)
-		end if
+		'if curItem->getType() <> ITEM_BOMB then
+		'	curItem->drawItem(scnbuff)
+		'end if
 	END_HASH()
-	
 	
 	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
 	silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera)	
+    
+    
+    static as double a = 0
+    a += 0.01
+    drawHexPrism(scnbuff, 55, 440, a, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+
+    
 end sub
 
 sub Player.processItems(t as double)

@@ -46,6 +46,10 @@ function Animation.getGlow() as integer
 	return glowValue
 end function
 
+function Animation.getRawImage() as integer ptr
+    return data_->image
+end function
+
 
 sub Animation.load(filename as string)
     dim as integer  f, readStep, i
@@ -62,6 +66,7 @@ sub Animation.load(filename as string)
             *(.animName) = filename
             f = freefile
             readStep = 0
+            .defaultAnim = 0
             open filename for input as #f
             line input #f, lne
             while lne <> ""
@@ -103,9 +108,13 @@ sub Animation.load(filename as string)
 						readStep = 2
                     case 2
                         .animations_n = val(lne)
-                        .animations = new Animation_t[.animations_n] 'allocate(sizeof(Animation_t) * .animations_n)
-                        curAnim = -1
-                        readStep = 100
+                        if .animations_n = 0 then
+                            exit while
+                        else
+                            .animations = new Animation_t[.animations_n] 'allocate(sizeof(Animation_t) * .animations_n)
+                            curAnim = -1
+                            readStep = 100
+                        end if
                     case 100
                         .defaultAnim = val(lne)
                         readStep = 3
@@ -203,7 +212,6 @@ sub Animation.load(filename as string)
                 line input #f, lne
             wend 
             close #f
-            .defaultAnim = 0
         end with
         animHash.insert(filename, @data_)
     end if

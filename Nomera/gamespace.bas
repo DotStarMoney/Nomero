@@ -113,7 +113,8 @@ constructor GameSpace()
     scnbuff = imagecreate(640,480)
     stallTime_mili = 15
     movingFrmAvg = 0
-    
+    shake = 0 
+
 end constructor
 
 sub GameSpace.reconnectCollision()
@@ -171,7 +172,6 @@ function GameSpace.go() as integer
 	put #pathFileNum,,pathData[0], pathBytes
 	close #pathFileNum
 	deallocate(pathData)
-
     return 0
 end function
             
@@ -218,10 +218,27 @@ sub GameSpace.hardSwitchMusic(filename as string)
 end sub
 
 sub GameSpace.step_draw()
+    #define INIT_PROFILE(X) timeAdd(X) = 0
+    #define START_PROFILE(X) startTime(X) = timer
+    #define RECORD_PROFILE(X) timeAdd(X) += timer - startTime(X)
+
     dim as integer x, y, block
     dim as integer tl_x, tl_y
     dim as integer br_x, br_y
-    dim as integer shake
+    dim as integer i
+    
+    dim as double tM, tS, totalT, startTotalT
+    dim as double timeAdd(0 to 3), startTime(0 to 3)
+    static as double timeProfiles(0 to 3)
+    
+    INIT_PROFILE(0)
+    INIT_PROFILE(1)
+    INIT_PROFILE(2)
+    INIT_PROFILE(3)
+    
+    START_PROFILE(0)
+    
+    
     if isSwitching = 0 then
 		camera = spy.body.p * 0.1 + camera * 0.9
 	elseif isSwitching = -1 then
@@ -254,6 +271,7 @@ sub GameSpace.step_draw()
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
                   
+                  
     line scnbuff, (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5), 0, BF
     
@@ -263,21 +281,44 @@ sub GameSpace.step_draw()
         shake = 0
     end if
 	
+    START_PROFILE(3)
+    
+    START_PROFILE(1)
     lvlData.drawLayers(scnbuff, BACKGROUND, camera.x(), camera.y(), Vector2D(0, 0))
+    RECORD_PROFILE(1)
+    
+    START_PROFILE(2)
     if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)
+    RECORD_PROFILE(2)
+    
+    START_PROFILE(1)
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
+    RECORD_PROFILE(1)
+    
     graphicFX.drawEffects(scnbuff, camera, ACTIVE)
     spy.drawPlayer(scnbuff)
 	dynControl.drawDynamics(scnbuff, ACTIVE)
 
-	lvlData.drawLayers(scnbuff, ACTIVE_COVER, camera.x(), camera.y(), Vector2D(0, shake))
+    START_PROFILE(1)
+	lvlData.drawLayers(scnbuff, ACTIVE_COVER, camera.x(), camera.y(), Vector2D(0, shake))'
+    RECORD_PROFILE(1)
+
 	dynControl.drawDynamics(scnbuff, ACTIVE_COVER)
+    
+    START_PROFILE(1)
     lvlData.drawLayers(scnbuff, FOREGROUND, camera.x(), camera.y(), Vector2D(0, shake))
+    RECORD_PROFILE(1)
+
+    
     effects.draw_effects(scnbuff)
     projectiles.draw_collection(scnbuff)
 
+    START_PROFILE(2)
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
-    spy.drawItems(scnbuff, Vector2D(0, shake))
+    RECORD_PROFILE(2)
+
+    
+    spy.drawOverlay(scnbuff, Vector2D(0, shake))
 
     dynControl.drawDynamics(scnbuff, FOREGROUND)
     
@@ -336,6 +377,8 @@ sub GameSpace.step_draw()
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
     tracker.record_draw(scnbuff)
+    RECORD_PROFILE(3)
+
 
 	#ifndef SCALE_2X
 	    window screen (0,0)-(SCRX-1,SCRY-1)
@@ -343,6 +386,18 @@ sub GameSpace.step_draw()
 	#else
 		scale2sync scnbuff
     #endif
+    RECORD_PROFILE(0)
+
+    for i = 0 to 3
+        timeProfiles(i) = timeProfiles(i) * 0.90 + 0.10 * timeAdd(i)
+    next i
+    'window screen (0,0)-(SCRX*2-1,SCRY*2-1)
+    'draw string (0, 0), "Time % to draw static layers: " + str(int((timeProfiles(1) / timeProfiles(3))*100)), 0
+    'draw string (0, 8), "Time % to draw snow: " + str(int((timeProfiles(2) / timeProfiles(3))*100)), 0
+    'draw string (0, 16), "Time % to draw to buffer out of screen refresh time " + str(int((timeProfiles(3) / timeProfiles(0))*100)), 0
+
+
+    
 end sub
     
 
@@ -416,6 +471,9 @@ sub GameSpace.step_process()
         
     if lvlData.mustReconnect() = 1 then reconnectCollision()
     triggers.process(0.01667)
+
+    lvlData.computeDrawRegions(camera.x(), camera.y(), Vector2D(0, shake))
+
         
     if isSwitching = 1 then
 		switchFrame += 64
@@ -464,7 +522,7 @@ sub GameSpace.step_process()
 			next i
 		#endif
 	end if
-
+    
 end sub
 sub GameSpace.doGameEnd()
 	#macro sync()

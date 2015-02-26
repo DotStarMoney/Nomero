@@ -101,6 +101,7 @@ type Animation
         declare function getOffset() as Vector2D
         declare function getFrame() as integer
         declare function getGlow() as integer
+        declare function getRawImage() as integer ptr
         
         declare function getFramePixelCount(rotatedFlags as integer = 0) as integer
         declare sub getFrameImageData(byref img as uinteger ptr, byref xpos as integer, byref ypos as integer, byref w as integer, byref h as integer)

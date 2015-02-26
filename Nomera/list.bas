@@ -195,6 +195,20 @@ function List.roll() as any ptr
         return tempNode_->data_
     end if
 end function
+
+function List.rollBack() as any ptr
+    dim as ListNode_t ptr tempNode_
+	if size = 0 then return 0
+    if curRollNode_ = 0 then
+        return 0
+    else
+		oldCurRollNode_ = curRollNode_
+        tempNode_ = curRollNode_
+        curRollNode_ = curRollNode_->prev_
+        return tempNode_->data_
+    end if   
+end function
+
 sub List.rollRemove()
     dim as ListNode_t ptr tempNode_
     dim as ListNode_t ptr delNode_
@@ -242,6 +256,12 @@ sub List.rollReset()
     curRollNode_ = head_
     oldCurRollNode_ = 0
 end sub
+        
+sub List.rollBackReset()
+    curRollNode_ = tail_
+    oldCurRollNode_ = 0
+end sub
+
 function List.bufferRoll() as ListNodeRoll_t
 	Dim as ListNodeRoll_t ln
 	ln.curRollNode_ = curRollNode_

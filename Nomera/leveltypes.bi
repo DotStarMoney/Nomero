@@ -69,11 +69,11 @@ type Level_Tileset
     as ushort row_count
     as uinteger ptr set_image
     as HashTable tileEffect
+    as HashTable NoTransparencyIDs
 end type
 
 type Level_SquareMask
     as Vector2D tl, br
-    as integer x0, y0, x1, y1
 end type
 
 type Level_SquareMaskList
@@ -88,7 +88,6 @@ type Level_VisBlock
     as short  frameDelay
     as ushort usesAnim
     as ushort rotatedType
-    as ushort NoTransparency
 end type
 
 Type Level_LayerData
@@ -103,6 +102,11 @@ Type Level_LayerData
     as single depth
     as Level_SquareMaskList ptr visibilitySquares
     as Level_SquareMaskList ptr maskSquares
+    
+    as Vector2D frameCenter
+    as List frameDrawRegions
+    as Level_SquareMaskList ptr aggregateBlockingRegions
+    
 end type
 
 enum PortalDirection_t

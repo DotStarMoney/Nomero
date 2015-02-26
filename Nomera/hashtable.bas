@@ -241,8 +241,10 @@ function HashTable.exists(r_key as integer) as integer
     dim as HashNode_t ptr curNode
 
     key = hashInteger(r_key) 
-
-    curNode = data_[key]
+    
+    
+    curNode = data_[key]    
+    
     while curNode <> 0
         if curNode->key_type = KEY_INTEGER then
             if curNode->key_integer = r_key then
