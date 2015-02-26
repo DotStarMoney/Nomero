@@ -1467,8 +1467,7 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
     dim as List ptr curList
     dim as Level_SquareMask drawSlices(0 to MAX_SLICES - 1)
     dim as integer drawSlices_N, oldDrawSlices_N
-    
-
+   
     
     aggregateMask = new Level_SquareMaskList(SCRX, SCRY)
     
@@ -1503,7 +1502,6 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
             tl = center - Vector2D(SCRX, SCRY)*0.5
             br = center + Vector2D(SCRX, SCRY)*0.5
             
-            'lots of nested loops but more often than not these will be run once, maybe twice
             layerData[i].frameDrawRegions.flush()
             squares_N = layerData[i].visibilitySquares->squares.search(tl, br, squares)
             for j = 0 to squares_N - 1
@@ -1520,43 +1518,15 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
                 drawSlices_N = 1
                 drawSlices(0) = squareInst
               
-                'if i = blocks_N - 6 then
-                '    print "square to be chopped"
-                '    line (drawSlices(0).tl.x*2, drawSlices(0).tl.y*2)-(drawSlices(0).br.x*2, drawSlices(0).br.y*2), rgb(255, 0, 0), BF
-                '    sleep
-                'end if
-                
                 coverSquares_N = aggregateMask->squares.search(drawSlices(0).tl, drawSlices(0).br, coverSquares)
                 for q = 0 to coverSquares_N - 1      
                     curCoverSquare = coverSquares[q]
-                    'if i = blocks_N - 6 then
-                    '    print "square that covers"
-                    '    line (curCoverSquare->tl.x*2, curCoverSquare->tl.y*2)-(curCoverSquare->br.x*2, curCoverSquare->br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
-                    '    sleep
-                    'end if
                     
                     u = 0
                     oldDrawSlices_N = drawSlices_N
                     while u < oldDrawSlices_N
-                    
-                        'if i = blocks_N - 6 then print "current list of chopped up squares", drawSlices_N
-                        'for t = 0 to drawSlices_N - 1
-                        '    if i = blocks_N - 6 then 
-                        '        line (drawSlices(t).tl.x*2, drawSlices(t).tl.y*2)-(drawSlices(t).br.x*2, drawSlices(t).br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
-                        '        'print "printing..."
-                        '        sleep
-                        '    end if
-                        'next t
-                        
-                            
+                     
                         numNew = subtractSquareMasksList(drawSlices(u), *curCoverSquare, drawSlices(), drawSlices_N)
-                        
-                        'loop through and draw all before after?
-                        'if i = blocks_N - 6 then 
-                        '    print "numNew: "; numNew, u
-                        '    sleep
-                        'end if
-                        
                         if numNew > -2 then
                             if numNew = 0 then
                                 oldDrawSlices_N -= 1
@@ -1570,39 +1540,18 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
                         else
                             u += 1
                         end if
-                        
-                        
+                                 
                     wend  
-                    
-                    'if i = blocks_N - 6 then print "final list of chopped up squares", drawSlices_N
-                    'for t = 0 to drawSlices_N - 1
-                    '    if i = blocks_N - 6 then 
-                    '        line (drawSlices(t).tl.x*2, drawSlices(t).tl.y*2)-(drawSlices(t).br.x*2, drawSlices(t).br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
-                    '        'print "printing..."
-                    '        sleep
-                    '    end if
-                    'next t
-                    
+               
                 next q
                 deallocate(coverSquares)
                 
-                
-                'add whatever we have in drawSlices to the draw regions list
-                'if i = blocks_N - 6 then print "final squares"
                 for q = 0 to drawSlices_N - 1
                     layerData[i].frameDrawRegions.push_back(@(drawSlices(q)))
-                    if i = blocks_N - 7 then 
-                        'line (drawSlices(q).tl.x*2, drawSlices(q).tl.y*2)-(drawSlices(q).br.x*2, drawSlices(q).br.y*2), rgb(0, 255, 0), BF       
-                       ' line (drawSlices(q).tl.x*2, drawSlices(q).tl.y*2)-(drawSlices(q).br.x*2, drawSlices(q).br.y*2), rgb(0, 64, 0), B                        
-                        
-                    end if
                 next q
-                'if i = blocks_N - 6 then sleep
             next j
             deallocate(squares)
             
-            
-            'merge the square mask squares in this layer's blocking buffer to the aggregate
             coverSquares_N = layerData[i].maskSquares->squares.search(tl, br, coverSquares)
             for j = 0 to coverSquares_N - 1
                 squareInst = *(coverSquares[j])
