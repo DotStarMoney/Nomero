@@ -3,10 +3,15 @@
 #include "fbgfx.bi"
 #include "debug.bi"
 #include "objectlink.bi"
+
+#define WIN_INCLUDEALL
 #include "windows.bi"
+
 #include "vbcompat.bi"
 #include "fbpng.bi"
 #include "cpurender.bi"
+
+#define SLEEP_RESOLUTION 1
 
 using fb
 
@@ -72,7 +77,7 @@ constructor GameSpace()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
     'FSOUND_Stream_Play currentMusic, music(currentMusic)
-    FSOUND_SetVolumeAbsolute(currentMusic, 64)
+    'FSOUND_SetVolumeAbsolute(currentMusic, 128)
         
     switchTracks = 0
     
@@ -114,6 +119,8 @@ constructor GameSpace()
     stallTime_mili = 15
     movingFrmAvg = 0
     shake = 0 
+   
+    timeBeginPeriod(SLEEP_RESOLUTION)
 
 end constructor
 
@@ -121,6 +128,9 @@ sub GameSpace.reconnectCollision()
     world.setBlockData(lvlData.getCollisionLayerData(),_
                    lvlData.getWidth(), lvlData.getHeight(),_
                    16.0)
+                   
+    timeEndPeriod(SLEEP_RESOLUTION)
+
 end sub
 
 destructor GameSpace
@@ -132,7 +142,7 @@ sub GameSpace.setMusicVolume(v as integer)
 end sub
         
 function GameSpace.go() as integer
-    dim as double startTime, totalTime
+    dim as double startTime, processTime
     dim as byte ptr trackerEx
     dim as integer  dataSize
     do
@@ -141,27 +151,25 @@ function GameSpace.go() as integer
 		step_draw()
         step_input()
         step_process()
+        processTime = 1000*(timer - startTime)
+        sleep(SLEEP_RESOLUTION * stallTime_mili)
         frameTime = timer - startTime
         if keypress(SC_ESCAPE) then exit do
         'print spy.body.p
-        locate 1,1
-        movingFrmAvg = movingFrmAvg * 0.90 + 0.10 * (frameTime / (1 / FPS_TARGET) * 100)
-		print using "Engine at ##.##% load"; movingFrmAvg
-		
-		stall( stallTime_mili)
-		totalTime = (timer - startTime)
-        if totalTime < (1 / FPS_TARGET) then
+        
+        
+        
+        movingFrmAvg = movingFrmAvg*0.9 + 0.1*(frameTime*1000)		
+        if movingFrmAvg < (1000 / FPS_TARGET) then
 			stallTime_mili += 1
 		else
 			stallTime_mili -= 1
 			if stallTime_mili < 0 then stallTime_mili = 0
 		end if
-		
-		if keypress(SC_P) then
-			sleep
-			stall(100)
-			sleep
-		end if
+        
+        locate 1,1
+        print using "Frame Load %: ##.##"; (processTime / (1000 / FPS_TARGET)) * 100
+
     loop 
     
 	kill pathFile

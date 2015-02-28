@@ -70,11 +70,13 @@ cover layers
 		animation caches non-transparent per frame, count non transparent matches in region, divide by total
 make sure path tracker isn't splitting long nodes - fixed by implementing proper in place array shift
 added HUD spinner
+frame delay now using system timer, gives OS a chance to do some stuff
+
 
 KNOWN ODDITIES:
 in Player.computeCoverage, sprite comparison requires that character be a multiple of 16 for now
 Landing on a slope after a jump and releasing forward and immediately jumping afterword can really boost your speed
-Landing on a slope after a jump up it and immediately jumping afterword can give you a super jump
+Landing on a slope after a jump up it and immediately jumping afterword can give you a super jump (hard to trigger)
 
 
 
@@ -84,7 +86,6 @@ Add other bomb types
 door indicators
 door keys
 if holding crouch and jumping, landing causes funny little animation glitch
-mask out fully covered squares for speed
 cache segment measurements for speed
 effects reacting to bombs and other triggers
 remove old ass code (like fbtriggers, "parent" pointers where should be link, 

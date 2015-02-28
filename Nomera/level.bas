@@ -281,9 +281,11 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
     end if
 
+    '1272 size bytes, so 318 words to erase, referenced by (x + y * ((SCRX / 16) + 1))
     
     rand = rnd
-	
+	'create a mask of drawn tiles before hand (level keeps it). in some way, clear it really fast first here (SSE)
+    'go through each draw square, calculate tiles, loop through and draw if mask holds zero. on draw, mark mask position as 1
     for yscan = tl_y to br_y
         for xscan = tl_x to br_x
             block = blocks[lyr][yscan * lvlWidth + xscan]
@@ -877,7 +879,7 @@ sub level.flush()
             delete(layerData[i].aggregateBlockingRegions)
         next i
         if blocks <> 0 then deallocate(blocks)
-        if layerData <> 0 then deallocate(layerData)
+        if layerData <> 0 then delete(layerData)
         background_layer.flush()
         active_layer.flush()
         activeCover_layer.flush()
@@ -1250,7 +1252,7 @@ sub level.load(filename as string)
 				stall(100)
 			end if
 		#endif
-		layerData = allocate(sizeof(Level_LayerData) * blocks_N)
+		layerData = new Level_LayerData[blocks_N]
 		#ifdef DEBUG
 			if layerData = 0 then
 				printlog "panic 4"
@@ -1461,6 +1463,7 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
     dim as Level_SquareMask squareInst
     dim as Level_SquareMaskList ptr aggregateMask
     dim as Level_SquareMask ptr ptr coverSquares
+    dim as Hash2D choppingSquares
     dim as integer coverSquares_N, numNew
     dim as Level_SquareMask ptr curCoverSquare
     dim as integer ptr curLayer
@@ -1468,7 +1471,7 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
     dim as Level_SquareMask drawSlices(0 to MAX_SLICES - 1)
     dim as integer drawSlices_N, oldDrawSlices_N
    
-    
+    choppingSquares.init(SCRX, SCRY, sizeof(Level_SquareMask))
     aggregateMask = new Level_SquareMaskList(SCRX, SCRY)
     
     for layerList = 0 to 3
@@ -1515,18 +1518,55 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
                 squareInst.tl = squareInst.tl - tl
                 squareInst.br = squareInst.br - tl
                   
+                  
+                  
                 drawSlices_N = 1
                 drawSlices(0) = squareInst
+                
+                locate 1,1
+                if i = blocks_N - 8 then
+                 print "square to be chopped"
+                 line (drawSlices(0).tl.x*2, drawSlices(0).tl.y*2)-(drawSlices(0).br.x*2, drawSlices(0).br.y*2), rgb(255, 0, 0), BF
+                 sleep
+                end if
               
                 coverSquares_N = aggregateMask->squares.search(drawSlices(0).tl, drawSlices(0).br, coverSquares)
                 for q = 0 to coverSquares_N - 1      
                     curCoverSquare = coverSquares[q]
                     
+                    locate 2, 1
+                    if i = blocks_N - 8 then
+                     print "square that covers"
+                     line (curCoverSquare->tl.x*2, curCoverSquare->tl.y*2)-(curCoverSquare->br.x*2, curCoverSquare->br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
+                     sleep
+                    end if
+                    
                     u = 0
                     oldDrawSlices_N = drawSlices_N
+                    'change list of chopped up squares to hash2D and query the choppin' squares with the cover squares
+                    'dont need to do it the first time around since obviously that one square is... well... lol
+                    'but from there on out, take the cover square, and query the choppin' squares and chop those bad boiz.
                     while u < oldDrawSlices_N
                      
+                        if i = blocks_N - 8 then print "current list of chopped up squares", drawSlices_N
+                        for t = 0 to drawSlices_N - 1
+                         if i = blocks_N - 8 then
+                         line (drawSlices(t).tl.x*2, drawSlices(t).tl.y*2)-(drawSlices(t).br.x*2, drawSlices(t).br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
+                         'print "printing..."
+                         sleep
+                         end if
+                        next t 
+                     
+                     
                         numNew = subtractSquareMasksList(drawSlices(u), *curCoverSquare, drawSlices(), drawSlices_N)
+                        
+                        'loop through and draw all before after?
+                        if i = blocks_N - 8 then
+                         print "numNew: "; numNew, u
+                         sleep
+                        end if
+                        
+                        
                         if numNew > -2 then
                             if numNew = 0 then
                                 oldDrawSlices_N -= 1
@@ -1542,13 +1582,29 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
                         end if
                                  
                     wend  
+                    
+                    
+                    if i = blocks_N - 8 then print "final list of chopped up squares", drawSlices_N
+                    for t = 0 to drawSlices_N - 1
+                     if i = blocks_N - 8 then
+                     line (drawSlices(t).tl.x*2, drawSlices(t).tl.y*2)-(drawSlices(t).br.x*2, drawSlices(t).br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
+                     'print "printing..."
+                     sleep
+                     end if
+                    next t
                
                 next q
                 deallocate(coverSquares)
                 
+                if i = blocks_N - 8 then print "final squares"
                 for q = 0 to drawSlices_N - 1
                     layerData[i].frameDrawRegions.push_back(@(drawSlices(q)))
+                    if i = blocks_N - 8 then
+                        line (drawSlices(q).tl.x*2, drawSlices(q).tl.y*2)-(drawSlices(q).br.x*2, drawSlices(q).br.y*2), rgb(0,255,0), bf
+                        line (drawSlices(q).tl.x*2, drawSlices(q).tl.y*2)-(drawSlices(q).br.x*2, drawSlices(q).br.y*2), rgb(0,64,0), b
+                    end if
                 next q
+                if i = blocks_N - 8 then sleep
             next j
             deallocate(squares)
             

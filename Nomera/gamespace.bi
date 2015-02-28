@@ -21,7 +21,6 @@
 
 #define FPS_TARGET 60
 
-
 type GameSpace
     public:
         declare constructor
