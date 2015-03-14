@@ -42,9 +42,6 @@ type Level
         declare function getHeight() as integer
         declare function getName() as string
         declare sub drawLayer(scnbuff as uinteger ptr,_
-                              tl_x as integer, tl_y as integer,_
-                              br_x as integer, br_y as integer,_
-                              x as integer, y as integer,_
                               cam_x as integer, cam_y as integer,_
                               lyr as integer)
         declare sub drawLayers(scnbuff as uinteger ptr, order as integer,_
@@ -82,13 +79,7 @@ type Level
                                                  squareB as Level_SquareMask,_
                                                  outSquares() as Level_SquareMask, offset as integer) as integer   
                                                   
-                                            
-    
-        declare sub putDispatch(scnbuff as integer ptr,_
-                                block as Level_VisBlock,_
-                                x as integer, y as integer,_
-                                tilePos_x as integer, tilePos_y as integer,_
-                                cam_x as integer, cam_y as integer)
+                                           
                                 
         declare sub splodeBlockReact(xs as integer, ys as integer)
         declare sub modBlockDestruct(lyr as integer, xs as integer, ys as integer)

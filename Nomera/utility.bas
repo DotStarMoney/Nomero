@@ -835,6 +835,14 @@ sub vTriangle(dest as integer ptr = 0,_
 	triangle_AHS dest, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, col
 end sub
 
+sub allocateAlligned(byref basePtr as any ptr, byref allignedPtr as any ptr, bytes as integer)
+    #define ALLIGNMENT 16
+    
+    basePtr     = allocate(bytes + (sizeof(byte) * (ALLIGNMENT - 1)))
+    allignedPtr = cast(integer ptr, (cast(integer, basePtr) + ALLIGNMENT) _
+                  and (not (ALLIGNMENT - 1)))
+                  
+end sub
 
 sub triangle_AHS(dest as integer ptr = 0,_
                  x0 as double, y0 as double,_

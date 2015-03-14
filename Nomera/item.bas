@@ -182,7 +182,7 @@ function Item.process(t as double) as integer
 			link.soundeffects_ptr->playSound(SND_EXPLODE)
 
 			for i = 1 to 5
-				link.projectilecollection_ptr->create(body.p, Vector2D(rnd*2 - 1, rnd*2 - 1) * (1 + rnd*700), DETRITIS)
+				link.projectilecollection_ptr->create(body.p, Vector2D(rnd*2 - 1.0, rnd*2 - 1.0) * (300 + rnd*700), DETRITIS)
 			next i
 			
 			link.gamespace_ptr->vibrateScreen()

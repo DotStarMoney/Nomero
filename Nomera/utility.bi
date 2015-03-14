@@ -92,6 +92,8 @@ declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					        img_width as integer, img_height as integer,_
 					        dest_x as integer, dest_y as integer)
                             
+declare sub allocateAlligned(byref basePtr as any ptr, byref allignedPtr as any ptr, bytes as integer)
+                            
 'add linked list merge sort
                             
 type SegList_t

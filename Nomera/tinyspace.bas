@@ -1353,8 +1353,10 @@ sub TinySpace.step_time(byval t as double)
         br = br * block_l
 
 		skipSearch = 0
-		if start_x >= end_x orElse end_x < start_x orElse _
+        if (c->noCollide = 1) orElse _
+           start_x >= end_x orElse end_x < start_x orElse _
 		   start_y >= end_y orElse end_y < start_y then
+           
 		   skipSearch = 1
 		   
 		end if 

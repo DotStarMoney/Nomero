@@ -40,6 +40,7 @@ new jump animation
 add money items and add when enemy killed
 spline, electric shock cgi
 mr.spy silhouette looks odd
+change tile animations so each tile has an index to effect data in the tileset so no hash lookup
 
 ________________________________________________________________________________________________________________
 
@@ -53,6 +54,7 @@ tinyspace bug: sticking, STILL something to do with OWP corners - cannot reprodu
 IGNORED:
 SSE implementation of fallout - doubtful the speed benefit is worth it
 bug in alpha blend routine causing jaggies across screen when mines towards edge - commented out < 4 case 
+
 
 NON-ISSUE:
 collision with pain blocks should be circle to box - tried, but seems to make more sense visually when box to box
@@ -77,8 +79,7 @@ KNOWN ODDITIES:
 in Player.computeCoverage, sprite comparison requires that character be a multiple of 16 for now
 Landing on a slope after a jump and releasing forward and immediately jumping afterword can really boost your speed
 Landing on a slope after a jump up it and immediately jumping afterword can give you a super jump (hard to trigger)
-
-
+draw mask technique causes rare missed tile artifacts (visible seams in layers)
 
 
 - PHASE 2 -
@@ -86,7 +87,7 @@ Add other bomb types
 door indicators
 door keys
 if holding crouch and jumping, landing causes funny little animation glitch
-cache segment measurements for speed
+cache segment measurements for speed and implement sleeping state, causing big slow-down in physics without
 effects reacting to bombs and other triggers
 remove old ass code (like fbtriggers, "parent" pointers where should be link, 
 super speed jump should still work, but remove slowdown that occurs if pressing forward during superjump

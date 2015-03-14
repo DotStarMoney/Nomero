@@ -129,12 +129,12 @@ sub GameSpace.reconnectCollision()
                    lvlData.getWidth(), lvlData.getHeight(),_
                    16.0)
                    
-    timeEndPeriod(SLEEP_RESOLUTION)
-
 end sub
 
 destructor GameSpace
     imagedestroy scnbuff
+    timeEndPeriod(SLEEP_RESOLUTION)
+
 end destructor
         
 sub GameSpace.setMusicVolume(v as integer)
@@ -145,17 +145,23 @@ function GameSpace.go() as integer
     dim as double startTime, processTime
     dim as byte ptr trackerEx
     dim as integer  dataSize
+    stallTime_mili = 1
     do
 		
         startTime = timer
 		step_draw()
+        
+        locate 1,1
+        print using "Frame Load %: ##.##"; (processTime / (1000 / FPS_TARGET)) * 100
+        print spy.body.p
+
+        
         step_input()
         step_process()
         processTime = 1000*(timer - startTime)
         sleep(SLEEP_RESOLUTION * stallTime_mili)
         frameTime = timer - startTime
         if keypress(SC_ESCAPE) then exit do
-        'print spy.body.p
         
         
         
@@ -167,9 +173,6 @@ function GameSpace.go() as integer
 			if stallTime_mili < 0 then stallTime_mili = 0
 		end if
         
-        locate 1,1
-        print using "Frame Load %: ##.##"; (processTime / (1000 / FPS_TARGET)) * 100
-
     loop 
     
 	kill pathFile
@@ -236,58 +239,25 @@ sub GameSpace.step_draw()
     dim as integer i
     
     dim as double tM, tS, totalT, startTotalT
-    dim as double timeAdd(0 to 3), startTime(0 to 3)
-    static as double timeProfiles(0 to 3)
+    dim as double timeAdd(0 to 9), startTime(0 to 9)
+    static as double timeProfiles(0 to 9)
     
-    INIT_PROFILE(0)
-    INIT_PROFILE(1)
-    INIT_PROFILE(2)
-    INIT_PROFILE(3)
+    for i = 0 to 9
+        INIT_PROFILE(i)
+    next i
     
     START_PROFILE(0)
     
     
-    if isSwitching = 0 then
-		camera = spy.body.p * 0.1 + camera * 0.9
-	elseif isSwitching = -1 then
-		camera = spy.body.p
-	end if
-    if lvlData.getWidth() * 16 > SCRX then
-        if camera.x() < SCRX*0.5 then 
-            camera.setX(SCRX*0.5)
-        elseif camera.x() >= lvlData.getWidth()*16 - SCRX*0.5 then
-            camera.setX(lvlData.getWidth()*16 - SCRX*0.5)
-        end if
-    else
-        camera.setX(lvlData.getWidth() * 8)
-    end if
-    
-    if lvlData.getHeight() * 16 > SCRY then
-        if camera.y() < SCRY*0.5 then 
-            camera.setY(SCRY*0.5)
-        elseif camera.y() >= lvlData.getHeight()*16 - SCRY*0.5 then
-            camera.setY(lvlData.getHeight()*16 - SCRY*0.5)
-        end if  
-    else
-        camera.setY(lvlData.getHeight() * 8)
-    end if
-        
-    camera.setX(int(camera.x()))
-    camera.setY(int(camera.y()))
-	
+
 	
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
                   
                   
-    line scnbuff, (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
-                  (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5), 0, BF
+    'line scnbuff, (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
+    '              (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5), 0, BF
     
-    if vibcount > 0 then
-        shake = ((vibcount mod 2) * 2 - 1) * 5
-    else
-        shake = 0
-    end if
 	
     START_PROFILE(3)
     
@@ -300,35 +270,51 @@ sub GameSpace.step_draw()
     RECORD_PROFILE(2)
     
     START_PROFILE(1)
+    
+    
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
     RECORD_PROFILE(1)
     
+    START_PROFILE(4)
     graphicFX.drawEffects(scnbuff, camera, ACTIVE)
+    RECORD_PROFILE(4)
+    
+    START_PROFILE(5)
     spy.drawPlayer(scnbuff)
+    RECORD_PROFILE(5)
+    
+    START_PROFILE(6)
 	dynControl.drawDynamics(scnbuff, ACTIVE)
-
+    RECORD_PROFILE(6)
+    
     START_PROFILE(1)
 	lvlData.drawLayers(scnbuff, ACTIVE_COVER, camera.x(), camera.y(), Vector2D(0, shake))'
     RECORD_PROFILE(1)
 
+    START_PROFILE(6)
 	dynControl.drawDynamics(scnbuff, ACTIVE_COVER)
+    RECORD_PROFILE(6)
     
     START_PROFILE(1)
     lvlData.drawLayers(scnbuff, FOREGROUND, camera.x(), camera.y(), Vector2D(0, shake))
     RECORD_PROFILE(1)
 
-    
+    START_PROFILE(4)
     effects.draw_effects(scnbuff)
     projectiles.draw_collection(scnbuff)
+    RECORD_PROFILE(4)
 
     START_PROFILE(2)
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     RECORD_PROFILE(2)
 
-    
+    START_PROFILE(5)
     spy.drawOverlay(scnbuff, Vector2D(0, shake))
+    RECORD_PROFILE(5)
 
+    START_PROFILE(6)
     dynControl.drawDynamics(scnbuff, FOREGROUND)
+    RECORD_PROFILE(6)
     
     window screen (0,0)-(SCRX-1,SCRY-1)
     
@@ -396,25 +382,77 @@ sub GameSpace.step_draw()
     #endif
     RECORD_PROFILE(0)
 
-    for i = 0 to 3
+    for i = 0 to 9
         timeProfiles(i) = timeProfiles(i) * 0.90 + 0.10 * timeAdd(i)
     next i
-    'window screen (0,0)-(SCRX*2-1,SCRY*2-1)
-    'draw string (0, 0), "Time % to draw static layers: " + str(int((timeProfiles(1) / timeProfiles(3))*100)), 0
-    'draw string (0, 8), "Time % to draw snow: " + str(int((timeProfiles(2) / timeProfiles(3))*100)), 0
-    'draw string (0, 16), "Time % to draw to buffer out of screen refresh time " + str(int((timeProfiles(3) / timeProfiles(0))*100)), 0
-
-
+    
+    window screen (0,0)-(SCRX*2-1,SCRY*2-1)
+    draw string (0, 8), "Time % to draw static layers: " + str(int((timeProfiles(1) / timeProfiles(3))*100)), 0
+    draw string (0, 16), "Time % to draw snow: " + str(int((timeProfiles(2) / timeProfiles(3))*100)),0
+    draw string (0, 24), "Time % to draw projectiles and one shots: " + str(int((timeProfiles(4) / timeProfiles(3))*100)),0
+    draw string (0, 32), "Time % to draw player and overlay: " + str(int((timeProfiles(5) / timeProfiles(3))*100)), 0
+    draw string (0, 40), "Time % to draw dynamic objects: " + str(int((timeProfiles(6) / timeProfiles(3))*100)),0
+    draw string (0, 48), "Time % to draw to buffer out of screen refresh time " + str(int((timeProfiles(3) / timeProfiles(0))*100)),0
     
 end sub
     
 
 
 sub GameSpace.step_process()
+
+    #define INIT_PROFILE(X) timeAdd(X) = 0
+    #define START_PROFILE(X) startTime(X) = timer
+    #define RECORD_PROFILE(X) timeAdd(X) += timer - startTime(X)
+    
     dim as integer i, dire, jump, ups, fire, explodeAll, deactivateAll
     dim as integer numbers(0 to 9)
+
+    dim as double tM, tS, totalT, startTotalT
+    dim as double timeAdd(0 to 9), startTime(0 to 9)
+    static as double timeProfiles(0 to 9)
+    
+    for i = 0 to 9
+        INIT_PROFILE(i)
+    next i
+    
+    START_PROFILE(0)
     
     window
+    
+    if isSwitching = 0 then
+		camera = spy.body.p * 0.1 + camera * 0.9
+	elseif isSwitching = -1 then
+		camera = spy.body.p
+	end if
+    if lvlData.getWidth() * 16 > SCRX then
+        if camera.x() < SCRX*0.5 then 
+            camera.setX(SCRX*0.5)
+        elseif camera.x() >= lvlData.getWidth()*16 - SCRX*0.5 then
+            camera.setX(lvlData.getWidth()*16 - SCRX*0.5)
+        end if
+    else
+        camera.setX(lvlData.getWidth() * 8)
+    end if
+    
+    if lvlData.getHeight() * 16 > SCRY then
+        if camera.y() < SCRY*0.5 then 
+            camera.setY(SCRY*0.5)
+        elseif camera.y() >= lvlData.getHeight()*16 - SCRY*0.5 then
+            camera.setY(lvlData.getHeight()*16 - SCRY*0.5)
+        end if  
+    else
+        camera.setY(lvlData.getHeight() * 8)
+    end if
+        
+    camera.setX(int(camera.x()))
+    camera.setY(int(camera.y()))
+    
+    if vibcount > 0 then
+        shake = ((vibcount mod 2) * 2 - 1) * 5
+    else
+        shake = 0
+    end if
+    
 
     if keypress(SC_RIGHT) then
         dire = 1
@@ -520,16 +558,29 @@ sub GameSpace.step_process()
 	end if
   
 	tracker.step_record(keypress(SC_DELETE))
-  
+    START_PROFILE(1)
     if isSwitching = 0 then
 		#ifdef DEBUG
 			world.step_time(0.01667)
 		#else
 			for i = 1 to 3
-				world.step_time(0.00555)
+				world.step_time(0.0055555)
 			next i
 		#endif
 	end if
+    RECORD_PROFILE(1)
+    
+
+	
+    
+    
+    'spy.body.p = Vector2D(979.2597, 849.9504)
+    
+    RECORD_PROFILE(0)
+    for i = 0 to 9
+        timeProfiles(i) = timeProfiles(i) * 0.90 + 0.10 * timeAdd(i)
+    next i
+    'print int((timeProfiles(1) / timeProfiles(0)) * 100)
     
 end sub
 sub GameSpace.doGameEnd()

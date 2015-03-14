@@ -9,6 +9,8 @@
 #include "soundeffects.bi"
 #include "fbpng.bi"
 
+#include "tree2d.bi"
+
 dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
 #ifdef DEBUG
 	dim as integer ptr Level.collisionBlox = 0
@@ -103,8 +105,6 @@ end sub
 sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                      cam_x as integer, cam_y as integer,_
                      adjust as Vector2D)
-    dim as integer tl_x, tl_y
-    dim as integer br_x, br_y
     dim as double  x, y
     dim as integer i, num, j
     dim as Vector2D a, b
@@ -153,19 +153,17 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                 ocx = cam_x + adjust.x()
                 ocy = cam_y + adjust.y()
             end if
-            tl_x = ((ocx - x - SCRX * 0.5) ) / 16 - 1
-            tl_y = ((ocy - y - SCRY * 0.5) ) / 16 - 1
-            br_x = ((ocx - x + SCRX * 0.5) ) / 16
-            br_y = ((ocy - y + SCRY * 0.5) ) / 16
- 
+
             window screen (ocx - SCRX * 0.5, ocy - SCRY * 0.5)-_
                           (ocx + SCRX * 0.5, ocy + SCRY * 0.5)
                                       
             if layerData[i].isFallout <> 65535 then
+                
                 if falloutBlend = 0 then
                     falloutBlend = imagecreate(640,480)
                 end if
-                drawLayer(falloutBlend, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
+                
+                drawLayer(falloutBlend, ocx, ocy, i)
                 
                 a = Vector2D(cam_x, cam_y) - Vector2D(SCRX, SCRY) * 0.5
                 b = Vector2D(cam_x, cam_y) + Vector2D(SCRX, SCRY) * 0.5
@@ -213,7 +211,7 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                 put scnbuff, (ocx - SCRX*0.5,ocy - SCRY*0.5), falloutBlend, TRANS
                 
             else
-                drawLayer(scnbuff, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
+                drawLayer(scnbuff, ocx, ocy, i)
             end if
         else
             exit do
@@ -252,9 +250,6 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
 end sub
 
 sub level.drawLayer(scnbuff as uinteger ptr,_
-                    tl_x as integer, tl_y as integer,_
-                    br_x as integer, br_y as integer,_
-                    x as integer, y as integer,_
                     cam_x as integer, cam_y as integer,_
                     lyr as integer)
                     
@@ -267,247 +262,90 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     dim as double newcx, newcy
     dim as integer tilePosX, tilePosY
     dim as double rand
+    dim as Level_SquareMask ptr curMask
     dim as Level_EffectData tempEffect
-    
-    if tl_x > br_x then swap tl_x, br_x
-    if tl_y > br_y then swap tl_y, br_y
-    if tl_x <            0 then tl_x = 0
-    if br_x > lvlWidth - 1 then br_x = lvlWidth - 1
-    if tl_y <             0 then tl_y = 0
-    if br_y > lvlHeight - 1 then br_y = lvlHeight - 1    
-    
+    dim as any ptr eraseMask
+    dim as integer x, y
+    dim as integer tl_x, tl_y
+    dim as integer br_x, br_y
+      
     if layerData[lyr].parallax < 8 then
         x = (cam_x - (lvlWidth * 0.5 * 16)) * (1-layerData[lyr].depth)
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
     end if
 
-    '1272 size bytes, so 318 words to erase, referenced by (x + y * ((SCRX / 16) + 1))
-    
-    rand = rnd
-	'create a mask of drawn tiles before hand (level keeps it). in some way, clear it really fast first here (SSE)
-    'go through each draw square, calculate tiles, loop through and draw if mask holds zero. on draw, mark mask position as 1
-    for yscan = tl_y to br_y
-        for xscan = tl_x to br_x
-            block = blocks[lyr][yscan * lvlWidth + xscan]
-            if block.tileset < 65535 then
+        
+    BEGIN_LIST(curMask, layerData[lyr].frameDrawRegions)
+        
+            
+        tl_x = int((curMask->tl.x + layerData[lyr].frameCenter.x) / 16.0)
+        tl_y = int((curMask->tl.y + layerData[lyr].frameCenter.y) / 16.0)
+        br_x = int((curMask->br.x + layerData[lyr].frameCenter.x - 1) / 16.0)
+        br_y = int((curMask->br.y + layerData[lyr].frameCenter.y - 1) / 16.0)
+        'check for things out of bounds, or impossible widths/heights, 
+        '   at least no longer have to int and divide. Also, in square create,
+        '   set up the draw box 
+        for yscan = tl_y to br_y
+            for xscan = tl_x to br_x
                 
+                block = blocks[lyr][yscan*lvlWidth + xscan]
+
                 row_c = tilesets[block.tileset].row_count
                 tilePosX = ((block.tileNum - 1) mod row_c) * 16
-                tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
+                tilePosY = ((block.tileNum - 1) \   row_c) * 16
                 
-                if block.usesAnim < 65535 then
-					
-                    tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
-                    select case tempEffect.effect
-                    case ANIMATE
-                        block.frameDelay += 1
-                        if block.frameDelay > tempEffect.delay then
+                /'
+                tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+                select case tempEffect.effect
+                case ANIMATE
+                    block.frameDelay += 1
+                    if block.frameDelay > tempEffect.delay then
+                        block.frameDelay = 0
+                        block.tileNum += tempEffect.nextTile
+                        if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
+                            block.usesAnim = 1
+                        else
+                            block.usesAnim = 65535
+                        end if
+                        if tempEffect.effect = ANIMATE then
                             block.frameDelay = 0
-                            block.tileNum += tempEffect.nextTile
-                            if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
-                                block.usesAnim = 1
-                            else
-                                block.usesAnim = 65535
-                            end if
-                            if tempEffect.effect = ANIMATE then
-                                block.frameDelay = 0
-                            elseif tempEffect.effect = FLICKER then
-                                block.frameDelay = tempEffect.offset + tempEffect.delay * rand
-                            end if
-                            blocks[lyr][yscan * lvlWidth + xscan] = block
-                        else
-                            blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
+                        elseif tempEffect.effect = FLICKER then
+                            block.frameDelay = tempEffect.offset + tempEffect.delay * rand
                         end if
-                    case FLICKER
-                        block.frameDelay -= 1
-                        if block.frameDelay < 0 then
-                            block.tileNum += tempEffect.nextTile
-                            if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
-                                tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
-                                block.usesAnim = 1
-                            else
-                                block.usesAnim = 65535
-                            end if
-                            if tempEffect.effect = ANIMATE then
-                                block.frameDelay = 0
-                            elseif tempEffect.effect = FLICKER then
-                                block.frameDelay = tempEffect.offset + tempEffect.delay * rand
-                            end if
-                            blocks[lyr][yscan * lvlWidth + xscan] = block
+                        blocks[lyr][yscan * lvlWidth + xscan] = block
+                    else
+                        blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
+                    end if
+                case FLICKER
+                    block.frameDelay -= 1
+                    if block.frameDelay < 0 then
+                        block.tileNum += tempEffect.nextTile
+                        if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
+                            tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+                            block.usesAnim = 1
                         else
-                            blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
+                            block.usesAnim = 65535
                         end if
-                    case DESTRUCT
-                        ''
-                    end select
-                end if
-                
+                        if tempEffect.effect = ANIMATE then
+                            block.frameDelay = 0
+                        elseif tempEffect.effect = FLICKER then
+                            block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                        end if
+                        blocks[lyr][yscan * lvlWidth + xscan] = block
+                    else
+                        blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
+                    end if
+                case DESTRUCT
+                    ''
+                end select
+                '/
+               
                 put scnbuff, (xscan*16 + x, yscan*16 + y), tilesets[block.tileset].set_image, (tilePosX, tilePosY)-(tilePosX + 15, tilePosY + 15), TRANS
-
-            end if
-        next xscan
-    next yscan 
-end sub
-
-
-
-sub Level.putDispatch(scnbuff as integer ptr,_
-                      block as Level_VisBlock,_
-                      x as integer, y as integer,_
-                      tilePos_x as integer, tilePos_y as integer,_
-                      cam_x as integer, cam_y as integer)
-                      
-    #define X_ 0
-    #define Y_ 1
+               
+            next xscan
+        next yscan
+    END_LIST()
     
-    'lol this is in here twice... y lol...
-    
-    dim as uinteger ptr src
-    dim as integer ppos(0 to 1)
-    dim as integer pdes(0 to 1)
-    dim as integer pdir(0 to 1)
-    dim as integer ptr ptile(0 to 1)
-    dim as integer byCol, byRow, oldCol, i
-    dim as integer xpos, ypos, w, col
-    
-    src = tilesets[block.tileset].set_image
-    w = tilesets[block.tileset].set_width
-    
-    if block.rotatedType = 0 then
-        put scnbuff, (x, y), src, (tilePos_x, tilePos_y)-(tilePos_x + 15, tilePos_y + 15), TRANS
-    else
-		/'
-        x -= (cam_x - SCRX*0.5)
-        y -= (cam_y - SCRY*0.5)
-        ptile(X_) = @tilePos_x
-        ptile(Y_) = @tilePos_y
-        ppos(X_) = x
-        ppos(Y_) = y
-        pdes(X_) = x
-        pdes(Y_) = y 
-        select case block.rotatedType
-        case 1
-            byRow = X_
-            byCol = Y_
-            ppos(byRow) += 15
-            ppos(byCol) += 15
-            pdes(byRow) += -1
-            pdes(byCol) += -1
-            pdir(byRow) = -1
-            pdir(byCol) = -1
-        case 2
-            byRow = Y_
-            byCol = X_
-            ppos(byRow) += 15
-            ppos(byCol) += 0
-            pdes(byRow) += -1
-            pdes(byCol) += 16
-            pdir(byRow) = -1
-            pdir(byCol) = 1
-        case 3
-            byRow = X_
-            byCol = Y_
-            ppos(byRow) += 0
-            ppos(byCol) += 15
-            pdes(byRow) += 16
-            pdes(byCol) += -1
-            pdir(byRow) = 1
-            pdir(byCol) = -1
-        case 4
-            byRow = Y_
-            byCol = X_
-            ppos(byRow) += 0
-            ppos(byCol) += 15
-            pdes(byRow) += 16
-            pdes(byCol) += -1
-            pdir(byRow) = 1
-            pdir(byCol) = -1
-        case 5
-            byRow = X_
-            byCol = Y_
-            ppos(byRow) += 15
-            ppos(byCol) += 0
-            pdes(byRow) += -1
-            pdes(byCol) += 16
-            pdir(byRow) = -1
-            pdir(byCol) = 1
-        case 6
-            byRow = Y_
-            byCol = X_
-            ppos(byRow) += 15
-            ppos(byCol) += 15
-            pdes(byRow) += -1
-            pdes(byCol) += -1
-            pdir(byRow) = -1
-            pdir(byCol) = -1
-        case 7
-            byRow = X_
-            byCol = Y_
-            ppos(byRow) += 0
-            ppos(byCol) += 0
-            pdes(byRow) += 16
-            pdes(byCol) += 16
-            pdir(byRow) = 1
-            pdir(byCol) = 1
-        end select
-
-        if ppos(X_) < 0 then 
-            *(ptile(byCol)) += (-ppos(X_))
-            ppos(X_) = 0
-        elseif ppos(X_) >= SCRX then
-            *(ptile(byCol)) += (ppos(X_) - SCRX) + 1
-            ppos(X_) = SCRX - 1
-        end if
-            
-        if pdes(X_) < 0 then 
-            pdes(X_) = 0
-        elseif pdes(X_) > SCRX then
-            pdes(X_) = SCRX
-        end if
-        
-        if ppos(Y_) < 0 then 
-            *(ptile(byRow)) += (-ppos(Y_))
-            ppos(Y_) = 0
-        elseif ppos(Y_) >= SCRY then
-            *(ptile(byRow)) += (ppos(Y_) - SCRY) + 1
-            ppos(Y_) = SCRY - 1
-        end if
-            
-        if pdes(Y_) < 0 then 
-            pdes(Y_) = 0
-        elseif pdes(Y_) > SCRY then
-            pdes(Y_) = SCRY
-        end if
-        
-        if sgn(pdes(X_) - ppos(X_)) <> pdir(X_) then 
-            exit sub
-        end if
-        
-        if sgn(pdes(Y_) - ppos(Y_)) <> pdir(Y_) then 
-            exit sub
-        end if
-        
-        ypos = tilePos_y
-        oldCol = ppos(byCol)
-
-        while ppos(byRow) <> pdes(byRow)
-            ppos(byCol) = oldCol
-            xpos = tilePos_x
-            while ppos(byCol) <> pdes(byCol)
-                
-                col = src[8 + xpos + ypos*w]
-                if col <> &hffff00ff then 
-                    scnbuff[8 + ppos(X_) + ppos(Y_) * SCRX] = col
-                end if
-                ppos(byCol) += pdir(byCol)
-                xpos += 1
-            wend
-            ppos(byRow) += pdir(byRow)
-            ypos += 1
-        wend
-		'/
-    end if
-                 
 end sub
   
 destructor level
@@ -709,6 +547,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
     dim as Level_VisBlock block
     dim as Level_EffectData tempEffect
     
+    
     fallout.a = Vector2D(x,y) - Vector2D(64, 64)
     fallout.b = Vector2D(x,y) + Vector2D(64, 64)
     if flavor = -1 then
@@ -741,21 +580,28 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
 			xp = xs * 16 - x
 			yp = ys * 16 - y
 			d = sqr(xp*xp + yp*yp)
-			if d <= 48 then
-				splodeBlockReact(xs, ys)
-				if noVisuals = 0 andAlso fallout.flavor <> 2 then
-					for i = 0 to blocks_N - 1
-						if (layerData[i].isFallout = 1) andAlso d <= 12 then
-							resetBlock(xs, ys, i)
-						end if
-					next i
-				end if
-			end if
+            for i = 0 to blocks_N - 1
+                if (layerData[i].isFallout = 1) andAlso (blocks[i][ys*lvlWidth + xs].tileset <> 65535) then blocks[i][ys*lvlWidth + xs].NoTransparency = 1
+            next i
+            if d <= 48 then
+                splodeBlockReact(xs, ys)
+                if noVisuals = 0 andAlso fallout.flavor <> 2 then
+                    for i = 0 to blocks_N - 1
+                        if d <= 16 andAlso (layerData[i].isFallout = 1) then
+                            resetBlock(xs, ys, i)
+                        end if
+                    next i
+                end if
+            end if
 		next xs
 	next ys
-   
-
     
+    for i = 0 to blocks_N - 1
+        if layerData[i].isFallout = 1 then
+            computeSquareMasks(i, tl_x, tl_y, br_x, br_y)
+        end if
+    next i
+
     fallout.flavor = flavor
     fallout.cachedImage = 0
     
@@ -821,6 +667,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
     
     falloutZones.insert(fallout.a, fallout.b, @fallout)
 	reconnect = 1
+    
 end sub
 
 function Level.checkDestroyedBlocks(x as integer, y as integer) as integer
@@ -935,7 +782,7 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
         NTvalue = 0
         if compStep = NT_MASK then
             tset = blocks[lyr][BLOCK_INDEX].tileset
-            if tset <> 65535 then
+            if tset <> 65535 andAlso (blocks[lyr][BLOCK_INDEX].NoTransparency = 0) then
                 if tilesets[tset].NoTransparencyIDs.exists(blocks[lyr][BLOCK_INDEX].tileNum - 1) then
                     NTvalue = 1
                 end if
@@ -944,7 +791,7 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
             if blocks[lyr][BLOCK_INDEX].tileset <> 65535 then
                 NTvalue = 1
             end if
-        end if
+        end if 
     
     #endmacro
     #define NT_MASK 0
@@ -962,6 +809,8 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
     dim as integer ptr searchMask
     dim as integer compStep
     
+    dim as Tree2D buhnz = 128
+    
     subtractSquareMasks((*layerData[lyr].maskSquares), x0*16, y0*16, (x1 + 1)*16, (y1 + 1)*16)
     subtractSquareMasks((*layerData[lyr].visibilitySquares), x0*16, y0*16, (x1 + 1)*16, (y1 + 1)*16)
   
@@ -974,7 +823,7 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
             offX = 0
             xscan = x0
             while xscan <= x1
-            
+                        
                 SET_NT_VALUE(yscan * lvlWidth + xscan)
                 
                 if NTvalue = 1 andAlso (searchMask[offX + offY * windowSize] = 0) then
@@ -1075,13 +924,14 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
                         next j
                     next i
                    
-                    newSquare.tl = Vector2D(best_x0, best_y0) * 16
-                    newSquare.br = Vector2D(best_x1 + 1, best_y1 + 1) * 16
+                    newSquare.tl = Vector2D(best_x0 + x0, best_y0 + y0) * 16
+                    newSquare.br = Vector2D(best_x1 + 1 + x0, best_y1 + 1 + y0) * 16
                     
                     if compStep = NT_MASK then
                         (*layerData[lyr].maskSquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
                     elseif compStep = DRAW_MASK then
                         (*layerData[lyr].visibilitySquares).squares.insert(newSquare.tl, newSquare.br, @newSquare)
+                        buhnz.insert(Tree2D_Square(newSquare.tl, newSquare.br, newSquare.tl.x / 16, newSquare.tl.y / 16, (newSquare.br.x - 1) / 16, (newSquare.br.y - 1) / 16))
                     end if
                     
                     if last_y0 = yscan then 
@@ -1099,6 +949,22 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
         deallocate(searchMask)
     next compStep
     
+    dim as Tree2D_Square sq
+    cls
+    sq.tl = Vector2D(100, 100)
+    sq.br = Vector2D(500, 1000)
+    Tree2DDebugPrint(buhnz.getRoot(), 0, 0)
+    line (450 + sq.tl.x * 0.5, sq.tl.y * 0.5)-(450 + sq.br.x * 0.5, sq.br.y * 0.5), rgb(255,255,255), B
+    line (450, 0)-(450, 480*2), rgb(64, 64, 64)
+    print "splits time!"
+    sleep
+    buhnz.splitNode(sq, buhnz.getRoot())
+    print "displaying final tree..."
+    sleep
+    cls
+    line (450 + sq.tl.x * 0.5, sq.tl.y * 0.5)-(450 + sq.br.x * 0.5, sq.br.y * 0.5), rgb(255,255,255), B
+    Tree2DDebugPrint(buhnz.getRoot(), 0, 0)
+    sleep
 end sub
 
 sub level.load(filename as string)
@@ -1183,11 +1049,12 @@ sub level.load(filename as string)
         
     #endif
    
+    
     for i = 0 to tilesets_N - 1
         get #f,,strdata
         tilesets[i].set_name = allocate(len(strdata) + 1)
         *(tilesets[i].set_name) = strdata
-
+        
         get #f,,strdata
         get #f,,tilesets[i].set_width
         get #f,,tilesets[i].set_height
@@ -1331,6 +1198,7 @@ sub level.load(filename as string)
                 blocks[lyr][j].tileset = 65535
                 blocks[lyr][j].tilenum = 65535
                 blocks[lyr][j].rotatedType = blockNumber shr 29
+                blocks[lyr][j].NoTransparency = 0
                 
                 
                 blockNumber = blockNumber and FLIPPED_MASK
@@ -1463,13 +1331,15 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
     dim as Level_SquareMask squareInst
     dim as Level_SquareMaskList ptr aggregateMask
     dim as Level_SquareMask ptr ptr coverSquares
+    dim as Level_SquareMask ptr ptr chopSquaresArray
     dim as Hash2D choppingSquares
     dim as integer coverSquares_N, numNew
     dim as Level_SquareMask ptr curCoverSquare
+    dim as Level_SquareMask ptr curChopSquare
+    dim as integer chopSquares_N
     dim as integer ptr curLayer
     dim as List ptr curList
-    dim as Level_SquareMask drawSlices(0 to MAX_SLICES - 1)
-    dim as integer drawSlices_N, oldDrawSlices_N
+    dim as Level_SquareMask drawSlices(0 to 3)
    
     choppingSquares.init(SCRX, SCRY, sizeof(Level_SquareMask))
     aggregateMask = new Level_SquareMaskList(SCRX, SCRY)
@@ -1501,9 +1371,13 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
                 ocy = cam_y + adjust.y()
             end if
             center = Vector2D(ocx - x, ocy - y)
-            layerData[i].frameCenter = center
             tl = center - Vector2D(SCRX, SCRY)*0.5
             br = center + Vector2D(SCRX, SCRY)*0.5
+            layerData[i].frameCenter = tl
+            
+            'for each square that is in the visible frame, make a list of all mask squares it touches, 
+            '   loop through the mask squares, making more pieces until we've gone through all the mask squares (fastest?)
+            
             
             layerData[i].frameDrawRegions.flush()
             squares_N = layerData[i].visibilitySquares->squares.search(tl, br, squares)
@@ -1511,110 +1385,53 @@ sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vecto
                 
                 squareInst = *(squares[j])
                 
-                if squareInst.tl.x < tl.x then squareInst.tl.setX(tl.x)
-                if squareInst.tl.y < tl.y then squareInst.tl.setY(tl.y) 
-                if squareInst.br.x > br.x then squareInst.br.setX(br.x)
-                if squareInst.br.y > br.y then squareInst.br.setY(br.y)
+                if squareInst.tl.x < tl.x - 16 then squareInst.tl.setX(tl.x - 16)
+                if squareInst.tl.y < tl.y - 16 then squareInst.tl.setY(tl.y - 16) 
+                if squareInst.br.x > br.x      then squareInst.br.setX(br.x)
+                if squareInst.br.y > br.y      then squareInst.br.setY(br.y)
                 squareInst.tl = squareInst.tl - tl
                 squareInst.br = squareInst.br - tl
                   
-                  
-                  
-                drawSlices_N = 1
-                drawSlices(0) = squareInst
-                
-                locate 1,1
-                if i = blocks_N - 8 then
-                 print "square to be chopped"
-                 line (drawSlices(0).tl.x*2, drawSlices(0).tl.y*2)-(drawSlices(0).br.x*2, drawSlices(0).br.y*2), rgb(255, 0, 0), BF
-                 sleep
-                end if
+                choppingSquares.flush()
+                choppingSquares.insert(squareInst.tl, squareInst.br, @squareInst)
               
-                coverSquares_N = aggregateMask->squares.search(drawSlices(0).tl, drawSlices(0).br, coverSquares)
+                coverSquares_N = aggregateMask->squares.search(squareInst.tl, squareInst.br, coverSquares)
                 for q = 0 to coverSquares_N - 1      
                     curCoverSquare = coverSquares[q]
-                    
-                    locate 2, 1
-                    if i = blocks_N - 8 then
-                     print "square that covers"
-                     line (curCoverSquare->tl.x*2, curCoverSquare->tl.y*2)-(curCoverSquare->br.x*2, curCoverSquare->br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
-                     sleep
-                    end if
-                    
-                    u = 0
-                    oldDrawSlices_N = drawSlices_N
-                    'change list of chopped up squares to hash2D and query the choppin' squares with the cover squares
-                    'dont need to do it the first time around since obviously that one square is... well... lol
-                    'but from there on out, take the cover square, and query the choppin' squares and chop those bad boiz.
-                    while u < oldDrawSlices_N
-                     
-                        if i = blocks_N - 8 then print "current list of chopped up squares", drawSlices_N
-                        for t = 0 to drawSlices_N - 1
-                         if i = blocks_N - 8 then
-                         line (drawSlices(t).tl.x*2, drawSlices(t).tl.y*2)-(drawSlices(t).br.x*2, drawSlices(t).br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
-                         'print "printing..."
-                         sleep
-                         end if
-                        next t 
-                     
-                     
-                        numNew = subtractSquareMasksList(drawSlices(u), *curCoverSquare, drawSlices(), drawSlices_N)
-                        
-                        'loop through and draw all before after?
-                        if i = blocks_N - 8 then
-                         print "numNew: "; numNew, u
-                         sleep
+            
+                    chopSquares_N = choppingSquares.search(curCoverSquare->tl, curCoverSquare->br, chopSquaresArray)
+                    for u = 0 to chopSquares_N - 1
+                        numNew = subtractSquareMasksList(*(chopSquaresArray[u]), *curCoverSquare, drawSlices(), 0)
+                        if numNew >= 0 then
+                            for t = 0 to numNew - 1
+                                choppingSquares.insert(drawSlices(t).tl, drawSlices(t).br, @(drawSlices(t)))
+                            next t
+                            choppingSquares.remove(chopSquaresArray[u])
                         end if
-                        
-                        
-                        if numNew > -2 then
-                            if numNew = 0 then
-                                oldDrawSlices_N -= 1
-                                drawSlices_N -= 1
-                                drawSlices(u) = drawSlices(drawSlices_N)
-                            else
-                                drawSlices_N += numNew - 1
-                                drawSlices(u) = drawSlices(drawSlices_N)
-                                u += 1
-                            end if
-                        else
-                            u += 1
-                        end if
-                                 
-                    wend  
-                    
-                    
-                    if i = blocks_N - 8 then print "final list of chopped up squares", drawSlices_N
-                    for t = 0 to drawSlices_N - 1
-                     if i = blocks_N - 8 then
-                     line (drawSlices(t).tl.x*2, drawSlices(t).tl.y*2)-(drawSlices(t).br.x*2, drawSlices(t).br.y*2), rgb(255*rnd, 255*rnd, 255*rnd), BF
-                     'print "printing..."
-                     sleep
-                     end if
-                    next t
-               
+                    next u
+                    deallocate(chopSquaresArray)
+
                 next q
                 deallocate(coverSquares)
                 
-                if i = blocks_N - 8 then print "final squares"
-                for q = 0 to drawSlices_N - 1
-                    layerData[i].frameDrawRegions.push_back(@(drawSlices(q)))
-                    if i = blocks_N - 8 then
-                        line (drawSlices(q).tl.x*2, drawSlices(q).tl.y*2)-(drawSlices(q).br.x*2, drawSlices(q).br.y*2), rgb(0,255,0), bf
-                        line (drawSlices(q).tl.x*2, drawSlices(q).tl.y*2)-(drawSlices(q).br.x*2, drawSlices(q).br.y*2), rgb(0,64,0), b
-                    end if
-                next q
-                if i = blocks_N - 8 then sleep
+                BEGIN_HASH2D(curChopSquare, choppingSquares)
+                    layerData[i].frameDrawRegions.push_back(curChopSquare)
+                    'if i = 3 then
+                    '    line (curChopSquare->tl.x*2, curChopSquare->tl.y*2)-(curChopSquare->br.x*2, curChopSquare->br.y*2), rgb(0, 255,0), BF
+                    '    line (curChopSquare->tl.x*2, curChopSquare->tl.y*2)-(curChopSquare->br.x*2, curChopSquare->br.y*2), rgb(0, 64, 0), B                    
+                    'end if
+                END_HASH2D()
+         
             next j
             deallocate(squares)
             
             coverSquares_N = layerData[i].maskSquares->squares.search(tl, br, coverSquares)
             for j = 0 to coverSquares_N - 1
                 squareInst = *(coverSquares[j])
-                if squareInst.tl.x < tl.x then squareInst.tl.setX(tl.x)
-                if squareInst.tl.y < tl.y then squareInst.tl.setY(tl.y) 
-                if squareInst.br.x > br.x then squareInst.br.setX(br.x)
-                if squareInst.br.y > br.y then squareInst.br.setY(br.y)
+                if squareInst.tl.x < tl.x - 16 then squareInst.tl.setX(tl.x - 16)
+                if squareInst.tl.y < tl.y - 16 then squareInst.tl.setY(tl.y - 16) 
+                if squareInst.br.x > br.x      then squareInst.br.setX(br.x)
+                if squareInst.br.y > br.y      then squareInst.br.setY(br.y)
                 squareInst.tl = squareInst.tl - tl
                 squareInst.br = squareInst.br - tl
                 subtractSquareMasks(*aggregateMask, squareInst.tl.x, squareInst.tl.y, squareInst.br.x, squareInst.br.y)                

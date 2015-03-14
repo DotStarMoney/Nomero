@@ -88,6 +88,7 @@ type Level_VisBlock
     as short  frameDelay
     as ushort usesAnim
     as ushort rotatedType
+    as ushort NoTransparency
 end type
 
 Type Level_LayerData
@@ -106,7 +107,6 @@ Type Level_LayerData
     as Vector2D frameCenter
     as List frameDrawRegions
     as Level_SquareMaskList ptr aggregateBlockingRegions
-    
 end type
 
 enum PortalDirection_t
