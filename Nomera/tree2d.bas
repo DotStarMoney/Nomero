@@ -215,11 +215,7 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
     #endmacro
     
     #macro FIX_NODE()
-        print "fixing nodes up to node_ starting with node "; fixNode
-        sleep
         while (fixNode <> 0) andAlso (fixNode <> node_)
-            'print "", fixNode->left_;","; fixNode->right_
-            'sleep
             GET_MINMAX_SQUARE(fixNode->left_->square, fixNode->right_->square, tempSquare)
             if (tempSquare.tl.x = fixNode->square.tl.x) andAlso (tempSquare.tl.y = fixNode->square.tl.y) andAlso _
                (tempSquare.br.x = fixNode->square.br.x) andAlso (tempSquare.br.y = fixNode->square.br.y) then
@@ -231,8 +227,6 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
             end if
         wend
         fixNode = 0    
-        print "fix sucessful."
-        sleep
     #endmacro
     
     #macro EAT_NODE(X)
@@ -251,9 +245,9 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
         end if
     #endmacro
     
-    #define INTERSECT(A, B) ((A.br.x >= B.tl.x) andAlso (A.tl.x <= B.br.x) andAlso (A.br.y >= B.tl.y) andALso (A.tl.y <= B.br.y))
+    #define INTERSECT(A, B) ((A.br.x > B.tl.x) andAlso (A.tl.x < B.br.x) andAlso (A.br.y > B.tl.y) andALso (A.tl.y < B.br.y))
     #define OVERLAP(B, A) ((A.tl.x >= B.tl.x) andAlso (A.br.x <= B.br.x) andAlso (A.tl.y >= B.tl.y) andALso (A.br.y <= B.br.y))
-    #define NO_INTERSECT(A, B) ((A.br.x < B.tl.x) orElse (A.tl.x > B.br.x) orElse (A.br.y < B.tl.y) orElse (A.tl.y > B.br.y))
+    #define NO_INTERSECT(A, B) ((A.br.x <= B.tl.x) orElse (A.tl.x >= B.br.x) orElse (A.br.y <= B.tl.y) orElse (A.tl.y >= B.br.y))
     
     dim as Tree2D_Node ptr curNode, nodeA, nodeB, nodeC, nodeD, nodeE, nodeF
     dim as Tree2D_Node ptr tempParent_, fixNode
@@ -264,8 +258,6 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
 
     splitStackPointer = 0
     
-    'eat node = replace its parent with its sibling
-
     if OVERLAP(splitSquare, root_->square) then
         root_ = 0
         nodePool_usage = 0
@@ -275,22 +267,13 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
     curNode = node_
     fixNode = 0
     do
-        print "on node: "; curNode->square.tl; ", "; curNode->square.br
-        print "searching down left side of tree"
-        sleep
-        
+
         searchUp = 0
         while curNode->left_
-            print "examining left traversal node: "; curNode->left_->square.tl; ", "; curNode->left_->square.br
             if NO_INTERSECT(curNode->left_->square, splitSquare) then
-                print "exiting because left traversal square does not touch split square"
-                sleep
                 exit while
             elseif OVERLAP(splitSquare, curNode->left_->square) then
-                print "consuming left node and restructuring"
-                sleep
                 EAT_NODE(curNode->right_)
-             
                 fixNode = curNode->parent_
                 FIX_NODE()
             else
@@ -298,15 +281,8 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
                 curNode = curNode->left_
             end if 
         wend
-        print "finished searching left side"
-        sleep
-        if curNode->right_ = 0 then
-            'we definitely do not overlap curNode, if we did we would have eaten it already in left walk
-            
-            print "there is no node to the right, this is a leaf"            
-            line (450 + curNode->square.tl.x * 0.5+1, curNode->square.tl.y * 0.5+1)-(450 + curNode->square.br.x * 0.5-1, curNode->square.br.y * 0.5-1), rgb(255,0,0), BF
-            sleep
-                        
+        
+        if curNode->right_ = 0 then      
             with curNode->square
                 if .tl.x < splitSquare.tl.x then
                     if .tl.y < splitSquare.tl.y then
@@ -676,52 +652,29 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
             end select               
             FIX_NODE()
             searchUp = 1
-        
-            print "performed split with style: "; cutStyle
-            print "drawing sub-tree"
-            Tree2DDebugPrint(node_, 0, 0)
-            sleep
         elseif NO_INTERSECT(curNode->right_->square, splitSquare) then 
             searchUp = 1
-            print "there is a node to the right, but it is not one we intersect"
-            sleep
         elseif OVERLAP(splitSquare, curNode->right_->square) then
             EAT_NODE(curNode->left_)
-            
-            
-            print "there is a node to the right, we consume it"
-            sleep
             fixNode = curNode->parent_
             FIX_NODE()
             searchUp = 1
         end if
         
         if searchUp = 1 then 
-            print "heading back up the tree..."
-            sleep
             skipCycle = 0
             do
                 if splitStackPointer = 0 then
-                    print "search is over, stack is empty when heading back up."
-                    sleep
                     skipCycle = 1
                     exit do
                 end if
                 POP_SPLIT(curNode)
-                               
                 if INTERSECT(curNode->right_->square, splitSquare) then
                     if OVERLAP(splitSquare, curNode->right_->square) then
                         EAT_NODE(curNode->left_)
-                        
-                        print "there is a node to the right which we'll eat and then resume going back up"
-                        sleep
-                        
-                        'keep going back up/quit in next iteration
                         fixNode = curNode->parent_
                         FIX_NODE() 
                     else                    
-                        print "we intersect the right square, stop upward traversal."
-                        sleep
                         exit do
                     end if
                 end if
@@ -729,8 +682,7 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
         end if
         if skipCycle = 0 then curNode = curNode->right_
     loop until skipCycle = 1
-    print "performing final repair..."
-    sleep
+    
     if node_ <> root_ then
         fixNode = node_->parent_
         while (fixNode <> 0)
@@ -744,23 +696,120 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
                 fixNode = fixNode->parent_
             end if
         wend
-    end if
-  
+    end if  
 end sub
 
-sub Tree2d.setSearch(searchSquare as Tree2D_Square)
-
+sub Tree2d.setSearch(searchSquare_p as Tree2D_Square)
+    searchSquare = searchSquare_p
+    curSearchNode = root_
+    searchStackPointer = 0
+    searchTerm = 0
 end sub
 
 function Tree2d.getSearch() as Tree2D_Square ptr
+         
+    #macro PUSH_SEARCH(A_PTR)
+        searchStack(searchStackPointer) = A_PTR
+        searchStackPointer += 1
+    #endmacro
+    
+    #macro POP_SEARCH(A_PTR)
+        searchStackPointer -= 1
+        A_PTR = searchStack(searchStackPointer)
+    #endmacro
+    
+    #define INTERSECT(A, B) ((A.br.x > B.tl.x) andAlso (A.tl.x < B.br.x) andAlso (A.br.y > B.tl.y) andALso (A.tl.y < B.br.y))
+    #define NO_INTERSECT(A, B) ((A.br.x <= B.tl.x) orElse (A.tl.x >= B.br.x) orElse (A.br.y <= B.tl.y) orElse (A.tl.y >= B.br.y))
+    
+    dim as Tree2D_square ptr returnSquare 
+    dim as integer searchUp
 
+    returnSquare = 0
+    if curSearchNode = 0 then searchTerm = 1
+    
+    if searchTerm = 1 then exit function
+    do
+        
+        searchUp = 0
+        while curSearchNode->left_
+            if NO_INTERSECT(curSearchNode->left_->square, searchSquare) then
+                exit while
+            else
+                PUSH_SEARCH(curSearchNode)
+                curSearchNode = curSearchNode->left_
+            end if 
+        wend
+        
+        if curSearchNode->right_ = 0 then 
+            returnSquare = @(curSearchNode->square)
+            searchUp = 1
+        elseif NO_INTERSECT(curSearchNode->right_->square, searchSquare) then 
+            searchUp = 1
+        end if
+        
+        if searchUp = 1 then 
+            do
+                if searchStackPointer = 0 then
+                    searchTerm = 1
+                    exit do
+                end if
+                POP_SEARCH(curSearchNode)
+                if INTERSECT(curSearchNode->right_->square, searchSquare) then exit do
+            loop
+        end if
+        if searchTerm = 0 then curSearchNode = curSearchNode->right_
+    loop while searchTerm = 0 andAlso returnSquare = 0 
+    
+    return returnSquare
 end function
 
 sub Tree2d.resetRoll()
-
+    curRollNode = root_
+    rollStackPointer = 0
+    rollTerm = 0    
 end sub
 
 function Tree2d.roll() as Tree2D_Square ptr
-
+    #macro PUSH_ROLL(A_PTR)
+        rollStack(rollStackPointer) = A_PTR
+        rollStackPointer += 1
+    #endmacro
+    
+    #macro POP_ROLL(A_PTR)
+        rollStackPointer -= 1
+        A_PTR = rollStack(rollStackPointer)
+    #endmacro
+    
+    dim as Tree2D_square ptr returnSquare 
+    dim as integer searchUp
+    
+    if curRollNode = 0 then rollTerm = 1
+    returnSquare = 0
+    
+    if rollTerm = 1 then exit function
+    do
+    
+        searchUp = 0
+        while curRollNode->left_
+            PUSH_ROLL(curRollNode)
+            curRollNode = curRollNode->left_
+        wend
+        
+        if curRollNode->right_ = 0 then 
+            returnSquare = @(curRollNode->square)
+        end if
+        
+        if rollStackPointer = 0 then
+            rollTerm = 1
+        else
+            POP_ROLL(curRollNode)
+        end if
+  
+        if rollTerm = 0 then curRollNode = curRollNode->right_
+    
+    loop while rollTerm = 0 andAlso returnSquare = 0
+    
+    return returnSquare
+    
 end function
         

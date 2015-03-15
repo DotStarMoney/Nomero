@@ -4,6 +4,37 @@
 #include "vector2d.bi"
 #define MAX_STACK_DEPTH 32
 
+#macro BEGIN_TREE2D(x, y)
+	y.resetRoll()
+	do
+		x = y.roll()
+		if x then
+#endmacro
+
+#macro BEGIN_SEARCH_TREE2D(x, y, z)
+	y.setSearch(z)
+	do
+		x = y.getSearch()
+		if x then
+#endmacro
+#macro ABORT_TREE2D()
+	exit do
+#endmacro
+
+#macro END_TREE2D()
+		else
+			exit do
+		end if
+	loop
+#endmacro
+
+#macro END_SEARCH_TREE2D()
+    END_TREE2D()
+#endmacro
+#macro ABORT_SEARCH_TREE2D()
+    ABORT_TREE2D()
+#endmacro
+
 type Tree2D_Square
     declare constructor()
     declare constructor(tl_p as Vector2D, br_p as Vector2D, x0_p as integer, y0_p as integer, x1_p as integer, y1_p as integer)
@@ -25,13 +56,6 @@ end type
 '}
 
 
-'need flush
-'insert one, returns node where inserted
-'split at node (provide splitting square and node to split)
-'set current search
-'reset search
-'get next search
-
 type Tree2D
     public:
         declare constructor(maxNodes as integer)
@@ -40,7 +64,7 @@ type Tree2D
         declare function insert(newSquare as Tree2D_Square) as Tree2D_Node ptr
         declare sub flush()
         declare sub splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
-        declare sub setSearch(searchSquare as Tree2D_Square)
+        declare sub setSearch(searchSquare_p as Tree2D_Square)
         declare function getSearch() as Tree2D_Square ptr
         declare function getRoot() as Tree2D_Node ptr
         
@@ -55,10 +79,15 @@ type Tree2D
         as integer nodePool_usage
         
         as Tree2D_node ptr searchStack(0 to MAX_STACK_DEPTH-1)
+        as Tree2D_node ptr curSearchNode
+        as Tree2D_square searchSquare
         as integer searchStackPointer 
+        as integer searchTerm
         
         as Tree2D_node ptr rollStack(0 to MAX_STACK_DEPTH-1)
+        as Tree2D_node ptr curRollNode
         as integer rollStackPointer 
+        as integer rollTerm
         
         as Tree2D_node ptr splitStack(0 to MAX_STACK_DEPTH-1)
         as integer splitStackPointer

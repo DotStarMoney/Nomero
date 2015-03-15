@@ -4,6 +4,7 @@
 #include "hash2d.bi"
 #include "hashtable.bi"
 #include "constants.bi"
+#include "tree2d.bi"
 
 enum ObjectType_t
     EFFECT
@@ -100,7 +101,8 @@ Type Level_LayerData
     as ushort illuminated
     as ubyte  ambientLevel
     as ushort coverage
-    as single depth
+    as single depth 
+    
     as Level_SquareMaskList ptr visibilitySquares
     as Level_SquareMaskList ptr maskSquares
     

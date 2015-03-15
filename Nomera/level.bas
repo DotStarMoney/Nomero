@@ -958,13 +958,20 @@ sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
     line (450, 0)-(450, 480*2), rgb(64, 64, 64)
     print "splits time!"
     sleep
-    buhnz.splitNode(sq, buhnz.getRoot())
+    'buhnz.splitNode(sq, buhnz.getRoot())
     print "displaying final tree..."
     sleep
     cls
     line (450 + sq.tl.x * 0.5, sq.tl.y * 0.5)-(450 + sq.br.x * 0.5, sq.br.y * 0.5), rgb(255,255,255), B
     Tree2DDebugPrint(buhnz.getRoot(), 0, 0)
     sleep
+    dim as Tree2D_Square ptr treeStar
+    BEGIN_TREE2D(treeStar, buhnz)
+        line (450 + treeStar->tl.x * 0.5, treeStar->tl.y * 0.5)-(450 + treeStar->br.x * 0.5, treeStar->br.y * 0.5), rgb(0,255,255), BF
+        sleep
+    END_TREE2D()
+    sleep
+    
 end sub
 
 sub level.load(filename as string)
