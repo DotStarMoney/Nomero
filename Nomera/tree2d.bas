@@ -26,11 +26,13 @@ sub Tree2DDebugPrint(node as Tree2D_node ptr, isLeft as integer, level as intege
         '    end if
         'end if
         'print str(node->area)
+        level += 1
         if node->right_ = 0 andAlso node->left_ = 0 then
-            line (450+ node->square.tl.x * 0.5+1, node->square.tl.y * 0.5+1)-(450+ node->square.br.x * 0.5-1, node->square.br.y * 0.5-1), rgb(level*8972347, level*2348970, level*7233), BF       
+            line (node->square.tl.x * 0.5+1, node->square.tl.y * 0.5+1)-( node->square.br.x * 0.5-1, node->square.br.y * 0.5-1), rgb(level*8972347, level*2348970, level*7233), BF       
         else
-            line (450+ node->square.tl.x * 0.5, node->square.tl.y * 0.5)-(450 + node->square.br.x * 0.5, node->square.br.y * 0.5), rgb(level*8972347, level*2348970, level*7233), B
+            line (node->square.tl.x * 0.5, node->square.tl.y * 0.5)-(node->square.br.x * 0.5, node->square.br.y * 0.5), rgb(level*8972347, level*2348970, level*7233), B
         end if
+        level -= 1
         Tree2DDebugPrint(node->left_, 1, level + 1)
     end if
 end sub
@@ -39,7 +41,7 @@ constructor Tree2D_Square()
     ''
 end constructor
 
-constructor Tree2D_Square(tl_p as Vector2D, br_p as Vector2D, x0_p as integer, y0_p as integer, x1_p as integer, y1_p as integer)
+constructor Tree2D_Square(tl_p as Vector2D, br_p as Vector2D, x0_p as integer=0, y0_p as integer=0, x1_p as integer=0, y1_p as integer=0)
     tl = tl_p
     br = br_p
     x0 = x0_p
@@ -167,7 +169,51 @@ sub Tree2d.flush()
     root_ = 0
 end sub
 
-sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
+function Tree2d.consistencyCheck(node_ as Tree2D_Node ptr, testNode_ as Tree2D_Node ptr) as integer
+    dim as Tree2d_node ptr tp_
+    dim as integer total
+   
+    if node_ = 0 then 
+        return 0
+    end if
+    
+    tp_ = node_->parent_
+    
+    total += consistencyCheck(node_->left_, testNode_)        
+    if tp_ = 0 then 
+        if node_ <> root_ then
+            print "root error", tp_
+            sleep 100
+            beep
+            sleep
+        end if
+    else
+        if (tp_->left_ <> node_) andALso (tp_->right_ <> node_) then
+            print "error", tp_
+            sleep 100
+            beep
+            sleep        
+        end if
+    end if
+    if ((node_->left_ = 0) andAlso (node_->right_ <> 0)) orElse ((node_->left_ <> 0) andAlso (node_->right_ = 0)) then
+        print "balance error", node_
+        sleep 100
+        beep
+        sleep      
+    end if
+
+    total += consistencyCheck(node_->right_, testNode_)
+
+
+    if testNode_ = node_ then
+        total += 1
+    end if
+    
+    return total
+
+end function
+
+sub Tree2d.splitNode(splitSquare as Tree2D_Square, byref node_ as Tree2D_Node ptr)
           
     #macro GET_MINMAX_SQUARE(A, B, C)
         min_x = B.tl.x
@@ -215,7 +261,7 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
     #endmacro
     
     #macro FIX_NODE()
-        while (fixNode <> 0) andAlso (fixNode <> node_)
+        while (fixNode <> 0) andAlso (fixNode <> node_->parent_)
             GET_MINMAX_SQUARE(fixNode->left_->square, fixNode->right_->square, tempSquare)
             if (tempSquare.tl.x = fixNode->square.tl.x) andAlso (tempSquare.tl.y = fixNode->square.tl.y) andAlso _
                (tempSquare.br.x = fixNode->square.br.x) andAlso (tempSquare.br.y = fixNode->square.br.y) then
@@ -226,22 +272,38 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
                 fixNode = fixNode->parent_
             end if
         wend
-        fixNode = 0    
+        fixNode = 0        
     #endmacro
     
-    #macro EAT_NODE(X)
+    #macro EAT_NODE(XX)
+        if node_ = curNode then 
+            line (node_->square.tl.x*0.5, node_->square.tl.y*0.5)-(node_->square.br.x*0.5, node_->square.br.y*0.5), rgb(0,0,255), BF
+            node_ = XX
+
+            beep
+            
+        end if
         tempParent_ = curNode->parent_
         if tempParent_ = 0 then
-            root_ = X
-            curNode = root_
+            root_ = XX
         else
             if tempParent_->left_ = curNode then
-                tempParent_->left_ = X
+                tempParent_->left_ = XX
             else
-                tempParent_->right_ = X     
+                tempParent_->right_ = XX  
             end if
-            curNode = X
-            curNode->parent_ = tempParent_
+            
+        end if
+        curNode = XX
+        curNode->parent_ = tempParent_     
+    #endmacro
+    
+    #macro ERROR_CHECK()
+        if consistencyCheck(root_, curNode) = 0 then
+            print "curNode not in tree", curNode->parent_
+            sleep 100
+            beep
+            sleep              
         end if
     #endmacro
     
@@ -258,31 +320,99 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
 
     splitStackPointer = 0
     
-    if OVERLAP(splitSquare, root_->square) then
-        root_ = 0
-        nodePool_usage = 0
+    if NO_INTERSECT(splitSquare, root_->square) then exit sub
+    if OVERLAP(splitSquare, node_->square) then
+        if node_ = root_ then
+            root_ = 0
+            nodePool_usage = 0
+        else
+            tempParent_ = node_->parent_
+            if tempParent_->left_ = node_ then
+                tempParent_->right_->parent_ = tempParent_->parent_
+                if tempParent_->parent_ = 0 then
+                    root_ = tempParent_->right_
+                else
+                    if tempParent_->parent_->left_ = tempParent_ then
+                        tempParent_->parent_->left_ = tempParent_->right_
+                    else
+                        tempParent_->parent_->right_ = tempParent_->right_
+                    end if
+                end if
+                fixNode = tempParent_->right_
+            else
+                tempParent_->left_->parent_ = tempParent_->parent_
+                if tempParent_->parent_ = 0 then
+                    root_ = tempParent_->left_
+                else
+                    if tempParent_->parent_->left_ = tempParent_ then
+                        tempParent_->parent_->left_ = tempParent_->left_
+                    else
+                        tempParent_->parent_->right_ = tempParent_->left_
+                    end if
+                end if 
+                fixNode = tempParent_->left_
+            end if   
+            if fixNode <> root_ then
+                fixNode = node_->parent_
+                while (fixNode <> 0)
+                    GET_MINMAX_SQUARE(fixNode->left_->square, fixNode->right_->square, tempSquare)
+                    if (tempSquare.tl.x = fixNode->square.tl.x) andAlso (tempSquare.tl.y = fixNode->square.tl.y) andAlso _
+                       (tempSquare.br.x = fixNode->square.br.x) andAlso (tempSquare.br.y = fixNode->square.br.y) then
+                        fixNode = 0
+                    else
+                        fixNode->square = tempSquare
+                        fixNode->area = GET_AREA(fixNode->square)
+                        fixNode = fixNode->parent_
+                    end if
+                wend
+            end if              
+        end if
+        node_ = 0
         exit sub
     end if
-    
+   
     curNode = node_
-    fixNode = 0
+    'line (0,0)-(350, 300), 0, BF
+    'locate 1,1
+    'print "begin", node_, curNode, root_
+    'print "also", nodePool_usage
     do
-
+        'locate 3, 1
+        fixNode = 0
         searchUp = 0
         while curNode->left_
+            'print "in left"
+            'ERROR_CHECK()
             if NO_INTERSECT(curNode->left_->square, splitSquare) then
                 exit while
-            elseif OVERLAP(splitSquare, curNode->left_->square) then
+            elseif OVERLAP(splitSquare, curNode->left_->square) then                        
                 EAT_NODE(curNode->right_)
                 fixNode = curNode->parent_
                 FIX_NODE()
+                if splitStackPointer = 0 then 
+                    if curNode <> root_ then
+                        curNode = curNode->parent_
+                    else
+                        exit sub
+                    end if
+                else
+                    POP_SPLIT(curNode)                    
+                end if
+                'print "chomp left"
+                'ERROR_CHECK()
             else
                 PUSH_SPLIT(curNode)
                 curNode = curNode->left_
+                'print "go left stuffffffff"
+                'ERROR_CHECK()
             end if 
+            'print "one round of left"
         wend
+        'print "go left"
+        'ERROR_CHECK()
         
-        if curNode->right_ = 0 then      
+        
+        if curNode->right_ = 0 then 
             with curNode->square
                 if .tl.x < splitSquare.tl.x then
                     if .tl.y < splitSquare.tl.y then
@@ -652,15 +782,20 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
             end select               
             FIX_NODE()
             searchUp = 1
+            'print "split"
         elseif NO_INTERSECT(curNode->right_->square, splitSquare) then 
             searchUp = 1
+            'print "intersect"
         elseif OVERLAP(splitSquare, curNode->right_->square) then
             EAT_NODE(curNode->left_)
             fixNode = curNode->parent_
             FIX_NODE()
             searchUp = 1
+            'print "chomp mid"
         end if
-        
+        'print "mid"
+        ERROR_CHECK()
+
         if searchUp = 1 then 
             skipCycle = 0
             do
@@ -674,13 +809,21 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
                         EAT_NODE(curNode->left_)
                         fixNode = curNode->parent_
                         FIX_NODE() 
+                        'print "chomp end"
                     else                    
                         exit do
                     end if
                 end if
+                'print "go up"
+                'ERROR_CHECK()
             loop
+            'print "searchUp"
+            'ERROR_CHECK()
         end if
-        if skipCycle = 0 then curNode = curNode->right_
+
+        if skipCycle = 0 then 
+            curNode = curNode->right_
+        end if
     loop until skipCycle = 1
     
     if node_ <> root_ then
@@ -700,10 +843,19 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
 end sub
 
 sub Tree2d.setSearch(searchSquare_p as Tree2D_Square)
+    #define NO_INTERSECT(A, B) ((A.br.x <= B.tl.x) orElse (A.tl.x >= B.br.x) orElse (A.br.y <= B.tl.y) orElse (A.tl.y >= B.br.y))
+
     searchSquare = searchSquare_p
     curSearchNode = root_
     searchStackPointer = 0
     searchTerm = 0
+    if curSearchNode = 0 then 
+        searchTerm = 1
+    else
+        if NO_INTERSECT(searchSquare, root_->square) then
+            searchTerm = 1
+        end if
+    end if
 end sub
 
 function Tree2d.getSearch() as Tree2D_Square ptr
@@ -725,9 +877,8 @@ function Tree2d.getSearch() as Tree2D_Square ptr
     dim as integer searchUp
 
     returnSquare = 0
-    if curSearchNode = 0 then searchTerm = 1
     
-    if searchTerm = 1 then exit function
+    if searchTerm = 1 then return 0
     do
         
         searchUp = 0

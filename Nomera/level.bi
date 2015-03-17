@@ -4,6 +4,7 @@
 #include "tinyblock.bi"
 #include "constants.bi"
 #include "vector2d.bi"
+#include "tree2d.bi"
 #include "hash2d.bi"
 #include "list.bi"
 #include "effectcontroller.bi"
@@ -16,6 +17,7 @@
 #define FLIPPED_VERT  &h2
 #define FLIPPED_DIAG  &h1
 #define FLIPPED_MASK  &h1fffffff
+
 
 #include "leveltypes.bi"
 
@@ -72,6 +74,7 @@ type Level
        
         dim as integer justLoaded
     private:
+        /'
         declare sub subtractSquareMasks(byref squares as Level_SquareMaskList,_
                                         x0 as double, y0 as double,_
                                         x1 as double, y1 as double)
@@ -79,7 +82,7 @@ type Level
                                                  squareB as Level_SquareMask,_
                                                  outSquares() as Level_SquareMask, offset as integer) as integer   
                                                   
-                                           
+        '/                                   
                                 
         declare sub splodeBlockReact(xs as integer, ys as integer)
         declare sub modBlockDestruct(lyr as integer, xs as integer, ys as integer)
@@ -99,6 +102,7 @@ type Level
         dim as Hashtable destroyedBlockMemory
         dim as ubyte ptr curDestBlocks
         dim as integer noVisuals
+        dim as Tree2d ptr aggregateMask
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum

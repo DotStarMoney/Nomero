@@ -249,8 +249,10 @@ sub GameSpace.step_draw()
     START_PROFILE(0)
     
     
-
-	
+    
+    spy.body.p = Vector2D(1165, 1014)
+    camera = spy.body.p
+    
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
                   
@@ -418,7 +420,7 @@ sub GameSpace.step_process()
     START_PROFILE(0)
     
     window
-    
+        
     if isSwitching = 0 then
 		camera = spy.body.p * 0.1 + camera * 0.9
 	elseif isSwitching = -1 then
@@ -570,11 +572,8 @@ sub GameSpace.step_process()
 	end if
     RECORD_PROFILE(1)
     
-
-	
-    
-    
-    'spy.body.p = Vector2D(979.2597, 849.9504)
+    spy.body.p = Vector2D(1165, 1014)
+    camera = spy.body.p
     
     RECORD_PROFILE(0)
     for i = 0 to 9

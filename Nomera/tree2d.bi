@@ -37,7 +37,7 @@
 
 type Tree2D_Square
     declare constructor()
-    declare constructor(tl_p as Vector2D, br_p as Vector2D, x0_p as integer, y0_p as integer, x1_p as integer, y1_p as integer)
+    declare constructor(tl_p as Vector2D, br_p as Vector2D, x0_p as integer=0, y0_p as integer=0, x1_p as integer=0, y1_p as integer=0)
     as Vector2D tl, br
     as integer x0, y0, x1, y1
 end type
@@ -49,13 +49,6 @@ type Tree2D_node
 end type
 
 
-'iterate through tree A (visible) squares
-    'iterate through squares in B (mask) touched by A square (can keep pointer from last time since we'll be close by, instead of starting at root)
-        'split A square node (split at) by B
-    '}
-'}
-
-
 type Tree2D
     public:
         declare constructor(maxNodes as integer)
@@ -63,7 +56,7 @@ type Tree2D
         
         declare function insert(newSquare as Tree2D_Square) as Tree2D_Node ptr
         declare sub flush()
-        declare sub splitNode(splitSquare as Tree2D_Square, node_ as Tree2D_Node ptr)
+        declare sub splitNode(splitSquare as Tree2D_Square, byref node_ as Tree2D_Node ptr)
         declare sub setSearch(searchSquare_p as Tree2D_Square)
         declare function getSearch() as Tree2D_Square ptr
         declare function getRoot() as Tree2D_Node ptr
@@ -71,7 +64,9 @@ type Tree2D
         declare sub resetRoll()
         declare function roll() as Tree2D_Square ptr
         
+        declare function consistencyCheck(node_ as Tree2D_Node ptr, testNode_ as Tree2D_Node ptr) as integer
     private:
+        
         as Tree2D_node ptr root_
         
         as Tree2D_node ptr nodePool
@@ -94,7 +89,7 @@ type Tree2D
 
 end type
 
-declare sub Tree2DDebugPrint(node as Tree2D_node ptr, isLeft as integer, level as integer)
+declare sub Tree2DDebugPrint(node as Tree2D_node ptr, isLeft as integer=0, level as integer=0)
 
 
 #endif

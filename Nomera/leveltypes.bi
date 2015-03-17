@@ -73,16 +73,6 @@ type Level_Tileset
     as HashTable NoTransparencyIDs
 end type
 
-type Level_SquareMask
-    as Vector2D tl, br
-end type
-
-type Level_SquareMaskList
-    declare constructor(lvlWidth as double, lvlHeight as double)
-    declare destructor()
-    as Hash2D squares 'a 2d hash of pointers to square masks
-end type
-
 type Level_VisBlock
     as ushort tileset
     as ushort tileNum
@@ -103,12 +93,14 @@ Type Level_LayerData
     as ushort coverage
     as single depth 
     
-    as Level_SquareMaskList ptr visibilitySquares
-    as Level_SquareMaskList ptr maskSquares
+    as Tree2D ptr visibilitySquares
+    as Tree2D ptr maskSquares
+    as Tree2D ptr frameDrawRegions
+    as Tree2D ptr aggregateBlockingRegions
+
+
     
     as Vector2D frameCenter
-    as List frameDrawRegions
-    as Level_SquareMaskList ptr aggregateBlockingRegions
 end type
 
 enum PortalDirection_t
