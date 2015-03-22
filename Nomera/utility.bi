@@ -58,6 +58,13 @@ declare sub bitblt_alphaGlow(dest as uinteger ptr,_
                              src_x1 as integer, src_y1 as integer,_
                              colOffset as integer = &h00000000)
                              
+declare sub bitblt_transMulMix(dest as uinteger ptr,_
+							   xpos as integer, ypos as integer,_
+							   src  as uinteger ptr,_
+                               src_x0 as integer, src_y0 as integer,_
+                               src_x1 as integer, src_y1 as integer,_
+                               mixColor as integer = &h00000000)
+                                                          
 declare function countTrans(src as uinteger ptr,_
 							src_x0 as integer, src_y0 as integer,_
                             src_x1 as integer, src_y1 as integer) as integer
@@ -92,6 +99,8 @@ declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					        img_width as integer, img_height as integer,_
 					        dest_x as integer, dest_y as integer)
                             
+declare function intLog2(x as integer) as integer
+ 
 declare sub allocateAlligned(byref basePtr as any ptr, byref allignedPtr as any ptr, bytes as integer)
                             
 'add linked list merge sort

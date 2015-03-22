@@ -276,13 +276,7 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, byref node_ as Tree2D_Node pt
     #endmacro
     
     #macro EAT_NODE(XX)
-        if node_ = curNode then 
-            line (node_->square.tl.x*0.5, node_->square.tl.y*0.5)-(node_->square.br.x*0.5, node_->square.br.y*0.5), rgb(0,0,255), BF
-            node_ = XX
-
-            beep
-            
-        end if
+        if node_ = curNode then node_ = XX
         tempParent_ = curNode->parent_
         if tempParent_ = 0 then
             root_ = XX
@@ -413,6 +407,9 @@ sub Tree2d.splitNode(splitSquare as Tree2D_Square, byref node_ as Tree2D_Node pt
         
         
         if curNode->right_ = 0 then 
+            
+            line (curNode->square.tl.x*0.5, curNode->square.tl.y*0.5)-(curNode->square.br.x*0.5, curNode->square.br.y*0.5), rgb(0,0,255), BF
+
             with curNode->square
                 if .tl.x < splitSquare.tl.x then
                     if .tl.y < splitSquare.tl.y then

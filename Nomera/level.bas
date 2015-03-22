@@ -9,9 +9,6 @@
 #include "soundeffects.bi"
 #include "fbpng.bi"
 
-
-#define VISIBILITY_MAX_NODES 256
-
 dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
 #ifdef DEBUG
 	dim as integer ptr Level.collisionBlox = 0
@@ -38,8 +35,7 @@ constructor level
     if falloutTex(2) = 0 then
 		falloutTex(2) = png_load("falloutdisk96_3.png")
     end if    
-    aggregateMask = new Tree2D(VISIBILITY_MAX_NODES)
-
+       
     foreground_layer.init(sizeof(integer))
     background_layer.init(sizeof(integer))
     active_layer.init(sizeof(integer))
@@ -96,6 +92,8 @@ end sub
 sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                      cam_x as integer, cam_y as integer,_
                      adjust as Vector2D)
+    dim as integer tl_x, tl_y
+    dim as integer br_x, br_y
     dim as double  x, y
     dim as integer i, num, j
     dim as Vector2D a, b
@@ -144,17 +142,20 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                 ocx = cam_x + adjust.x()
                 ocy = cam_y + adjust.y()
             end if
-
+            tl_x = ((ocx - x - SCRX * 0.5) ) / 16 - 1
+            tl_y = ((ocy - y - SCRY * 0.5) ) / 16 - 1
+            br_x = ((ocx - x + SCRX * 0.5) ) / 16
+            br_y = ((ocy - y + SCRY * 0.5) ) / 16
+        
+            
             window screen (ocx - SCRX * 0.5, ocy - SCRY * 0.5)-_
                           (ocx + SCRX * 0.5, ocy + SCRY * 0.5)
                                       
             if layerData[i].isFallout <> 65535 then
-                
                 if falloutBlend = 0 then
                     falloutBlend = imagecreate(640,480)
                 end if
-                
-                drawLayer(falloutBlend, ocx, ocy, i)
+                drawLayer(falloutBlend, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
                 
                 a = Vector2D(cam_x, cam_y) - Vector2D(SCRX, SCRY) * 0.5
                 b = Vector2D(cam_x, cam_y) + Vector2D(SCRX, SCRY) * 0.5
@@ -202,7 +203,7 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                 put scnbuff, (ocx - SCRX*0.5,ocy - SCRY*0.5), falloutBlend, TRANS
                 
             else
-                drawLayer(scnbuff, ocx, ocy, i)
+                drawLayer(scnbuff, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
             end if
         else
             exit do
@@ -241,6 +242,9 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
 end sub
 
 sub level.drawLayer(scnbuff as uinteger ptr,_
+                    tl_x as integer, tl_y as integer,_
+                    br_x as integer, br_y as integer,_
+                    x as integer, y as integer,_
                     cam_x as integer, cam_y as integer,_
                     lyr as integer)
                     
@@ -253,91 +257,248 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     dim as double newcx, newcy
     dim as integer tilePosX, tilePosY
     dim as double rand
-    dim as Tree2D_Square ptr curMask
     dim as Level_EffectData tempEffect
-    dim as any ptr eraseMask
-    dim as integer x, y
-    dim as integer tl_x, tl_y
-    dim as integer br_x, br_y
-      
+    
+    if tl_x > br_x then swap tl_x, br_x
+    if tl_y > br_y then swap tl_y, br_y
+    if tl_x <            0 then tl_x = 0
+    if br_x > lvlWidth - 1 then br_x = lvlWidth - 1
+    if tl_y <             0 then tl_y = 0
+    if br_y > lvlHeight - 1 then br_y = lvlHeight - 1    
+    
     if layerData[lyr].parallax < 8 then
         x = (cam_x - (lvlWidth * 0.5 * 16)) * (1-layerData[lyr].depth)
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
     end if
+    
+    if layerData[lyr].coverage = 1 then
 
-    /'
-    BEGIN_TREE2D(curMask, layerData[lyr].frameDrawRegions)
-        
-            
-        tl_x = curMask->x0'int((curMask->tl.x + layerData[lyr].frameCenter.x) / 16.0)
-        tl_y = curMask->y0'int((curMask->tl.y + layerData[lyr].frameCenter.y) / 16.0)
-        br_x = curMask->x1'int((curMask->br.x + layerData[lyr].frameCenter.x - 1) / 16.0)
-        br_y = curMask->y1'int((curMask->br.y + layerData[lyr].frameCenter.y - 1) / 16.0)
-        
-        'check for things out of bounds, or impossible widths/heights, 
-        '   at least no longer have to int and divide. Also, in square create,
-        '   set up the draw box 
-        for yscan = tl_y to br_y
-            for xscan = tl_x to br_x
+
+    end if 
+    
+    rand = rnd
+	
+    for yscan = tl_y to br_y
+        for xscan = tl_x to br_x
+            block = blocks[lyr][yscan * lvlWidth + xscan]
+            if block.tileset < 65535 then
                 
-                block = blocks[lyr][yscan*lvlWidth + xscan]
-
                 row_c = tilesets[block.tileset].row_count
                 tilePosX = ((block.tileNum - 1) mod row_c) * 16
-                tilePosY = ((block.tileNum - 1) \   row_c) * 16
+                tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
                 
-                /'
-                tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
-                select case tempEffect.effect
-                case ANIMATE
-                    block.frameDelay += 1
-                    if block.frameDelay > tempEffect.delay then
-                        block.frameDelay = 0
-                        block.tileNum += tempEffect.nextTile
-                        if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
-                            block.usesAnim = 1
-                        else
-                            block.usesAnim = 65535
-                        end if
-                        if tempEffect.effect = ANIMATE then
+                if block.usesAnim < 65535 then
+					
+                    tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+                    select case tempEffect.effect
+                    case ANIMATE
+                        block.frameDelay += 1
+                        if block.frameDelay > tempEffect.delay then
                             block.frameDelay = 0
-                        elseif tempEffect.effect = FLICKER then
-                            block.frameDelay = tempEffect.offset + tempEffect.delay * rand
-                        end if
-                        blocks[lyr][yscan * lvlWidth + xscan] = block
-                    else
-                        blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
-                    end if
-                case FLICKER
-                    block.frameDelay -= 1
-                    if block.frameDelay < 0 then
-                        block.tileNum += tempEffect.nextTile
-                        if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
-                            tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
-                            block.usesAnim = 1
+                            block.tileNum += tempEffect.nextTile
+                            if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
+                                block.usesAnim = 1
+                            else
+                                block.usesAnim = 65535
+                            end if
+                            if tempEffect.effect = ANIMATE then
+                                block.frameDelay = 0
+                            elseif tempEffect.effect = FLICKER then
+                                block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                            end if
+                            blocks[lyr][yscan * lvlWidth + xscan] = block
                         else
-                            block.usesAnim = 65535
+                            blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
                         end if
-                        if tempEffect.effect = ANIMATE then
-                            block.frameDelay = 0
-                        elseif tempEffect.effect = FLICKER then
-                            block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                    case FLICKER
+                        block.frameDelay -= 1
+                        if block.frameDelay < 0 then
+                            block.tileNum += tempEffect.nextTile
+                            if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
+                                tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
+                                block.usesAnim = 1
+                            else
+                                block.usesAnim = 65535
+                            end if
+                            if tempEffect.effect = ANIMATE then
+                                block.frameDelay = 0
+                            elseif tempEffect.effect = FLICKER then
+                                block.frameDelay = tempEffect.offset + tempEffect.delay * rand
+                            end if
+                            blocks[lyr][yscan * lvlWidth + xscan] = block
+                        else
+                            blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
                         end if
-                        blocks[lyr][yscan * lvlWidth + xscan] = block
-                    else
-                        blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
-                    end if
-                case DESTRUCT
-                    ''
-                end select
-                '/
-               
+                    case DESTRUCT
+                        ''
+                    end select
+                end if
+                
                 put scnbuff, (xscan*16 + x, yscan*16 + y), tilesets[block.tileset].set_image, (tilePosX, tilePosY)-(tilePosX + 15, tilePosY + 15), TRANS
-               
-            next xscan
-        next yscan
-    END_TREE2D()
-    '/
+
+            end if
+        next xscan
+    next yscan
+ 
+end sub
+
+sub Level.putDispatch(scnbuff as integer ptr,_
+                      block as Level_VisBlock,_
+                      x as integer, y as integer,_
+                      tilePos_x as integer, tilePos_y as integer,_
+                      cam_x as integer, cam_y as integer)
+                      
+    #define X_ 0
+    #define Y_ 1
+    
+    'lol this is in here twice... y lol...
+    
+    dim as uinteger ptr src
+    dim as integer ppos(0 to 1)
+    dim as integer pdes(0 to 1)
+    dim as integer pdir(0 to 1)
+    dim as integer ptr ptile(0 to 1)
+    dim as integer byCol, byRow, oldCol, i
+    dim as integer xpos, ypos, w, col
+    
+    src = tilesets[block.tileset].set_image
+    w = tilesets[block.tileset].set_width
+    
+    if block.rotatedType = 0 then
+        put scnbuff, (x, y), src, (tilePos_x, tilePos_y)-(tilePos_x + 15, tilePos_y + 15), TRANS
+    else
+		/'
+        x -= (cam_x - SCRX*0.5)
+        y -= (cam_y - SCRY*0.5)
+        ptile(X_) = @tilePos_x
+        ptile(Y_) = @tilePos_y
+        ppos(X_) = x
+        ppos(Y_) = y
+        pdes(X_) = x
+        pdes(Y_) = y 
+        select case block.rotatedType
+        case 1
+            byRow = X_
+            byCol = Y_
+            ppos(byRow) += 15
+            ppos(byCol) += 15
+            pdes(byRow) += -1
+            pdes(byCol) += -1
+            pdir(byRow) = -1
+            pdir(byCol) = -1
+        case 2
+            byRow = Y_
+            byCol = X_
+            ppos(byRow) += 15
+            ppos(byCol) += 0
+            pdes(byRow) += -1
+            pdes(byCol) += 16
+            pdir(byRow) = -1
+            pdir(byCol) = 1
+        case 3
+            byRow = X_
+            byCol = Y_
+            ppos(byRow) += 0
+            ppos(byCol) += 15
+            pdes(byRow) += 16
+            pdes(byCol) += -1
+            pdir(byRow) = 1
+            pdir(byCol) = -1
+        case 4
+            byRow = Y_
+            byCol = X_
+            ppos(byRow) += 0
+            ppos(byCol) += 15
+            pdes(byRow) += 16
+            pdes(byCol) += -1
+            pdir(byRow) = 1
+            pdir(byCol) = -1
+        case 5
+            byRow = X_
+            byCol = Y_
+            ppos(byRow) += 15
+            ppos(byCol) += 0
+            pdes(byRow) += -1
+            pdes(byCol) += 16
+            pdir(byRow) = -1
+            pdir(byCol) = 1
+        case 6
+            byRow = Y_
+            byCol = X_
+            ppos(byRow) += 15
+            ppos(byCol) += 15
+            pdes(byRow) += -1
+            pdes(byCol) += -1
+            pdir(byRow) = -1
+            pdir(byCol) = -1
+        case 7
+            byRow = X_
+            byCol = Y_
+            ppos(byRow) += 0
+            ppos(byCol) += 0
+            pdes(byRow) += 16
+            pdes(byCol) += 16
+            pdir(byRow) = 1
+            pdir(byCol) = 1
+        end select
+
+        if ppos(X_) < 0 then 
+            *(ptile(byCol)) += (-ppos(X_))
+            ppos(X_) = 0
+        elseif ppos(X_) >= SCRX then
+            *(ptile(byCol)) += (ppos(X_) - SCRX) + 1
+            ppos(X_) = SCRX - 1
+        end if
+            
+        if pdes(X_) < 0 then 
+            pdes(X_) = 0
+        elseif pdes(X_) > SCRX then
+            pdes(X_) = SCRX
+        end if
+        
+        if ppos(Y_) < 0 then 
+            *(ptile(byRow)) += (-ppos(Y_))
+            ppos(Y_) = 0
+        elseif ppos(Y_) >= SCRY then
+            *(ptile(byRow)) += (ppos(Y_) - SCRY) + 1
+            ppos(Y_) = SCRY - 1
+        end if
+            
+        if pdes(Y_) < 0 then 
+            pdes(Y_) = 0
+        elseif pdes(Y_) > SCRY then
+            pdes(Y_) = SCRY
+        end if
+        
+        if sgn(pdes(X_) - ppos(X_)) <> pdir(X_) then 
+            exit sub
+        end if
+        
+        if sgn(pdes(Y_) - ppos(Y_)) <> pdir(Y_) then 
+            exit sub
+        end if
+        
+        ypos = tilePos_y
+        oldCol = ppos(byCol)
+
+        while ppos(byRow) <> pdes(byRow)
+            ppos(byCol) = oldCol
+            xpos = tilePos_x
+            while ppos(byCol) <> pdes(byCol)
+                
+                col = src[8 + xpos + ypos*w]
+                if col <> &hffff00ff then 
+                    scnbuff[8 + ppos(X_) + ppos(Y_) * SCRX] = col
+                end if
+                ppos(byCol) += pdir(byCol)
+                xpos += 1
+            wend
+            ppos(byRow) += pdir(byRow)
+            ypos += 1
+        wend
+		'/
+    end if
+                 
 end sub
   
 destructor level
@@ -539,7 +700,6 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
     dim as Level_VisBlock block
     dim as Level_EffectData tempEffect
     
-    
     fallout.a = Vector2D(x,y) - Vector2D(64, 64)
     fallout.b = Vector2D(x,y) + Vector2D(64, 64)
     if flavor = -1 then
@@ -572,28 +732,21 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
 			xp = xs * 16 - x
 			yp = ys * 16 - y
 			d = sqr(xp*xp + yp*yp)
-            for i = 0 to blocks_N - 1
-                if (layerData[i].isFallout = 1) andAlso (blocks[i][ys*lvlWidth + xs].tileset <> 65535) then blocks[i][ys*lvlWidth + xs].NoTransparency = 1
-            next i
-            if d <= 48 then
-                splodeBlockReact(xs, ys)
-                if noVisuals = 0 andAlso fallout.flavor <> 2 then
-                    for i = 0 to blocks_N - 1
-                        if d <= 16 andAlso (layerData[i].isFallout = 1) then
-                            resetBlock(xs, ys, i)
-                        end if
-                    next i
-                end if
-            end if
+			if d <= 48 then
+				splodeBlockReact(xs, ys)
+				if noVisuals = 0 andAlso fallout.flavor <> 2 then
+					for i = 0 to blocks_N - 1
+						if (layerData[i].isFallout = 1) andAlso d <= 12 then
+							resetBlock(xs, ys, i)
+						end if
+					next i
+				end if
+			end if
 		next xs
 	next ys
-    
-    for i = 0 to blocks_N - 1
-        if layerData[i].isFallout = 1 then
-            computeSquareMasks(i, tl_x, tl_y, br_x, br_y)
-        end if
-    next i
+   
 
+    
     fallout.flavor = flavor
     fallout.cachedImage = 0
     
@@ -659,7 +812,6 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
     
     falloutZones.insert(fallout.a, fallout.b, @fallout)
 	reconnect = 1
-    
 end sub
 
 function Level.checkDestroyedBlocks(x as integer, y as integer) as integer
@@ -713,13 +865,9 @@ sub level.flush()
         if tilesets <> 0 then delete(tilesets)
         for i = 0 to blocks_N - 1
             if blocks[i] <> 0 then deallocate(blocks[i])
-            delete(layerData[i].visibilitySquares)
-            delete(layerData[i].maskSquares)
-            delete(layerData[i].aggregateBlockingRegions)
-            delete(layerData[i].frameDrawRegions)
         next i
         if blocks <> 0 then deallocate(blocks)
-        if layerData <> 0 then delete(layerData)
+        if layerData <> 0 then deallocate(layerData)
         background_layer.flush()
         active_layer.flush()
         activeCover_layer.flush()
@@ -767,189 +915,6 @@ function Level.getDefaultPos() as Vector2D
 end function
 
 
-sub Level.computeSquareMasks(lyr as integer, x0 as integer, y0 as integer,_
-                                             x1 as integer, y1 as integer)
-
-    #macro SET_NT_VALUE(BLOCK_INDEX)
-    
-        NTvalue = 0
-        if compStep = NT_MASK then
-            tset = blocks[lyr][BLOCK_INDEX].tileset
-            if tset <> 65535 andAlso (blocks[lyr][BLOCK_INDEX].NoTransparency = 0) then
-                if tilesets[tset].NoTransparencyIDs.exists(blocks[lyr][BLOCK_INDEX].tileNum - 1) then
-                    NTvalue = 1
-                end if
-            end if    
-        elseif compStep = DRAW_MASK then
-            if blocks[lyr][BLOCK_INDEX].tileset <> 65535 then
-                NTvalue = 1
-            end if
-        end if 
-    
-    #endmacro
-    #define NT_MASK 0
-    #define DRAW_MASK 1
-                                             
-    dim as Tree2D_Square newSquare
-    dim as integer xscan, yscan, windowSize, tset
-    dim as integer i, j, findLowLimit
-    dim as integer offX, offY, largestArea
-    dim as integer best_x0, best_y0, best_x1, best_y1, area
-    dim as integer last_x0, last_y0, last_x1, last_y1, row
-    dim as integer leftLo, leftHi, rightLo, rightHi
-    dim as integer invalidLeft, invalidRight, leftExArea, rightExArea
-    dim as integer NTvalue
-    dim as integer ptr searchMask
-    dim as integer compStep
-    
-    if layerData[lyr].maskSquares->getRoot() then
-        layerData[lyr].maskSquares->splitNode(Tree2D_square(Vector2D(x0*16, y0*16), Vector2D((x1 + 1)*16, (y1 + 1)*16),_
-                                              x0, y0, x1, y1), layerData[lyr].maskSquares->getRoot())
-    end if
-    
-    if layerData[lyr].visibilitySquares->getRoot() then
-        layerData[lyr].visibilitySquares->splitNode(Tree2D_square(Vector2D(x0*16, y0*16), Vector2D((x1 + 1)*16, (y1 + 1)*16),_
-                                                    x0, y0, x1, y1), layerData[lyr].maskSquares->getRoot())
-    end if
-    
-    windowSize = (x1 - x0 + 1)
-    for compStep = NT_MASK to DRAW_MASK
-        searchMask = callocate(windowSize * (y1 - y0 + 1), sizeof(integer))
-        offY = 0
-        yscan = y0
-        while yscan <= y1
-            offX = 0
-            xscan = x0
-            while xscan <= x1
-                        
-                SET_NT_VALUE(yscan * lvlWidth + xscan)
-                
-                if NTvalue = 1 andAlso (searchMask[offX + offY * windowSize] = 0) then
-                    
-                    last_x0 = offX
-                    last_x1 = offX
-                    last_y0 = offY
-                    last_y1 = last_y0
-                    
-                    while(last_y1 < (y1 - y0))
-                        SET_NT_VALUE((y0 + last_y1 + 1)*lvlWidth + (x0 + last_x0))
-                        if (NTvalue = 0) orElse (searchMask[(last_y1 + 1)*windowSize + last_x0] = 1) then exit while
-                        last_y1 += 1
-                    wend
-                    
-                    largestArea = 0 
-                    invalidLeft = 0
-                    invalidRight = 0
-                    do
-                        area = (last_x1 - last_x0 + 1) * (last_y1 - last_y0 + 1)
-
-                        if area > largestArea then
-                            largestArea = area
-                            best_x0 = last_x0
-                            best_y0 = last_y0
-                            best_x1 = last_x1
-                            best_y1 = last_y1
-                        end if
-                        if last_y0 > last_y1 then exit do
-              
-                        if invalidLeft = 0 then
-                            leftLo = last_y0
-                            leftHi = last_y1
-                            if last_x0 > 0 then
-                                findLowLimit = 1
-                                for row = last_y0 to last_y1
-                                    SET_NT_VALUE((y0 + row)*lvlWidth + (x0 + last_x0 - 1))
-                                    if (NTvalue = 0) orElse (searchMask[row*windowSize + last_x0 - 1] = 1) then 
-                                        if findLowLimit = 1 then
-                                            leftLo += 1
-                                        else
-                                            leftHi = row - 1
-                                            exit for
-                                        end if
-                                    else
-                                        findLowLimit = 0
-                                    end if
-                                next row      
-                            else
-                                invalidLeft = 1
-                            end if
-                            if leftLo > leftHi then invalidLeft = 1
-                        end if
-                        
-                        if invalidRight = 0 then
-                            rightLo = last_y0
-                            rightHi = last_y1
-                            if last_x1 < (x1 - x0) then
-                                findLowLimit = 1
-                                for row = last_y0 to last_y1
-                                    SET_NT_VALUE((y0 + row)*lvlWidth + (x0 + last_x1 + 1))
-                                    if (NTvalue = 0) orElse (searchMask[row*windowSize + last_x1 + 1] = 1) then 
-                                        if findLowLimit = 1 then
-                                            rightLo += 1
-                                        else
-                                            rightHi = row - 1
-                                            exit for
-                                        end if
-                                    else
-                                        findLowLimit = 0
-                                    end if
-                                next row      
-                            else
-                                invalidRight = 1
-                            end if
-                            if rightLo > rightHi then invalidRight = 1
-                        end if
-                        
-                        if (invalidLeft = 1) andAlso (invalidRight = 1) then exit do
-                        
-                        leftExArea = (leftHi - leftLo + 1) * (last_x1 - last_x0 + 2)
-                        rightExArea = (rightHi - rightLo + 1) * (last_x1 - last_x0 + 2)
-                        
-                        if ((leftExArea > rightExArea) orElse (invalidRight = 1)) andAlso (invalidLeft = 0) then
-                            last_y0 = leftLo
-                            last_y1 = leftHi
-                            last_x0 -= 1
-                        else
-                            last_y0 = rightLo
-                            last_y1 = rightHi
-                            last_x1 += 1                    
-                        end if
-                    loop
-                    
-                    for i = best_y0 to best_y1
-                        for j = best_x0 to best_x1
-                            searchMask[i*windowSize + j] = 1
-                        next j
-                    next i
-                   
-                    newSquare.tl = Vector2D(best_x0 + x0, best_y0 + y0) * 16
-                    newSquare.br = Vector2D(best_x1 + 1 + x0, best_y1 + 1 + y0) * 16
-                    
-                    if compStep = NT_MASK then
-                        layerData[lyr].maskSquares->insert(Tree2D_Square(newSquare.tl, newSquare.br,_
-                                                                         newSquare.tl.x / 16, newSquare.tl.y / 16, (newSquare.br.x - 1) / 16, (newSquare.br.y - 1) / 16))
-                    elseif compStep = DRAW_MASK then
-                        layerData[lyr].visibilitySquares->insert(Tree2D_Square(newSquare.tl, newSquare.br,_
-                                                                               newSquare.tl.x / 16, newSquare.tl.y / 16, (newSquare.br.x - 1) / 16, (newSquare.br.y - 1) / 16))
-                    end if
-                    
-                    if last_y0 = yscan then 
-                        offX += 1
-                        xscan += 1
-                    end if
-                else
-                    offX += 1
-                    xscan += 1
-                end if
-            wend
-            offY += 1
-            yscan += 1
-        wend
-        deallocate(searchMask)
-    next compStep
-    
-end sub
-
 sub level.load(filename as string)
     dim as integer f, i, q, j, s, x, y, xscan, yscan, skipCheck
     dim as TinyBlock block
@@ -967,7 +932,6 @@ sub level.load(filename as string)
     dim as PortalType_t tempPortal
     dim as single tempSingleField
     dim as destroyedBlocks_t tempDblocks
-    dim as Hashtable ptr NoTransLookup
     
     f = freefile
  
@@ -1032,18 +996,14 @@ sub level.load(filename as string)
         
     #endif
    
-    
     for i = 0 to tilesets_N - 1
         get #f,,strdata
         tilesets[i].set_name = allocate(len(strdata) + 1)
         *(tilesets[i].set_name) = strdata
-        
+
         get #f,,strdata
         get #f,,tilesets[i].set_width
         get #f,,tilesets[i].set_height
-        
-        tilesets[i].NoTransparencyIDs.init(sizeof(integer))
-        
         
         tilesets[i].row_count = (tilesets[i].set_width / 16)  
         tilesets[i].count = (tilesets[i].set_width / 16) * (tilesets[i].set_height / 16)
@@ -1077,18 +1037,7 @@ sub level.load(filename as string)
             tilesets[i].tileEffect.insert(tempEffect.tilenum, @tempEffect)
         next j
 
-        for j = 0 to tilesets[i].count - 1    
-            row_c = tilesets[i].row_count
-            tilePosX = (j mod row_c) * 16
-            tilePosY = (j \ row_c) * 16
-            transPxls = countTrans(tilesets[i].set_image, tilePosX, tilePosY, tilePosX+15, tilePosY+15)            
-            if transPxls = 256 then tilesets[i].NoTransparencyIDs.insert(j, @j)
-        next j
-        
     next i
-    
-
-                            
     
     get #f,,blocks_N
     blocks_N -= 1
@@ -1102,7 +1051,7 @@ sub level.load(filename as string)
 				stall(100)
 			end if
 		#endif
-		layerData = new Level_LayerData[blocks_N]
+		layerData = allocate(sizeof(Level_LayerData) * blocks_N)
 		#ifdef DEBUG
 			if layerData = 0 then
 				printlog "panic 4"
@@ -1115,7 +1064,6 @@ sub level.load(filename as string)
 			blocks[i] = 0
 		next i
 	end if
-    
     
     for i = 0 to blocks_N
         get #f,,strdata
@@ -1156,11 +1104,6 @@ sub level.load(filename as string)
 				activeCover_layer.push_back(@layerInt)
             end select
             
-            layerData[lyr].visibilitySquares        = new Tree2D(VISIBILITY_MAX_NODES)
-            layerData[lyr].maskSquares              = new Tree2D(VISIBILITY_MAX_NODES)
-            layerData[lyr].frameDrawRegions         = new Tree2D(VISIBILITY_MAX_NODES)
-            layerData[lyr].aggregateBlockingRegions = new Tree2D(VISIBILITY_MAX_NODES)
-
             lvb = 0
             lvb = allocate(sizeof(Level_VisBlock) * lvlWidth * lvlHeight)
             
@@ -1196,6 +1139,16 @@ sub level.load(filename as string)
                       
                         if tilesets[q].tileEffect.exists(blocks[lyr][j].tilenum) = 1 then
                             blocks[lyr][j].usesAnim = 1
+                        else
+                          
+                            row_c = tilesets[q].row_count
+                            tilePosX = ((blocks[lyr][j].tilenum - 1) mod row_c) * 16
+                            tilePosY = ((blocks[lyr][j].tilenum - 1) \ row_c  ) * 16
+                            transPxls = countTrans(tilesets[q].set_image, tilePosX, tilePosY, tilePosX+15, tilePosY+15)
+
+                            if transPxls = 256 then
+                                blocks[lyr][j].NoTransparency = 1
+                            end if
                         end if
                         
                         exit for
@@ -1205,11 +1158,7 @@ sub level.load(filename as string)
                 
             next j
             
-            computeSquareMasks(i, 0, 0, lvlWidth-1, lvlHeight-1)
-            
         end if
-        
-        
     next i
     
     get #f,,numObjs
@@ -1297,151 +1246,6 @@ sub Level.overrideCurrentMusicFile(filename as string)
 	loadedMusic = filename
 end sub
 
-
-sub level.computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vector2D)
-    #define MAX_SLICES 64
-
-    dim as integer layerList, i
-    dim as double x, y
-    dim as double ocx, ocy
-    dim as Vector2D tl, br
-    dim as Vector2D center
-    dim as integer ptr curLayer
-    dim as Tree2d_Square curVisSquare, screenBound, curMaskSquare
-    dim as Tree2d_Square ptr curVisSquare_ptr, curMaskSquare_ptr
-    dim as Tree2d_Node ptr insertLocation
-    dim as List ptr curList
-   
-    aggregateMask->flush()
-    
-    for layerList = 0 to 3
-        select case layerList
-        case 0
-            curList = @foreground_layer
-        case 1
-            curList = @activeCover_layer
-        case 2
-            curList = @active_layer
-        case 3
-            curList = @background_layer
-        end select
-        BEGIN_LIST_REVERSE(curLayer, (*curList))
-            x = 0
-            y = 0
-            i = *curLayer
-            if layerData[i].parallax < 255 then
-                parallaxAdjust(x, y,_
-                               cam_x, cam_y,_
-                               lvlWidth * 16, lvlHeight * 16,_
-                               layerData[i].depth)
-                ocx = cam_x
-                ocy = cam_y
-            else
-                ocx = cam_x + adjust.x()
-                ocy = cam_y + adjust.y()
-            end if
-            center = Vector2D(ocx - x, ocy - y)
-            tl = center - Vector2D(SCRX, SCRY)*0.5
-            br = center + Vector2D(SCRX, SCRY)*0.5
-            layerData[i].frameCenter = tl
-            
-            screenBound.tl = tl - Vector2D(16, 16)
-            screenBound.br = br
-            screenBound.x0 = screenBound.tl.x / 16
-            screenBound.y0 = screenBound.tl.y / 16
-            screenBound.x1 = (screenBound.br.x - 1) / 16
-            screenBound.y1 = (screenBound.br.y - 1) / 16            
-            
-            layerData[i].frameDrawRegions->flush()
-            
-            BEGIN_SEARCH_TREE2D(curVisSquare_ptr, (*layerData[i].visibilitySquares), Tree2D_Square(tl, br))
-                
-                curVisSquare = *curVisSquare_ptr
-                if curVisSquare.tl.x < screenBound.tl.x then 
-                    curVisSquare.tl.setX(screenBound.tl.x)
-                    curVisSquare.x0 = screenBound.x0
-                end if
-                if curVisSquare.tl.y < screenBound.tl.y then 
-                    curVisSquare.tl.setY(screenBound.tl.y) 
-                    curVisSquare.y0 = screenBound.y0                    
-                end if
-                if curVisSquare.br.x > screenBound.br.x then 
-                    curVisSquare.br.setX(screenBound.br.x)
-                    curVisSquare.x1 = screenBound.x1
-                end if
-                if curVisSquare.br.y > screenBound.br.y then 
-                    curVisSquare.br.setY(screenBound.br.y)
-                    curVisSquare.y1 = screenBound.y1
-                end if
-                
-                curVisSquare.tl = curVisSquare.tl - tl
-                curVisSquare.br = curVisSquare.br - tl
-                insertLocation = layerData[i].frameDrawRegions->insert(curVisSquare)
-
-                if i = 0 then 
-                    cls
-                    print "before split"
-                    Tree2DDebugPrint(layerData[i].frameDrawRegions->getRoot())
-                    sleep
-                end if
-               
-                BEGIN_SEARCH_TREE2D(curMaskSquare_ptr, (*aggregateMask), curVisSquare)
-                    if i = 0 then line (curMaskSquare_ptr->tl.x*0.5, curMaskSquare_ptr->tl.y*0.5)-(curMaskSquare_ptr->br.x*0.5, curMaskSquare_ptr->br.y*0.5), rgb(255,0,0), BF
-                    layerData[i].frameDrawRegions->splitNode(*curMaskSquare_ptr, insertLocation)
-                    if insertLocation = 0 then ABORT_SEARCH_TREE2D()
-                    if i = 0 then 
-                        sleep
-                        cls
-                        Tree2DDebugPrint(layerData[i].frameDrawRegions->getRoot())
-                       sleep
-                    end if
-                END_SEARCH_TREE2D()
-                
-                
-                if i = 0 then 
-                    cls
-                    print "after split"
-                    Tree2DDebugPrint(layerData[i].frameDrawRegions->getRoot())
-                    sleep
-                end if
-                
-            END_SEARCH_TREE2D()
-            
-            if i = 0 then Tree2DDebugPrint(layerData[i].frameDrawRegions->getRoot())
-
-
-            
-            BEGIN_SEARCH_TREE2D(curMaskSquare_ptr, (*layerData[i].maskSquares), Tree2D_Square(tl, br))
-                curMaskSquare = *curMaskSquare_ptr
-                
-                if curMaskSquare.tl.x < screenBound.tl.x then 
-                    curMaskSquare.tl.setX(screenBound.tl.x)
-                    curMaskSquare.x0 = screenBound.x0
-                end if
-                if curMaskSquare.tl.y < screenBound.tl.y then 
-                    curMaskSquare.tl.setY(screenBound.tl.y) 
-                    curMaskSquare.y0 = screenBound.y0                    
-                end if
-                if curMaskSquare.br.x > screenBound.br.x then 
-                    curMaskSquare.br.setX(screenBound.br.x)
-                    curMaskSquare.x1 = screenBound.x1
-                end if
-                if curMaskSquare.br.y > screenBound.br.y then 
-                    curMaskSquare.br.setY(screenBound.br.y)
-                    curMaskSquare.y1 = screenBound.y1
-                end if
-                curMaskSquare.tl = curMaskSquare.tl - tl
-                curMaskSquare.br = curMaskSquare.br - tl   
-                if aggregateMask->getRoot() then
-                    aggregateMask->splitNode(curMaskSquare, aggregateMask->getRoot())
-                end if
-                aggregateMask->insert(curMaskSquare)         
-            END_SEARCH_TREE2D()
-
-            
-        END_LIST()
-    next layerList
-end sub                    
                                                        
 sub Level.repositionFromPortal(l as levelSwitch_t, _
                                byref p as TinyBody)

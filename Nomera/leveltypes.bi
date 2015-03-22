@@ -4,7 +4,6 @@
 #include "hash2d.bi"
 #include "hashtable.bi"
 #include "constants.bi"
-#include "tree2d.bi"
 
 enum ObjectType_t
     EFFECT
@@ -70,7 +69,6 @@ type Level_Tileset
     as ushort row_count
     as uinteger ptr set_image
     as HashTable tileEffect
-    as HashTable NoTransparencyIDs
 end type
 
 type Level_VisBlock
@@ -91,16 +89,7 @@ Type Level_LayerData
     as ushort illuminated
     as ubyte  ambientLevel
     as ushort coverage
-    as single depth 
-    
-    as Tree2D ptr visibilitySquares
-    as Tree2D ptr maskSquares
-    as Tree2D ptr frameDrawRegions
-    as Tree2D ptr aggregateBlockingRegions
-
-
-    
-    as Vector2D frameCenter
+    as single depth
 end type
 
 enum PortalDirection_t

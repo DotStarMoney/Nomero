@@ -4,7 +4,6 @@
 #include "tinyblock.bi"
 #include "constants.bi"
 #include "vector2d.bi"
-#include "tree2d.bi"
 #include "hash2d.bi"
 #include "list.bi"
 #include "effectcontroller.bi"
@@ -17,7 +16,6 @@
 #define FLIPPED_VERT  &h2
 #define FLIPPED_DIAG  &h1
 #define FLIPPED_MASK  &h1fffffff
-
 
 #include "leveltypes.bi"
 
@@ -44,6 +42,9 @@ type Level
         declare function getHeight() as integer
         declare function getName() as string
         declare sub drawLayer(scnbuff as uinteger ptr,_
+                              tl_x as integer, tl_y as integer,_
+                              br_x as integer, br_y as integer,_
+                              x as integer, y as integer,_
                               cam_x as integer, cam_y as integer,_
                               lyr as integer)
         declare sub drawLayers(scnbuff as uinteger ptr, order as integer,_
@@ -59,8 +60,6 @@ type Level
         declare function usesSnow() as integer
         declare function mustReconnect() as integer
         
-        declare sub computeDrawRegions(cam_x as integer, cam_y as integer, adjust as Vector2D)
-        
         declare function getCurrentMusicFile() as string
         declare sub overrideCurrentMusicFile(filename as string)
         declare sub addPortal(pt as PortalType_t)
@@ -74,20 +73,17 @@ type Level
        
         dim as integer justLoaded
     private:
-        /'
-        declare sub subtractSquareMasks(byref squares as Level_SquareMaskList,_
-                                        x0 as double, y0 as double,_
-                                        x1 as double, y1 as double)
-        declare function subtractSquareMasksList(squareA as Level_SquareMask,_
-                                                 squareB as Level_SquareMask,_
-                                                 outSquares() as Level_SquareMask, offset as integer) as integer   
-                                                  
-        '/                                   
+        
+    
+        declare sub putDispatch(scnbuff as integer ptr,_
+                                block as Level_VisBlock,_
+                                x as integer, y as integer,_
+                                tilePos_x as integer, tilePos_y as integer,_
+                                cam_x as integer, cam_y as integer)
                                 
         declare sub splodeBlockReact(xs as integer, ys as integer)
         declare sub modBlockDestruct(lyr as integer, xs as integer, ys as integer)
-        declare sub computeSquareMasks(lyr as integer, x0_d as integer, y0_d as integer,_
-                                                       x1_d as integer, y1_d as integer)
+
         
         dim as integer reconnect
         dim as ushort ptr coldata
@@ -102,7 +98,6 @@ type Level
         dim as Hashtable destroyedBlockMemory
         dim as ubyte ptr curDestBlocks
         dim as integer noVisuals
-        dim as Tree2d ptr aggregateMask
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum

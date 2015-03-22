@@ -69,6 +69,112 @@ end function
 
 
 
+sub transBumpDiffSpecBlit2(dest as any ptr, posx as integer, posy as integer,_
+                          src as any ptr, nrmSrc as any ptr,_
+                          x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
+                          ambientLight as integer,_
+                          lightX1 as integer, lightY1 as integer,_
+                          diffSrc1 as any ptr, specSrc1 as any ptr,_
+                          lightX2 as integer, lightY2 as integer,_
+                          diffSrc2 as any ptr, specSrc2 as any ptr)
+                          
+    dim as integer ptr fbDest, fbSrc, fbNrmSrc
+    
+    dim as integer ptr fbDiffSrc1, fbSpecSrc1
+    dim as integer lpDifX1, lpDifY1, lightW1, lightH1
+    dim as integer lightWMask1, lightHMask1
+    dim as integer shiftLightW1
+    
+    dim as integer ptr fbDiffSrc2, fbSpecSrc2
+    dim as integer lpDifX2, lpDifY2, lightW2, lightH2
+    dim as integer lightWMask2, lightHMask2
+    dim as integer shiftLightW2   
+    
+    dim as integer destW, destH, srcW, srcH, lightPLoc
+    dim as integer destStride, srcStride
+    dim as integer xp, yp, yDest, xDest, lightCol
+    dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
+    dim as integer destPos, destOffset, srcOffset, wCount
+    
+    imageinfo dest, destW, destH,, destStride, fbDest
+    imageinfo src,,,,srcStride, fbSrc
+    imageinfo nrmSrc,,,,,fbNrmSrc
+    
+    imageinfo diffSrc1, lightW1, lightH1,,,fbDiffSrc1
+    imageinfo specSrc1,,,,,fbSpecSrc1
+    
+    imageinfo diffSrc2, lightW2, lightH2,,,fbDiffSrc2
+    imageinfo specSrc2,,,,,fbSpecSrc2
+       
+    srcW = x1 - x0 + 1
+    srcH = y1 - y0 + 1
+    
+    destStride shr= 2
+    srcStride shr= 2
+    destOffset = destStride*posy + posx
+    srcOffset = srcStride*y0 + x0
+    destStride -= srcW
+    srcStride -= srcW
+    
+    lightWMask1 = not (lightW1 - 1)
+    lightHMask1 = not (lightH1 - 1)
+    lpDifX1 = -lightX1 - 128 + lightW1 shr 1
+    lpDifY1 = -lightY1 - 128 + lightH1 shr 1
+    shiftLightW1 = intLog2(lightW1)
+    
+    lightWMask2 = not (lightW2 - 1)
+    lightHMask2 = not (lightH2 - 1)
+    lpDifX2 = -lightX2 - 128 + lightW2 shr 1
+    lpDifY2 = -lightY2 - 128 + lightH2 shr 1
+    shiftLightW2 = intLog2(lightW2)
+    
+    yDest = posy + srcH
+    xDest = posx + srcW
+    startX = posx
+    yp = posy
+    do
+        xp = startX
+        do
+ 
+            if fbSrc[srcOffset] <> &hffff00ff then
+                scol = fbSrc[srcOffset]
+                lv = fbNrmSrc[srcOffset]                 
+                
+                normCol = ambientLight
+                hiCol = 0
+                
+                lvx = (lv and &hff) + xp + lpDifX1
+                lvy = ((lv shr 8) and &hff) + yp + lpDifY1
+                if ((lvx and lightWMask1) or (lvy and lightHMask1)) = 0 then
+                    lightPLoc = lvy shl shiftLightW1 + lvx
+                    normCol = addsatColors(fbDiffSrc1[lightPLoc], normCol)
+                    hiCol = addsatColors(fbSpecSrc1[lightPLoc], hiCol)
+                end if
+                
+                lvx = (lv and &hff) + xp + lpDifX2
+                lvy = ((lv shr 8) and &hff) + yp + lpDifY2
+                if ((lvx and lightWMask2) or (lvy and lightHMask2)) = 0 then
+                    lightPLoc = lvy shl shiftLightW2 + lvx
+                    normCol = addsatColors(fbDiffSrc2[lightPLoc], normCol)
+                    hiCol = addsatColors(fbSpecSrc2[lightPLoc], hiCol)
+                end if
+
+                pcol = addsatColors(mulmixColors(scol, normCol), hiCol)
+                
+                fbDest[destOffset] = pcol
+            
+            end if
+                 
+            destOffset += 1
+            srcOffset += 1
+            xp += 1
+        loop while xp < xDest
+        destOffset += destStride
+        srcOffset += srcStride
+        yp += 1
+    loop while yp < yDest
+   
+end sub
 
 'light dimensions must be power of 2
 sub transBumpDiffSpecBlit(dest as any ptr, posx as integer, posy as integer,_
@@ -80,7 +186,7 @@ sub transBumpDiffSpecBlit(dest as any ptr, posx as integer, posy as integer,_
     dim as integer lightW, lightH, destW, destH, srcW, srcH, lightPLoc
     dim as integer destStride, srcStride
     dim as integer xp, yp, yDest, xDest, lightCol, shiftLightW
-    dim as integer lpDifX, lpDifY, lvx, lvy, lv, normCol, hicol, scol, pcol
+    dim as integer lpDifX, lpDifY, lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount, lightWMask, lightHMask
     imageinfo dest, destW, destH,, destStride, fbDest
     imageinfo src,,,,srcStride, fbSrc
@@ -98,23 +204,24 @@ sub transBumpDiffSpecBlit(dest as any ptr, posx as integer, posy as integer,_
     srcStride -= srcW
     lightWMask = not (lightW - 1)
     lightHMask = not (lightH - 1)
-    yp = posy
-    yDest = posy + srcH
-    xDest = posx + srcW
-    lpDifX = posx - lightX - 128 + 32 'uhhhhhh why 32?
-    lpDifY = posy - lightY - 128 + 32 'uhhhhhh why 32?
+    lpDifX = -lightX - 128 + lightW shr 1
+    lpDifY = -lightY - 128 + lightH shr 1
     shiftLightW = intLog2(lightW)
+    yDest = posy + srcH + lpDifY
+    xDest = posx + srcW + lpDifX
+    startX = posx + lpDifX
     
+    yp = posy + lpDifY
     do
-        xp = posx
+        xp = startX
         do
  
            
             if fbSrc[srcOffset] <> &hffff00ff then
                 scol = fbSrc[srcOffset]
-                lv = fbNrmSrc[srcOffset]                        'do with byte selection in asm
-                lvx = (lv and &hff) + xp + lpDifX
-                lvy = ((lv shr 8) and &hff) + yp + lpDifY
+                lv = fbNrmSrc[srcOffset]                        
+                lvx = (lv and &hff) + xp
+                lvy = ((lv shr 8) and &hff) + yp
                 
                 if ((lvx and lightWMask) or (lvy and lightHMask)) = 0 then
                     lightPLoc = lvy shl shiftLightW + lvx
@@ -141,7 +248,7 @@ sub transBumpDiffSpecBlit(dest as any ptr, posx as integer, posy as integer,_
         destOffset += destStride
         srcOffset += srcStride
         yp += 1
-    loop while yp < yDest     
+    loop while yp < yDest
     
     
 end sub
@@ -160,10 +267,12 @@ bload "hilight.bmp", hilight
 dim as integer mx, my
 setmouse ,,0
 do
+    line buffer, (0,0)-(319,239),0,BF
     getmouse mx, my
-    transBumpDiffSpecBlit buffer, 130, 80, img, img2, 0, 0, 31, 63, rgb(0,0,64), mx, my, light, hilight, 0
+    transBumpDiffSpecBlit buffer, 200,64,img, img2, 0, 0, 31, 63, rgb(0,0,128), mx, my, light, hilight, 0
+    pset buffer, (mx, my)
     put (0,0), buffer, pSEt
-
+    
 loop
 
 

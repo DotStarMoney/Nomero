@@ -9,7 +9,6 @@
 
 #include "vbcompat.bi"
 #include "fbpng.bi"
-#include "cpurender.bi"
 
 #define SLEEP_RESOLUTION 1
 
@@ -248,10 +247,6 @@ sub GameSpace.step_draw()
     
     START_PROFILE(0)
     
-    
-    
-    spy.body.p = Vector2D(1165, 1014)
-    camera = spy.body.p
     
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
@@ -520,7 +515,6 @@ sub GameSpace.step_process()
     if lvlData.mustReconnect() = 1 then reconnectCollision()
     triggers.process(0.01667)
 
-    lvlData.computeDrawRegions(camera.x(), camera.y(), Vector2D(0, shake))
 
         
     if isSwitching = 1 then
@@ -571,9 +565,6 @@ sub GameSpace.step_process()
 		#endif
 	end if
     RECORD_PROFILE(1)
-    
-    spy.body.p = Vector2D(1165, 1014)
-    camera = spy.body.p
     
     RECORD_PROFILE(0)
     for i = 0 to 9

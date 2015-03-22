@@ -458,6 +458,14 @@ sub bitblt_FalloutToFalloutMix(dest as uinteger ptr,_
     end asm
 end sub
 
+function intLog2(x as integer) as integer
+    asm
+        mov     eax,        [x]
+        bsr     eax,        eax
+        mov     [function], eax
+    end asm
+end function
+
 sub bitblt_alphaGlow(dest as uinteger ptr,_
 					 xpos as integer, ypos as integer,_
 					 src  as uinteger ptr,_
@@ -466,11 +474,9 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
                      colOffset as integer = &h00000000)
 
     #macro MIX_STEP()
-				
-		movdqu		xmm0,		[esi]			
-		
-		movdqu		xmm4,		[col_offset]	
-		psubusb		xmm0,		xmm4
+						
+		movdqu		xmm2,		[col_offset]	
+		psubusb		xmm0,		xmm2
 				
 		movhlps		xmm1,		xmm0    
 		
@@ -485,7 +491,6 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
 		pshufhw		xmm1,		xmm1,				&hff
 		pshuflw		xmm1,		xmm1,				&hff
 
-		movdqu		xmm4,		[edi]			
 		movhlps		xmm5,		xmm4    		
 		
 		punpcklbw 	xmm4, 		xmm6
@@ -508,25 +513,53 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
 		
     #endmacro
     
+    #macro MIX_STEP_HALF()
+						
+		movdqu		xmm2,		[col_offset]	
+		psubusb		xmm0,		xmm2
+						
+		punpcklbw 	xmm0, 		xmm6
+		movdqu		xmm2,		xmm0
+	
+		pshufhw		xmm0,		xmm0,				&hff
+		pshuflw		xmm0,		xmm0,				&hff
+				
+		punpcklbw 	xmm4, 		xmm6
+		
+		psubsw		xmm2,		xmm4
+		
+		psrlw		xmm0,		1
+		pmullw		xmm2,		xmm0			
+		psraw		xmm2, 		7
+		
+		paddsw		xmm2,		xmm4
+
+		packuswb	xmm2,		xmm3			
+		
+    #endmacro
+    
 	static as integer zeroReg(0 to 3) = {&h00000000, &h00000000, &h00000000, &h00000000}    
     static as integer col_offset(0 to 3)
     
-    dim as integer ptr dest_pxls, src_pxls
-    dim as integer     dest_w, dest_h
-    dim as integer     src_w, src_h
-    dim as integer     target_w, target_h
-    dim as integer     dest_row_adv, src_row_adv
-    imageinfo dest,dest_w,dest_h,,,dest_pxls
-    imageinfo src,src_w,src_h,,,src_pxls
+    dim as byte ptr dest_pxls, src_pxls
+    dim as integer  dest_w, dest_h
+    dim as integer  src_w, src_h
+    dim as integer  target_w, target_h
+    dim as integer  dest_row_adv, src_row_adv
     
-    dest_pxls += xpos + ypos * dest_w
-    src_pxls += src_x0 + src_y0 * src_w
+    imageinfo dest,dest_w,dest_h,,dest_row_adv,dest_pxls
+    imageinfo src,src_w,src_h,,src_row_adv,src_pxls
+    
+    dest_pxls += (xpos shl 2) + ypos*dest_row_adv
+    src_pxls  += (src_x0 shl 2) + src_y0*src_row_adv
     
     target_w = (src_x1 - src_x0 + 1)
     target_h = (src_y1 - src_y0 + 1)
     
-    dest_row_adv = (dest_w - target_w) shl 2
-    src_row_adv = (src_w - target_w) shl 2
+    if target_h < 1 then exit sub
+    
+    dest_row_adv -= target_w shl 2
+    src_row_adv  -= target_w shl 2    
     
     colOffset = ((&hff - ((colOffset shr 24) and &hff)) shl 24) or _
 				((&hff - ((colOffset shr 16) and &hff)) shl 16) or _
@@ -537,123 +570,229 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
 	col_offset(1) = colOffset
 	col_offset(2) = colOffset
 	col_offset(3) = colOffset
-	
-	if target_w and 3 then target_w -= 4 
-	
-	if target_w >= 4 then
 		
-		asm
-					movdqu		xmm6,		[zeroReg]
+    
+    asm
+                movdqu		xmm6,		[zeroReg]
 
-					mov         esi,        [src_pxls]
-					mov         edi,        [dest_pxls]
-					
-					mov         eax,        [target_w]
-					mov         ebx,        [target_h]
-						
-			bitblt_ag_rows:
-				
-					mov         ecx,        eax
-					
-			bitblt_ag_cols:
-				
-					MIX_STEP()	
-					
-					movdqu		[edi],		xmm2
-				   
-					add         esi,        16
-					add         edi,        16
-							
-					cmp         ecx,		4
-					jle			bitblt_ag_oddrow
-					
-					sub			ecx,		4
-					
-					jmp         bitblt_ag_cols
-					
-			bitblt_ag_oddrow:
-			
-					test        ecx,        2
-					jz          bitblt_ag_skip2
-					
-					MIX_STEP()
-					
-					movq		[edi],		xmm2
-					
-					add         esi,        8
-					add         edi,        8
-			bitblt_ag_skip2:
-			
-					test        ecx,        1
-					jz          bitblt_ag_skip1
-					
-					MIX_STEP()
-							
-					movd		[edi],		xmm2
-					
-					add			esi,		4
-					add			edi,		4
-			
-			bitblt_ag_skip1:     
-					 
-					add         esi,        [src_row_adv]
-					add         edi,        [dest_row_adv]
-					
-					dec         ebx
-					jnz         bitblt_ag_rows
-		end asm
-	elseif target_w > 1 then
-		/'
-		drawStringShadow dest, 200, 500, str(target_w), &hffffffff
-		asm
-					'movdqu		xmm6,		[zeroReg]
+                mov         esi,        [src_pxls]
+                mov         edi,        [dest_pxls]
+                
+                mov         eax,        [target_w]
+                mov         ebx,        [target_h]
+                    
+        bitblt_ag_rows:
+                
+                mov         ecx,        eax
 
-					mov         esi,        [src_pxls]
-					mov         edi,        [dest_pxls]
-					
-					mov         eax,        [target_w]
-					mov         ebx,        [target_h]
-						
-			bitblt_ag_2rows:
-				
-					mov         ecx,        eax
-					
-			bitblt_ag_2cols:
-			
-					test        ecx,        2
-					jz          bitblt_ag_2skip2
-					
-					MIX_STEP()
-					
-					movq		[edi],		xmm2
-					
-					add         esi,        8
-					add         edi,        8
-					
-					sub			ecx,		2
-			bitblt_ag_2skip2:
-			
-					test        ecx,        1
-					jz          bitblt_ag_2skip1
-					
-					MIX_STEP()
-							
-					movd		[edi],		xmm2
-					
-					add			esi,		4
-					add			edi,		4
-			
-					sub			ecx,		1
-			bitblt_ag_2skip1:     
-					 
-					add         esi,        [src_row_adv]
-					add         edi,        [dest_row_adv]
-					
-					dec         ebx
-					jnz         bitblt_ag_2rows
-		end asm	
-		'/
-	end if         
+                cmp         ecx,        4
+                jl          bitblt_ag_2pxls
+                
+        bitblt_ag_cols:
+        
+                movdqu		xmm0,		[esi]		
+                movdqu		xmm4,		[edi]			
+                
+                MIX_STEP()	
+                
+                movdqu		[edi],		xmm2
+               
+                add         esi,        16
+                add         edi,        16
+                        
+                sub			ecx,		4
+                cmp         ecx,        4
+                jge         bitblt_ag_cols
+        
+        bitblt_ag_2pxls:        
+                
+                test        ecx,        2
+                jz          bitblt_ag_1pxls
+ 
+                movq		xmm0,		[esi]		
+                movq		xmm4,		[edi]
+                
+                MIX_STEP_HALF()
+                
+                movq        [edi],      xmm2
+
+                add         esi,        8
+                add         edi,        8
+ 
+        bitblt_ag_1pxls:
+        
+                test        ecx,        1
+                jz          bitblt_ag_nextRow
+        
+                movd        xmm0,       [esi]
+                movd        xmm4,       [edi]
+                
+                MIX_STEP_HALF()
+                
+                movd        [edi],      xmm2
+        
+                add         esi,        4
+                add         edi,        4 
+                
+        bitblt_ag_nextRow:
+        
+                add         esi,        [src_row_adv]
+                add         edi,        [dest_row_adv]
+                
+                dec         ebx
+                jnz         bitblt_ag_rows
+        
+    end asm
+
+end sub
+
+sub bitblt_transMulMix(dest as uinteger ptr,_
+                       xpos as integer, ypos as integer,_
+                       src  as uinteger ptr,_
+                       src_x0 as integer, src_y0 as integer,_
+                       src_x1 as integer, src_y1 as integer,_
+                       mixColor as integer = &h00000000)
+
+    #macro MIX_STEP()
+        movdqa      xmm2,       xmm0
+        movhlps		xmm1,		xmm0   
+        punpcklbw 	xmm0, 		xmm6
+		punpcklbw 	xmm1, 		xmm6
+            
+        pmullw      xmm0,       xmm7
+        pmullw      xmm1,       xmm7
+        psraw		xmm0, 		8
+        psraw		xmm1, 		8
+   
+        packuswb	xmm0,		xmm1
+   
+        pcmpeqd     xmm2,       xmm5
+        
+        pand        xmm4,       xmm2
+        pandn       xmm2,       xmm0
+        por         xmm2,       xmm4        
+    #endmacro
+    
+    #macro MIX_STEP_HALF()
+        movdqa      xmm2,       xmm0
+        punpcklbw 	xmm0, 		xmm6
+            
+        pmullw      xmm0,       xmm7
+        psraw		xmm0, 		8
+   
+        packuswb	xmm0,		xmm0
+   
+        pcmpeqd     xmm2,       xmm5
+        
+        pand        xmm4,       xmm2
+        pandn       xmm2,       xmm0
+        por         xmm2,       xmm4     
+    #endmacro
+    
+	static as integer zeroReg(0 to 3) = {&h00000000, &h00000000, &h00000000, &h00000000}    
+    static as integer col_offset(0 to 3)
+    static as integer trans_color(0 to 3) = {&hffff00ff, &hffff00ff, &hffff00ff, &hffff00ff}
+    
+    dim as byte ptr dest_pxls, src_pxls
+    dim as integer  dest_w, dest_h
+    dim as integer  src_w, src_h
+    dim as integer  target_w, target_h
+    dim as integer  dest_row_adv, src_row_adv
+    
+    imageinfo dest,dest_w,dest_h,,dest_row_adv,dest_pxls
+    imageinfo src,src_w,src_h,,src_row_adv,src_pxls
+    
+    dest_pxls += (xpos shl 2) + ypos*dest_row_adv
+    src_pxls  += (src_x0 shl 2) + src_y0*src_row_adv
+    
+    target_w = (src_x1 - src_x0 + 1)
+    target_h = (src_y1 - src_y0 + 1)
+    
+    if target_h < 1 then exit sub
+    
+    dest_row_adv -= target_w shl 2
+    src_row_adv  -= target_w shl 2    
+   
+	col_offset(0) = (mixColor and &hff) or ((mixColor and &hff00) shl 8)
+	col_offset(1) = ((mixColor and &hff0000) shr 16) or ((mixColor and &hff000000) shr 8)
+    col_offset(2) = col_offset(0)
+    col_offset(3) = col_offset(1)
+    
+    asm
+                movdqu      xmm5,       [trans_color]
+                movdqu		xmm6,		[zeroReg]
+                movdqu      xmm7,       [col_offset]
+                
+                mov         esi,        [src_pxls]
+                mov         edi,        [dest_pxls]
+                
+                mov         eax,        [target_w]
+                mov         ebx,        [target_h]
+                    
+        bitblt_tmm_rows:
+                
+                mov         ecx,        eax
+
+                cmp         ecx,        4
+                jl          bitblt_tmm_2pxls
+                
+        bitblt_tmm_cols:
+        
+                movdqu		xmm0,		[esi]		
+                movdqu		xmm4,		[edi]			
+                
+                MIX_STEP()	
+                               
+                movdqu		[edi],		xmm2
+                               
+                add         esi,        16
+                add         edi,        16
+                        
+                sub			ecx,		4
+                cmp         ecx,        4
+                jge         bitblt_tmm_cols
+        
+        bitblt_tmm_2pxls:        
+                
+                test        ecx,        2
+                jz          bitblt_tmm_1pxls
+ 
+                movq		xmm0,		[esi]		
+                movq		xmm4,		[edi]
+                
+                MIX_STEP_HALF()
+                
+                movdqu		[edi],		xmm2
+                
+                add         esi,        8
+                add         edi,        8
+ 
+        bitblt_tmm_1pxls:
+        
+                test        ecx,        1
+                jz          bitblt_tmm_nextRow
+        
+                movd        xmm0,       [esi]
+                movd        xmm4,       [edi]
+                
+                MIX_STEP_HALF()
+                
+                movdqu		[edi],		xmm2
+                        
+                add         esi,        4
+                add         edi,        4 
+                
+        bitblt_tmm_nextRow:
+        
+                add         esi,        [src_row_adv]
+                add         edi,        [dest_row_adv]
+                
+                dec         ebx
+                jnz         bitblt_tmm_rows
+        
+    end asm                       
+                                        
+      
 end sub
 
 function countTrans(src as uinteger ptr,_

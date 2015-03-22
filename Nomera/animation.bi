@@ -3,6 +3,7 @@
 
 #include "vector2d.bi"
 #include "hashtable.bi"
+#include "zimage.bi"
 
 enum ANIM_TYPE
     ANIM_ONE_SHOT
