@@ -32,6 +32,7 @@ sub drawXQuad3D(scnptr as integer ptr, vp as BasicViewport3D,_
     
     imageinfo tex,,,,pitch_src,pxls
     imageinfo scnptr,,,,pitch_dest,dest_pxls
+
     tex_w = tex_x1 - tex_x0 + 1
     tex_h = tex_y1 - tex_y0 + 1
     
@@ -142,6 +143,7 @@ sub drawXQuad3D(scnptr as integer ptr, vp as BasicViewport3D,_
                 
                 mov         ebx,        [mulConst_ptr]
                 movq        xmm0,       [ebx]
+                pandn       xmm1,       xmm1
             
                 dxq3D_srh_col:
                     
@@ -158,6 +160,7 @@ sub drawXQuad3D(scnptr as integer ptr, vp as BasicViewport3D,_
                 
                 dxq3D_srh_endif:
                 
+                
                 movd        xmm2,       [edi]
                 
                 punpcklbw   xmm2,       xmm1
@@ -166,6 +169,7 @@ sub drawXQuad3D(scnptr as integer ptr, vp as BasicViewport3D,_
                 packuswb    xmm2,       xmm2
                 
                 movd        [esi],      xmm2
+                
                 
                 add         esi,        [pitch_dest]
                 
@@ -224,7 +228,7 @@ sub drawHexPrism(scnptr as integer ptr, x as integer, y as integer,_
     a = wrap(angle + (face - 2)*1.0472)
     l_x_pos = cos(a)*r
     l_z_pos = sin(a)*r
-
+    
     for i = 1 to 3
         nFace = face + 1
         if nFace >= 6 then nFace -= 6

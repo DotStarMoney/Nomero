@@ -33,7 +33,7 @@ type FrameData_t
 end type
 
 type RotatedGroup_t
-	as integer ptr ptr rotatedGroup
+	as zimage ptr rotatedGroup
 end type
 
 type NonTransCount_t
@@ -67,7 +67,7 @@ type AnimationData_t
     as Animation_t ptr animations
     as integer animations_n
     as zstring ptr imgName
-    as integer ptr image
+    as zimage image
     as integer w
     as integer h
     as Anim_DrawType_e drawMode
@@ -114,7 +114,7 @@ type Animation
         declare sub step_Loop()
         declare sub step_Still()
         declare sub fetchImageData(animNum as integer, frameNum as integer, rotatedFlag as integer,_
-				                   byref imgdata as uinteger ptr, byref drawW as integer, byref drawH as integer, byref offset as Vector2D,_
+				                   byref imgdata as zimage, byref drawW as integer, byref drawH as integer, byref offset as Vector2D,_
 				                   byref start_x as integer, byref start_y as integer)
         
         declare sub advance()

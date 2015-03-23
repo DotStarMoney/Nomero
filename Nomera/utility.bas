@@ -895,6 +895,15 @@ function trimwhite(s as string) as string
 	return s
 end function
 
+sub pmapFix(byref x as integer, byref y as integer)
+    x = pmap(x, 0)
+    y = pmap(y, 1)
+    #ifdef SCALE_2X
+        x *= 0.5
+        y *= 0.5
+    #endif
+end sub
+
 Function ScreenClip(px as integer, py as integer ,_
                     sx as integer, sy as integer ,_
                     byref npx  as integer, byref npy  as integer ,_

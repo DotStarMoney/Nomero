@@ -4,6 +4,7 @@
 #include "hash2d.bi"
 #include "hashtable.bi"
 #include "constants.bi"
+#include "zimage.bi"
 
 enum ObjectType_t
     EFFECT
@@ -67,7 +68,7 @@ type Level_Tileset
     as ushort set_height
     as ushort count
     as ushort row_count
-    as uinteger ptr set_image
+    as zimage set_image
     as HashTable tileEffect
 end type
 
@@ -77,7 +78,6 @@ type Level_VisBlock
     as short  frameDelay
     as ushort usesAnim
     as ushort rotatedType
-    as ushort NoTransparency
 end type
 
 Type Level_LayerData

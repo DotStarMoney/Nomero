@@ -19,10 +19,13 @@ constructor zimage(filename as string)
 end constructor 
 
 destructor zimage()
-    if diffuse_fbimg then imagedestroy(diffuse_fbimg)
-    if norm_fbimg then imagedestroy(norm_fbimg)
+
 end destructor
 
+sub zimage.flush()
+    if diffuse_fbimg then imagedestroy(diffuse_fbimg)
+    if norm_fbimg then imagedestroy(norm_fbimg)
+end sub
 
 sub zimage.load(filename as string)
     dim as integer f
@@ -67,9 +70,27 @@ function zimage.getHeight() as integer
     return h
 end function
 
+function zimage.getData() as integer ptr
+    return diffuse_fbimg
+end function
+
+function zimage.getNorm() as integer ptr
+    return norm_fbimg
+end function
+
+sub zimage.create(wp as integer, hp as integer, diffuse_ as integer ptr, normal_ as integer ptr)
+    isEmpty = 0
+    isPng = 0
+    if normal_ <> 0 then hasNorm = 1
+    diffuse_fbimg = diffuse_
+    norm_fbimg = normal_
+    w = wp
+    h = hp
+end sub
 
 sub zimage.putTRANS(dest_fbimg as integer ptr, posX as integer, posY as integer,_
                     x0 as integer, y0 as integer, x1 as integer, y1 as integer)
+                    
     put dest_fbimg, (posX, posY), diffuse_fbimg, (x0, y0)-(x1, y1), TRANS      
 end sub
 
@@ -81,15 +102,14 @@ sub zimage.putGLOW(dest_fbimg as integer ptr, posX as integer, posY as integer,_
     dim as integer npx, npy
     dim as integer sdx0, sdy0, sdx1, sdy1
     
-    posX = pmap(posX, 0)
-    posY = pmap(posY, 1)
+    pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0
         sdy0 += y0
         sdx1 += x0
         sdy1 += y0
-            
+  
         bitblt_alphaGlow(dest_fbimg, npx, npy, diffuse_fbimg, sdx0, sdy0, sdx1, sdy1, colOffset)
                      
     end if         
@@ -102,8 +122,7 @@ sub zimage.putTRANS_0xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer npx, npy
     dim as integer sdx0, sdy0, sdx1, sdy1
     
-    posX = pmap(posX, 0)
-    posY = pmap(posY, 1)
+    pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0
@@ -149,8 +168,7 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
 
-    posX = pmap(posX, 0)
-    posY = pmap(posY, 1)
+    pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0
@@ -310,8 +328,7 @@ sub zimage.putTRANS_2xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
 
-    posX = pmap(posX, 0)
-    posY = pmap(posY, 1)
+    pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0
@@ -517,8 +534,7 @@ sub zimage.putTRANS_3xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
 
-    posX = pmap(posX, 0)
-    posY = pmap(posY, 1)
+    pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0

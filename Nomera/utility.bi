@@ -93,6 +93,8 @@ declare sub vLine(scnbuff as integer ptr, a as Vector2D, b as Vector2D, col as i
 declare sub addColor(byref a as integer, byref b as integer)
 declare sub subColor(byref ac as integer, byref bc as integer)
 
+declare sub pmapFix(byref x as integer, byref y as integer)
+
 declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					        flipFlags as integer,_
 					        src_x as integer, src_y as integer,_

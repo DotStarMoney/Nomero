@@ -334,7 +334,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                     end select
                 end if
                 
-                put scnbuff, (xscan*16 + x, yscan*16 + y), tilesets[block.tileset].set_image, (tilePosX, tilePosY)-(tilePosX + 15, tilePosY + 15), TRANS
+                tilesets[block.tileset].set_image.putTRANS(scnbuff, xscan*16 + x, yscan*16 + y, tilePosX, tilePosY, tilePosX + 15, tilePosY + 15)
 
             end if
         next xscan
@@ -342,165 +342,6 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
  
 end sub
 
-sub Level.putDispatch(scnbuff as integer ptr,_
-                      block as Level_VisBlock,_
-                      x as integer, y as integer,_
-                      tilePos_x as integer, tilePos_y as integer,_
-                      cam_x as integer, cam_y as integer)
-                      
-    #define X_ 0
-    #define Y_ 1
-    
-    'lol this is in here twice... y lol...
-    
-    dim as uinteger ptr src
-    dim as integer ppos(0 to 1)
-    dim as integer pdes(0 to 1)
-    dim as integer pdir(0 to 1)
-    dim as integer ptr ptile(0 to 1)
-    dim as integer byCol, byRow, oldCol, i
-    dim as integer xpos, ypos, w, col
-    
-    src = tilesets[block.tileset].set_image
-    w = tilesets[block.tileset].set_width
-    
-    if block.rotatedType = 0 then
-        put scnbuff, (x, y), src, (tilePos_x, tilePos_y)-(tilePos_x + 15, tilePos_y + 15), TRANS
-    else
-		/'
-        x -= (cam_x - SCRX*0.5)
-        y -= (cam_y - SCRY*0.5)
-        ptile(X_) = @tilePos_x
-        ptile(Y_) = @tilePos_y
-        ppos(X_) = x
-        ppos(Y_) = y
-        pdes(X_) = x
-        pdes(Y_) = y 
-        select case block.rotatedType
-        case 1
-            byRow = X_
-            byCol = Y_
-            ppos(byRow) += 15
-            ppos(byCol) += 15
-            pdes(byRow) += -1
-            pdes(byCol) += -1
-            pdir(byRow) = -1
-            pdir(byCol) = -1
-        case 2
-            byRow = Y_
-            byCol = X_
-            ppos(byRow) += 15
-            ppos(byCol) += 0
-            pdes(byRow) += -1
-            pdes(byCol) += 16
-            pdir(byRow) = -1
-            pdir(byCol) = 1
-        case 3
-            byRow = X_
-            byCol = Y_
-            ppos(byRow) += 0
-            ppos(byCol) += 15
-            pdes(byRow) += 16
-            pdes(byCol) += -1
-            pdir(byRow) = 1
-            pdir(byCol) = -1
-        case 4
-            byRow = Y_
-            byCol = X_
-            ppos(byRow) += 0
-            ppos(byCol) += 15
-            pdes(byRow) += 16
-            pdes(byCol) += -1
-            pdir(byRow) = 1
-            pdir(byCol) = -1
-        case 5
-            byRow = X_
-            byCol = Y_
-            ppos(byRow) += 15
-            ppos(byCol) += 0
-            pdes(byRow) += -1
-            pdes(byCol) += 16
-            pdir(byRow) = -1
-            pdir(byCol) = 1
-        case 6
-            byRow = Y_
-            byCol = X_
-            ppos(byRow) += 15
-            ppos(byCol) += 15
-            pdes(byRow) += -1
-            pdes(byCol) += -1
-            pdir(byRow) = -1
-            pdir(byCol) = -1
-        case 7
-            byRow = X_
-            byCol = Y_
-            ppos(byRow) += 0
-            ppos(byCol) += 0
-            pdes(byRow) += 16
-            pdes(byCol) += 16
-            pdir(byRow) = 1
-            pdir(byCol) = 1
-        end select
-
-        if ppos(X_) < 0 then 
-            *(ptile(byCol)) += (-ppos(X_))
-            ppos(X_) = 0
-        elseif ppos(X_) >= SCRX then
-            *(ptile(byCol)) += (ppos(X_) - SCRX) + 1
-            ppos(X_) = SCRX - 1
-        end if
-            
-        if pdes(X_) < 0 then 
-            pdes(X_) = 0
-        elseif pdes(X_) > SCRX then
-            pdes(X_) = SCRX
-        end if
-        
-        if ppos(Y_) < 0 then 
-            *(ptile(byRow)) += (-ppos(Y_))
-            ppos(Y_) = 0
-        elseif ppos(Y_) >= SCRY then
-            *(ptile(byRow)) += (ppos(Y_) - SCRY) + 1
-            ppos(Y_) = SCRY - 1
-        end if
-            
-        if pdes(Y_) < 0 then 
-            pdes(Y_) = 0
-        elseif pdes(Y_) > SCRY then
-            pdes(Y_) = SCRY
-        end if
-        
-        if sgn(pdes(X_) - ppos(X_)) <> pdir(X_) then 
-            exit sub
-        end if
-        
-        if sgn(pdes(Y_) - ppos(Y_)) <> pdir(Y_) then 
-            exit sub
-        end if
-        
-        ypos = tilePos_y
-        oldCol = ppos(byCol)
-
-        while ppos(byRow) <> pdes(byRow)
-            ppos(byCol) = oldCol
-            xpos = tilePos_x
-            while ppos(byCol) <> pdes(byCol)
-                
-                col = src[8 + xpos + ypos*w]
-                if col <> &hffff00ff then 
-                    scnbuff[8 + ppos(X_) + ppos(Y_) * SCRX] = col
-                end if
-                ppos(byCol) += pdir(byCol)
-                xpos += 1
-            wend
-            ppos(byRow) += pdir(byRow)
-            ypos += 1
-        wend
-		'/
-    end if
-                 
-end sub
-  
 destructor level
     flush()
     imagedestroy(falloutTex(0))
@@ -668,7 +509,7 @@ function Level.getCoverageLayerBlocks(x0 as integer, y0 as integer,_
 					listSize += 1
 					data_ = reallocate(data_, sizeof(Level_CoverageBlockInfo_t)*listSize)
 					with data_[listSize - 1]
-						.img = tilesets[block.tileset].set_image
+						.img = tilesets[block.tileset].set_image.getData()
 						.l = *layer_i
 						.x0 = tilePosX
 						.y0 = tilePosY
@@ -860,7 +701,7 @@ sub level.flush()
         if coldata <> 0 then deallocate(coldata)
         for i = 0 to tilesets_N - 1
             deallocate(tilesets[i].set_name)
-            if tilesets[i].set_image <> 0 then imagedestroy(tilesets[i].set_image)
+            tilesets[i].set_image.flush()
         next i
         if tilesets <> 0 then delete(tilesets)
         for i = 0 to blocks_N - 1
@@ -1013,12 +854,7 @@ sub level.load(filename as string)
 			stall(100)
 		#endif
 		
-		if right(strdata, 3) = "bmp" then
-			tilesets[i].set_image =  imagecreate(tilesets[i].set_width, tilesets[i].set_height)
-			bload strdata, tilesets[i].set_image
-		else
-			tilesets[i].set_image = png_load(strdata)
-		end if
+        tilesets[i].set_image.load(strdata)
 
         get #f,,setFirstIds(i)
         get #f,,numAnims
@@ -1122,9 +958,7 @@ sub level.load(filename as string)
        
                 blocks[lyr][j].tileset = 65535
                 blocks[lyr][j].tilenum = 65535
-                blocks[lyr][j].rotatedType = blockNumber shr 29
-                blocks[lyr][j].NoTransparency = 0
-                
+                blocks[lyr][j].rotatedType = blockNumber shr 29                
                 
                 blockNumber = blockNumber and FLIPPED_MASK
                 
@@ -1144,11 +978,7 @@ sub level.load(filename as string)
                             row_c = tilesets[q].row_count
                             tilePosX = ((blocks[lyr][j].tilenum - 1) mod row_c) * 16
                             tilePosY = ((blocks[lyr][j].tilenum - 1) \ row_c  ) * 16
-                            transPxls = countTrans(tilesets[q].set_image, tilePosX, tilePosY, tilePosX+15, tilePosY+15)
 
-                            if transPxls = 256 then
-                                blocks[lyr][j].NoTransparency = 1
-                            end if
                         end if
                         
                         exit for

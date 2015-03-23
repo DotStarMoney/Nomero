@@ -171,7 +171,6 @@ function GameSpace.go() as integer
 			stallTime_mili -= 1
 			if stallTime_mili < 0 then stallTime_mili = 0
 		end if
-        
     loop 
     
 	kill pathFile
@@ -267,8 +266,6 @@ sub GameSpace.step_draw()
     RECORD_PROFILE(2)
     
     START_PROFILE(1)
-    
-    
     lvlData.drawLayers(scnbuff, ACTIVE, camera.x(), camera.y(), Vector2D(0, shake))
     RECORD_PROFILE(1)
     
@@ -492,8 +489,10 @@ sub GameSpace.step_process()
     
     vibcount -= 1
     
+    
     dynControl.process(0.01667)
        
+    
 	if keypress(SC_M) then tracker.record()
 	if keypress(SC_N) then tracker.pause()
 	
@@ -514,7 +513,7 @@ sub GameSpace.step_process()
         
     if lvlData.mustReconnect() = 1 then reconnectCollision()
     triggers.process(0.01667)
-
+    
 
         
     if isSwitching = 1 then
@@ -552,7 +551,7 @@ sub GameSpace.step_process()
 	if bailFrame > 255 then
 		doGameEnd()
 	end if
-  
+    
 	tracker.step_record(keypress(SC_DELETE))
     START_PROFILE(1)
     if isSwitching = 0 then
