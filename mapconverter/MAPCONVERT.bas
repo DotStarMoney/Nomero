@@ -193,7 +193,7 @@ type layer_t
     as ushort parallax
     as ushort coverage
     as ushort illuminated
-    as ubyte  ambientLevel
+    as integer ambientLevel
     as single depth
     as ushort inRangeSet
     as ushort isDestructible
@@ -467,7 +467,7 @@ do
                                 layers(N_layers - 1).parallax = 65535
                                 layers(N_layers - 1).coverage = 65535
                                 layers(N_layers - 1).mergeless = 65535
-                                layers(N_layers - 1).ambientLevel = 255
+                                layers(N_layers - 1).ambientLevel = 0
                                 layers(N_layers - 1).illuminated = 65535
                                 layers(N_layers - 1).inRangeSet = ACTIVE
                                 layers(N_layers - 1).isDestructible = 65535
@@ -1048,7 +1048,7 @@ type mergeStack_t
     as integer ptr image
     as integer     flags
     as single      depth
-    as ubyte       ambientLevel
+    as integer     ambientLevel
     as integer     layer
     as integer     newTile
     as integer     tileset

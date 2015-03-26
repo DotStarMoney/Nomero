@@ -22,8 +22,12 @@ constructor Item()
 end constructor
 
 destructor Item()
-	flush()
-	link.tinyspace_ptr->removeBody(body_i)
+	if anims then delete(anims)
+    if lightState then
+        imagedestroy(lightShaded.diffuse_fbimg)
+        imagedestroy(lightShaded.specular_fbimg)
+    end if
+    if body_i <> -1 then link.tinyspace_ptr->removeBody(body_i)
 end destructor
 
 function Item.getIndicatorColor(i as integer) as integer
@@ -53,8 +57,11 @@ sub Item.setLink(link_ as objectLink)
 end sub
 
 sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
+    dim as string lightFilename
+    dim as integer lw, lh
 	itemType = itemType_
 	flush()
+    body_i = -1
 	select case itemType
 	case ITEM_BOMB
 		body = TinyBody(Vector2D(0,0), 8, 10)
@@ -86,6 +93,38 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
 			body.f = body.f + Vector2D(BOMB_STICKYNESS, 0)
 		end select
 		body_i = link.tinyspace_ptr->addBody(@body)
+        lightState = 0
+    case ITEM_LIGHT
+        body = TinyBody(Vector2D(0,0), 4, 1)
+        body.elasticity = 1
+        body.v = Vector2D(100, 0)
+        'body.f = Vector2D(0, -DEFAULT_GRAV)
+        itemFlavor = itemFlavor_
+        anims_n = 2
+		anims = new Animation[anims_n]
+        select case itemFlavor
+        case 0
+            lightFilename = "LightOrange"
+            lw = 256
+            lh = 256
+        case else
+            lightFilename = "LightOrange"
+            lw = 256
+            lh = 256
+        end select
+        anims[0].load("Lights\" + lightFilename + "_Diffuse.txt")
+        anims[1].load("Lights\" + lightFilename + "_Specular.txt")
+        lightTex.diffuse_fbimg = anims[0].getRawImage()
+        lightTex.specular_fbimg = anims[1].getRawImage()
+        lightTex.x = body.p.x
+        lightTex.y = body.p.y
+        lightTex.w = lw
+        lightTex.h = lh
+        lightShaded = lightTex
+        lightShaded.diffuse_fbimg = imagecreate(lw, lh)
+        lightShaded.specular_fbimg = imagecreate(lw, lh)        
+        body_i = link.tinyspace_ptr->addBody(@body)
+        lightState = 1
 	case else
 		anims_n = 0
 	end select
@@ -107,6 +146,9 @@ sub Item.getBounds(byref a as Vector2D, byref b as Vector2D)
 			a = anims[0].getOffset() + body.p
 			b = a + Vector2D(anims[0].getWidth(), anims[0].getHeight())
 		end select
+    case ITEM_LIGHT
+        a = body.p
+        b = body.p
 	case else
 	
 	end select	
@@ -120,6 +162,7 @@ sub Item.drawItem(scnbuff as integer ptr)
 		case 0
 			anims[0].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
 		end select
+    case ITEM_LIGHT
 	case else
 	
 	end select
@@ -141,6 +184,8 @@ sub Item.drawItemTop(scnbuff as integer ptr)
 			addColor col, &h101010
 			drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col
 		end select
+    case ITEM_LIGHT
+        circle scnbuff, (body.p.x, body.p.y), 3, rgb(255, 255,255),,,,F
 	case else
 	
 	end select
@@ -148,6 +193,10 @@ end sub
 
 sub Item.flush()
 	if anims then delete(anims)
+    if lightState then
+        imagedestroy(lightShaded.diffuse_fbimg)
+        imagedestroy(lightShaded.specular_fbimg)
+    end if
 end sub
 
 function Item.getFlavor() as integer
@@ -157,6 +206,15 @@ end function
 function Item.getType() as Item_Type_e
 	return itemType
 end function
+
+function Item.hasLight() as integer
+    return lightState
+end function
+
+sub Item.getLightingData(texture as Pointlight, shaded as Pointlight)
+    texture = lightTex
+    shaded = lightShaded
+end sub
 
 function Item.process(t as double) as integer
 	dim as integer i
@@ -197,7 +255,14 @@ function Item.process(t as double) as integer
 			
 			return 1
 		end if
-	case else
+    case ITEM_LIGHT
+        lightTex.x = body.p.x
+        lightTex.y = body.p.y
+        lightShaded.x = lightTex.x
+        lightShaded.y = lightTex.y
+       
+        if data1 <> 0 then return 1
+  	case else
 		return 1
 	end select
 	return 0

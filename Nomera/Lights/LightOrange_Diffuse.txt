@@ -1,0 +1,8 @@
+      #IMAGE NAME
+"LightOrange_diffuse.png"
+      #IMAGE SIZE
+256,256
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+0

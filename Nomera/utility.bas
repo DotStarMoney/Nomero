@@ -661,8 +661,8 @@ sub bitblt_transMulMix(dest as uinteger ptr,_
             
         pmullw      xmm0,       xmm7
         pmullw      xmm1,       xmm7
-        psraw		xmm0, 		8
-        psraw		xmm1, 		8
+        psrlw		xmm0, 		8
+        psrlw		xmm1, 		8
    
         packuswb	xmm0,		xmm1
    
@@ -678,7 +678,7 @@ sub bitblt_transMulMix(dest as uinteger ptr,_
         punpcklbw 	xmm0, 		xmm6
             
         pmullw      xmm0,       xmm7
-        psraw		xmm0, 		8
+        psrlw		xmm0, 		8
    
         packuswb	xmm0,		xmm0
    
@@ -896,12 +896,20 @@ function trimwhite(s as string) as string
 end function
 
 sub pmapFix(byref x as integer, byref y as integer)
-    x = pmap(x, 0)
-    y = pmap(y, 1)
+    dim as double x_r, y_r
+    x_r = x
+    y_r = y
+    x_r = pmap(x_r, 0)
+    y_r = pmap(y_r, 1)
     #ifdef SCALE_2X
-        x *= 0.5
-        y *= 0.5
+        x = x_r / 2
+        y = y_r / 2
+    #else
+        x = x_r
+        y = y_r
     #endif
+    if x > SCRX*0.5 then x -= 1
+    if y > SCRY*0.5 then y -= 1
 end sub
 
 Function ScreenClip(px as integer, py as integer ,_

@@ -87,7 +87,7 @@ Type Level_LayerData
     as ushort isDestructible
     as ushort isFallout
     as ushort illuminated
-    as ubyte  ambientLevel
+    as integer ambientLevel
     as ushort coverage
     as single depth
 end type

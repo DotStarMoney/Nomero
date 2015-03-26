@@ -1,1 +1,1 @@
-Nomera "pd1_2.map"
+Nomera "LightDebug1.map"

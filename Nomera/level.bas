@@ -35,7 +35,7 @@ constructor level
     if falloutTex(2) = 0 then
 		falloutTex(2) = png_load("falloutdisk96_3.png")
     end if    
-       
+    lightList = new LightPair[LIGHT_MAX]
     foreground_layer.init(sizeof(integer))
     background_layer.init(sizeof(integer))
     active_layer.init(sizeof(integer))
@@ -271,11 +271,6 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
     end if
     
-    if layerData[lyr].coverage = 1 then
-
-
-    end if 
-    
     rand = rnd
 	
     for yscan = tl_y to br_y
@@ -286,7 +281,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                 row_c = tilesets[block.tileset].row_count
                 tilePosX = ((block.tileNum - 1) mod row_c) * 16
                 tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
-                
+                /'
                 if block.usesAnim < 65535 then
 					
                     tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
@@ -333,9 +328,14 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                         ''
                     end select
                 end if
-                
-                tilesets[block.tileset].set_image.putTRANS(scnbuff, xscan*16 + x, yscan*16 + y, tilePosX, tilePosY, tilePosX + 15, tilePosY + 15)
-
+                '/ 
+                if layerData[lyr].illuminated <> 65535 then
+                    tilesets[block.tileset].set_image.putTRANS_1xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                       tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
+                                                                       layerData[lyr].ambientLevel, lightList[0].texture)                                            
+                else
+                    tilesets[block.tileset].set_image.putTRANS(scnbuff, xscan*16 + x, yscan*16 + y, tilePosX, tilePosY, tilePosX + 15, tilePosY + 15)
+                end if
             end if
         next xscan
     next yscan
@@ -623,8 +623,7 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
                     
                     cacheW = .b.x() - .a.x()
                     cacheH = .b.y() - .a.y()
-                    
-                    
+                                       
                     bitblt_FalloutToFalloutMix(fallout.cachedImage,_
                                                .a.x() - fallout.a.x(),_
                                                .a.y() - fallout.a.y(),_
@@ -755,6 +754,9 @@ function Level.getDefaultPos() as Vector2D
 	return Vector2D(default_x * 16, default_y * 16)
 end function
 
+sub level.process(t as double)
+    lightList_N = link.dynamiccontroller_ptr->populateLightList(lightList)    
+end sub
 
 sub level.load(filename as string)
     dim as integer f, i, q, j, s, x, y, xscan, yscan, skipCheck
@@ -813,11 +815,8 @@ sub level.load(filename as string)
 	end if
     graphicFX_->init(lvlWidth * 16, lvlHeight * 16)
    
-
     portals.init(lvlWidth * 16, lvlHeight * 16, sizeof(PortalType_t))
-    
-    
-    
+        
     #ifdef DEBUG
         if tilesets = 0 then
             printlog "panic 0"

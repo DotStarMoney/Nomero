@@ -5,6 +5,7 @@
 #include "objectlink.bi"
 #include "tinyspace.bi"
 #include "animation.bi"
+#include "pointlight.bi"
 
 #define BOMB_STICKYNESS 0
 #define MINE_FREEFALL_MAX 30
@@ -15,6 +16,7 @@ enum Item_Type_e
 	ITEM_SECRETFURNITURE
 	ITEM_CASH
 	ITEM_BOMB
+    ITEM_LIGHT
 	ITEM_DYNAMICPLATFORM
 end enum
 
@@ -42,11 +44,15 @@ type Item
 		declare function getFlavor() as integer
 		declare function getType() as Item_Type_e
 		declare function process(t as double) as integer
+        declare function hasLight() as integer
+        declare sub getLightingData(texture as Pointlight, shaded as Pointlight)
 		declare sub flush()
 		declare sub setLink(link_ as objectLink)
 	private:
 		static as uinteger ptr BOMB_COLORS
-	
+        as Pointlight  lightTex
+        as Pointlight  lightShaded
+        as integer     lightState
 		as Item_Type_e itemType
 		as integer     itemFlavor
 		as TinyBody    body

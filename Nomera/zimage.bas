@@ -59,6 +59,7 @@ sub zimage.load(filename as string)
         bload normalFile, norm_fbimg
         hasNorm = 1
     end if 
+
 end sub
 
 
@@ -90,7 +91,7 @@ end sub
 
 sub zimage.putTRANS(dest_fbimg as integer ptr, posX as integer, posY as integer,_
                     x0 as integer, y0 as integer, x1 as integer, y1 as integer)
-                    
+     
     put dest_fbimg, (posX, posY), diffuse_fbimg, (x0, y0)-(x1, y1), TRANS      
 end sub
 
@@ -141,19 +142,19 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
                             ambientLight as integer = &h00000000,_
                             light1 as PointLight)
                                
-    #macro MULMIX(XMMA, XMMB)
-        punpcklbw   XMMB,               xmm6
+    #macro MULMIX(XMMA, XMMB)    
         punpcklbw   XMMA,               xmm6
+        punpcklbw   XMMB,               xmm6
         pmullw      XMMA,               XMMB
-        psraw		XMMA, 	        	8
+        psrlw		XMMA, 	        	8
         packuswb    XMMA,               XMMA    
     #endmacro
     
     #macro ADDSAT(XMMA, XMMB)
         paddusb     XMMA,               XMMB
     #endmacro
-                           
-    dim as integer     npx, npy
+     
+    dim as integer     npx, npy, opx, opy
     dim as integer     sdx0, sdy0, sdx1, sdy1
     dim as integer ptr fbDest, fbSrc, fbNrmSrc
     
@@ -167,7 +168,17 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer xp, yp, yDest, xDest, lightCol
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
-
+        
+    if norm_fbimg = 0 then
+        putTRANS_0xLight(dest_fbimg, posX, posY,_
+                         x0, y0, x1, y1,_
+                         ambientLight)
+        exit sub
+    end if   
+   
+    opx = posX
+    opy = posY
+    
     pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
@@ -182,7 +193,7 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
         
         imageinfo light1.diffuse_fbimg, lightW1, lightH1,,,fbDiffSrc1
         imageinfo light1.specular_fbimg,,,,,fbSpecSrc1
-           
+
         srcW = sdx1 - sdx0 + 1
         srcH = sdy1 - sdy0 + 1
     
@@ -197,11 +208,11 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
         lpDifY1 = -light1.y - 128 + lightH1 shr 1
         shiftLightW1 = intLog2(lightW1)
         
-        yDest = npy + srcH
-        xDest = npx + srcW
-        startX = npx
-              
-        yp = npy
+        xDest = opx + (sdx0 - x0) + srcW
+        yDest = opy + (sdy0 - y0) + srcH
+        startX = opx + (sdx0 - x0)
+        
+        yp = opy + (sdy0 - y0)
         asm
                 mov         esi,                [destOffset]
                 mov         edi,                [srcOffset]
@@ -218,23 +229,23 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
                 mov         eax,                [fbSrc]
                 cmp         dword ptr[eax+edi], &hffff00ff
                 je          zimage_putTRANS_1xLight_endCol
+               
+                movdqa      xmm1,               xmm7
+                pxor        xmm2,               xmm2
                 
                 movd        xmm0,               [eax+edi]
                 mov         eax,                [fbNrmSrc]
                 mov         eax,                [eax+edi]
-                
-                movq        xmm1,               xmm7
-                pxor        xmm2,               xmm2
-                    
-                movsbl      ebx,                al
+                                             
+                movzbl      ebx,                al
                 add         ebx,                [xp]
                 mov         [xbN],              ebx
-                movsbl      ecx,                ah
+                movzbl      ecx,                ah
                 add         ecx,                [yp]
                 mov         [ybN],              ecx
-                
+                                
                 '----------------------- LIGHT 1 -----------------------------
-                
+
                 mov         eax,                [xbN]
                 add         eax,                [lpDifX1]
                 mov         ebx,                [ybN]
@@ -245,6 +256,7 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
                 and         eax,                [lightWMask1]
                 and         ebx,                [lightHMask1]
                 or          eax,                ebx
+            
                 jnz         zimage_putTRANS_1xLight_light1
                 
                 mov         eax,                ecx
@@ -252,15 +264,15 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
                 mov         cl,                 [shiftLightW1]
                 shl         ebx,                cl
                 add         eax,                ebx
-                
+
                 mov         ecx,                [fbDiffSrc1]
                 movd        xmm3,               [ecx+eax*4]
                 mov         ecx,                [fbSpecSrc1]
                 movd        xmm4,               [ecx+eax*4]
-                
+                 
                 ADDSAT(     xmm1,               xmm3)
                 ADDSAT(     xmm2,               xmm4)
-
+                
             zimage_putTRANS_1xLight_light1:    
 
                 '--------------------------------------------------------------
@@ -270,7 +282,7 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
                 
                 mov         eax,                [fbDest]
                 movd        [esi+eax],          xmm0
-                
+
             zimage_putTRANS_1xLight_endCol:    
             
                 add         esi,                4
@@ -290,6 +302,8 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
         end asm   
     end if             
 end sub
+
+'rest of utilities need repairs 
 
 sub zimage.putTRANS_2xLight(dest_fbimg as integer ptr, posX as integer, posY as integer,_
                             x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
@@ -328,6 +342,13 @@ sub zimage.putTRANS_2xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
 
+    if norm_fbimg = 0 then
+        putTRANS_0xLight(dest_fbimg, posX, posY,_
+                         x0, y0, x1, y1,_
+                         ambientLight)
+        exit sub
+    end if
+    
     pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
@@ -533,7 +554,14 @@ sub zimage.putTRANS_3xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer xp, yp, yDest, xDest, lightCol
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
-
+    
+    if norm_fbimg = 0 then
+        putTRANS_0xLight(dest_fbimg, posX, posY,_
+                         x0, y0, x1, y1,_
+                         ambientLight)
+        exit sub
+    end if
+    
     pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 

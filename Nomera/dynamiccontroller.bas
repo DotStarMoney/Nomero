@@ -3,6 +3,7 @@
 #include "enemy.bi"
 #include "utility.bi"
 #include "soundeffects.bi"
+#include "gamespace.bi"
 #include "item.bi"
 
 #define N_OBJ_TYPES 4
@@ -81,6 +82,48 @@ sub DynamicController.explosionAlert(p as Vector2D)
 		end if
 	loop
 end sub
+
+function DynamicController.populateLightList(ll as LightPair ptr) as integer
+    dim as DynamicObjectType_t ptr dobj
+    dim as Item ptr ditem
+    dim as ListNodeRoll_t tempR
+    dim as integer nlights
+    dim as PointLight tex, shade
+    dim as Vector2d scn_a, scn_b
+    dim as Vector2d light_a, light_b
+    
+    scn_a = link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5
+    scn_b = link.gamespace_ptr->camera + Vector2D(SCRX, SCRY)*0.5
+    
+    nlights = 0
+    
+    tempR = objects.bufferRoll()
+    
+    BEGIN_LIST(dobj, objects)
+    
+        if dobj->object_type = OBJ_ITEM then
+            ditem = cast(Item ptr, dobj->data_)
+            if ditem->hasLight() then
+            
+                ditem->getLightingData(tex, shade)
+                light_a = Vector2D(tex.x, tex.y) - Vector2D(tex.w, tex.h)*0.5 - Vector2D(128, 128)
+                light_b = Vector2D(tex.x, tex.y) + Vector2D(tex.w, tex.h)*0.5 + Vector2D(128, 128)
+                
+                if (light_a.x < scn_b.x) andAlso (light_b.x > scn_a.x) andAlso _
+                   (light_a.y < scn_b.y) andAlso (light_b.y > scn_a.y) then
+
+                    ll[nlights].texture = tex
+                    ll[nlights].shaded = shade
+                    nlights += 1
+                end if
+                
+            end if
+        end if
+        
+    END_LIST()
+    objects.setRoll(tempR)
+    return nlights
+end function
 
 sub DynamicController.addSpawnZone(objectName as string,_
 								   respawn as SpawnZoneDespawnType_e,_
@@ -230,7 +273,7 @@ sub DynamicController.process(t as double)
 				lnr = objects.bufferRoll()
 				shouldDelete = curItem->process(t)
 				objects.setRoll(lnr)
-
+                
 				if shouldDelete then
 					delete (cast(Item ptr, dobj->data_))
 					objects.rollRemove()

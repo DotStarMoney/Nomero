@@ -75,8 +75,8 @@ constructor GameSpace()
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    'FSOUND_Stream_Play currentMusic, music(currentMusic)
-    'FSOUND_SetVolumeAbsolute(currentMusic, 128)
+    FSOUND_Stream_Play currentMusic, music(currentMusic)
+    FSOUND_SetVolumeAbsolute(currentMusic, 128)
         
     switchTracks = 0
     
@@ -119,6 +119,8 @@ constructor GameSpace()
     movingFrmAvg = 0
     shake = 0 
    
+    dynControl.addOneItem(Vector2D(303, 877), ITEM_LIGHT, 0)
+   
     timeBeginPeriod(SLEEP_RESOLUTION)
 
 end constructor
@@ -145,6 +147,7 @@ function GameSpace.go() as integer
     dim as byte ptr trackerEx
     dim as integer  dataSize
     stallTime_mili = 1
+    step_process()
     do
 		
         startTime = timer
@@ -491,7 +494,7 @@ sub GameSpace.step_process()
     
     
     dynControl.process(0.01667)
-       
+    lvlData.process(0.01667)
     
 	if keypress(SC_M) then tracker.record()
 	if keypress(SC_N) then tracker.pause()

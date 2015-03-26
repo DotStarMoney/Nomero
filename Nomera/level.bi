@@ -31,6 +31,7 @@ type Level
         declare sub init(e_p as EffectController_ ptr)
         
         declare sub load(filename as string)
+        declare sub process(t as double)
         declare function processPortalCoverage(p as Vector2D,_
                                                w as double, h as double,_
                                                byref l as levelSwitch_t,_
@@ -84,7 +85,6 @@ type Level
         declare sub splodeBlockReact(xs as integer, ys as integer)
         declare sub modBlockDestruct(lyr as integer, xs as integer, ys as integer)
 
-        
         dim as integer reconnect
         dim as ushort ptr coldata
         dim as string lvlName
@@ -98,6 +98,8 @@ type Level
         dim as Hashtable destroyedBlockMemory
         dim as ubyte ptr curDestBlocks
         dim as integer noVisuals
+        dim as LightPair ptr lightList
+        dim as integer lightList_N
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum
