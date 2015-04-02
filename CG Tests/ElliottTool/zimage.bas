@@ -19,7 +19,7 @@ constructor zimage(filename as string)
 end constructor 
 
 destructor zimage()
-
+    
 end destructor
 
 sub zimage.flush()

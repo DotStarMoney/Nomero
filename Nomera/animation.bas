@@ -52,11 +52,16 @@ end function
 
 
 sub Animation.load(filename as string)
-    dim as integer  f, readStep, i
-    dim as string   lne, imageName, curText
+    dim as integer  f, readStep, i, slashP
+    dim as string   lne, imageName, curText, filePath
     redim as string pieces(0)
     dim as integer charPos, curAnim, getRFrames
-    
+    slashP = instrrev(filename, "\")
+    if slashP = 0 then
+        filePath = ""
+    else
+        filePath = left(filename, slashP)
+    end if 
     if animHash.exists(filename) = 1 then
         data_ = *cast(AnimationData_t ptr ptr, animHash.retrieve(filename))
     else
@@ -90,7 +95,8 @@ sub Animation.load(filename as string)
                         .w = val(pieces(0))
                         .h = val(pieces(1))
                         
-                        .image.load(imageName)
+                        .image.load(filepath + imageName)
+                        
                         /'
                         if right(imageName, 3) = "bmp" then
 							.image = imagecreate(.w, .h)

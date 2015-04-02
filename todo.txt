@@ -1,6 +1,7 @@
 - PHASE 1 - start 1/15/15
 
 TODO:
+add specular channel to normal map
 optimized light cast routine with bump support (diffuse and specular map textures) 
 fix path tracker crash when deleting edges mid-record
 pathtracker needs to split nodes if there are objects in the way.

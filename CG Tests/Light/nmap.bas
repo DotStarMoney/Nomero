@@ -1,5 +1,4 @@
 screenres 640,480,32
-
 dim as integer w, h, f, lrgV
 dim as integer xdif, ydif, x, y
 dim as double scale
@@ -16,7 +15,6 @@ close #f
 dim as integer ptr img = imagecreate(w, h), dataX, dataY
 bload command(1), img
 
-
 dataX = allocate(sizeof(integer)*w*h)
 dataY = allocate(sizeof(integer)*w*h)
 
@@ -25,17 +23,17 @@ for y = 0 to h-1
     for x = 0 to w-1
       
         if x = 0 then
-            xdif = 128 - (point(1, y, img) and &hff)
+            xdif = (point(x, y, img) and &hff) - (point(1, y, img) and &hff)
         elseif x = (w-1) then
-            xdif = (point(w-2, y, img) and &hff) - 128
+            xdif = (point(w-2, y, img) and &hff) - (point(x, y, img) and &hff)
         else
             xdif = (point(x+1, y, img) and &hff) - (point(x-1, y, img) and &hff)
         end if
     
         if y = 0 then
-            ydif = 128 - (point(x, 1, img) and &hff)
+            ydif = (point(x, y, img) and &hff) - (point(x, 1, img) and &hff)
         elseif y = (h-1) then
-            ydif = (point(x, h-2, img) and &hff) - 128
+            ydif = (point(x, h-2, img) and &hff) - (point(x, y, img) and &hff)
         else
             ydif = (point(x, y+1, img) and &hff) - (point(x, y-1, img) and &hff)
         end if

@@ -75,8 +75,8 @@ constructor GameSpace()
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    FSOUND_Stream_Play currentMusic, music(currentMusic)
-    FSOUND_SetVolumeAbsolute(currentMusic, 128)
+    'FSOUND_Stream_Play currentMusic, music(currentMusic)
+    'FSOUND_SetVolumeAbsolute(currentMusic, 128)
         
     switchTracks = 0
     
