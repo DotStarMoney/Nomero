@@ -281,54 +281,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                 row_c = tilesets[block.tileset].row_count
                 tilePosX = ((block.tileNum - 1) mod row_c) * 16
                 tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
-                /'
-                if block.usesAnim < 65535 then
-					
-                    tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
-                    select case tempEffect.effect
-                    case ANIMATE
-                        block.frameDelay += 1
-                        if block.frameDelay > tempEffect.delay then
-                            block.frameDelay = 0
-                            block.tileNum += tempEffect.nextTile
-                            if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
-                                block.usesAnim = 1
-                            else
-                                block.usesAnim = 65535
-                            end if
-                            if tempEffect.effect = ANIMATE then
-                                block.frameDelay = 0
-                            elseif tempEffect.effect = FLICKER then
-                                block.frameDelay = tempEffect.offset + tempEffect.delay * rand
-                            end if
-                            blocks[lyr][yscan * lvlWidth + xscan] = block
-                        else
-                            blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
-                        end if
-                    case FLICKER
-                        block.frameDelay -= 1
-                        if block.frameDelay < 0 then
-                            block.tileNum += tempEffect.nextTile
-                            if tilesets[block.tileset].tileEffect.exists(block.tileNum) = 1 then
-                                tempEffect = *cast(Level_EffectData ptr, tilesets[block.tileset].tileEffect.retrieve(block.tileNum))
-                                block.usesAnim = 1
-                            else
-                                block.usesAnim = 65535
-                            end if
-                            if tempEffect.effect = ANIMATE then
-                                block.frameDelay = 0
-                            elseif tempEffect.effect = FLICKER then
-                                block.frameDelay = tempEffect.offset + tempEffect.delay * rand
-                            end if
-                            blocks[lyr][yscan * lvlWidth + xscan] = block
-                        else
-                            blocks[lyr][yscan * lvlWidth + xscan].frameDelay = block.frameDelay
-                        end if
-                    case DESTRUCT
-                        ''
-                    end select
-                end if
-                '/ 
+
                 if layerData[lyr].illuminated <> 65535 then
                     tilesets[block.tileset].set_image.putTRANS_1xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
                                                                        tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_

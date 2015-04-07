@@ -1,8 +1,9 @@
 - PHASE 1 - start 1/15/15
 
 TODO:
-add specular channel to normal map
-optimized light cast routine with bump support (diffuse and specular map textures) 
+Add in dynamic shadows
+Add player shadow casting
+Add in 2 test electronic items with light bleed overlays. Do a scope and a randomizing tube.
 fix path tracker crash when deleting edges mid-record
 pathtracker needs to split nodes if there are objects in the way.
 get player friction right
@@ -24,6 +25,7 @@ program enemy death animation
 fix jump mid-air direction, facillitate through animation class
 bombs should be more damaging to the player
 get elliott to utilize flipped owp
+Enemy shadow casting
 many mr. spy fixes:
 	hat flattens during jump, jump is silly to begin with
 	run needs an improvement
@@ -38,6 +40,7 @@ add bomb memory between maps
 add deactivation effect for mines
 add crouch to place bomb, and bomb placement scheme, bombs on walls unstick if moved or destroyed
 new jump animation
+add full set of explosion blox
 add money items and add when enemy killed
 spline, electric shock cgi
 mr.spy silhouette looks odd
@@ -74,7 +77,8 @@ cover layers
 make sure path tracker isn't splitting long nodes - fixed by implementing proper in place array shift
 added HUD spinner
 frame delay now using system timer, gives OS a chance to do some stuff
-
+add specular channel to normal map
+optimized light cast routine with bump support (diffuse and specular map textures) 
 
 KNOWN ODDITIES:
 in Player.computeCoverage, sprite comparison requires that character be a multiple of 16 for now
