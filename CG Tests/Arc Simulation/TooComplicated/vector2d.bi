@@ -23,9 +23,8 @@ type Vector2D
         declare operator let ( byref rhs as Vector2D)
         
         declare function NAN() as integer
-        
-        as double xs, ys
     private:
+        as double xs, ys
         as integer isNAN
 end type
     

@@ -1,10 +1,7 @@
 
 Const RR2 As Double = Sqr(2)^-1
-#define SCRX 640
-#define SCRY 480
 
-
-Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
+Sub CastLight(dest as integer ptr, source As Integer Ptr, xp As Integer, yp As Integer,_
               rad As Double, col As Integer = &HFF400000, tcol As Integer = &HFF000000)
               
     #macro _setaddr(dest, src)
@@ -14,65 +11,64 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
     #define _gosub(addr) asm Call [addr]
     #define _return asm ret
 
-    #define _Ek 1
-    #define _Dn 2
-    #define _Dp 3
-    #define _Xd 4
-    #define _Ub 5
-    #define _Xx 6
+    #define _Ek 0
+    #define _Dn 1
+    #define _Dp 2
+    #define _Xd 3
+    #define _Ub 4
+    #define _Xx 5
+    
+    #define MAX_PAIRS 128
+
+    #define ShadowsA(_I_, _P_) readList[(_I_)*6 + _P_]
+    #define ShadowsB(_I_, _P_) writeList[(_I_)*6 + _P_]
 
     #macro _addelement(a)
-        _N += 1
-        Redim Preserve As Integer ShadowsB(1 To _N, 1 To 6)
         ShadowsB(_N,_Xx) = a: ShadowsB(_N,_Xd) = Sgn(dx)
         dx = Abs(dx): dy = Abs(dy)
         ShadowsB(_N,_Ek) = dx SHL 1 - dy
         ShadowsB(_N,_Dn) = ShadowsB(_N,_Ek) + dy
         ShadowsB(_N,_Dp) = ShadowsB(_N,_Ek) - dy
         ShadowsB(_N,_Ub) = 1
+        _N += 1
     #endmacro
     
     #macro _copyelement(x)
-        _N += 1
-        Redim Preserve As Integer ShadowsB(1 To _N, 1 To 6)
         ShadowsB(_N,_Ek) = ShadowsA(x,_Ek)
         ShadowsB(_N,_Dn) = ShadowsA(x,_Dn)
         ShadowsB(_N,_Dp) = ShadowsA(x,_Dp)
         ShadowsB(_N,_Xx) = ShadowsA(x,_Xx)
         ShadowsB(_N,_Xd) = ShadowsA(x,_Xd)
         ShadowsB(_N,_Ub) = ShadowsA(x,_Ub)
+        _N += 1
     #endmacro
     
     #macro _copylist()
-        For i = 1 To _N
-            ShadowsA(i,1)=ShadowsB(i,1)
-            ShadowsA(i,2)=ShadowsB(i,2)
-            ShadowsA(i,3)=ShadowsB(i,3)
-            ShadowsA(i,4)=ShadowsB(i,4)
-            ShadowsA(i,5)=ShadowsB(i,5)
-            ShadowsA(i,6)=ShadowsB(i,6)
-        Next i
+        swap readList, writeList
     #endmacro
-    
-
-    Redim As Integer ShadowsA(1 To 2, 1 To 6), ShadowsB(1 To 1, 1 To 6)
+        
+    dim as integer ptr readList, writeList, Sptr
     Dim As Integer inc, scan, xs, xe, yend = rad*RR2, xcirc, dx, dy, s1, s2, prad, oxs, oxe, txe
     Dim As Integer xpos, ypos, segs, i, _N, ccol, LeftBnd, RightBnd, Offset, yadd,q
     Dim As Any Ptr FillLoop, SearchLoop, Proc
-    Dim As Integer QuadBnd(1 To 8, 1 To 5), WorkCol
+    Dim As Integer QuadBnd(0 To 7, 0 To 4), WorkCol, destW, destH, destStride
     
-    Dim As Uinteger Ptr Sptr = ScreenPtr                        
-
-    QuadBnd(1,_Ek) = 1: QuadBnd(1,_Dn) = 2: QuadBnd(1,_Dp) = 0: QuadBnd(1,_Xd) = -1: QuadBnd(1,_Ub) = 0
-    QuadBnd(2,_Ek) = 1: QuadBnd(2,_Dn) = 2: QuadBnd(2,_Dp) = 0: QuadBnd(2,_Xd) =  1: QuadBnd(2,_Ub) = 0
-    QuadBnd(3,_Ek) = 1: QuadBnd(3,_Dn) = 2: QuadBnd(3,_Dp) = 0: QuadBnd(3,_Xd) = -1: QuadBnd(3,_Ub) = 0
+    imageinfo dest, destW, destH,, destStride, Sptr 
+    destStride shr= 2
+    
+    readList  = new integer[MAX_PAIRS*2]
+    writeList = new integer[MAX_PAIRS*2]
+    
+    QuadBnd(0,_Ek) = 1: QuadBnd(0,_Dn) = 2: QuadBnd(0,_Dp) = 0: QuadBnd(0,_Xd) = -1: QuadBnd(0,_Ub) = 0
+    QuadBnd(1,_Ek) = 1: QuadBnd(1,_Dn) = 2: QuadBnd(1,_Dp) = 0: QuadBnd(1,_Xd) =  1: QuadBnd(1,_Ub) = 0
+    QuadBnd(2,_Ek) = 1: QuadBnd(2,_Dn) = 2: QuadBnd(2,_Dp) = 0: QuadBnd(2,_Xd) = -1: QuadBnd(2,_Ub) = 0
+    QuadBnd(3,_Ek) = 1: QuadBnd(3,_Dn) = 2: QuadBnd(3,_Dp) = 0: QuadBnd(3,_Xd) =  1: QuadBnd(3,_Ub) = 0
     QuadBnd(4,_Ek) = 1: QuadBnd(4,_Dn) = 2: QuadBnd(4,_Dp) = 0: QuadBnd(4,_Xd) =  1: QuadBnd(4,_Ub) = 0
-    QuadBnd(5,_Ek) = 1: QuadBnd(5,_Dn) = 2: QuadBnd(5,_Dp) = 0: QuadBnd(5,_Xd) =  1: QuadBnd(5,_Ub) = 0
-    QuadBnd(6,_Ek) = 1: QuadBnd(6,_Dn) = 2: QuadBnd(6,_Dp) = 0: QuadBnd(6,_Xd) = -1: QuadBnd(6,_Ub) = 0
-    QuadBnd(7,_Ek) = 1: QuadBnd(7,_Dn) = 2: QuadBnd(7,_Dp) = 0: QuadBnd(7,_Xd) =  1: QuadBnd(7,_Ub) = 0
-    QuadBnd(8,_Ek) = 1: QuadBnd(8,_Dn) = 2: QuadBnd(8,_Dp) = 0: QuadBnd(8,_Xd) = -1: QuadBnd(8,_Ub) = 0
+    QuadBnd(5,_Ek) = 1: QuadBnd(5,_Dn) = 2: QuadBnd(5,_Dp) = 0: QuadBnd(5,_Xd) = -1: QuadBnd(5,_Ub) = 0
+    QuadBnd(6,_Ek) = 1: QuadBnd(6,_Dn) = 2: QuadBnd(6,_Dp) = 0: QuadBnd(6,_Xd) =  1: QuadBnd(6,_Ub) = 0
+    QuadBnd(7,_Ek) = 1: QuadBnd(7,_Dn) = 2: QuadBnd(7,_Dp) = 0: QuadBnd(7,_Xd) = -1: QuadBnd(7,_Ub) = 0
     prad = rad-yend
-    Dim as integer CurveOff(1 to prad), cind
+    Dim as integer CurveOff(0 to prad-1), cind
     dx = 0
     dy = Rad
     xs = 1 - Rad
@@ -82,7 +78,7 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
             xs += dx SHL 1 + 3
         Else
             xs += (dx - dy) SHL 1 + 5
-            CurveOff(i) = dx
+            CurveOff(i - 1) = dx
             dy -= 1
             i -= 1
         End If
@@ -93,11 +89,12 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
         _setaddr(FillLoop, FillQ1)
         _setaddr(SearchLoop, SearchQ1)
     
+        ShadowsA(0,_Ek) = QuadBnd(0,_Ek): ShadowsA(0,_Dn) = QuadBnd(0,_Dn): ShadowsA(0,_Dp) = QuadBnd(0,_Dp)
+        ShadowsA(0,_Xx) = xp: ShadowsA(0,_Xd) = QuadBnd(0,_Xd): ShadowsA(0,_Ub) = QuadBnd(0,_Ub)
         ShadowsA(1,_Ek) = QuadBnd(1,_Ek): ShadowsA(1,_Dn) = QuadBnd(1,_Dn): ShadowsA(1,_Dp) = QuadBnd(1,_Dp)
         ShadowsA(1,_Xx) = xp: ShadowsA(1,_Xd) = QuadBnd(1,_Xd): ShadowsA(1,_Ub) = QuadBnd(1,_Ub)
-        ShadowsA(2,_Ek) = QuadBnd(2,_Ek): ShadowsA(2,_Dn) = QuadBnd(2,_Dn): ShadowsA(2,_Dp) = QuadBnd(2,_Dp)
-        ShadowsA(2,_Xx) = xp: ShadowsA(2,_Xd) = QuadBnd(2,_Xd): ShadowsA(2,_Ub) = QuadBnd(2,_Ub)
-        yadd = yp * SCRX
+        _N = 2
+        yadd = yp * destStride
         If yp - rad < 0 Then 
             prad = yp 
         Else
@@ -105,20 +102,20 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
         Endif
         For inc = 1 To prad
             If inc > yend Then
-                xcirc = inc - yend
+                xcirc = inc - yend - 1
                 RightBnd = xp + CurveOff(xcirc)
                 LeftBnd  = xp - CurveOff(xcirc)
             Else
                 RightBnd = xp + inc - 1
                 LeftBnd  = xp - inc
             Endif
-            If RightBnd >= SCRX Then RightBnd = SCRX-1
-            If LeftBnd  <  0    Then LeftBnd  = 0
+            If RightBnd >= destW Then RightBnd = destW-1
+            If LeftBnd  <  0     Then LeftBnd  = 0
             ypos = yp - inc
-            yadd -= SCRX
-            segs = Ubound(ShadowsA)
+            yadd -= destStride
+            segs = _N
             _N = 0
-            For i = 1 To segs Step 2
+            For i = 0 To segs-1 Step 2
                 s1 = i
                 oxs = ShadowsA(s1,_Xx)
                 If ShadowsA(s1,_Ek) < 0 Then
@@ -137,6 +134,7 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
                 End If
                 xs = ShadowsA(s1,_Xx)
                 xe = ShadowsA(s2,_Xx)
+                
                 If xe < LeftBnd Then 
                     Goto SkipScanQ1
                 Elseif xs > RightBnd Then
@@ -148,15 +146,17 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
                 If xe > RightBnd Then xe = RightBnd
                         
                 If (xs - oxs) < 0 then
-                    if (Sptr[yadd+xs+1] <> tcol) andAlso (Sptr[yadd+xs+SCRX] <> tcol) then
+                    if (Sptr[yadd+xs+1] <> tcol) andAlso (Sptr[yadd+xs+destStride] <> tcol) then
                         xs += 1
                     end if
                 end if
                 If (txe - oxe) > 0 then
-                    if (Sptr[yadd+xe-1] <> tcol) andAlso (Sptr[yadd+xe+SCRX] <> tcol) then
+                    if (Sptr[yadd+xe-1] <> tcol) andAlso (Sptr[yadd+xe+destStride] <> tcol) then
                         xe -= 1
                     end if
                 end if
+
+                
                 
                 xpos = xs
                 If Sptr[yadd+xpos] <> tcol Then
@@ -178,7 +178,7 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
                     _copyelement(s1)
                 Endif
                 
-                Sptr[yadd+xpos] = col
+                'Sptr[yadd+xpos] = col
                 Proc = FillLoop
                 
                 Do
@@ -189,48 +189,47 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
                 If _N Mod 2 = 1 Then
                     _copyelement(s2)
                 Endif
-                SkipScanQ1:           
+                SkipScanQ1:    
+                
+                
             Next i
             If _N = 0 Then Exit For
-            Redim Preserve As Integer ShadowsA(1 To _N, 1 To 6)
             _copylist()
-            Redim As Integer ShadowsB(1 To 1, 1 To 6)
         Next inc
- /'   
  
     '----------------------------------------------------QUAD 2------------------------------------
     
-        Redim As Integer ShadowsA(1 To 2, 1 To 6), ShadowsB(1 To 1, 1 To 6)
     
         _setaddr(FillLoop, FillQ2)
         _setaddr(SearchLoop, SearchQ2)
     
+        ShadowsA(0,_Ek) = QuadBnd(2,_Ek): ShadowsA(0,_Dn) = QuadBnd(2,_Dn): ShadowsA(0,_Dp) = QuadBnd(2,_Dp)
+        ShadowsA(0,_Xx) = yp: ShadowsA(0,_Xd) = QuadBnd(2,_Xd): ShadowsA(0,_Ub) = QuadBnd(2,_Ub)
         ShadowsA(1,_Ek) = QuadBnd(3,_Ek): ShadowsA(1,_Dn) = QuadBnd(3,_Dn): ShadowsA(1,_Dp) = QuadBnd(3,_Dp)
         ShadowsA(1,_Xx) = yp: ShadowsA(1,_Xd) = QuadBnd(3,_Xd): ShadowsA(1,_Ub) = QuadBnd(3,_Ub)
-        ShadowsA(2,_Ek) = QuadBnd(4,_Ek): ShadowsA(2,_Dn) = QuadBnd(4,_Dn): ShadowsA(2,_Dp) = QuadBnd(4,_Dp)
-        ShadowsA(2,_Xx) = yp: ShadowsA(2,_Xd) = QuadBnd(4,_Xd): ShadowsA(2,_Ub) = QuadBnd(4,_Ub)
-        
-        If xp + rad >= SCRX Then
-            prad = SCRX-xp-1
+        _N = 2
+        If xp + rad >= destW Then
+            prad = destW-xp-1
         Else
             prad = rad
         Endif
         For inc = 1 To prad
             If inc > yend Then
-                xcirc = inc-yend
+                xcirc = inc - yend - 1
                 RightBnd = yp + CurveOff(xcirc)
                 LeftBnd  = yp - CurveOff(xcirc)
             Else
                 RightBnd = yp + inc - 1
-                LeftBnd  = yp - inc 
+                LeftBnd  = yp - inc
             Endif
-            If RightBnd >= SCRY Then RightBnd = SCRY-1
-            If LeftBnd  <  0    Then LeftBnd  = 0
+            If RightBnd >= destH Then RightBnd = destH-1
+            If LeftBnd  <  0     Then LeftBnd  = 0
             xpos = xp + inc
-            segs = Ubound(ShadowsA)
+            segs = _N
             _N = 0
-            For i = 1 To segs Step 2
+            For i = 0 To segs-1 Step 2
                 s1 = i
+                oxs = ShadowsA(s1,_Xx)
                 If ShadowsA(s1,_Ek) < 0 Then
                     ShadowsA(s1,_Ek) += ShadowsA(s1,_Dn)
                 Else
@@ -238,6 +237,7 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
                     ShadowsA(s1,_Xx) += ShadowsA(s1,_Xd)
                 End If
                 s2 = i + 1
+                oxe = ShadowsA(s2,_Xx)
                 If ShadowsA(s2,_Ek) < 0 Then
                     ShadowsA(s2,_Ek) += ShadowsA(s2,_Dn)
                 Else
@@ -255,14 +255,29 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
                 Elseif xs < LeftBnd Then
                     xs = LeftBnd
                 Endif
+                txe = xe
                 If xe > RightBnd Then xe = RightBnd
+                
+                /'
+                If (xs - oxs) < 0 then
+                    if (Sptr[yadd+xs+destStride] <> tcol) andAlso (Sptr[yadd+xs-1] <> tcol) then
+                        xs += 1
+                    end if
+                end if
+                If (txe - oxe) > 0 then
+                    if (Sptr[yadd+xe-destStride] <> tcol) andAlso (Sptr[yadd+xe-1] <> tcol) then
+                        xe -= 1
+                    end if
+                end if
+                '/
+                
                 ypos = xs
-                yadd = xs * SCRX
+                yadd = xs * destStride
                 If Sptr[yadd+xpos] <> tcol Then
                     Do
                         ypos += 1
                         If ypos >= xe Then Goto SkipScanQ2
-                        yadd += SCRX
+                        yadd += destStride
                         ccol = Sptr[yadd+xpos]
                         If ccol = tcol Or ccol = -1 Then
                             If ypos < xe Then
@@ -277,25 +292,26 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
                 Else
                     _copyelement(s1)
                 Endif
-                Pset (xpos, ypos), col
+
+                'Sptr[yadd+xpos] = col
+                
                 Proc = FillLoop
                 Do
                     ypos += 1
-                    yadd += SCRX
+                    yadd += destStride
                     If ypos > xe Then Exit Do
                     _gosub(Proc)
                 Loop
                 If _N Mod 2 = 1 Then
                     _copyelement(s2)
                 Endif
+                
                 SkipScanQ2:
             Next i
             If _N = 0 Then Exit For
-            Redim Preserve As Integer ShadowsA(1 To _N, 1 To 6)
             _copylist()
-            Redim As Integer ShadowsB(1 To 1, 1 To 6)
         Next inc
-
+/'
 
     '------------------------------------------------QUAD 3---------------------------------------
      
@@ -486,6 +502,10 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
             Redim As Integer ShadowsB(1 To 1, 1 To 6)
         Next inc
    '/
+   
+    delete(readList)
+    delete(writeList)
+    
     Exit Sub
     
     '======================================FILLING LOOPS======================================
@@ -496,8 +516,7 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
             _addelement(xpos-1)
             Proc = SearchLoop
         Else
-            'Sptr[yadd+xpos] = col
-            Pset(xpos,ypos),col
+            Sptr[yadd+xpos] = col
         Endif
     _return
     
@@ -506,8 +525,7 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
             dx = xpos-xp: dy = inc 
             _addelement(xpos)
             Proc = FillLoop
-            'Sptr[yadd+xpos] = Col
-            Pset(xpos,ypos),col
+            Sptr[yadd+xpos] = Col
         Endif
     _return
     
@@ -568,22 +586,21 @@ Sub CastLight(source As Integer Ptr, xp As Integer, yp As Integer,_
         Endif
     _return
     
-    
-    
 End Sub
 
 
 screenres 640,480,32
 setmouse ,,0
-Dim As Integer Ptr Img
+Dim As Integer Ptr Img, Img2
 Dim As Integer mx, my, f, fps
 Img = ImageCreate(640,480,&HFF000000)
+Img2 = ImageCreate(640,480,&HFF000000)
 'Bload "ShadowTest2.bmp", Img
 randomize timer
 For mx = 1 to 10
-    Circle Img,(rnd*640,rnd*480),rnd*100, &h0000ff
+    Circle Img2,(rnd*640,rnd*480),rnd*100, &h0000ff
 Next mx
-Line Img,(10,10)-(300,300)
+Line Img2,(10,10)-(300,300)
 Dim as double T = TIMER
 Do  
     'ScreenLock
@@ -593,13 +610,15 @@ Do
         my = 240
     Endif
     Locate 1,1: Print mx, my
-    Put (0,0), Img, Pset
+    
+    Put Img, (0,0), Img2, Pset
+    
     mx = 320: my = 240
-    CastLight Img,mx,my,300
-    Circle (mx,my),10,&H800000,,,,F
+    CastLight Img,0,mx,my,300
+    
+    put (0,0), Img, Pset
+    
     Locate 2,1: Print fps
-    'ScreenUnLock
-    sleep 1,1
     f += 1
     If TIMER-T > 1 Then 
         fps = f
