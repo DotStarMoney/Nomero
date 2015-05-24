@@ -67,7 +67,6 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
 		body = TinyBody(Vector2D(0,0), 8, 10)
 		orientation = (itemFlavor_ and &h11000) shr 3
 		itemFlavor = (itemFlavor_ and &b111)
-		'body.f = Vector2D(0, -10 * DEFAULT_GRAV)
 		data0 = 0
 		data1 = 0
 		anims_n = 3
@@ -98,7 +97,6 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
         body = TinyBody(Vector2D(0,0), 4, 1)
         body.elasticity = 1
         body.v = Vector2D(100, 0)
-        'body.f = Vector2D(0, -DEFAULT_GRAV)
         itemFlavor = itemFlavor_
         anims_n = 2
 		anims = new Animation[anims_n]

@@ -122,8 +122,8 @@ sub OneShotEffects.draw_effects(scnbuff as uinteger ptr)
         if cur.fx <> FLASH then 
 			cur.anim.drawAnimation(scnbuff, cur.p.x(), cur.p.y())
 		else
-			if cur.endIt < 2 then
-				circle scnbuff, (cur.p.x(), cur.p.y()), 40, rgb(255,255,0),,,,F   
+			if cur.endIt < 3 then
+				circle scnbuff, (cur.p.x(), cur.p.y()), 40, rgb(255,255,128),,,,F   
 			else
 				circle scnbuff, (cur.p.x(), cur.p.y()), 20, rgb(0,0,0),,,,F   
 			end if     

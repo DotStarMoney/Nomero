@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="1052.3622" height="744.09448" id="svg2" version="1.1" inkscape:version="0.47 r22583" sodipodi:docname="FASlogoFinal.svg" inkscape:export-filename="C:\Documents and Settings\Todd V\My Documents\FAS logos\FASlogoSmall.png" inkscape:export-xdpi="27.3305" inkscape:export-ydpi="27.3305">
+  <title id="title2885">3D Star</title>
+  <defs id="defs4">
+    <inkscape:perspective sodipodi:type="inkscape:persp3d" inkscape:vp_x="0 : 372.04724 : 1" inkscape:vp_y="0 : 1000 : 0" inkscape:vp_z="1052.3622 : 372.04724 : 1" inkscape:persp3d-origin="526.18109 : 248.03149 : 1" id="perspective2876"/>
+  </defs>
+  <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="0.72776573" inkscape:cx="526.18109" inkscape:cy="372.04724" inkscape:document-units="px" inkscape:current-layer="layer1" showgrid="false" inkscape:window-width="1280" inkscape:window-height="962" inkscape:window-x="-8" inkscape:window-y="-8" inkscape:window-maximized="1"/>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1" transform="translate(0,-308.2677)">
+    <g id="g2881">
+      <path transform="matrix(0.35035782,0,0,0.35035782,455.74963,609.17364)" d="M 1040.2778,23.195527 493.3717,418.33821 702.97699,1059.6725 158.17069,661.63967 -387.00284,1059.1693 -176.80555,418.02886 -723.34662,22.381446 -48.631257,24.167636 158.76132,-617.88558 365.56106,24.358825 1040.2778,23.195527 z" inkscape:randomized="0" inkscape:rounded="0" inkscape:flatsided="false" sodipodi:arg2="0.31462086" sodipodi:arg1="-0.31369767" sodipodi:r2="352.33307" sodipodi:r1="927.19232" sodipodi:cy="309.30664" sodipodi:cx="158.33333" sodipodi:sides="5" id="path3656-2" style="fill:#ffff00;fill-opacity:1;stroke:none" sodipodi:type="star"/>
+      <path sodipodi:nodetypes="ccccccccccccccccccsc" id="path3997" d="m 511.38738,392.65404 -72.67746,224.99281 72.29949,100.63349 0.37797,-325.6263 z m -0.38925,325.59799 c 0,0 309.23567,-100.95993 309.23567,-100.95993 l -236.42734,0.40794 c 0,0 -72.80833,100.55199 -72.80833,100.55199 z M 202.28693,617.00006 c 0,0 191.52169,138.62598 191.52169,138.62598 0,0 117.19673,-37.40904 117.19673,-37.40904 0,0 -308.71842,-101.21694 -308.71842,-101.21694 z m 308.52709,101.26072 c 0,0 -190.64482,262.00623 -190.64482,262.00623 L 511.18565,840.97952 510.81402,718.26078 z m -0.0756,-0.17343 c 0,0 191.31799,262.38749 191.31799,262.38749 0,0 -73.44956,-224.73331 -73.44956,-224.73331 0,0 -117.86843,-37.65418 -117.86843,-37.65418 z" style="fill:#f1d009;fill-opacity:1;stroke:none"/>
+    </g>
+  </g>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Open Clip Art Library</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>3D Spiral Star</dc:title>
+        <dc:date>2010-03-23T22:23:16</dc:date>
+        <dc:description>A 3D star</dc:description>
+        <dc:source>http://openclipart.org/detail/33619/3d-spiral-star-by-badtheba</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>badtheba</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>3D</rdf:li>
+            <rdf:li>clip art</rdf:li>
+            <rdf:li>clipart</rdf:li>
+            <rdf:li>spiral</rdf:li>
+            <rdf:li>star</rdf:li>
+            <rdf:li>yellow</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

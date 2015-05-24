@@ -1017,18 +1017,9 @@ sub ElectricArc.stepArcs(timestep as double)
             curArc->p = int(rnd * (curArc->period_max - curArc->period_min)) + curArc->period_min
             curArc->curSplit = curSplits
         else
-            lvl = 0
-            cnt = 1 shl lvl
-            persist = 4
             for i = 0 to curArc->curSplit-1
                 curArc->splits[i].xs += curArc->drifts[i].xs
                 curArc->splits[i].ys += curArc->drifts[i].ys
-                cnt -= 1
-                if cnt = 0 then
-                    lvl += 1
-                    cnt = 1 shl lvl
-                    persist *= 0.5
-                end if
             next i
             curArc->p -= 1
         end if     
@@ -1130,39 +1121,6 @@ sub ElectricArc.drawArcs(scnbuff as integer ptr)
     accSquareR5()
     compSquareR1(pxldata)
    
-    
-
-    'for yi = 0 to blockH-1
-    '    for xi = 0 to blockW-1
-    '        'line scnbuff, (xi*BLOCK_SIZE,yi*BLOCK_SIZE)-(xi*BLOCK_SIZE+BLOCK_SIZE-1,yi*BLOCK_SIZE+BLOCK_SIZE-1), activeBlockFiles[yi*blockW+xi]*&h00ff00, BF
-    '    next xi
-    'next yi
-    
-    /'
-    for yi = 0 to planeHeight-1
-        for xi = 0 to planeWidth-1
-            if arcSmoothData[yi*planeWidth+xi] <> 0 then
-                blockaddr = arcSmoothData[yi*planeWidth+xi]
-                
-                '1803, 23 bits
-
-
-                blockaddr = int(blockaddr * 64) - 1
-                /'
-                if blockaddr > 255 then 
-                    print blockaddr
-                    beep
-                end if
-                if blockaddr < 0 then 
-                    print blockaddr
-                    beep
-                end if
-                '/
-                pset scnbuff, (xi, yi), rgb(blockaddr, blockaddr, blockaddr)
-            end if
-        next xi
-    next yi
-    '/
     
 
     wipeMemory()

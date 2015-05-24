@@ -92,7 +92,8 @@ if success = 0 then
             if y = 0 then
                 upHeight = curHeight
             else
-                if curBound = point(x, y-1, boundary_map) then
+                if (curBound = point(x, y-1, boundary_map)) andAlso _
+                   (point(x, y-1, diffuse_map) <> &hffff00ff) then
                     upHeight = point(x, y-1, height_map) and &hff
                 else
                     upHeight = curHeight
@@ -101,7 +102,8 @@ if success = 0 then
             if y = imgH-1 then
                 downHeight = curHeight
             else
-                if curBound = point(x, y+1, boundary_map) then
+                if (curBound = point(x, y+1, boundary_map)) andAlso _
+                   (point(x, y+1, diffuse_map) <> &hffff00ff) then
                     downHeight = point(x, y+1, height_map) and &hff
                 else
                     downHeight = curHeight
@@ -110,7 +112,8 @@ if success = 0 then
             if x = 0 then
                 leftHeight = curHeight
             else
-                if curBound = point(x-1, y, boundary_map) then
+                if (curBound = point(x-1, y, boundary_map)) andAlso _
+                   (point(x-1, y, diffuse_map) <> &hffff00ff) then
                     leftHeight = point(x-1, y, height_map) and &hff
                 else
                     leftHeight = curHeight
@@ -119,7 +122,8 @@ if success = 0 then
             if x = imgW-1 then
                 rightHeight = curHeight
             else
-                if curBound = point(x+1, y, boundary_map) then
+                if (curBound = point(x+1, y, boundary_map)) andAlso _
+                   (point(x+1, y, diffuse_map) <> &hffff00ff) then
                     rightHeight = point(x+1, y, height_map) and &hff
                 else
                     rightHeight = curHeight
@@ -391,10 +395,12 @@ if success = 0 then
                 col = point(x, y, renderScale)
                 offX = WINDOW_W*0.5 - imgW + x*2 + xshift
                 offY = WINDOW_H*0.5 - imgH + y*2 + yshift
-                pset workArea, (offX  , offY  ), col
-                pset workArea, (offX+1, offY  ), col
-                pset workArea, (offX  , offY+1), col
-                pset workArea, (offX+1, offY+1), col
+                if col <> &hffff00ff then
+                    pset workArea, (offX  , offY  ), col
+                    pset workArea, (offX+1, offY  ), col
+                    pset workArea, (offX  , offY+1), col
+                    pset workArea, (offX+1, offY+1), col
+                end if
             next x
         next y
         

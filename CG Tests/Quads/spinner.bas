@@ -219,10 +219,10 @@ sub drawHexPrism(scnptr as integer ptr, x as integer, y as integer,_
     
     imageinfo tex, tex_w, tex_h
     
-    v.Z_PLANE = 256
+    v.Z_PLANE = 768
     v.center_x = x
     v.center_y = y
-    v.cam_z = -256
+    v.cam_z = -768
     
     angle = wrap(angle)
     
@@ -290,7 +290,7 @@ do
     'cls
     line buffer, (0,0)-(639, 479), 0, BF
     
-    drawHexPrism buffer, 320, 29, angle, 46, 43, image, 48, 48, &b0000000000111111
+    drawHexPrism buffer, 320, 240, angle, 300, 260, image, 48, 48, &b0000000000111111
 
     put (0,0), buffer, PSET
     
