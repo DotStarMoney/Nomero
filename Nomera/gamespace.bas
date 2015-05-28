@@ -35,20 +35,23 @@ constructor GameSpace()
     soundFX.init()
     effects.setLink(link)
     spy.setLink(link)
-    
+    dynControl.setLink(link)
+    lvlData.setLink(link)
+	projectiles.setLink(link)
+
+
     movingFrmAvg = 0.016
     vibcount = 0
 	lockAction = 0
 	winStatus = 0
     lvlData.init(@graphicFX)
-    lvlData.setLink(link)
+    
     lvlData.load(command(1))
     world.setBlockData(lvlData.getCollisionLayerData(),_
                        lvlData.getWidth(), lvlData.getHeight(),_
                        16.0)
     fadeoutTex = 0
     bailFrame = 0         
-    dynControl.setLink(link)
     graphicFX.setParent(@effects, @projectiles)
     
     spy.body.r = 18
@@ -59,7 +62,6 @@ constructor GameSpace()
     spy.body.friction = 2
 
 	
-	projectiles.setLink(link)
     effects.setParent(@this, @lvlData)
     projectiles.setParent(@world, @lvlData, @this)
     spy.setParent(@world, @lvlData, @projectiles, @this)
@@ -118,9 +120,7 @@ constructor GameSpace()
     stallTime_mili = 15
     movingFrmAvg = 0
     shake = 0 
-   
-    dynControl.addOneItem(Vector2D(303, 877), ITEM_LIGHT, 0)
-   
+      
     timeBeginPeriod(SLEEP_RESOLUTION)
 
 end constructor
@@ -370,7 +370,7 @@ sub GameSpace.step_draw()
     tracker.record_draw(scnbuff)
     RECORD_PROFILE(3)
 
-
+    
 	#ifndef SCALE_2X
 	    window screen (0,0)-(SCRX-1,SCRY-1)
 		put (0,0), scnbuff, PSET

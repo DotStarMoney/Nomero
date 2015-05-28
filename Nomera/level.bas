@@ -7,6 +7,7 @@
 #include "projectilecollection.bi"
 #include "player.bi"
 #include "soundeffects.bi"
+#include "item.bi"
 #include "fbpng.bi"
 
 dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
@@ -255,7 +256,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     dim as integer row_c, nextTile
     dim as integer retrieve
     dim as double newcx, newcy
-    dim as integer tilePosX, tilePosY
+    dim as integer tilePosX, tilePosY, nLights
     dim as double rand
     dim as Level_EffectData tempEffect
     
@@ -271,27 +272,105 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
         y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
     end if
     
+    nLights = lightList_N
+    if nLights > 3 then nLights = 3
     rand = rnd
 	
-    for yscan = tl_y to br_y
-        for xscan = tl_x to br_x
-            block = blocks[lyr][yscan * lvlWidth + xscan]
-            if block.tileset < 65535 then
-                
-                row_c = tilesets[block.tileset].row_count
-                tilePosX = ((block.tileNum - 1) mod row_c) * 16
-                tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
+    if layerData[lyr].illuminated <> 65535 then
+        
+        if layerData[lyr].receiver <> 65535 then
+            for yscan = tl_y to br_y
+                for xscan = tl_x to br_x
+                    block = blocks[lyr][yscan * lvlWidth + xscan]
+                    if block.tileset < 65535 then
+                        
+                        row_c = tilesets[block.tileset].row_count
+                        tilePosX = ((block.tileNum - 1) mod row_c) * 16
+                        tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
 
-                if layerData[lyr].illuminated <> 65535 then
-                    tilesets[block.tileset].set_image.putTRANS_1xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
-                                                                       tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
-                                                                       layerData[lyr].ambientLevel, lightList[0].texture)                                            
-                else
+                        select case nLights
+                        case 0
+                            tilesets[block.tileset].set_image.putTRANS_0xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                               tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
+                                                                               layerData[lyr].ambientLevel)    
+                        case 1
+                            tilesets[block.tileset].set_image.putTRANS_1xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                               tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
+                                                                               layerData[lyr].ambientLevel, lightList[0].texture)   
+                        case 2
+                            tilesets[block.tileset].set_image.putTRANS_2xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                               tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
+                                                                               layerData[lyr].ambientLevel, lightList[0].texture, lightList[1].texture)
+                        case 3
+                            tilesets[block.tileset].set_image.putTRANS_3xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                                   tilePosX, tilePosY, tilePosX + 15, tilePosY + 15, _
+                                                                                   layerData[lyr].ambientLevel, lightList[0].texture, _
+                                                                                                                lightList[1].texture, _
+                                                                                                                lightList[2].texture)
+                        end select
+                        
+                      
+                                                                                                 
+                        
+                    end if
+                next xscan
+            next yscan
+        else
+            for yscan = tl_y to br_y
+                for xscan = tl_x to br_x
+                    block = blocks[lyr][yscan * lvlWidth + xscan]
+                    if block.tileset < 65535 then
+                        
+                        row_c = tilesets[block.tileset].row_count
+                        tilePosX = ((block.tileNum - 1) mod row_c) * 16
+                        tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
+
+                        select case nLights
+                        case 0
+                            tilesets[block.tileset].set_image.putTRANS_0xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                               tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
+                                                                               layerData[lyr].ambientLevel)    
+                        case 1
+                            tilesets[block.tileset].set_image.putTRANS_1xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                               tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
+                                                                               layerData[lyr].ambientLevel, lightList[0].texture)   
+                        case 2
+                            tilesets[block.tileset].set_image.putTRANS_2xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                               tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
+                                                                               layerData[lyr].ambientLevel, lightList[0].texture, lightList[1].texture)
+                        case 3
+                            tilesets[block.tileset].set_image.putTRANS_3xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
+                                                                                   tilePosX, tilePosY, tilePosX + 15, tilePosY + 15, _
+                                                                                   layerData[lyr].ambientLevel, lightList[0].texture, _
+                                                                                                                lightList[1].texture, _
+                                                                                                                lightList[2].texture)
+                        end select
+                        
+                      
+                                                                                                 
+                        
+                    end if
+                next xscan
+            next yscan        
+        end if
+    else
+        for yscan = tl_y to br_y
+            for xscan = tl_x to br_x
+                block = blocks[lyr][yscan * lvlWidth + xscan]
+                if block.tileset < 65535 then
+                    
+                    row_c = tilesets[block.tileset].row_count
+                    tilePosX = ((block.tileNum - 1) mod row_c) * 16
+                    tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
+
+                  
                     tilesets[block.tileset].set_image.putTRANS(scnbuff, xscan*16 + x, yscan*16 + y, tilePosX, tilePosY, tilePosX + 15, tilePosY + 15)
                 end if
-            end if
-        next xscan
-    next yscan
+            next xscan
+        next yscan
+    end if
+    
+
  
 end sub
 
@@ -707,8 +786,16 @@ function Level.getDefaultPos() as Vector2D
 	return Vector2D(default_x * 16, default_y * 16)
 end function
 
+sub level.processLights()
+    'cast shadows per light into shaded
+    
+    
+
+end sub
+
 sub level.process(t as double)
     lightList_N = link.dynamiccontroller_ptr->populateLightList(lightList)    
+    processLights()
 end sub
 
 sub level.load(filename as string)
@@ -880,6 +967,8 @@ sub level.load(filename as string)
             get #f,,layerData[lyr].illuminated
             get #f,,layerData[lyr].ambientLevel
             get #f,,layerData[lyr].coverage
+            get #f,,layerData[lyr].receiver
+            get #f,,layerData[lyr].occluding
             
             select case layerData[lyr].inRangeSet
             case BACKGROUND
@@ -943,7 +1032,12 @@ sub level.load(filename as string)
         end if
     next i
     
+    #ifdef DEBUG
+        printlog "Loading objects..."
+    #endif
+    
     get #f,,numObjs
+    
     for i = 0 to numObjs - 1 
         get #f,,tempObj.object_name
         get #f,,tempObj.object_type
@@ -955,10 +1049,20 @@ sub level.load(filename as string)
         case EFFECT
             get #f,,objField(0)
             get #f,,objField(1)
-            graphicFX_->create(tempObj.object_name, objField(0),_
-                               tempObj.object_shape, tempObj.p,_
-                               tempObj.size, objField(1),_
-                               tempObj.inRangeSet)
+            get #f,,objField(2) 'minValue
+            get #f,,objField(3) 'maxValue
+            get #f,,objField(4) 'mode
+            
+            if objField(0) >= LIGHT_EFFECT_VALUE then
+                link.dynamiccontroller_ptr->addOneItem(tempObj.p, ITEM_LIGHT, objField(0) - LIGHT_EFFECT_VALUE,_
+                                                       objField(2) / 65535.0, objField(3) / 65535.0, objField(4))
+            else
+                graphicFX_->create(tempObj.object_name, objField(0),_
+                                   tempObj.object_shape, tempObj.p,_
+                                   tempObj.size, objField(1),_
+                                   tempObj.inRangeSet)
+            end if
+            
         case PORTAL
             get #f,,strdata
             tempPortal.to_map = allocate(len(strdata) + 1)
@@ -986,7 +1090,7 @@ sub level.load(filename as string)
 													 tempSingleField)
         end select
     next i
-
+    
     #ifdef DEBUG
         printlog str(blocks_N) & ", " & tilesets_N
         stall(100)

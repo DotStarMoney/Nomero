@@ -946,35 +946,42 @@ End Function
 function circleBox(px as double, py as double, rad as double,_
                    x1 as double, y1 as double,_
                    x2 as double, y2 as double) as integer
-    dim as integer dx, dy, x, y, c=0
-    x=px
+    dim as integer dx, dy, x, y, c
+    c = 0
+    x = px
     rad *= rad
-    if x<x1 then
-        x=x1
+    if x < x1 then
+        x = x1
         c = 1
-    elseif x>x2 then
-        x=x2
+    elseif x > x2 then
+        x = x2
         c = 1
     end if
-    x = x - px: x *= x
-    dy = y1 - py: dy *= dy
-    if x+dy<rad then return 1
-    dy = y2 - py: dy *= dy
-    if x+dy<rad then return 1
-    y=py
-    if y<y1 then
-        y=y1
-        c=1
-    elseif y>y2 then
-        y=y2
-        c=1
+    x = x - px
+    x *= x
+    dy = y1 - py
+    dy *= dy
+    if x + dy < rad then return 1
+    dy = y2 - py
+    dy *= dy
+    if x + dy < rad then return 1
+    y = py
+    if y < y1 then
+        y = y1
+        c = 1
+    elseif y > y2 then
+        y = y2 
+        c = 1
     end if
-    y = y - py: y *= y
-    dx = x1 - px: dx *= dx
-    if y+dx<rad then return 1
-    dx = x2 - px: dx *= dx
-    if y+dx<rad then return 1
-    if c=0 then return 1
+    y = y - py
+    y *= y
+    dx = x1 - px
+    dx *= dx
+    if y + dx < rad then return 1
+    dx = x2 - px
+    dx *= dx
+    if y + dx < rad then return 1
+    if c = 0 then return 1
     return 0
 end function 
 
@@ -999,6 +1006,806 @@ sub allocateAlligned(byref basePtr as any ptr, byref allignedPtr as any ptr, byt
                   and (not (ALLIGNMENT - 1)))
                   
 end sub
+
+function lineCircleCollision(p as Vector2D, r as double, a as Vector2D, b as Vector2D, byref ret1 as vector2D, byref ret2 as vector2D) as integer
+    dim as Vector2D dl, dr
+    dim as double x0, x1, x2
+    dim as double disc, t1, t2
+    
+    dl = b - a
+    dr = a - p
+    x0 = dl*dl
+    x1 = 2*(dl*dr)
+    x2 = dr*dr - r*r
+    
+    disc = x1*x1 - 4*x0*x2
+    
+    if disc < 0 then 
+        return 0
+    else
+        disc = sqr(disc)
+        t1 = (-x1 - disc) / (2*x0)
+        t2 = (-x1 + disc) / (2*x0)
+        
+        if (t1 >= 0) andAlso (t1 <= 1) then
+            if (t2 >= 0) andAlso (t2 <= 1) then
+                ret1 = t1*dl + a
+                ret2 = t2*dl + a
+                return 2
+            else
+                ret1 = t1*dl + a
+                return 1
+            end if
+        elseif (t2 >= 0) andAlso (t2 <= 1) then
+            ret1 = t2*dl + a
+            return 1
+        else
+            return 0
+        end if
+    end if
+
+end function
+
+function angDist(a as double, b as double) as double
+    dim as double ret
+
+    ret = b - a
+    if ret > PI then 
+        ret -= 2*PI
+    elseif ret < -PI then
+        ret += 2*PI
+    end if
+    
+    return ret
+end function
+
+function windowCircleIntersect(tl as Vector2d, br as Vector2d,_
+                               p as Vector2d, r as double, byref ret as windowCircleIntersectData_t) as integer
+                          
+    #macro TEST_ADD_LINE(_A_, _B_)
+        npts = lineCircleCollision(p, r, _A_, _B_, ptA, ptB)
+        if npts > 0 then
+            p_list(p_list_N) = ptA: p_list_N += 1
+        end if
+        if npts > 1 then
+            p_list(p_list_N) = ptB: p_list_N += 1
+        end if
+    #endmacro
+    
+    dim as double dx, dy, nx, ny
+    dim as Vector2D p_list(0 to 7), ptA, ptB, m
+    dim as Vector2D minP, maxP, nTl, nBr
+    dim as double p_listAngles(0 to 7)
+    dim as integer p_list_N, p_listAngles_N, npts, i, highI, lowI
+    
+    if circleBox(p.x, p.y, r, tl.x, tl.y, br.x, br.y) then
+        if (p.x >= tl.x) andAlso (p.y >= tl.y) andAlso (p.x <= br.x) andALso (p.y <= br.y) then
+            ret.tl_x = max(tl.x, p.x - r)
+            ret.tl_y = max(tl.y, p.y - r)
+            ret.br_x = min(br.x, p.x + r)
+            ret.br_y = min(br.y, p.y + r)           
+            ret.dx0 = 0: ret.dy0 = 0
+            ret.dx1 = 0: ret.dy1 = 0
+        else
+            p_list_N = 0
+            
+            TEST_ADD_LINE(Vector2D(tl.x, tl.y), Vector2D(br.x, tl.y))
+            TEST_ADD_LINE(Vector2D(br.x, tl.y), Vector2D(br.x, br.y))
+            TEST_ADD_LINE(Vector2D(br.x, br.y), Vector2D(tl.x, br.y))
+            TEST_ADD_LINE(Vector2D(tl.x, br.y), Vector2D(tl.x, tl.y))
+            m = Vector2D(tl.x, tl.y) - p
+            if m.magnitude() < r then 
+                p_list(p_list_N) = Vector2D(tl.x, tl.y): p_list_N += 1
+            end if
+            m = Vector2D(br.x, tl.y) - p
+            if m.magnitude() < r then 
+                p_list(p_list_N) = Vector2D(br.x, tl.y): p_list_N += 1
+            end if
+            m = Vector2D(br.x, br.y) - p
+            if m.magnitude() < r then 
+                p_list(p_list_N) = Vector2D(br.x, br.y): p_list_N += 1
+            end if
+            m = Vector2D(tl.x, br.y) - p
+            if m.magnitude() < r then 
+                p_list(p_list_N) = Vector2D(tl.x, br.y): p_list_N += 1
+            end if
+            
+            p_listAngles_N = p_list_N
+            highI = 0
+            lowI = 0
+            for i = 0 to p_listAngles_N - 1
+                p_listAngles(i) = atan2(p_list(i).y - p.y, p_list(i).x - p.x)
+                if angDist(p_listAngles(i), p_listAngles(highI)) < 0 then highI = i
+                if angDist(p_listAngles(i), p_listAngles(lowI)) > 0  then lowI = i
+            next i
+            
+            minP = p_list(lowI)
+            maxP = p_list(highI)
+   
+            nTl = Vector2D(min(min(minP.x, maxP.x), p.x), min(min(minP.y, maxP.y), p.y))
+            nBr = Vector2D(max(max(minP.x, maxP.x), p.x), max(max(minP.y, maxP.y), p.y))
+            
+            if p.y < tl.y then
+                if (p.x >= tl.x) andAlso (p.x <= br.x) then
+                    nBr = Vector2D(nBr.x, min(p.y + r, br.y))
+                end if
+            elseif p.y > br.y then
+                if (p.x >= tl.x) andAlso (p.x <= br.x) then
+                    nTl = Vector2D(nTl.x, max(p.y - r, tl.y))
+                end if    
+            elseif p.x < tl.x then
+                if (p.y >= tl.y) andAlso (p.y <= br.y) then
+                    nBr = Vector2D(min(p.x + r, br.x), nBr.y)
+                end if                
+            elseif p.x > br.x then
+                if (p.y >= tl.y) andAlso (p.y <= br.y) then
+                    nTl = Vector2D(max(p.x - r, tl.x), nTl.y)
+                end if                  
+            end if
+           
+            ret.tl_x = nTl.x
+            ret.tl_y = nTl.y
+            ret.br_x = nBr.x
+            ret.br_y = nBr.y
+            ret.dx0 = minP.x - p.x: ret.dy0 = minP.y - p.y
+            ret.dx1 = maxP.x - p.x: ret.dy1 = maxP.y - p.y
+   
+        end if
+    else
+        return 0
+    end if  
+    return 1
+end function
+
+Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, yp As Integer,_
+                     rad As integer, tcol As Integer = &HFF000000, memoryPool as integer ptr = 0)
+              
+    'may hit the skids when image pitch is not in words 
+    
+    'create region from circle window and copy occluders into it.
+    'feed data from circlewindow into pointcast
+    'set point cast to use three sources, occlude, write, and texture
+    'point cast into "shaded" version of lightpair
+    'store "last region" in level light memory
+    'write custom fast erase to draw over in black
+
+    #define _Ek 0
+    #define _Dn 1
+    #define _Dp 2
+    #define _Xd 3
+    #define _Xx 4
+        
+    #define SEARCH_LOOP 0
+    #define FILL_LOOP 1
+    
+    #define RR2 0.70710678118654
+    
+    #define MAX_DWORDS 512
+
+    #define ShadowsA(_I_, _P_) readList[(_I_)*5 + _P_]
+    #define ShadowsB(_I_, _P_) writeList[(_I_)*5 + _P_]
+
+    #macro _addelement(a)
+        ShadowsB(_N,_Xx) = a: ShadowsB(_N,_Xd) = Sgn(dx)
+        dx = Abs(dx): dy = Abs(dy)
+        ShadowsB(_N,_Ek) = dx SHL 1 - dy
+        ShadowsB(_N,_Dn) = ShadowsB(_N,_Ek) + dy
+        ShadowsB(_N,_Dp) = ShadowsB(_N,_Ek) - dy
+        _N += 1
+    #endmacro
+    
+    #macro _copyelement(x)
+        ShadowsB(_N,_Ek) = ShadowsA(x,_Ek)
+        ShadowsB(_N,_Dn) = ShadowsA(x,_Dn)
+        ShadowsB(_N,_Dp) = ShadowsA(x,_Dp)
+        ShadowsB(_N,_Xx) = ShadowsA(x,_Xx)
+        ShadowsB(_N,_Xd) = ShadowsA(x,_Xd)
+        _N += 1
+    #endmacro
+    
+    #macro _copylist()
+        swap readList, writeList
+    #endmacro
+        
+    dim as integer ptr readList, writeList, Sptr, tex
+    Dim As Integer inc, scan, xs, xe, yend = rad*RR2, xcirc, dx, dy, s1, s2, prad, oxs, oxe, txe
+    Dim As Integer xpos, ypos, segs, i, _N, ccol, LeftBnd, RightBnd, Offset, yadd,q
+    Dim As integer proc, checkAddr, cind, srcW, srcH, sourceStride, texOffset, texCurOffset
+    Dim As Integer QuadBnd(0 To 7, 0 To 4), WorkCol, destW, destH, destStride, texCenter
+    redim as integer CurveOff(0)
+    
+    imageinfo dest, destW, destH,, destStride, Sptr 
+    imageinfo source, srcW, srcH,, sourceStride, tex
+    sourceStride shr=2
+    destStride shr= 2
+    
+    if memoryPool = 0 then
+        readList  = new integer[MAX_DWORDS]
+        writeList = new integer[MAX_DWORDS]
+    else
+        readList = memoryPool
+        writeList = @(memoryPool[MAX_DWORDS])
+    end if
+    
+    texCenter = (srcW*0.5) + (srcH*0.5)*sourceStride
+    
+    QuadBnd(0,_Ek) = 1: QuadBnd(0,_Dn) = 2: QuadBnd(0,_Dp) = 0: QuadBnd(0,_Xd) = -1
+    QuadBnd(1,_Ek) = 1: QuadBnd(1,_Dn) = 2: QuadBnd(1,_Dp) = 0: QuadBnd(1,_Xd) =  1
+    QuadBnd(2,_Ek) = 1: QuadBnd(2,_Dn) = 2: QuadBnd(2,_Dp) = 0: QuadBnd(2,_Xd) = -1
+    QuadBnd(3,_Ek) = 1: QuadBnd(3,_Dn) = 2: QuadBnd(3,_Dp) = 0: QuadBnd(3,_Xd) =  1
+    QuadBnd(4,_Ek) = 1: QuadBnd(4,_Dn) = 2: QuadBnd(4,_Dp) = 0: QuadBnd(4,_Xd) =  1
+    QuadBnd(5,_Ek) = 1: QuadBnd(5,_Dn) = 2: QuadBnd(5,_Dp) = 0: QuadBnd(5,_Xd) = -1
+    QuadBnd(6,_Ek) = 1: QuadBnd(6,_Dn) = 2: QuadBnd(6,_Dp) = 0: QuadBnd(6,_Xd) =  1
+    QuadBnd(7,_Ek) = 1: QuadBnd(7,_Dn) = 2: QuadBnd(7,_Dp) = 0: QuadBnd(7,_Xd) = -1
+    
+    prad = rad-yend
+    redim as integer CurveOff(0 to prad-1)
+    dx = 0
+    dy = Rad
+    xs = 1 - Rad
+    i = prad
+    Do
+        If xs < 0 Then
+            xs += dx SHL 1 + 3
+        Else
+            xs += (dx - dy) SHL 1 + 5
+            CurveOff(i - 1) = dx
+            dy -= 1
+            i -= 1
+        End If
+        dx += 1
+    Loop Until i = 0
+    '-------------------------------------------------QUAD 1---------------------------------------
+    
+    if (yp > 0) andAlso (yp < destH) andAlso (xp > 0) andALso (xp < destW) then
+        checkAddr = yp*destStride+xp
+        if Sptr[checkAddr] = tcol then
+            Sptr[yp*destStride+xp] = Source[texCenter]
+        else
+            exit sub
+        end if
+    else
+        exit sub
+    end if
+    
+    if yp > 0 then
+        ShadowsA(0,_Ek) = QuadBnd(0,_Ek): ShadowsA(0,_Dn) = QuadBnd(0,_Dn): ShadowsA(0,_Dp) = QuadBnd(0,_Dp)
+        ShadowsA(0,_Xx) = xp: ShadowsA(0,_Xd) = QuadBnd(0,_Xd)
+        ShadowsA(1,_Ek) = QuadBnd(1,_Ek): ShadowsA(1,_Dn) = QuadBnd(1,_Dn): ShadowsA(1,_Dp) = QuadBnd(1,_Dp)
+        ShadowsA(1,_Xx) = xp: ShadowsA(1,_Xd) = QuadBnd(1,_Xd)
+        _N = 2
+        texOffset = texCenter
+        yadd = yp * destStride
+        If yp - rad < 0 Then 
+            prad = yp 
+        Else
+            prad = rad
+        Endif
+        For inc = 1 To prad
+            If inc > yend Then
+                xcirc = inc - yend - 1
+                RightBnd = xp + CurveOff(xcirc)
+                LeftBnd  = xp - CurveOff(xcirc)
+            Else
+                RightBnd = xp + inc - 1
+                LeftBnd  = xp - inc
+            End if
+            If RightBnd >= destW Then RightBnd = destW-1
+            If LeftBnd  <  0     Then LeftBnd  = 0
+            ypos = yp - inc
+            yadd -= destStride
+            texOffset -= sourceStride
+            segs = _N
+            _N = 0
+            For i = 0 To segs-1 Step 2
+                
+                s1 = i
+                s2 = i + 1
+
+                oxs = ShadowsA(s1,_Xx)
+                If ShadowsA(s1,_Ek) < 0 Then
+                    ShadowsA(s1,_Ek) += ShadowsA(s1,_Dn)
+                Else
+                    ShadowsA(s1,_Ek) += ShadowsA(s1,_Dp)
+                    ShadowsA(s1,_Xx) += ShadowsA(s1,_Xd)
+                End If
+                oxe = ShadowsA(s2,_Xx)
+                If ShadowsA(s2,_Ek) < 0 Then
+                    ShadowsA(s2,_Ek) += ShadowsA(s2,_Dn)
+                Else
+                    ShadowsA(s2,_Ek) += ShadowsA(s2,_Dp)
+                    ShadowsA(s2,_Xx) += ShadowsA(s2,_Xd)
+                End If
+                xs = ShadowsA(s1,_Xx)
+                xe = ShadowsA(s2,_Xx)
+                
+                If xe < LeftBnd Then 
+                    Goto SkipScanQ1
+                Elseif xs > RightBnd Then
+                    Goto SkipScanQ1
+                Elseif xs < LeftBnd Then
+                    xs = LeftBnd
+                End if
+                txe = xe
+                If xe > RightBnd Then xe = RightBnd
+                        
+                If (xs - oxs) < 0 then
+                    if (Sptr[yadd+xs+1] <> tcol) andAlso (Sptr[yadd+xs+destStride] <> tcol) then
+                        xs += 1
+                    end if
+                end if
+                If (txe - oxe) > 0 andAlso xe > 0 then
+                    if (Sptr[yadd+xe-1] <> tcol) andAlso (Sptr[yadd+xe+destStride] <> tcol) then
+                        xe -= 1
+                    end if
+                end if
+                
+                if xe < xs then goto SkipScanQ1
+
+                xpos = xs
+                texCurOffset = texOffset + (xs - xp)
+                If Sptr[yadd+xpos] <> tcol Then
+                    Do
+                        xpos += 1
+                        texCurOffset += 1
+                        If xpos >= xe Then Goto SkipScanQ1
+                        ccol = Sptr[yadd+xpos]
+                        If ccol = tcol Then
+                            If xpos < xe Then
+                                dx = xpos-xp: dy = inc
+                                _addelement(xpos)
+                            Else
+                                Sptr[yadd+xpos] = tex[texCurOffset]
+                            End if
+                            Exit Do
+                        End if
+                    Loop
+                Else
+                    _copyelement(s1)
+                End if
+                
+                proc = FILL_LOOP
+                
+                Do
+                    if proc = FILL_LOOP then
+                        If Sptr[yadd+xpos] <> tcol Then
+                            dx = xpos-xp-1: dy = inc
+                            _addelement(xpos-1)
+                            proc = SEARCH_LOOP
+                        Else
+                            Sptr[yadd+xpos] = tex[texCurOffset]
+                        End if
+                    else
+                        If Sptr[yadd+xpos] = tcol Then
+                            dx = xpos-xp: dy = inc 
+                            _addelement(xpos)
+                            Proc = FILL_LOOP
+                            Sptr[yadd+xpos] = tex[texCurOffset]
+                        End if
+                    end if
+                    xpos += 1
+                    texCurOffset += 1
+                Loop until xpos > xe
+                
+                If _N Mod 2 = 1 Then
+                    _copyelement(s2)
+                End if
+                SkipScanQ1:    
+            Next i
+            If _N = 0 Then Exit For
+            _copylist()
+        Next inc
+    end if
+    
+    '----------------------------------------------------QUAD 2------------------------------------
+    
+    if xp < destW then
+        
+        ShadowsA(0,_Ek) = QuadBnd(2,_Ek): ShadowsA(0,_Dn) = QuadBnd(2,_Dn): ShadowsA(0,_Dp) = QuadBnd(2,_Dp)
+        ShadowsA(0,_Xx) = yp: ShadowsA(0,_Xd) = QuadBnd(2,_Xd)
+        ShadowsA(1,_Ek) = QuadBnd(3,_Ek): ShadowsA(1,_Dn) = QuadBnd(3,_Dn): ShadowsA(1,_Dp) = QuadBnd(3,_Dp)
+        ShadowsA(1,_Xx) = yp: ShadowsA(1,_Xd) = QuadBnd(3,_Xd)
+        _N = 2
+        texOffset = texCenter
+        If xp + rad >= destW Then
+            prad = destW-xp-1
+        Else
+            prad = rad
+        Endif
+        For inc = 1 To prad
+            If inc > yend Then
+                xcirc = inc - yend - 1
+                RightBnd = yp + CurveOff(xcirc)
+                LeftBnd  = yp - CurveOff(xcirc)
+            Else
+                RightBnd = yp + inc - 1
+                LeftBnd  = yp - inc
+            Endif
+            If RightBnd >= destH Then RightBnd = destH-1
+            If LeftBnd  <  0     Then LeftBnd  = 0
+            xpos = xp + inc
+            texOffset += 1
+            segs = _N
+            _N = 0
+            For i = 0 To segs-1 Step 2               
+                s1 = i
+                s2 = i + 1
+                
+                oxs = ShadowsA(s1,_Xx)
+                If ShadowsA(s1,_Ek) < 0 Then
+                    ShadowsA(s1,_Ek) += ShadowsA(s1,_Dn)
+                Else
+                    ShadowsA(s1,_Ek) += ShadowsA(s1,_Dp)
+                    ShadowsA(s1,_Xx) += ShadowsA(s1,_Xd)
+                End If
+                oxe = ShadowsA(s2,_Xx)
+                If ShadowsA(s2,_Ek) < 0 Then
+                    ShadowsA(s2,_Ek) += ShadowsA(s2,_Dn)
+                Else
+                    ShadowsA(s2,_Ek) += ShadowsA(s2,_Dp)
+                    ShadowsA(s2,_Xx) += ShadowsA(s2,_Xd)
+                End If
+                
+                xs = ShadowsA(s1,_Xx)
+                xe = ShadowsA(s2,_Xx)
+                
+                If xe < LeftBnd Then 
+                    Goto SkipScanQ2
+                Elseif xs > RightBnd Then
+                    Goto SkipScanQ2
+                Elseif xs < LeftBnd Then
+                    xs = LeftBnd
+                End if
+                txe = xe
+                If xe > RightBnd Then xe = RightBnd
+                
+                
+                If (xs - oxs) < 0 then
+                    checkAddr = xs*destStride + xpos
+                    if (Sptr[checkAddr + destStride] <> tcol) andAlso (Sptr[checkAddr - 1] <> tcol) then
+                        xs += 1
+                    end if
+                end if
+                
+                If (txe - oxe) > 0 andAlso xe > 0 then
+                    checkAddr = xe*destStride + xpos
+                    if (Sptr[checkAddr - destStride] <> tcol) andAlso (Sptr[checkAddr - 1] <> tcol) then
+                        xe -= 1
+                    end if
+                end if                
+                
+                if xe < xs then goto SkipScanQ2
+                
+                ypos = xs
+                yadd = xs * destStride
+                texCurOffset = texOffset + (xs - yp)*sourceStride
+                If Sptr[yadd+xpos] <> tcol Then
+                    Do
+                        ypos += 1
+                        yadd += destStride
+                        texCurOffset += sourceStride
+                        If ypos >= xe Then Goto SkipScanQ2
+                        ccol = Sptr[yadd+xpos]
+                        If ccol = tcol Then
+                            If ypos < xe Then
+                                dx = ypos-yp: dy = inc
+                                _addelement(ypos)
+                            Else
+                                Sptr[yadd+xpos] = tex[texCurOffset]
+                            End if
+                            Exit Do
+                        Endif
+                    Loop
+                Else
+                    _copyelement(s1)
+                End if
+
+                proc = FILL_LOOP
+                Do
+                    if proc = FILL_LOOP then
+                        If Sptr[yadd+xpos] <> tcol Then
+                            dx = ypos-yp-1: dy = inc
+                            _addelement(ypos-1)
+                            proc = SEARCH_LOOP
+                        Else
+                            Sptr[yadd+xpos] = tex[texCurOffset]
+                        End if 
+                    else
+                        If Sptr[yadd+xpos] = tcol Then
+                            dx = ypos-yp: dy = inc
+                            _addelement(ypos)
+                            proc = FILL_LOOP
+                            Sptr[yadd+xpos] = tex[texCurOffset]
+                        End if
+                    end if
+                    ypos += 1
+                    yadd += destStride
+                    texCurOffset += sourceStride
+                Loop until ypos > xe
+                
+                If _N Mod 2 = 1 Then
+                    _copyelement(s2)
+                End if
+
+                SkipScanQ2:
+            Next i
+        
+            If _N = 0 Then Exit For
+            _copylist()
+            
+        Next inc
+    end if
+    
+
+    '------------------------------------------------QUAD 3---------------------------------------
+    if yp < destH then
+        ShadowsA(0,_Ek) = QuadBnd(4,_Ek): ShadowsA(0,_Dn) = QuadBnd(4,_Dn): ShadowsA(0,_Dp) = QuadBnd(4,_Dp)
+        ShadowsA(0,_Xx) = xp: ShadowsA(0,_Xd) = QuadBnd(4,_Xd)
+        ShadowsA(1,_Ek) = QuadBnd(5,_Ek): ShadowsA(1,_Dn) = QuadBnd(5,_Dn): ShadowsA(1,_Dp) = QuadBnd(5,_Dp)
+        ShadowsA(1,_Xx) = xp: ShadowsA(1,_Xd) = QuadBnd(5,_Xd)
+        texOffset = texCenter
+        yadd = yp * destStride
+        If yp + rad >= destH Then
+            prad = destH-yp-1
+        Else
+            prad = rad
+        Endif
+        _N = 2
+        For inc = 1 To prad
+            If inc > yend Then
+                xcirc = inc - yend - 1
+                RightBnd = xp + CurveOff(xcirc)
+                LeftBnd  = xp - CurveOff(xcirc)
+            Else
+                RightBnd = xp + inc
+                LeftBnd  = xp - inc + 1
+            End if
+            If RightBnd >= destW Then RightBnd = destW - 1
+            If LeftBnd  <  0     Then LeftBnd  = 0
+            ypos = yp + inc
+            yadd += destStride
+            texOffset += sourceStride
+            segs = _N
+            _N = 0
+            For i = 0 To segs-1 Step 2
+                
+                s1 = i
+                s2 = i + 1
+                oxs = ShadowsA(s1,_Xx)
+                If ShadowsA(s1,_Ek) < 0 Then
+                    ShadowsA(s1,_Ek) += ShadowsA(s1,_Dn)
+                Else
+                    ShadowsA(s1,_Ek) += ShadowsA(s1,_Dp)
+                    ShadowsA(s1,_Xx) += ShadowsA(s1,_Xd)
+                End If
+                oxe = ShadowsA(s2,_Xx)
+                If ShadowsA(s2,_Ek) < 0 Then
+                    ShadowsA(s2,_Ek) += ShadowsA(s2,_Dn)
+                Else
+                    ShadowsA(s2,_Ek) += ShadowsA(s2,_Dp)
+                    ShadowsA(s2,_Xx) += ShadowsA(s2,_Xd)
+                End If
+                xs = ShadowsA(s1,_Xx)
+                xe = ShadowsA(s2,_Xx)
+                
+                If xe > RightBnd Then 
+                    Goto SkipScanQ3
+                Elseif xs < LeftBnd Then
+                    Goto SkipScanQ3
+                Elseif xs > RightBnd Then
+                    xs = RightBnd
+                End if
+                
+                txe = xe
+                If xe < LeftBnd Then xe = LeftBnd
+                
+                If (xs - oxs) > 0 andalso xs > 0 then
+                    if (Sptr[yadd+xs-1] <> tcol) andAlso (Sptr[yadd+xs-destStride] <> tcol) then
+                        xs -= 1
+                    end if
+                end if
+                If (txe - oxe) < 0 then
+                    if (Sptr[yadd+xe+1] <> tcol) andAlso (Sptr[yadd+xe-destStride] <> tcol) then
+                        xe += 1
+                    end if
+                end if
+                
+                if xe > xs then goto SkipScanQ3
+
+                xpos = xs
+                texCurOffset = texOffset + (xs - xp)
+                If Sptr[yadd+xpos] <> tcol Then
+                    Do
+                        xpos -= 1
+                        texCurOffset -= 1
+                        If xpos <= xe Then Goto SkipScanQ3
+                        ccol = Sptr[yadd+xpos]
+                        If ccol = tcol Then
+                            If xpos > xe Then
+                                dx = xpos-xp: dy = inc
+                                _addelement(xpos)
+                            Else
+                                Sptr[yadd+xpos] = tex[texCurOffset]
+                            End if
+                            Exit Do
+                        End if
+                    Loop
+                Else
+                    _copyelement(s1)
+                End if
+                
+                proc = FILL_LOOP
+                Do
+                    if proc = FILL_LOOP then
+                        If Sptr[yadd+xpos] <> tcol Then
+                            dx = xpos-xp+1: dy = inc
+                            _addelement(xpos+1)
+                            proc = SEARCH_LOOP
+                        Else
+                            Sptr[yadd+xpos] = tex[texCurOffset]
+                        End if
+                    else
+                        If Sptr[yadd+xpos] = tcol Then
+                            dx = xpos-xp: dy = inc 
+                            _addelement(xpos)
+                            proc = FILL_LOOP
+                            Sptr[yadd+xpos] = tex[texCurOffset]
+                        End if                   
+                    end if
+                    xpos -= 1
+                    texCurOffset -= 1
+                Loop until xpos < xe
+                
+                If _N Mod 2 = 1 Then
+                    _copyelement(s2)
+                End if
+                SkipScanQ3:
+            Next i
+            If _N = 0 Then Exit For
+            _copylist()
+        Next inc
+    end if
+    
+    '------------------------------------------------QUAD 4---------------------------------------
+    if xp > 0 then
+        ShadowsA(0,_Ek) = QuadBnd(6,_Ek): ShadowsA(0,_Dn) = QuadBnd(6,_Dn): ShadowsA(0,_Dp) = QuadBnd(6,_Dp)
+        ShadowsA(0,_Xx) = yp: ShadowsA(0,_Xd) = QuadBnd(6,_Xd)
+        ShadowsA(1,_Ek) = QuadBnd(7,_Ek): ShadowsA(1,_Dn) = QuadBnd(7,_Dn): ShadowsA(1,_Dp) = QuadBnd(7,_Dp)
+        ShadowsA(1,_Xx) = yp: ShadowsA(1,_Xd) = QuadBnd(7,_Xd)
+        texOffset = texCenter
+        _N = 2
+        If xp - rad < 0 Then
+            prad = xp
+        Else
+            prad = rad
+        End if
+        For inc = 1 To prad
+            If inc > yend Then
+                xcirc = inc - yend - 1
+                RightBnd = yp + CurveOff(xcirc)
+                LeftBnd  = yp - CurveOff(xcirc)
+            Else
+                RightBnd = yp + inc
+                LeftBnd  = yp - inc + 1
+            End if
+            If RightBnd >= destH Then RightBnd = destH-1
+            If LeftBnd  <  0     Then LeftBnd  = 0
+            xpos = xp - inc
+            texOffset -= 1
+            segs = _N
+            _N = 0
+            For i = 0 To segs-1 Step 2
+                
+                s1 = i
+                s2 = i + 1
+                oxs = ShadowsA(s1,_Xx)
+                If ShadowsA(s1,_Ek) < 0 Then
+                    ShadowsA(s1,_Ek) += ShadowsA(s1,_Dn)
+                Else
+                    ShadowsA(s1,_Ek) += ShadowsA(s1,_Dp)
+                    ShadowsA(s1,_Xx) += ShadowsA(s1,_Xd)
+                End If
+                oxe = ShadowsA(s2,_Xx)
+                If ShadowsA(s2,_Ek) < 0 Then
+                    ShadowsA(s2,_Ek) += ShadowsA(s2,_Dn)
+                Else
+                    ShadowsA(s2,_Ek) += ShadowsA(s2,_Dp)
+                    ShadowsA(s2,_Xx) += ShadowsA(s2,_Xd)
+                End If
+                xs = ShadowsA(s1,_Xx)
+                xe = ShadowsA(s2,_Xx)
+                
+                If xe > RightBnd Then 
+                    Goto SkipScanQ4
+                Elseif xs < LeftBnd Then
+                    Goto SkipScanQ4
+                Elseif xs > RightBnd Then
+                    xs = RightBnd
+                End if
+                
+                txe = xe
+                If xe < LeftBnd Then xe = LeftBnd
+                
+                
+                If (xs - oxs) > 0 andalso xs > 0 then
+                    checkAddr = xs*destStride + xpos
+                    if (Sptr[checkAddr - destStride] <> tcol) andAlso (Sptr[checkAddr + 1] <> tcol) then
+                        xs -= 1
+                        
+                    end if
+                end if
+                If (txe - oxe) < 0 then
+                    checkAddr = xe*destStride + xpos
+                    if (Sptr[checkAddr + destStride] <> tcol) andAlso (Sptr[checkAddr + 1] <> tcol) then
+                        xe += 1
+                    end if
+                end if
+                
+                if xe > xs then goto SkipScanQ4
+                
+                ypos = xs
+                yadd = xs * destStride
+                texCurOffset = texOffset + (xs - yp)*sourceStride
+                If Sptr[yadd+xpos] <> tcol Then
+                    Do
+                        ypos -= 1
+                        yadd -= destStride
+                        texCurOffset -= sourceStride
+                        If ypos <= xe Then Goto SkipScanQ4
+                        ccol = Sptr[yadd+xpos]
+                        If ccol = tcol Then
+                            If ypos > xe Then
+                                dx = ypos-yp: dy = inc
+                                _addelement(ypos)
+                            Else
+                                Sptr[yadd+xpos] = tex[texCurOffset]
+                            End if
+                            Exit Do
+                        End if
+                    Loop
+                Else
+                    _copyelement(s1)
+                End if
+                
+                proc = FILL_LOOP
+                Do
+                    if proc = FILL_LOOP then
+                        If Sptr[yadd+xpos] <> tcol Then
+                            dx = ypos-yp+1: dy = inc
+                            _addelement(ypos+1)
+                            Proc = SEARCH_LOOP
+                        Else
+                            Sptr[yadd+xpos] = tex[texCurOffset]
+                        End if
+                    else
+                        If Sptr[yadd+xpos] = tcol Then
+                            dx = ypos-yp: dy = inc
+                            _addelement(ypos)
+                            Proc = FILL_LOOP
+                            Sptr[yadd+xpos] = tex[texCurOffset]          
+                        End if                        
+                    end if
+                    ypos -= 1
+                    yadd -= destStride
+                    texCurOffset -= sourceStride
+                Loop until ypos < xe
+                
+                If _N Mod 2 = 1 Then
+                    _copyelement(s2)
+                End if
+                SkipScanQ4:
+            Next i
+            If _N = 0 Then Exit For
+            _copylist()
+        Next inc
+    end if
+   
+    if memoryPool = 0 then
+        delete(readList)
+        delete(writeList)
+    end if
+  
+End Sub
 
 sub triangle_AHS(dest as integer ptr = 0,_
                  x0 as double, y0 as double,_

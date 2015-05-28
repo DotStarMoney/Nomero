@@ -101,6 +101,10 @@ declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					        img_width as integer, img_height as integer,_
 					        dest_x as integer, dest_y as integer)
                             
+declare sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, yp As Integer,_
+                             rad As integer, tcol As Integer = &HFF000000, memoryPool as integer ptr = 0)
+
+                            
 declare function intLog2(x as integer) as integer
  
 declare sub allocateAlligned(byref basePtr as any ptr, byref allignedPtr as any ptr, bytes as integer)
@@ -120,5 +124,21 @@ enum Cardinal
 end enum
 declare function extractOrthoBoundsCheck(A as integer ptr, w as integer, h as integer, x as integer, y as integer) as integer
 declare function extractOrthoSegs(A as integer ptr, w as integer, h as integer) as SegList_t ptr
+
+declare function lineCircleCollision(p as Vector2D, r as double, a as Vector2D, b as Vector2D, ret1 as vector2D, ret2 as vector2D) as integer
+declare function angDist(a as double, b as double) as double
+
+type windowCircleIntersectData_t
+    as integer tl_x
+    as integer tl_y
+    as integer br_x
+    as integer br_y
+    as integer dx0, dy0
+    as integer dx1, dy1
+end type
+
+declare function windowCircleIntersect(tl as Vector2d, br as Vector2d,_
+                                       p as Vector2d, r as double, byref ret as windowCircleIntersectData_t) as integer
+
 
 #endif 

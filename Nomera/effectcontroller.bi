@@ -14,10 +14,10 @@ enum EffectControllerType_e
     STEAM           	= 2
     DRIP             	= 3
     TELEPORTER_SHIELD   = 4
-    ONE_SHOT_SMOKE   	= 5
-    ONE_SHOT_EXPLODE 	= 6
-    OPEN_DOOR        	= 7
-    ACTIVE_SPEAKER   	= 8
+    ONE_SHOT_SMOKE   	= 105
+    ONE_SHOT_EXPLODE 	= 106
+    OPEN_DOOR        	= 107
+    ACTIVE_SPEAKER   	= 108
 end enum
 
 type ObjectEffect_t

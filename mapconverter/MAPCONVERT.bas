@@ -198,6 +198,8 @@ type layer_t
     as ushort inRangeSet
     as ushort isDestructible
     as ushort isFallout
+    as ushort isReceiver
+    as ushort occluding
     as ushort mergeless
     as ushort order
     as integer empty
@@ -244,11 +246,28 @@ enum ObjectEffectType_t
     SMOKE               = 2
     DRIP                = 3
     TELEPORTER_SHIELD   = 4
+    LIGHT_1             = 5
+    LIGHT_2             = 6
+    LIGHT_3             = 7
+    LIGHT_4             = 8
+    LIGHT_5             = 9
+    LIGHT_6             = 10
+    LIGHT_7             = 11
+    LIGHT_8             = 12
+end enum
+
+enum ObjectEffectMode_t
+    MODE_FLICKER = 0
+    MODE_TOGGLE  = 1
+    MODE_STATIC  = 2
 end enum
 
 type objectEffect_t
     as ushort effect_type
     as ushort effect_density
+    as ushort minValue
+    as ushort maxValue
+    as ushort mode
 end type
 
 dim as objectPortal_t  ptr tempObjPortal
@@ -472,6 +491,8 @@ do
                                 layers(N_layers - 1).inRangeSet = ACTIVE
                                 layers(N_layers - 1).isDestructible = 65535
                                 layers(N_layers - 1).isFallout = 65535
+                                layers(N_layers - 1).isReceiver = 65535
+                                layers(N_layers - 1).occluding = 65535
                                 if item_content <> "{}" then 
                                     propertyline = 1
                                     propertyType = 0
@@ -549,7 +570,11 @@ do
                                     case EFFECT
                                         objects(N_objects - 1).data_ = allocate(sizeof(ObjectEffect_t))
                                         tempObjEffect = objects(N_objects - 1).data_
+                                        tempObjEffect->effect_type = LIGHT_1
                                         tempObjEffect->effect_density = 65536 * 0.5
+                                        tempObjEffect->minValue = 65535
+                                        tempObjEffect->maxValue = 65535
+                                        tempObjEffect->mode = MODE_STATIC
                                     case PORTAL
                                         objects(N_objects - 1).data_ = allocate(sizeof(ObjectPortal_t))
                                         tempObjPortal = objects(N_objects - 1).data_
@@ -612,7 +637,11 @@ do
                     elseif left(lcase(item_tag), 11) = "illuminated" then
                         layers(N_layers - 1).illuminated = 1
                     elseif left(lcase(item_tag), 8) = "coverage" then
-                        layers(N_layers - 1).coverage = 1                        
+                        layers(N_layers - 1).coverage = 1         
+                    elseif left(lcase(item_tag), 8) = "receiver" then
+                        layers(N_layers - 1).isReceiver = 1 
+                    elseif left(lcase(item_tag), 9) = "occluding" then
+                        layers(N_layers - 1).occluding = 1    
                     end if
                 elseif propertyType = 1 then
                     with tempEffect
@@ -658,9 +687,37 @@ do
                                 tempObjEffect->effect_type = DRIP
                             elseif left(lcase(item_content), 17) = "teleporter shield" then
                                 tempObjEffect->effect_type = TELEPORTER_SHIELD
+                            elseif left(lcase(item_content), 7) = "light 1" then
+                                tempObjEffect->effect_type = LIGHT_1 
+                            elseif left(lcase(item_content), 7) = "light 2" then
+                                tempObjEffect->effect_type = LIGHT_2
+                            elseif left(lcase(item_content), 7) = "light 3" then
+                                tempObjEffect->effect_type = LIGHT_3   
+                            elseif left(lcase(item_content), 7) = "light 4" then
+                                tempObjEffect->effect_type = LIGHT_4
+                            elseif left(lcase(item_content), 7) = "light 5" then
+                                tempObjEffect->effect_type = LIGHT_5   
+                            elseif left(lcase(item_content), 7) = "light 6" then
+                                tempObjEffect->effect_type = LIGHT_6
+                            elseif left(lcase(item_content), 7) = "light 7" then
+                                tempObjEffect->effect_type = LIGHT_7   
+                            elseif left(lcase(item_content), 7) = "light 8" then
+                                tempObjEffect->effect_type = LIGHT_8
                             end if
                         elseif left(lcase(item_tag), 7) = "density" then
                             tempObjEffect->effect_density = val(item_content) * 65535.0
+                        elseif left(lcase(item_tag), 9) = "min value" then
+                            tempObjEffect->minValue = val(item_content) * 65535.0
+                        elseif left(lcase(item_tag), 9) = "max value" then
+                            tempObjEffect->maxValue = val(item_content) * 65535.0
+                        elseif left(lcase(item_tag), 4) = "mode" then
+                            if left(lcase(item_content), 7) = "flicker" then
+                                tempObjEffect->effect_type = MODE_FLICKER
+                            elseif left(lcase(item_content), 6) = "toggle" then
+                                tempObjEffect->effect_type = MODE_TOGGLE
+                            elseif left(lcase(item_content), 6) = "static" then
+                                tempObjEffect->effect_type = MODE_STATIC
+                            end if                        
                         end if
                     case PORTAL
                         if left(lcase(item_tag), 9) = "direction" then 
@@ -780,7 +837,7 @@ print "Layers: "; N_layers
 for i = 0 to N_layers - 1
     print "   ";layers(i).layer_name
     print "   ";layers(i).order
-    print "  ";layers(i).depth
+    print "   ";layers(i).depth
     print "   ";layers(i).parallax
     print "   ";layers(i).inRangeSet
     print "   ";layers(i).isDestructible
@@ -1042,6 +1099,8 @@ curRange = ACTIVE
 #define PARALLAX_MASK &h10
 #define MERGELESS_MASK &h20
 #define NONE_MASK &h00
+#define RECEIVER_MASK &h40
+#define OCCLUDING_MASK &h80
 
 type mergeStack_t
     as integer ptr mask
@@ -1228,7 +1287,10 @@ for activeLayer = 0 to 3
                                    iif(layers(i).isDestructible < 65535, DESTRUCTIBLE_MASK, NONE_MASK) OR _
                                    iif(layers(i).coverage < 65535, COVERAGE_MASK, NONE_MASK) OR _
                                    iif(layers(i).parallax < 65535, PARALLAX_MASK, NONE_MASK)  OR _
-                                   iif(layers(i).mergeless < 65535, MERGELESS_MASK, NONE_MASK)
+                                   iif(layers(i).mergeless < 65535, MERGELESS_MASK, NONE_MASK) OR _
+                                   iif(layers(i).isReceiver < 65535, RECEIVER_MASK, NONE_MASK) OR _
+                                   iif(layers(i).occluding < 65535, OCCLUDING_MASK, NONE_MASK) 
+
                         
                         line curMask, (0,0)-(15,15),0, BF
                     
@@ -1387,8 +1449,10 @@ for activeLayer = 0 to 3
                                iif(layers(i).isDestructible < 65535, DESTRUCTIBLE_MASK, NONE_MASK) OR _
                                iif(layers(i).coverage < 65535, COVERAGE_MASK, NONE_MASK) OR _
                                iif(layers(i).parallax < 65535, PARALLAX_MASK, NONE_MASK)  OR _
-                               iif(layers(i).mergeless < 65535, MERGELESS_MASK, NONE_MASK)
-                    
+                               iif(layers(i).mergeless < 65535, MERGELESS_MASK, NONE_MASK) OR _
+                               iif(layers(i).isReceiver < 65535, RECEIVER_MASK, NONE_MASK) OR _
+                               iif(layers(i).occluding < 65535, OCCLUDING_MASK, NONE_MASK) 
+
                     line coverageMask, (0,0)-(15,15), 0, BF
                     layers(i).layer_data[q] = 0
                     for j = N_runs - 1 to 0 step -1
@@ -1674,6 +1738,8 @@ for i = 0 to N_layers - 1
             put #f,,layers(i).illuminated
             put #f,,layers(i).ambientLevel
             put #f,,layers(i).coverage
+            put #f,,layers(i).isReceiver
+            put #f,,layers(i).occluding
             put #f,,layers(i).layer_data[0],map_width*map_height
         else
             put #f,,layers(i).layer_name
@@ -1696,6 +1762,9 @@ for i = 0 to N_objects - 1
             tempObjEffect = .data_
             put #f,,tempObjEffect->effect_type
             put #f,,tempObjEffect->effect_density
+            put #f,,tempObjEffect->minValue
+            put #f,,tempObjEffect->maxValue
+            put #f,,tempObjEffect->mode            
         case PORTAL
             tempObjPortal = .data_
             put #f,,tempObjPortal->portal_to_map

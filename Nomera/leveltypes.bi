@@ -6,6 +6,8 @@
 #include "constants.bi"
 #include "zimage.bi"
 
+#define LIGHT_EFFECT_VALUE 5
+
 enum ObjectType_t
     EFFECT
     PORTAL
@@ -89,6 +91,8 @@ Type Level_LayerData
     as ushort illuminated
     as integer ambientLevel
     as ushort coverage
+    as ushort receiver
+    as ushort occluding
     as single depth
 end type
 
@@ -99,6 +103,12 @@ enum PortalDirection_t
     D_DOWN
     D_IN
     NO_FACING
+end enum
+
+enum EffectMode_e
+    MODE_FLICKER = 0
+    MODE_TOGGLE  = 1
+    MODE_STATIC  = 2
 end enum
 
 type PortalType_t

@@ -100,23 +100,23 @@ end function
 
 sub Player.computeCoverage()
 	dim as integer pposx, pposy
-	dim as integer numBlocks
+	dim as integer numblocks_
 	dim as integer ptr comptex
 	dim as integer i
 	dim as integer ptr playerImg
 	dim as integer xpos, ypos, w, h
-	dim as Level_CoverageBlockInfo_t ptr blocks
+	dim as Level_CoverageBlockInfo_t ptr blocks_
 	
 	pposx = body.p.x() + anim.getOffset().x
 	pposy = body.p.y() + anim.getOffset().y	
 	comptex = imagecreate((int((anim.getWidth() - 1) shr 4) + 1) shl 4, (int((anim.getHeight() - 1) shr 4) + 1) shl 4)
 	
-	numBlocks = link.level_ptr->getCoverageLayerBlocks(pposx, pposy,_
+	numblocks_ = link.level_ptr->getCoverageLayerblocks(pposx, pposy,_
 													   pposx+anim.getWidth()-1,pposy+anim.getHeight()-1,_
-													   blocks)
+													   blocks_)
 													   
-	for i = 0 to numBlocks - 1
-		put comptex, (blocks[i].rpx - pposx, blocks[i].rpy - pposy), blocks[i].img, (blocks[i].x0, blocks[i].y0)-(blocks[i].x1, blocks[i].y1), TRANS
+	for i = 0 to numblocks_ - 1
+		put comptex, (blocks_[i].rpx - pposx, blocks_[i].rpy - pposy), blocks_[i].img, (blocks_[i].x0, blocks_[i].y0)-(blocks_[i].x1, blocks_[i].y1), TRANS
 	next i
 	
 	
@@ -125,7 +125,7 @@ sub Player.computeCoverage()
 	'only works because character is a multiple of 16
 	covered = compareTrans(comptex, 0, 0, playerImg, xpos, ypos, w, h) / anim.getFramePixelCount()
 	
-	if blocks then deallocate blocks
+	if blocks_ then deallocate(blocks_)
 	imagedestroy comptex
 end sub
 

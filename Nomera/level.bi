@@ -75,7 +75,7 @@ type Level
         dim as integer justLoaded
     private:
         
-    
+        declare sub processLights()
         declare sub putDispatch(scnbuff as integer ptr,_
                                 block as Level_VisBlock,_
                                 x as integer, y as integer,_

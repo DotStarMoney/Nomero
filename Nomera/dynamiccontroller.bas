@@ -35,7 +35,8 @@ end destructor
 sub DynamicController.flush()
 	dim as SpawnZone_t ptr         szptr
 	dim as DynamicObjectType_t ptr dynObj
-	
+	dim as Item ptr curItem
+
 	spawnZones.rollReset()
 	do
 		szptr = spawnZones.roll()
@@ -55,6 +56,11 @@ sub DynamicController.flush()
 			if dynObj->object_type = OBJ_ENEMY then
 				link.tinyspace_ptr->removeBody(cast(Enemy ptr, dynObj->data_)->body_i)
 				delete (cast(Enemy ptr, dynObj->data_))
+            elseif dynObj->object_type = OBJ_ITEM then
+                'BOMB MEMORY, dont delete what should hang around
+                curItem = dynObj->data_
+                delete(curItem)
+
 			end if
 		else
 			exit do
@@ -157,14 +163,16 @@ sub DynamicController.addSpawnZone(objectName as string,_
 								   
 end sub
 
-function DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer) as Item ptr
+function DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer,_
+                                      minValue as double, maxValue as double, mode as integer) as Item ptr
 	dim as Item ptr curItem
 	dim as DynamicObjectType_t dobj
 
 	curItem = new Item
 	curItem->setLink(link)
 	curItem->init(itemType_, itemFlavor_)
-	curItem->setPos(position)
+    curItem->setPos(position)
+    curItem->setLightModeData(minValue, maxValue, mode)
 	
 	dobj.object_type = OBJ_ITEM
 	dobj.data_ = curItem
@@ -172,6 +180,7 @@ function DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Ty
 	objects.push_back(@dobj)
 	
 	return dobj.data_
+    
 end function
 
 sub DynamicController.addEnemy(sz as SpawnZone_t)
