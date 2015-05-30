@@ -317,7 +317,6 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     end if             
 end sub
 
-'rest of utilities need repairs 
 
 sub zimage.putTRANS_2xLight(dest_fbimg as integer ptr, posX as integer, posY as integer,_
                             x0 as integer, y0 as integer, x1 as integer, y1 as integer,_

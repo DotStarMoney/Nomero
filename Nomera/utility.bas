@@ -912,6 +912,39 @@ sub pmapFix(byref x as integer, byref y as integer)
     if y > SCRY*0.5 then y -= 1
 end sub
 
+function AnyClip(px as integer, py as integer ,_
+                 sx as integer, sy as integer ,_
+                 btl_x as integer, btl_y as integer,_
+                 bbr_x as integer, bbr_y as integer,_
+                 byref npx  as integer, byref npy  as integer ,_
+                 byref sdx1 as integer, byref sdy1 as integer ,_
+                 byref sdx2 as integer, byref sdy2 as integer) as integer
+    Dim as integer px1,py1,px2,py2
+    dim as integer bbx1, bbx2, bby1, bby2   
+   
+    px1 = px       : py1 = py
+    px2 = px+sx - 1: py2 = py+sy - 1
+    If px2 < btl_x Then Return 0
+    If px1 > bbr_x Then Return 0
+    If py2 < btl_y Then Return 0
+    If py1 > bbr_y Then Return 0
+    
+    bbx1 = iif(px1 < btl_x, btl_x, px1)
+    bby1 = iif(py1 < btl_y, btl_y, py1)
+    bbx2 = iif(px2 > bbr_x, bbr_x, px2)
+    bby2 = iif(py2 > bbr_y, bbr_y, py2)
+    
+    npx  = bbx1
+    npy  = bby1
+    sdx1 = bbx1 - px1
+    sdy1 = bby1 - py1
+    sdx2 = sx - (px2 - bbx2) - 1
+    sdy2 = sy - (py2 - bby2) - 1
+
+    Return 1             
+                 
+end function
+
 Function ScreenClip(px as integer, py as integer ,_
                     sx as integer, sy as integer ,_
                     byref npx  as integer, byref npy  as integer ,_
@@ -1157,18 +1190,93 @@ function windowCircleIntersect(tl as Vector2d, br as Vector2d,_
     return 1
 end function
 
-Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, yp As Integer,_
+sub imageSet(fbimg_ptr as integer ptr, value as integer, _
+             tl_x as integer,_
+             tl_y as integer,_
+             br_x as integer,_
+             br_y as integer)
+    
+    static as integer col_offset(0 to 3)
+    dim as any ptr pxls
+    dim as integer stride, offset, cols, rows
+    
+    imageinfo fbimg_ptr,,,,stride, pxls
+    pxls = pxls + (stride*tl_y) + (tl_x shl 2)
+    
+    cols = br_x - tl_x + 1
+    stride -= (cols shl 2)
+    
+    rows = br_y - tl_y + 1
+
+    col_offset(0) = value
+    col_offset(1) = value
+    col_offset(2) = value
+    col_offset(3) = value
+    
+    asm
+        
+            movdqu      xmm0,       [col_offset]
+            mov         edi,        [pxls]      
+            mov         ecx,        [rows]
+            mov         edx,        [stride]
+        
+        imageSet_rows:
+        
+            mov         ebx,        [cols]
+    
+        imageSet_startCopyCols4:
+            cmp         ebx,        4
+            jl          imageSet_endCopyCols4
+                
+            movdqu      [edi],      xmm0
+            
+            add         edi,        16
+            sub         ebx,        4
+            jmp         imageSet_startCopyCols4
+        imageSet_endCopyCols4:
+        
+            cmp         ebx,        2
+            jl          imageSet_endCopyCols2
+                
+            movq        [edi],      xmm0
+            
+            add         edi,        8
+            sub         ebx,        2
+        imageSet_endCopyCols2:
+        
+            cmp         ebx,        1
+            jl          imageSet_endCopyCols1
+                
+            movd        [edi],      xmm0
+            
+            add         edi,        4
+            sub         ebx,        1
+        imageSet_endCopyCols1:
+        
+            add         edi,        edx
+            dec         ecx
+            
+            jnz         imageSet_rows
+        
+    end asm
+
+end sub
+             
+Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
+                     source1 As Integer Ptr, source2 as integer ptr,_
+                     occlude as Integer ptr, _
+                     dx0 as integer, dy0 as integer,_
+                     dx1 as integer, dy1 as integer,_
+                     xp As Integer, yp As Integer,_
                      rad As integer, tcol As Integer = &HFF000000, memoryPool as integer ptr = 0)
               
     'may hit the skids when image pitch is not in words 
     
-    'create region from circle window and copy occluders into it.
-    'feed data from circlewindow into pointcast
-    'set point cast to use three sources, occlude, write, and texture
-    'point cast into "shaded" version of lightpair
-    'store "last region" in level light memory
-    'write custom fast erase to draw over in black
 
+    'add light multiply to blitters
+    'implement update of flicker/static/toggle in light item
+    'add bump map support to mapconvert
+    
     #define _Ek 0
     #define _Dn 1
     #define _Dp 2
@@ -1207,17 +1315,26 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
         swap readList, writeList
     #endmacro
         
-    dim as integer ptr readList, writeList, Sptr, tex
+    dim as integer ptr readList, writeList, Sptr, tex, Sptr2, tex2, occPxls
     Dim As Integer inc, scan, xs, xe, yend = rad*RR2, xcirc, dx, dy, s1, s2, prad, oxs, oxe, txe
     Dim As Integer xpos, ypos, segs, i, _N, ccol, LeftBnd, RightBnd, Offset, yadd,q
     Dim As integer proc, checkAddr, cind, srcW, srcH, sourceStride, texOffset, texCurOffset
-    Dim As Integer QuadBnd(0 To 7, 0 To 4), WorkCol, destW, destH, destStride, texCenter
+    Dim As Integer QuadBnd(0 To 7, 0 To 3), WorkCol, destW, destH, destStride, texCenter
+    dim as integer skipQuad, fquad, equad
     redim as integer CurveOff(0)
     
-    imageinfo dest, destW, destH,, destStride, Sptr 
-    imageinfo source, srcW, srcH,, sourceStride, tex
+    imageinfo dest1, destW, destH,, destStride, Sptr 
+    imageinfo dest2,,,,, Sptr2 
+
+    imageinfo source1, srcW, srcH,, sourceStride, tex
+    imageinfo source2,,,,, tex2
+    
+    imageinfo occlude,,,,,occPxls
+    
     sourceStride shr=2
     destStride shr= 2
+    
+    skipQuad = 0
     
     if memoryPool = 0 then
         readList  = new integer[MAX_DWORDS]
@@ -1229,6 +1346,27 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
     
     texCenter = (srcW*0.5) + (srcH*0.5)*sourceStride
     
+    fquad = -1
+    equad = -1
+    if (dy0 < 0) andAlso (abs(dy0) > abs(dx0)) then
+        fquad = 0
+    elseif (dx0 > 0) andAlso (abs(dx0) > abs(dy0)) then
+        fquad = 1
+    elseif (dy0 > 0) andAlso (abs(dy0) > abs(dx0)) then
+        fquad = 2
+    elseif (dx0 < 0) andAlso (abs(dx0) > abs(dy0)) then
+        fquad = 3
+    end if
+    if (dy1 < 0) andAlso (abs(dy1) > abs(dx1)) then
+        equad = 0
+    elseif (dx1 > 0) andAlso (abs(dx1) > abs(dy1)) then
+        equad = 1
+    elseif (dy1 > 0) andAlso (abs(dy1) > abs(dx1)) then
+        equad = 2
+    elseif (dx1 < 0) andAlso (abs(dx1) > abs(dy1)) then
+        equad = 3
+    end if
+    skipQuad = 0
     QuadBnd(0,_Ek) = 1: QuadBnd(0,_Dn) = 2: QuadBnd(0,_Dp) = 0: QuadBnd(0,_Xd) = -1
     QuadBnd(1,_Ek) = 1: QuadBnd(1,_Dn) = 2: QuadBnd(1,_Dp) = 0: QuadBnd(1,_Xd) =  1
     QuadBnd(2,_Ek) = 1: QuadBnd(2,_Dn) = 2: QuadBnd(2,_Dp) = 0: QuadBnd(2,_Xd) = -1
@@ -1237,6 +1375,44 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
     QuadBnd(5,_Ek) = 1: QuadBnd(5,_Dn) = 2: QuadBnd(5,_Dp) = 0: QuadBnd(5,_Xd) = -1
     QuadBnd(6,_Ek) = 1: QuadBnd(6,_Dn) = 2: QuadBnd(6,_Dp) = 0: QuadBnd(6,_Xd) =  1
     QuadBnd(7,_Ek) = 1: QuadBnd(7,_Dn) = 2: QuadBnd(7,_Dp) = 0: QuadBnd(7,_Xd) = -1
+    
+    if (fquad <> -1) andAlso (equad <> -1) then
+
+        if (fquad = 0) orElse (fquad = 1) then
+            dx = dx0
+            dy = dy0
+        else
+            dx = dy0
+            dy = dx0        
+        end if 
+        QuadBnd(fquad*2,_Xd) = Sgn(dx)
+        dx = Abs(dx)
+        dy = Abs(dy)
+        QuadBnd(fquad*2,_Ek) = dx shl 1 - dy
+        QuadBnd(fquad*2,_Dn) = QuadBnd(fquad*2,_Ek) + dy
+        QuadBnd(fquad*2,_Dp) = QuadBnd(fquad*2,_Ek) - dy
+        
+        if (equad = 0) orElse (equad = 1) then
+            dx = dx1
+            dy = dy1
+        else
+            dx = dy1
+            dy = dx1        
+        end if 
+        QuadBnd(fquad*2 + 1,_Xd) = Sgn(dx)
+        dx = Abs(dx)
+        dy = Abs(dy)
+        QuadBnd(fquad*2 + 1,_Ek) = dx shl 1 - dy
+        QuadBnd(fquad*2 + 1,_Dn) = QuadBnd(fquad*2 + 1,_Ek) + dy
+        QuadBnd(fquad*2 + 1,_Dp) = QuadBnd(fquad*2 + 1,_Ek) - dy
+        
+        equad = (equad + 1) mod 4
+        do
+            skipQuad = skipQuad or (1 shl equad)
+            equad = (equad + 1) mod 4
+        loop until equad = fquad
+        
+    end if
     
     prad = rad-yend
     redim as integer CurveOff(0 to prad-1)
@@ -1258,9 +1434,11 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
     '-------------------------------------------------QUAD 1---------------------------------------
     
     if (yp > 0) andAlso (yp < destH) andAlso (xp > 0) andALso (xp < destW) then
-        checkAddr = yp*destStride+xp
-        if Sptr[checkAddr] = tcol then
-            Sptr[yp*destStride+xp] = Source[texCenter]
+        checkAddr = yp*sourceStride+xp
+        if occPxls[checkAddr] = tcol then
+            checkAddr = yp*destStride+xp
+            Sptr[checkAddr] = tex[texCenter]
+            Sptr2[checkAddr] = tex2[texCenter]
         else
             exit sub
         end if
@@ -1268,7 +1446,7 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
         exit sub
     end if
     
-    if yp > 0 then
+    if yp > 0 andAlso ((skipQuad and 1) = 0) then
         ShadowsA(0,_Ek) = QuadBnd(0,_Ek): ShadowsA(0,_Dn) = QuadBnd(0,_Dn): ShadowsA(0,_Dp) = QuadBnd(0,_Dp)
         ShadowsA(0,_Xx) = xp: ShadowsA(0,_Xd) = QuadBnd(0,_Xd)
         ShadowsA(1,_Ek) = QuadBnd(1,_Ek): ShadowsA(1,_Dn) = QuadBnd(1,_Dn): ShadowsA(1,_Dp) = QuadBnd(1,_Dp)
@@ -1330,12 +1508,12 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 If xe > RightBnd Then xe = RightBnd
                         
                 If (xs - oxs) < 0 then
-                    if (Sptr[yadd+xs+1] <> tcol) andAlso (Sptr[yadd+xs+destStride] <> tcol) then
+                    if (occPxls[yadd+xs+1] <> tcol) andAlso (occPxls[yadd+xs+destStride] <> tcol) then
                         xs += 1
                     end if
                 end if
                 If (txe - oxe) > 0 andAlso xe > 0 then
-                    if (Sptr[yadd+xe-1] <> tcol) andAlso (Sptr[yadd+xe+destStride] <> tcol) then
+                    if (occPxls[yadd+xe-1] <> tcol) andAlso (occPxls[yadd+xe+destStride] <> tcol) then
                         xe -= 1
                     end if
                 end if
@@ -1344,18 +1522,19 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
 
                 xpos = xs
                 texCurOffset = texOffset + (xs - xp)
-                If Sptr[yadd+xpos] <> tcol Then
+                If occPxls[yadd+xpos] <> tcol Then
                     Do
                         xpos += 1
                         texCurOffset += 1
                         If xpos >= xe Then Goto SkipScanQ1
-                        ccol = Sptr[yadd+xpos]
+                        ccol = occPxls[yadd+xpos]
                         If ccol = tcol Then
                             If xpos < xe Then
                                 dx = xpos-xp: dy = inc
                                 _addelement(xpos)
                             Else
                                 Sptr[yadd+xpos] = tex[texCurOffset]
+                                Sptr2[yadd+xpos] = tex2[texCurOffset]                                
                             End if
                             Exit Do
                         End if
@@ -1368,19 +1547,21 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 
                 Do
                     if proc = FILL_LOOP then
-                        If Sptr[yadd+xpos] <> tcol Then
+                        If occPxls[yadd+xpos] <> tcol Then
                             dx = xpos-xp-1: dy = inc
                             _addelement(xpos-1)
                             proc = SEARCH_LOOP
                         Else
                             Sptr[yadd+xpos] = tex[texCurOffset]
+                            Sptr2[yadd+xpos] = tex2[texCurOffset]  
                         End if
                     else
-                        If Sptr[yadd+xpos] = tcol Then
+                        If occPxls[yadd+xpos] = tcol Then
                             dx = xpos-xp: dy = inc 
                             _addelement(xpos)
                             Proc = FILL_LOOP
                             Sptr[yadd+xpos] = tex[texCurOffset]
+                            Sptr2[yadd+xpos] = tex2[texCurOffset]  
                         End if
                     end if
                     xpos += 1
@@ -1399,7 +1580,7 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
     
     '----------------------------------------------------QUAD 2------------------------------------
     
-    if xp < destW then
+    if xp < destW andAlso ((skipQuad and 2) = 0) then
         
         ShadowsA(0,_Ek) = QuadBnd(2,_Ek): ShadowsA(0,_Dn) = QuadBnd(2,_Dn): ShadowsA(0,_Dp) = QuadBnd(2,_Dp)
         ShadowsA(0,_Xx) = yp: ShadowsA(0,_Xd) = QuadBnd(2,_Xd)
@@ -1462,14 +1643,14 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 
                 If (xs - oxs) < 0 then
                     checkAddr = xs*destStride + xpos
-                    if (Sptr[checkAddr + destStride] <> tcol) andAlso (Sptr[checkAddr - 1] <> tcol) then
+                    if (occPxls[checkAddr + destStride] <> tcol) andAlso (occPxls[checkAddr - 1] <> tcol) then
                         xs += 1
                     end if
                 end if
                 
                 If (txe - oxe) > 0 andAlso xe > 0 then
                     checkAddr = xe*destStride + xpos
-                    if (Sptr[checkAddr - destStride] <> tcol) andAlso (Sptr[checkAddr - 1] <> tcol) then
+                    if (occPxls[checkAddr - destStride] <> tcol) andAlso (occPxls[checkAddr - 1] <> tcol) then
                         xe -= 1
                     end if
                 end if                
@@ -1479,22 +1660,23 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 ypos = xs
                 yadd = xs * destStride
                 texCurOffset = texOffset + (xs - yp)*sourceStride
-                If Sptr[yadd+xpos] <> tcol Then
+                If occPxls[yadd+xpos] <> tcol Then
                     Do
                         ypos += 1
                         yadd += destStride
                         texCurOffset += sourceStride
                         If ypos >= xe Then Goto SkipScanQ2
-                        ccol = Sptr[yadd+xpos]
+                        ccol = occPxls[yadd+xpos]
                         If ccol = tcol Then
                             If ypos < xe Then
                                 dx = ypos-yp: dy = inc
                                 _addelement(ypos)
                             Else
                                 Sptr[yadd+xpos] = tex[texCurOffset]
+                                Sptr2[yadd+xpos] = tex2[texCurOffset]
                             End if
                             Exit Do
-                        Endif
+                        End if
                     Loop
                 Else
                     _copyelement(s1)
@@ -1503,19 +1685,21 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 proc = FILL_LOOP
                 Do
                     if proc = FILL_LOOP then
-                        If Sptr[yadd+xpos] <> tcol Then
+                        If occPxls[yadd+xpos] <> tcol Then
                             dx = ypos-yp-1: dy = inc
                             _addelement(ypos-1)
                             proc = SEARCH_LOOP
                         Else
                             Sptr[yadd+xpos] = tex[texCurOffset]
+                            Sptr2[yadd+xpos] = tex2[texCurOffset]
                         End if 
                     else
-                        If Sptr[yadd+xpos] = tcol Then
+                        If occPxls[yadd+xpos] = tcol Then
                             dx = ypos-yp: dy = inc
                             _addelement(ypos)
                             proc = FILL_LOOP
                             Sptr[yadd+xpos] = tex[texCurOffset]
+                            Sptr2[yadd+xpos] = tex2[texCurOffset]
                         End if
                     end if
                     ypos += 1
@@ -1538,7 +1722,7 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
     
 
     '------------------------------------------------QUAD 3---------------------------------------
-    if yp < destH then
+    if yp < destH andAlso ((skipQuad and 4) = 0) then
         ShadowsA(0,_Ek) = QuadBnd(4,_Ek): ShadowsA(0,_Dn) = QuadBnd(4,_Dn): ShadowsA(0,_Dp) = QuadBnd(4,_Dp)
         ShadowsA(0,_Xx) = xp: ShadowsA(0,_Xd) = QuadBnd(4,_Xd)
         ShadowsA(1,_Ek) = QuadBnd(5,_Ek): ShadowsA(1,_Dn) = QuadBnd(5,_Dn): ShadowsA(1,_Dp) = QuadBnd(5,_Dp)
@@ -1600,12 +1784,12 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 If xe < LeftBnd Then xe = LeftBnd
                 
                 If (xs - oxs) > 0 andalso xs > 0 then
-                    if (Sptr[yadd+xs-1] <> tcol) andAlso (Sptr[yadd+xs-destStride] <> tcol) then
+                    if (occPxls[yadd+xs-1] <> tcol) andAlso (occPxls[yadd+xs-destStride] <> tcol) then
                         xs -= 1
                     end if
                 end if
                 If (txe - oxe) < 0 then
-                    if (Sptr[yadd+xe+1] <> tcol) andAlso (Sptr[yadd+xe-destStride] <> tcol) then
+                    if (occPxls[yadd+xe+1] <> tcol) andAlso (occPxls[yadd+xe-destStride] <> tcol) then
                         xe += 1
                     end if
                 end if
@@ -1614,18 +1798,19 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
 
                 xpos = xs
                 texCurOffset = texOffset + (xs - xp)
-                If Sptr[yadd+xpos] <> tcol Then
+                If occPxls[yadd+xpos] <> tcol Then
                     Do
                         xpos -= 1
                         texCurOffset -= 1
                         If xpos <= xe Then Goto SkipScanQ3
-                        ccol = Sptr[yadd+xpos]
+                        ccol = occPxls[yadd+xpos]
                         If ccol = tcol Then
                             If xpos > xe Then
                                 dx = xpos-xp: dy = inc
                                 _addelement(xpos)
                             Else
                                 Sptr[yadd+xpos] = tex[texCurOffset]
+                                Sptr2[yadd+xpos] = tex2[texCurOffset]                                
                             End if
                             Exit Do
                         End if
@@ -1637,19 +1822,21 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 proc = FILL_LOOP
                 Do
                     if proc = FILL_LOOP then
-                        If Sptr[yadd+xpos] <> tcol Then
+                        If occPxls[yadd+xpos] <> tcol Then
                             dx = xpos-xp+1: dy = inc
                             _addelement(xpos+1)
                             proc = SEARCH_LOOP
                         Else
                             Sptr[yadd+xpos] = tex[texCurOffset]
+                            Sptr2[yadd+xpos] = tex2[texCurOffset]                          
                         End if
                     else
-                        If Sptr[yadd+xpos] = tcol Then
+                        If occPxls[yadd+xpos] = tcol Then
                             dx = xpos-xp: dy = inc 
                             _addelement(xpos)
                             proc = FILL_LOOP
                             Sptr[yadd+xpos] = tex[texCurOffset]
+                            Sptr2[yadd+xpos] = tex2[texCurOffset]                            
                         End if                   
                     end if
                     xpos -= 1
@@ -1667,7 +1854,7 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
     end if
     
     '------------------------------------------------QUAD 4---------------------------------------
-    if xp > 0 then
+    if xp > 0 andAlso ((skipQuad and 8) = 0) then
         ShadowsA(0,_Ek) = QuadBnd(6,_Ek): ShadowsA(0,_Dn) = QuadBnd(6,_Dn): ShadowsA(0,_Dp) = QuadBnd(6,_Dp)
         ShadowsA(0,_Xx) = yp: ShadowsA(0,_Xd) = QuadBnd(6,_Xd)
         ShadowsA(1,_Ek) = QuadBnd(7,_Ek): ShadowsA(1,_Dn) = QuadBnd(7,_Dn): ShadowsA(1,_Dp) = QuadBnd(7,_Dp)
@@ -1726,17 +1913,15 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 txe = xe
                 If xe < LeftBnd Then xe = LeftBnd
                 
-                
                 If (xs - oxs) > 0 andalso xs > 0 then
                     checkAddr = xs*destStride + xpos
-                    if (Sptr[checkAddr - destStride] <> tcol) andAlso (Sptr[checkAddr + 1] <> tcol) then
+                    if (occPxls[checkAddr - destStride] <> tcol) andAlso (occPxls[checkAddr + 1] <> tcol) then
                         xs -= 1
-                        
                     end if
                 end if
                 If (txe - oxe) < 0 then
                     checkAddr = xe*destStride + xpos
-                    if (Sptr[checkAddr + destStride] <> tcol) andAlso (Sptr[checkAddr + 1] <> tcol) then
+                    if (occPxls[checkAddr + destStride] <> tcol) andAlso (occPxls[checkAddr + 1] <> tcol) then
                         xe += 1
                     end if
                 end if
@@ -1746,19 +1931,20 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 ypos = xs
                 yadd = xs * destStride
                 texCurOffset = texOffset + (xs - yp)*sourceStride
-                If Sptr[yadd+xpos] <> tcol Then
+                If occPxls[yadd+xpos] <> tcol Then
                     Do
                         ypos -= 1
                         yadd -= destStride
                         texCurOffset -= sourceStride
                         If ypos <= xe Then Goto SkipScanQ4
-                        ccol = Sptr[yadd+xpos]
+                        ccol = occPxls[yadd+xpos]
                         If ccol = tcol Then
                             If ypos > xe Then
                                 dx = ypos-yp: dy = inc
                                 _addelement(ypos)
                             Else
                                 Sptr[yadd+xpos] = tex[texCurOffset]
+                                Sptr2[yadd+xpos] = tex2[texCurOffset]                                
                             End if
                             Exit Do
                         End if
@@ -1770,19 +1956,21 @@ Sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, 
                 proc = FILL_LOOP
                 Do
                     if proc = FILL_LOOP then
-                        If Sptr[yadd+xpos] <> tcol Then
+                        If occPxls[yadd+xpos] <> tcol Then
                             dx = ypos-yp+1: dy = inc
                             _addelement(ypos+1)
                             Proc = SEARCH_LOOP
                         Else
                             Sptr[yadd+xpos] = tex[texCurOffset]
+                            Sptr2[yadd+xpos] = tex2[texCurOffset]                            
                         End if
                     else
-                        If Sptr[yadd+xpos] = tcol Then
+                        If occPxls[yadd+xpos] = tcol Then
                             dx = ypos-yp: dy = inc
                             _addelement(ypos)
                             Proc = FILL_LOOP
-                            Sptr[yadd+xpos] = tex[texCurOffset]          
+                            Sptr[yadd+xpos] = tex[texCurOffset]
+                            Sptr2[yadd+xpos] = tex2[texCurOffset]           
                         End if                        
                     end if
                     ypos -= 1

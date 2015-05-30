@@ -98,7 +98,7 @@ type Level
         dim as Hashtable destroyedBlockMemory
         dim as ubyte ptr curDestBlocks
         dim as integer noVisuals
-        dim as LightPair ptr lightList
+        dim as LightPair ptr ptr lightList
         dim as integer lightList_N
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)

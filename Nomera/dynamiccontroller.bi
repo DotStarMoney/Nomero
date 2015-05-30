@@ -58,7 +58,7 @@ type DynamicController
 		declare sub flush()
 		declare function addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer,_
                                     minValue as double = 1, maxValue as double = 1, mode as integer = 0) as Item ptr
-		declare function populateLightList(ll as LightPair ptr) as integer
+		declare function populateLightList(ll as LightPair ptr ptr) as integer
 	private:
 		static as NamesTypes_t ptr namesTypesTable
 		static as integer          hasFilledTable

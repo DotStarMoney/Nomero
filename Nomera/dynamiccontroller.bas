@@ -89,12 +89,12 @@ sub DynamicController.explosionAlert(p as Vector2D)
 	loop
 end sub
 
-function DynamicController.populateLightList(ll as LightPair ptr) as integer
+function DynamicController.populateLightList(ll as LightPair ptr ptr) as integer
     dim as DynamicObjectType_t ptr dobj
     dim as Item ptr ditem
     dim as ListNodeRoll_t tempR
     dim as integer nlights
-    dim as PointLight tex, shade
+    dim as LightPair ptr lp
     dim as Vector2d scn_a, scn_b
     dim as Vector2d light_a, light_b
     
@@ -111,15 +111,14 @@ function DynamicController.populateLightList(ll as LightPair ptr) as integer
             ditem = cast(Item ptr, dobj->data_)
             if ditem->hasLight() then
             
-                ditem->getLightingData(tex, shade)
-                light_a = Vector2D(tex.x, tex.y) - Vector2D(tex.w, tex.h)*0.5 - Vector2D(128, 128)
-                light_b = Vector2D(tex.x, tex.y) + Vector2D(tex.w, tex.h)*0.5 + Vector2D(128, 128)
+                lp = ditem->getLightingData()
+                light_a = Vector2D(lp->texture.x, lp->texture.y) - Vector2D(lp->texture.w, lp->texture.h)*0.5 - Vector2D(128, 128)
+                light_b = Vector2D(lp->texture.x, lp->texture.y) + Vector2D(lp->texture.w, lp->texture.h)*0.5 + Vector2D(128, 128)
                 
                 if (light_a.x < scn_b.x) andAlso (light_b.x > scn_a.x) andAlso _
                    (light_a.y < scn_b.y) andAlso (light_b.y > scn_a.y) then
 
-                    ll[nlights].texture = tex
-                    ll[nlights].shaded = shade
+                    ll[nlights] = lp
                     nlights += 1
                 end if
                 

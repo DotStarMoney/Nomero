@@ -13,6 +13,11 @@ end type
 type LightPair
     as PointLight texture
     as PointLight shaded
+    as integer ptr occlusion_fbimg
+    as integer last_tl_x
+    as integer last_tl_y
+    as integer last_br_x
+    as integer last_br_y 
 end type
 
 #endif

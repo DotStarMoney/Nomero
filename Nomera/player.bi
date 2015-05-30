@@ -58,6 +58,7 @@ type Player
         declare sub drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
         declare sub loadAnimations(filename as string)
         declare sub drawPlayer(scnbuff as uinteger ptr)
+        declare sub drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer)
         declare function getState() as PlayerState
         declare sub explosionAlert(p as Vector2D)
         declare sub harm(p as Vector2D, amount as integer)

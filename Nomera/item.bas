@@ -24,8 +24,9 @@ end constructor
 destructor Item()
 	if anims then delete(anims)
     if lightState then
-        imagedestroy(lightShaded.diffuse_fbimg)
-        imagedestroy(lightShaded.specular_fbimg)
+        imagedestroy(light.shaded.diffuse_fbimg)
+        imagedestroy(light.shaded.specular_fbimg)
+        imagedestroy(light.occlusion_fbimg)
     end if
     if body_i <> -1 then link.tinyspace_ptr->removeBody(body_i)
 end destructor
@@ -110,6 +111,10 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
             lightFilename = "LightOrange"
             lw = 256
             lh = 256
+        case 1
+            lightFilename = "PaleBlue"
+            lw = 512
+            lh = 512        
         case else
             lightFilename = "LightOrange"
             lw = 256
@@ -117,15 +122,20 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
         end select
         anims[0].load("Lights\" + lightFilename + "_Diffuse.txt")
         anims[1].load("Lights\" + lightFilename + "_Specular.txt")
-        lightTex.diffuse_fbimg = anims[0].getRawImage()
-        lightTex.specular_fbimg = anims[1].getRawImage()
-        lightTex.x = body.p.x
-        lightTex.y = body.p.y
-        lightTex.w = lw
-        lightTex.h = lh
-        lightShaded = lightTex
-        lightShaded.diffuse_fbimg = imagecreate(lw, lh)
-        lightShaded.specular_fbimg = imagecreate(lw, lh)   
+        light.texture.diffuse_fbimg = anims[0].getRawImage()
+        light.texture.specular_fbimg = anims[1].getRawImage()
+        light.texture.x = body.p.x
+        light.texture.y = body.p.y
+        light.texture.w = lw
+        light.texture.h = lh
+        light.shaded = light.texture
+        light.shaded.diffuse_fbimg = imagecreate(lw, lh)
+        light.shaded.specular_fbimg = imagecreate(lw, lh)   
+        light.occlusion_fbimg = imagecreate(lw, lh)
+        light.last_tl_x = 0
+        light.last_tl_y = 0
+        light.last_br_x = lw - 1
+        light.last_br_y = lh - 1
         body_i = link.tinyspace_ptr->addBody(@body)
         lightState = 1
 	case else
@@ -197,8 +207,9 @@ end sub
 sub Item.flush()
 	if anims then delete(anims)
     if lightState then
-        imagedestroy(lightShaded.diffuse_fbimg)
-        imagedestroy(lightShaded.specular_fbimg)
+        imagedestroy(light.shaded.diffuse_fbimg)
+        imagedestroy(light.shaded.specular_fbimg)
+        imagedestroy(light.occlusion_fbimg)
     end if
 end sub
 
@@ -214,10 +225,10 @@ function Item.hasLight() as integer
     return lightState
 end function
 
-sub Item.getLightingData(texture as Pointlight, shaded as Pointlight)
-    texture = lightTex
-    shaded = lightShaded
-end sub
+function Item.getLightingData() as LightPair ptr
+    return @light
+end function
+
 
 function Item.process(t as double) as integer
 	dim as integer i
@@ -259,10 +270,10 @@ function Item.process(t as double) as integer
 			return 1
 		end if
     case ITEM_LIGHT
-        lightTex.x = body.p.x
-        lightTex.y = body.p.y
-        lightShaded.x = lightTex.x
-        lightShaded.y = lightTex.y
+        light.texture.x = body.p.x
+        light.texture.y = body.p.y
+        light.shaded.x = light.texture.x
+        light.shaded.y = light.texture.y
        
         if data1 <> 0 then return 1
   	case else

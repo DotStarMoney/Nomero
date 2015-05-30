@@ -46,13 +46,12 @@ type Item
 		declare function getType() as Item_Type_e
 		declare function process(t as double) as integer
         declare function hasLight() as integer
-        declare sub getLightingData(texture as Pointlight, shaded as Pointlight)
+        declare function getLightingData() as LightPair ptr
 		declare sub flush()
 		declare sub setLink(link_ as objectLink)
 	private:
 		static as uinteger ptr BOMB_COLORS
-        as Pointlight  lightTex
-        as Pointlight  lightShaded
+        as LightPair   light
         as integer     lightState
 		as Item_Type_e itemType
 		as integer     itemFlavor

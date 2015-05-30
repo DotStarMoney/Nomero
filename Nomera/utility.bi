@@ -40,7 +40,16 @@ declare function ScreenClip(px as integer, py as integer ,_
                             byref npx  as integer, byref npy  as integer ,_
                             byref sdx1 as integer, byref sdy1 as integer ,_
                             byref sdx2 as integer, byref sdy2 as integer) as integer
-                           
+ 
+declare function AnyClip(px as integer, py as integer ,_
+                         sx as integer, sy as integer ,_
+                         btl_x as integer, btl_y as integer,_
+                         bbr_x as integer, bbr_y as integer,_
+                         byref npx  as integer, byref npy  as integer ,_
+                         byref sdx1 as integer, byref sdy1 as integer ,_
+                         byref sdx2 as integer, byref sdy2 as integer) as integer
+  
+ 
  
 declare function circleBox(px as double, py as double, rad as double,_
 						   x1 as double, y1 as double,_
@@ -101,7 +110,12 @@ declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					        img_width as integer, img_height as integer,_
 					        dest_x as integer, dest_y as integer)
                             
-declare sub pointCastTexture(dest as integer ptr, source As Integer Ptr, xp As Integer, yp As Integer,_
+declare sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
+                             source1 As Integer Ptr, source2 as integer ptr,_
+                             occlude as Integer ptr, _
+                             dx0 as integer, dy0 as integer,_
+                             dx1 as integer, dy1 as integer,_
+                             xp As Integer, yp As Integer,_
                              rad As integer, tcol As Integer = &HFF000000, memoryPool as integer ptr = 0)
 
                             
@@ -127,6 +141,12 @@ declare function extractOrthoSegs(A as integer ptr, w as integer, h as integer) 
 
 declare function lineCircleCollision(p as Vector2D, r as double, a as Vector2D, b as Vector2D, ret1 as vector2D, ret2 as vector2D) as integer
 declare function angDist(a as double, b as double) as double
+
+declare sub imageSet(fbimg_ptr as integer ptr, value as integer, _
+                     tl_x as integer,_
+                     tl_y as integer,_
+                     br_x as integer,_
+                     br_y as integer)
 
 type windowCircleIntersectData_t
     as integer tl_x

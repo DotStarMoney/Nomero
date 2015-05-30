@@ -9,6 +9,7 @@
 #include "soundeffects.bi"
 #include "item.bi"
 #include "fbpng.bi"
+#include "gamespace.bi"
 
 dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
 #ifdef DEBUG
@@ -36,7 +37,7 @@ constructor level
     if falloutTex(2) = 0 then
 		falloutTex(2) = png_load("falloutdisk96_3.png")
     end if    
-    lightList = new LightPair[LIGHT_MAX]
+    lightList = new LightPair ptr[LIGHT_MAX]
     foreground_layer.init(sizeof(integer))
     background_layer.init(sizeof(integer))
     active_layer.init(sizeof(integer))
@@ -296,17 +297,17 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                         case 1
                             tilesets[block.tileset].set_image.putTRANS_1xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
                                                                                tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
-                                                                               layerData[lyr].ambientLevel, lightList[0].texture)   
+                                                                               layerData[lyr].ambientLevel, lightList[0]->shaded)   
                         case 2
                             tilesets[block.tileset].set_image.putTRANS_2xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
                                                                                tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
-                                                                               layerData[lyr].ambientLevel, lightList[0].texture, lightList[1].texture)
+                                                                               layerData[lyr].ambientLevel, lightList[0]->shaded, lightList[1]->shaded)
                         case 3
                             tilesets[block.tileset].set_image.putTRANS_3xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
                                                                                    tilePosX, tilePosY, tilePosX + 15, tilePosY + 15, _
-                                                                                   layerData[lyr].ambientLevel, lightList[0].texture, _
-                                                                                                                lightList[1].texture, _
-                                                                                                                lightList[2].texture)
+                                                                                   layerData[lyr].ambientLevel, lightList[0]->shaded, _
+                                                                                                                lightList[1]->shaded, _
+                                                                                                                lightList[2]->shaded)
                         end select
                         
                       
@@ -333,17 +334,17 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
                         case 1
                             tilesets[block.tileset].set_image.putTRANS_1xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
                                                                                tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
-                                                                               layerData[lyr].ambientLevel, lightList[0].texture)   
+                                                                               layerData[lyr].ambientLevel, lightList[0]->texture)   
                         case 2
                             tilesets[block.tileset].set_image.putTRANS_2xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
                                                                                tilePosX, tilePosY, tilePosX + 15, tilePosY + 15,_
-                                                                               layerData[lyr].ambientLevel, lightList[0].texture, lightList[1].texture)
+                                                                               layerData[lyr].ambientLevel, lightList[0]->texture, lightList[1]->texture)
                         case 3
                             tilesets[block.tileset].set_image.putTRANS_3xLight(scnbuff, xscan*16 + x, yscan*16 + y,_
                                                                                    tilePosX, tilePosY, tilePosX + 15, tilePosY + 15, _
-                                                                                   layerData[lyr].ambientLevel, lightList[0].texture, _
-                                                                                                                lightList[1].texture, _
-                                                                                                                lightList[2].texture)
+                                                                                   layerData[lyr].ambientLevel, lightList[0]->texture, _
+                                                                                                                lightList[1]->texture, _
+                                                                                                                lightList[2]->texture)
                         end select
                         
                       
@@ -745,6 +746,7 @@ sub level.flush()
         activeCover_layer.flush()
         foreground_layer.flush()
         falloutZones.rollReset()
+        lightList_N = 0
         do
             falloutItem = falloutZones.roll()
             if falloutItem > 0 then
@@ -787,14 +789,136 @@ function Level.getDefaultPos() as Vector2D
 end function
 
 sub level.processLights()
-    'cast shadows per light into shaded
+    dim as integer i
+    dim as windowCircleIntersectData_t wdata
+    dim as Vector2D screen_tl, screen_br
+    dim as Vector2D lightP
+    dim as double lightR
+    dim as integer tex_tl_x, tex_tl_y, tex_br_x, tex_br_y
+    dim as integer tl_x, tl_y, br_x, br_y
+    dim as integer xscan, yscan
+    dim as Level_VisBlock block
+    dim as integer row_c, tilePosX, tilePosY
+    dim as List ptr curList
+    dim as integer ptr curLayer
+    dim as integer order, cornerX, cornerY
+    dim as integer x0, y0, x1, y1
+    dim as integer dposx, dposy
     
+    lightList_N = link.dynamiccontroller_ptr->populateLightList(lightList)    
     
+    screen_tl = link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5 - Vector2D(128, 128)
+    screen_br = link.gamespace_ptr->camera + Vector2D(SCRX, SCRY)*0.5 + Vector2D(128, 128)
+    for i = 0 to lightList_N - 1
+        lightP = Vector2D(lightList[i]->texture.x, lightList[i]->texture.y)
+        lightR = lightList[i]->texture.w*0.5 
+        if windowCircleIntersect(screen_tl, screen_br, lightP, lightR, wdata) then
+            imageSet(lightList[i]->occlusion_fbimg, &hffff00ff, _
+                     lightList[i]->last_tl_x, lightList[i]->last_tl_y, _
+                     lightList[i]->last_br_x, lightList[i]->last_br_y)
+            imageSet(lightList[i]->shaded.diffuse_fbimg, &hff000000, _
+                     lightList[i]->last_tl_x, lightList[i]->last_tl_y, _
+                     lightList[i]->last_br_x, lightList[i]->last_br_y)
+            imageSet(lightList[i]->shaded.specular_fbimg, &hff000000, _
+                     lightList[i]->last_tl_x, lightList[i]->last_tl_y, _
+                     lightList[i]->last_br_x, lightList[i]->last_br_y)
+            
+            cornerX = lightList[i]->texture.x - lightList[i]->texture.w*0.5
+            cornerY = lightList[i]->texture.y - lightList[i]->texture.h*0.5
+            
+            tex_tl_x = wdata.tl_x - cornerX
+            tex_tl_y = wdata.tl_y - cornerY
+            tex_br_x = wdata.br_x - cornerX
+            tex_br_y = wdata.br_y - cornerY
+            
+            if tex_tl_x < 0 then tex_tl_x = 0
+            if tex_tl_y < 0 then tex_tl_y = 0
+            if tex_br_x >= lightList[i]->texture.w then tex_br_x = lightList[i]->texture.w - 1
+            if tex_br_y >= lightList[i]->texture.h then tex_br_y = lightList[i]->texture.h - 1
+            
+            tl_x = wdata.tl_x shr 4
+            tl_y = wdata.tl_y shr 4
+            br_x = wdata.br_x shr 4
+            br_y = wdata.br_y shr 4		
+            
+            if tl_x < 0 then tl_x = 0
+            if tl_y < 0 then tl_y = 0
+            if br_x >= lvlWidth then br_x = lvlWidth - 1
+            if br_y >= lvlHeight then br_y = lvlHeight - 1
+            
+            for order = 0 to 3
+            
+                select case order
+                case BACKGROUND
+                    curList = @background_layer
+                case ACTIVE
+                    curList = @active_layer
+                case FOREGROUND
+                    curList = @foreground_layer
+                case ACTIVE_COVER
+                    curList = @activeCover_layer
+                end select
+            
+                BEGIN_LIST(curLayer, (*curList))
+                    if layerData[*curLayer].occluding < 65535 then
+                        for yscan = tl_y to br_y
+                            for xscan = tl_x to br_x
+                                block = blocks[*curLayer][yscan * lvlWidth + xscan]
+                                if block.tileset < 65535 then
+                                    row_c = tilesets[block.tileset].row_count
+                                    tilePosX = ((block.tileNum - 1) mod row_c) * 16
+                                    tilePosY = ((block.tileNum - 1) \ row_c  ) * 16
+                                 
+                                    AnyClip(xscan*16 - cornerX, yscan*16 - cornerY, 16, 16,_
+                                            tex_tl_x, tex_tl_y, tex_br_x, tex_br_y,_
+                                            dposx, dposy,_
+                                            x0, y0, x1, y1)
+                                            
+                                    x0 += tilePosX
+                                    y0 += tilePosY
+                                    x1 += tilePosX
+                                    y1 += tilePosY
+                                    
+                                    put lightList[i]->occlusion_fbimg, (dposx, dposy), tilesets[block.tileset].set_image.getData(), (x0, y0)-(x1, y1), TRANS
+
+                                end if
+                            next xscan
+                        next yscan
+                    end if
+                END_LIST()	
+            next order
+            
+            link.player_ptr->drawPlayerInto(lightList[i]->occlusion_fbimg, cornerX, cornerY)
+            'draw player and any other registered things into the occlusion images
+            'for now draw just player
+            
+            'fix light boundary modification in pointCast and find out why texture isn't being cleared as it should
+            
+            line lightList[i]->occlusion_fbimg, (lightList[i]->texture.w*0.5 - 4, lightList[i]->texture.h*0.5 - 4)-_
+                                                (lightList[i]->texture.w*0.5 + 4, lightList[i]->texture.h*0.5 + 4),_
+                                                &hffff00ff, BF
+                                                
+                                                
+                                                
+            pointCastTexture(lightList[i]->shaded.diffuse_fbimg, lightList[i]->shaded.specular_fbimg,_
+                             lightList[i]->texture.diffuse_fbimg, lightList[i]->texture.specular_fbimg,_
+                             lightList[i]->occlusion_fbimg, _
+                             wdata.dx0, wdata.dy0, _
+                             wdata.dx1, wdata.dy1, _
+                             lightList[i]->texture.w*0.5, lightList[i]->texture.h*0.5,_
+                             lightList[i]->texture.w*0.5, &hffff00ff)
+        
+            lightList[i]->last_tl_x = tex_tl_x
+            lightList[i]->last_tl_y = tex_tl_y
+            lightList[i]->last_br_x = tex_br_x
+            lightList[i]->last_br_y = tex_br_y
+        end if
+    next i
+    'put (0,0), lightList[0]->shaded.diffuse_fbimg, PSET
 
 end sub
 
 sub level.process(t as double)
-    lightList_N = link.dynamiccontroller_ptr->populateLightList(lightList)    
     processLights()
 end sub
 
@@ -1053,8 +1177,8 @@ sub level.load(filename as string)
             get #f,,objField(3) 'maxValue
             get #f,,objField(4) 'mode
             
-            if objField(0) >= LIGHT_EFFECT_VALUE then
-                link.dynamiccontroller_ptr->addOneItem(tempObj.p, ITEM_LIGHT, objField(0) - LIGHT_EFFECT_VALUE,_
+            if objField(0) >= LIGHT_EFFECT_VALUE then 
+                link.dynamiccontroller_ptr->addOneItem(tempObj.p + tempObj.size*0.5, ITEM_LIGHT, objField(0) - LIGHT_EFFECT_VALUE,_
                                                        objField(2) / 65535.0, objField(3) / 65535.0, objField(4))
             else
                 graphicFX_->create(tempObj.object_name, objField(0),_

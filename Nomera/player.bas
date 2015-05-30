@@ -90,6 +90,10 @@ sub Player.drawPlayer(scnbuff as uinteger ptr)
 	end if
 end sub
 
+sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer)
+	anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy)
+end sub
+
 function Player.beingHarmed() as integer
 	if harmedFlashing > 0 then 
 		return 1

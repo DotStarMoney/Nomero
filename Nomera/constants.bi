@@ -8,10 +8,10 @@
 #define SCRY 480
 
 enum orderType
-    FOREGROUND
-    ACTIVE_COVER
-    ACTIVE
-    BACKGROUND
+    FOREGROUND = 0
+    ACTIVE_COVER = 1
+    ACTIVE = 2
+    BACKGROUND = 3
 end enum
 
 enum shapeType
