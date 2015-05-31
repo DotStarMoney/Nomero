@@ -28,7 +28,7 @@ type Item
 	public:
 		declare constructor()
 		declare destructor()
-		declare sub init(itemType_ as Item_Type_e, itemFlavor_ as integer)
+		declare sub init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast as integer)
 		declare sub setPos(v as Vector2D)
         declare sub setLightModeData(minValue as double, maxValue as double, mode as integer)
 		declare function getPos() as Vector2D
@@ -57,6 +57,7 @@ type Item
 		as integer     itemFlavor
         as double      minValue
         as double      maxValue
+        as integer     fast
         as integer     mode
 		as TinyBody    body
 		as integer     body_i

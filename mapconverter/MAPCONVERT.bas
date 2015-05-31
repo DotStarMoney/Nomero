@@ -268,6 +268,7 @@ type objectEffect_t
     as ushort minValue
     as ushort maxValue
     as ushort mode
+    as ushort fast
 end type
 
 dim as objectPortal_t  ptr tempObjPortal
@@ -575,6 +576,7 @@ do
                                         tempObjEffect->minValue = 65535
                                         tempObjEffect->maxValue = 65535
                                         tempObjEffect->mode = MODE_STATIC
+                                        tempObjEffect->fast = 65535
                                     case PORTAL
                                         objects(N_objects - 1).data_ = allocate(sizeof(ObjectPortal_t))
                                         tempObjPortal = objects(N_objects - 1).data_
@@ -707,16 +709,18 @@ do
                         elseif left(lcase(item_tag), 7) = "density" then
                             tempObjEffect->effect_density = val(item_content) * 65535.0
                         elseif left(lcase(item_tag), 9) = "min value" then
-                            tempObjEffect->minValue = val(item_content) * 65535.0
+                            tempObjEffect->minValue = val(item_content)
                         elseif left(lcase(item_tag), 9) = "max value" then
-                            tempObjEffect->maxValue = val(item_content) * 65535.0
+                            tempObjEffect->maxValue = val(item_content)
+                        elseif left(lcase(item_tag), 4) = "fast" then
+                            tempObjEffect->fast = 1
                         elseif left(lcase(item_tag), 4) = "mode" then
                             if left(lcase(item_content), 7) = "flicker" then
-                                tempObjEffect->effect_type = MODE_FLICKER
+                                tempObjEffect->mode = MODE_FLICKER
                             elseif left(lcase(item_content), 6) = "toggle" then
-                                tempObjEffect->effect_type = MODE_TOGGLE
+                                tempObjEffect->mode = MODE_TOGGLE
                             elseif left(lcase(item_content), 6) = "static" then
-                                tempObjEffect->effect_type = MODE_STATIC
+                                tempObjEffect->mode = MODE_STATIC
                             end if                        
                         end if
                     case PORTAL
@@ -1764,7 +1768,8 @@ for i = 0 to N_objects - 1
             put #f,,tempObjEffect->effect_density
             put #f,,tempObjEffect->minValue
             put #f,,tempObjEffect->maxValue
-            put #f,,tempObjEffect->mode            
+            put #f,,tempObjEffect->mode  
+            put #f,,tempObjEffect->fast              
         case PORTAL
             tempObjPortal = .data_
             put #f,,tempObjPortal->portal_to_map

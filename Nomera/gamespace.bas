@@ -165,9 +165,8 @@ function GameSpace.go() as integer
         frameTime = timer - startTime
         if keypress(SC_ESCAPE) then exit do
         
-        
-        
-        movingFrmAvg = movingFrmAvg*0.9 + 0.1*(frameTime*1000)		
+   
+        movingFrmAvg = movingFrmAvg*0.8 + 0.2*(frameTime*1000)		
         if movingFrmAvg < (1000 / FPS_TARGET) then
 			stallTime_mili += 1
 		else

@@ -63,12 +63,13 @@ sub Item.setLightModeData(minValue_p as double, maxValue_p as double, mode_p as 
     this.mode = mode_p
 end sub
 
-sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
+sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as integer = 0)
     dim as string lightFilename
     dim as integer lw, lh
 	itemType = itemType_
 	flush()
     body_i = -1
+    fast = fast_p
 	select case itemType
 	case ITEM_BOMB
 		body = TinyBody(Vector2D(0,0), 8, 10)
@@ -129,14 +130,21 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer)
         light.texture.w = lw
         light.texture.h = lh
         light.shaded = light.texture
-        light.shaded.diffuse_fbimg = imagecreate(lw, lh)
-        light.shaded.specular_fbimg = imagecreate(lw, lh)   
-        light.occlusion_fbimg = imagecreate(lw, lh)
+        if fast <> 65535 then
+            light.shaded.diffuse_fbimg = 0
+            light.shaded.specular_fbimg = 0   
+            light.occlusion_fbimg = 0       
+        else
+            light.shaded.diffuse_fbimg = imagecreate(lw, lh)
+            light.shaded.specular_fbimg = imagecreate(lw, lh)   
+            light.occlusion_fbimg = imagecreate(lw, lh)
+        end if
         light.last_tl_x = 0
         light.last_tl_y = 0
         light.last_br_x = lw - 1
         light.last_br_y = lh - 1
         body_i = link.tinyspace_ptr->addBody(@body)
+        data0 = 0
         lightState = 1
 	case else
 		anims_n = 0
@@ -274,6 +282,24 @@ function Item.process(t as double) as integer
         light.texture.y = body.p.y
         light.shaded.x = light.texture.x
         light.shaded.y = light.texture.y
+        
+        select case mode
+        case MODE_FLICKER
+            if data0 <= 0 then
+                data0 = (maxValue - minValue)*rnd + minValue
+                lightState = 1 - lightState 
+            else
+                data0 -= 1
+            end if
+        case MODE_TOGGLE
+            minValue += 1
+            if minValue >= maxValue then
+                minValue = 0
+                lightState = 1 - lightState
+            end if
+        case MODE_STATIC
+            lightState = 1
+        end select
        
         if data1 <> 0 then return 1
   	case else

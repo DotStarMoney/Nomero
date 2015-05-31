@@ -1265,17 +1265,14 @@ end sub
 Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                      source1 As Integer Ptr, source2 as integer ptr,_
                      occlude as Integer ptr, _
+                     tl_x as integer, tl_y as integer,_
+                     br_x as integer, br_y as integer,_
                      dx0 as integer, dy0 as integer,_
                      dx1 as integer, dy1 as integer,_
                      xp As Integer, yp As Integer,_
                      rad As integer, tcol As Integer = &HFF000000, memoryPool as integer ptr = 0)
               
     'may hit the skids when image pitch is not in words 
-    
-
-    'add light multiply to blitters
-    'implement update of flicker/static/toggle in light item
-    'add bump map support to mapconvert
     
     #define _Ek 0
     #define _Dn 1
@@ -1378,33 +1375,35 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
     
     if (fquad <> -1) andAlso (equad <> -1) then
 
-        if (fquad = 0) orElse (fquad = 1) then
+        if (fquad = 0) orElse (fquad = 2) then
             dx = dx0
             dy = dy0
         else
             dx = dy0
             dy = dx0        
         end if 
+               
         QuadBnd(fquad*2,_Xd) = Sgn(dx)
         dx = Abs(dx)
         dy = Abs(dy)
         QuadBnd(fquad*2,_Ek) = dx shl 1 - dy
         QuadBnd(fquad*2,_Dn) = QuadBnd(fquad*2,_Ek) + dy
         QuadBnd(fquad*2,_Dp) = QuadBnd(fquad*2,_Ek) - dy
+
         
-        if (equad = 0) orElse (equad = 1) then
+        if (equad = 0) orElse (equad = 2) then
             dx = dx1
             dy = dy1
         else
             dx = dy1
             dy = dx1        
         end if 
-        QuadBnd(fquad*2 + 1,_Xd) = Sgn(dx)
+        QuadBnd(equad*2 + 1,_Xd) = Sgn(dx)
         dx = Abs(dx)
         dy = Abs(dy)
-        QuadBnd(fquad*2 + 1,_Ek) = dx shl 1 - dy
-        QuadBnd(fquad*2 + 1,_Dn) = QuadBnd(fquad*2 + 1,_Ek) + dy
-        QuadBnd(fquad*2 + 1,_Dp) = QuadBnd(fquad*2 + 1,_Ek) - dy
+        QuadBnd(equad*2 + 1,_Ek) = dx shl 1 - dy
+        QuadBnd(equad*2 + 1,_Dn) = QuadBnd(equad*2 + 1,_Ek) + dy
+        QuadBnd(equad*2 + 1,_Dp) = QuadBnd(equad*2 + 1,_Ek) - dy
         
         equad = (equad + 1) mod 4
         do
@@ -1433,7 +1432,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
     Loop Until i = 0
     '-------------------------------------------------QUAD 1---------------------------------------
     
-    if (yp > 0) andAlso (yp < destH) andAlso (xp > 0) andALso (xp < destW) then
+    if (yp >= tl_y) andAlso (yp <= br_y) andAlso (xp >= tl_x) andALso (xp <= br_x) then
         checkAddr = yp*sourceStride+xp
         if occPxls[checkAddr] = tcol then
             checkAddr = yp*destStride+xp
@@ -1446,7 +1445,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
         exit sub
     end if
     
-    if yp > 0 andAlso ((skipQuad and 1) = 0) then
+    if yp > tl_y andAlso ((skipQuad and 1) = 0) then
         ShadowsA(0,_Ek) = QuadBnd(0,_Ek): ShadowsA(0,_Dn) = QuadBnd(0,_Dn): ShadowsA(0,_Dp) = QuadBnd(0,_Dp)
         ShadowsA(0,_Xx) = xp: ShadowsA(0,_Xd) = QuadBnd(0,_Xd)
         ShadowsA(1,_Ek) = QuadBnd(1,_Ek): ShadowsA(1,_Dn) = QuadBnd(1,_Dn): ShadowsA(1,_Dp) = QuadBnd(1,_Dp)
@@ -1454,11 +1453,11 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
         _N = 2
         texOffset = texCenter
         yadd = yp * destStride
-        If yp - rad < 0 Then 
-            prad = yp 
+        If yp - rad < tl_y Then 
+            prad = yp - tl_y 
         Else
             prad = rad
-        Endif
+        End if
         For inc = 1 To prad
             If inc > yend Then
                 xcirc = inc - yend - 1
@@ -1468,8 +1467,8 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                 RightBnd = xp + inc - 1
                 LeftBnd  = xp - inc
             End if
-            If RightBnd >= destW Then RightBnd = destW-1
-            If LeftBnd  <  0     Then LeftBnd  = 0
+            If RightBnd > br_x Then RightBnd = br_x
+            If LeftBnd  < tl_x Then LeftBnd  = tl_x
             ypos = yp - inc
             yadd -= destStride
             texOffset -= sourceStride
@@ -1499,11 +1498,12 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                 
                 If xe < LeftBnd Then 
                     Goto SkipScanQ1
-                Elseif xs > RightBnd Then
+                Elseif xs > RightBnd andAlso _N > 2 Then
                     Goto SkipScanQ1
                 Elseif xs < LeftBnd Then
                     xs = LeftBnd
                 End if
+                
                 txe = xe
                 If xe > RightBnd Then xe = RightBnd
                         
@@ -1518,7 +1518,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                     end if
                 end if
                 
-                if xe < xs then goto SkipScanQ1
+                if xe < xs andAlso _N > 2 then goto SkipScanQ1
 
                 xpos = xs
                 texCurOffset = texOffset + (xs - xp)
@@ -1580,7 +1580,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
     
     '----------------------------------------------------QUAD 2------------------------------------
     
-    if xp < destW andAlso ((skipQuad and 2) = 0) then
+    if xp < br_x andAlso ((skipQuad and 2) = 0) then
         
         ShadowsA(0,_Ek) = QuadBnd(2,_Ek): ShadowsA(0,_Dn) = QuadBnd(2,_Dn): ShadowsA(0,_Dp) = QuadBnd(2,_Dp)
         ShadowsA(0,_Xx) = yp: ShadowsA(0,_Xd) = QuadBnd(2,_Xd)
@@ -1588,8 +1588,8 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
         ShadowsA(1,_Xx) = yp: ShadowsA(1,_Xd) = QuadBnd(3,_Xd)
         _N = 2
         texOffset = texCenter
-        If xp + rad >= destW Then
-            prad = destW-xp-1
+        If xp + rad > br_x Then
+            prad = br_x - xp
         Else
             prad = rad
         Endif
@@ -1602,8 +1602,8 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                 RightBnd = yp + inc - 1
                 LeftBnd  = yp - inc
             Endif
-            If RightBnd >= destH Then RightBnd = destH-1
-            If LeftBnd  <  0     Then LeftBnd  = 0
+            If RightBnd > br_y Then RightBnd = br_y
+            If LeftBnd  < tl_y Then LeftBnd  = tl_y
             xpos = xp + inc
             texOffset += 1
             segs = _N
@@ -1632,7 +1632,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                 
                 If xe < LeftBnd Then 
                     Goto SkipScanQ2
-                Elseif xs > RightBnd Then
+                Elseif xs > RightBnd andAlso _N > 2 Then
                     Goto SkipScanQ2
                 Elseif xs < LeftBnd Then
                     xs = LeftBnd
@@ -1655,7 +1655,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                     end if
                 end if                
                 
-                if xe < xs then goto SkipScanQ2
+                if xe < xs andAlso _N > 2 then goto SkipScanQ2
                 
                 ypos = xs
                 yadd = xs * destStride
@@ -1722,18 +1722,18 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
     
 
     '------------------------------------------------QUAD 3---------------------------------------
-    if yp < destH andAlso ((skipQuad and 4) = 0) then
+    if yp < br_y andAlso ((skipQuad and 4) = 0) then
         ShadowsA(0,_Ek) = QuadBnd(4,_Ek): ShadowsA(0,_Dn) = QuadBnd(4,_Dn): ShadowsA(0,_Dp) = QuadBnd(4,_Dp)
         ShadowsA(0,_Xx) = xp: ShadowsA(0,_Xd) = QuadBnd(4,_Xd)
         ShadowsA(1,_Ek) = QuadBnd(5,_Ek): ShadowsA(1,_Dn) = QuadBnd(5,_Dn): ShadowsA(1,_Dp) = QuadBnd(5,_Dp)
         ShadowsA(1,_Xx) = xp: ShadowsA(1,_Xd) = QuadBnd(5,_Xd)
         texOffset = texCenter
         yadd = yp * destStride
-        If yp + rad >= destH Then
-            prad = destH-yp-1
+        If yp + rad > br_y Then
+            prad = br_y - yp
         Else
             prad = rad
-        Endif
+        End if
         _N = 2
         For inc = 1 To prad
             If inc > yend Then
@@ -1744,8 +1744,8 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                 RightBnd = xp + inc
                 LeftBnd  = xp - inc + 1
             End if
-            If RightBnd >= destW Then RightBnd = destW - 1
-            If LeftBnd  <  0     Then LeftBnd  = 0
+            If RightBnd > br_x Then RightBnd = br_x
+            If LeftBnd  < tl_x Then LeftBnd  = tl_x
             ypos = yp + inc
             yadd += destStride
             texOffset += sourceStride
@@ -1774,7 +1774,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                 
                 If xe > RightBnd Then 
                     Goto SkipScanQ3
-                Elseif xs < LeftBnd Then
+                Elseif xs < LeftBnd andAlso _N > 2 Then
                     Goto SkipScanQ3
                 Elseif xs > RightBnd Then
                     xs = RightBnd
@@ -1794,7 +1794,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                     end if
                 end if
                 
-                if xe > xs then goto SkipScanQ3
+                if xe > xs andALso _N > 2 then goto SkipScanQ3
 
                 xpos = xs
                 texCurOffset = texOffset + (xs - xp)
@@ -1854,15 +1854,15 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
     end if
     
     '------------------------------------------------QUAD 4---------------------------------------
-    if xp > 0 andAlso ((skipQuad and 8) = 0) then
+    if xp > tl_x andAlso ((skipQuad and 8) = 0) then
         ShadowsA(0,_Ek) = QuadBnd(6,_Ek): ShadowsA(0,_Dn) = QuadBnd(6,_Dn): ShadowsA(0,_Dp) = QuadBnd(6,_Dp)
         ShadowsA(0,_Xx) = yp: ShadowsA(0,_Xd) = QuadBnd(6,_Xd)
         ShadowsA(1,_Ek) = QuadBnd(7,_Ek): ShadowsA(1,_Dn) = QuadBnd(7,_Dn): ShadowsA(1,_Dp) = QuadBnd(7,_Dp)
         ShadowsA(1,_Xx) = yp: ShadowsA(1,_Xd) = QuadBnd(7,_Xd)
         texOffset = texCenter
         _N = 2
-        If xp - rad < 0 Then
-            prad = xp
+        If xp - rad < tl_x Then
+            prad = xp - tl_x
         Else
             prad = rad
         End if
@@ -1875,8 +1875,8 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                 RightBnd = yp + inc
                 LeftBnd  = yp - inc + 1
             End if
-            If RightBnd >= destH Then RightBnd = destH-1
-            If LeftBnd  <  0     Then LeftBnd  = 0
+            If RightBnd > br_y Then RightBnd = br_y
+            If LeftBnd  < tl_y Then LeftBnd  = tl_y
             xpos = xp - inc
             texOffset -= 1
             segs = _N
@@ -1904,7 +1904,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                 
                 If xe > RightBnd Then 
                     Goto SkipScanQ4
-                Elseif xs < LeftBnd Then
+                Elseif xs < LeftBnd andAlso _N > 2 Then
                     Goto SkipScanQ4
                 Elseif xs > RightBnd Then
                     xs = RightBnd
@@ -1926,7 +1926,7 @@ Sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                     end if
                 end if
                 
-                if xe > xs then goto SkipScanQ4
+                if xe > xs andALso _N > 2 then goto SkipScanQ4
                 
                 ypos = xs
                 yadd = xs * destStride

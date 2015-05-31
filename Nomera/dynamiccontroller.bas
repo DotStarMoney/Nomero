@@ -163,13 +163,13 @@ sub DynamicController.addSpawnZone(objectName as string,_
 end sub
 
 function DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer,_
-                                      minValue as double, maxValue as double, mode as integer) as Item ptr
+                                      minValue as double, maxValue as double, mode as integer, fast as integer) as Item ptr
 	dim as Item ptr curItem
 	dim as DynamicObjectType_t dobj
 
 	curItem = new Item
 	curItem->setLink(link)
-	curItem->init(itemType_, itemFlavor_)
+	curItem->init(itemType_, itemFlavor_, fast)
     curItem->setPos(position)
     curItem->setLightModeData(minValue, maxValue, mode)
 	

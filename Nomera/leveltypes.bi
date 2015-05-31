@@ -79,7 +79,8 @@ type Level_VisBlock
     as ushort tileNum
     as short  frameDelay
     as ushort usesAnim
-    as ushort rotatedType
+    as PointLight ptr light(0 to 2)
+    as integer numLights
 end type
 
 Type Level_LayerData
