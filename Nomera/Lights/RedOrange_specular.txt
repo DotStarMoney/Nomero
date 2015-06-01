@@ -1,0 +1,8 @@
+      #IMAGE NAME
+"RedOrange_specular.png"
+      #IMAGE SIZE
+512,512
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+0

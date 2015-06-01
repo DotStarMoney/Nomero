@@ -29,12 +29,14 @@ type SpawnZone_t
 	as integer                isNew
 	as Vector2D               p
 	as Vector2D               size
+    as Item_Type_e            itemNumber
 end type
 
 type NamesTypes_t
-	declare constructor(name_p as string, type_p as DynamicObjectType_e)
+	declare constructor(name_p as string, type_p as DynamicObjectType_e, itemNumber_p as Item_Type_e)
 	as zstring * 32        name_
 	as DynamicObjectType_e type_
+    as Item_Type_e         itemNumber_
 end type
 
 type DynamicObjectType_t

@@ -1,6 +1,7 @@
 #ifndef ANIMATION_BI
 #define ANIMATION_BI
 
+#include "pointlight.bi"
 #include "vector2d.bi"
 #include "hashtable.bi"
 #include "zimage.bi"
@@ -92,7 +93,16 @@ type Animation
         declare sub setSpeed(s as integer)
         declare sub setGlow(glow as integer)
  
-        declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
+        declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, _
+                                  cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
+        declare sub drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integer, _
+                                     lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
+                                     cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0)
+                                     
+        declare sub drawImageLit(scnbuff as uinteger ptr, x as integer, y as integer, x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
+                                     lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
+                                     cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0)                                     
+                                     
         declare sub drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as integer, anim as integer, frame as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
         
         declare sub step_animation()
@@ -103,6 +113,7 @@ type Animation
         declare function getFrame() as integer
         declare function getGlow() as integer
         declare function getRawImage() as integer ptr
+        declare function getRawZImage() as zimage ptr
         
         declare function getFramePixelCount(rotatedFlags as integer = 0) as integer
         declare sub getFrameImageData(byref img as uinteger ptr, byref xpos as integer, byref ypos as integer, byref w as integer, byref h as integer)

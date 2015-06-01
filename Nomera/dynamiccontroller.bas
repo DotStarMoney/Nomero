@@ -6,23 +6,26 @@
 #include "gamespace.bi"
 #include "item.bi"
 
-#define N_OBJ_TYPES 4
+#define N_OBJ_TYPES 5
 
 dim as NamesTypes_t ptr DynamicController.namesTypesTable = 0
 dim as integer          DynamicController.hasFilledTable = 0
 
-constructor NamesTypes_t(name_p as string, type_p as DynamicObjectType_e)
+constructor NamesTypes_t(name_p as string, type_p as DynamicObjectType_e, itemNumber_p as Item_Type_e)
 	this.name_ = name_p
 	this.type_ = type_p
+    this.itemNumber_ = itemNumber_p
 end constructor
 
 constructor DynamicController
 	if hasFilledTable = 0 then
 		hasFilledTable = 1
 		namesTypesTable = allocate(sizeof(NamesTypes_t) * N_OBJ_TYPES)
-		namesTypesTable[0] = NamesTypes_t("SOLDIER 1", OBJ_ENEMY)
-		namesTypesTable[1] = NamesTypes_t("SOLDIER 2", OBJ_ENEMY)
-		namesTypesTable[2] = NamesTypes_t("BEAR", OBJ_ENEMY)
+		namesTypesTable[0] = NamesTypes_t("SOLDIER 1", OBJ_ENEMY, 0)
+		namesTypesTable[1] = NamesTypes_t("SOLDIER 2", OBJ_ENEMY, 0)
+		namesTypesTable[2] = NamesTypes_t("BEAR", OBJ_ENEMY, 0)
+        namesTypesTable[3] = NamesTypes_t("NIXIE FLICKER", OBJ_ITEM, ITEM_NIXIEFLICKER)
+        namesTypesTable[4] = NamesTypes_t("SMALL OSCILLOSCOPE", OBJ_ITEM, ITEM_SMALLOSCILLOSCOPE)
 	end if
 	objects.init(sizeof(DynamicObjectType_t))
 	spawnZones.init(sizeof(SpawnZone_t))
@@ -127,6 +130,7 @@ function DynamicController.populateLightList(ll as LightPair ptr ptr) as integer
         
     END_LIST()
     objects.setRoll(tempR)
+   
     return nlights
 end function
 
@@ -147,6 +151,7 @@ sub DynamicController.addSpawnZone(objectName as string,_
 	next i
 	if objType = OBJ_NONE then exit sub
 	
+    zone.itemNumber = namesTypesTable[i].itemNumber_
 	zone.hasMember = 0
 	zone.spawn_time  = time_
 	zone.spawn_count = count_
@@ -220,7 +225,20 @@ sub DynamicController.addEnemy(sz as SpawnZone_t)
 end sub
 
 sub DynamicController.addItem(sz as SpawnZone_t)
+	dim as Item ptr curItem
+	dim as DynamicObjectType_t dobj
 
+	curItem = new Item
+	curItem->setLink(link)
+	curItem->init(sz.itemNumber, 0, 0)
+    curItem->setPos(sz.p)
+    curItem->setSize(sz.size)
+    	
+	dobj.object_type = OBJ_ITEM
+	dobj.data_ = curItem
+	
+	objects.push_back(@dobj)
+	   
 end sub
 								   
 sub DynamicController.process(t as double)
@@ -248,7 +266,7 @@ sub DynamicController.process(t as double)
 				case OBJ_ENEMY
 					addEnemy(*szptr)			
 				case OBJ_ITEM
-					'addItem(*szptr)
+					addItem(*szptr)
 				end select
 			end if
 		else

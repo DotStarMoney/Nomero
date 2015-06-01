@@ -50,6 +50,10 @@ function Animation.getRawImage() as integer ptr
     return data_->image.getData()
 end function
 
+function Animation.getRawZImage() as zimage ptr
+    return @(data_->image)
+end function
+
 
 sub Animation.load(filename as string)
     dim as integer  f, readStep, i, slashP
@@ -703,3 +707,160 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer,
     end with    
 end sub
 
+sub Animation.drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integer, _
+                               lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
+                               cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0)
+    Dim as Vector2D off
+    dim as integer start_x, start_y
+    dim as integer a_x, a_y
+    dim as integer b_x, b_y
+    dim as integer pos_x, pos_y
+    dim as integer drawW, drawH
+    dim as integer usesLight_N, i
+    dim as LightPair ptr usesLight(0 to 2)
+    dim as zimage  drawImg
+    with data_->animations[currentAnim]
+		
+        fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
+        usesLight_N = 0
+        
+        select case data_->drawMode
+        case ANIM_TRANS
+            pos_x = x + off.x
+            pos_y = y + off.y
+            for i = 0 to lightList_N-1
+                if ((lightList[i]->texture.x - lightList[i]->texture.w*0.5) <= (pos_x + drawW - 1)) andALso _
+                   ((lightList[i]->texture.x + lightList[i]->texture.w*0.5 - 1) >= pos_x) andALso _
+                   ((lightList[i]->texture.y - lightList[i]->texture.h*0.5) <= (pos_y + drawH - 1)) andALso _
+                   ((lightList[i]->texture.y + lightList[i]->texture.h*0.5 - 1) >= pos_y) then
+                   
+                    usesLight(usesLight_N) = lightList[i]
+                    usesLight_N += 1
+                                           
+                    if usesLight_N = 3 then exit for
+                end if
+            next i
+                          
+            if forceShading = 1 then
+                select case usesLight_N
+                case 0
+                    drawImg.putTRANS_0xLight(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1,_
+                                             ambientLight)
+                case 1
+                    drawImg.putTRANS_1xLight(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1,_
+                                             ambientLight, usesLight(0)->texture)
+                case 2
+                    drawImg.putTRANS_2xLight(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1,_
+                                             ambientLight, usesLight(0)->texture, usesLight(1)->texture)
+                case 3
+                    drawImg.putTRANS_3xLight(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1,_
+                                             ambientLight, usesLight(0)->texture, usesLight(1)->texture, usesLight(2)->texture)
+                end select
+            else
+                select case usesLight_N
+                case 0
+                    drawImg.putTRANS_0xLight(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1,_
+                                             ambientLight)
+                case 1
+                    drawImg.putTRANS_1xLight(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1,_
+                                             ambientLight, iif(usesLight(0)->shaded.diffuse_fbimg <> 0, usesLight(0)->shaded, usesLight(0)->texture))
+                case 2
+                    drawImg.putTRANS_2xLight(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1,_
+                                             ambientLight, iif(usesLight(0)->shaded.diffuse_fbimg <> 0, usesLight(0)->shaded, usesLight(0)->texture),_
+                                                           iif(usesLight(1)->shaded.diffuse_fbimg <> 0, usesLight(1)->shaded, usesLight(1)->texture))
+                case 3
+                    drawImg.putTRANS_3xLight(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1,_
+                                             ambientLight, iif(usesLight(0)->shaded.diffuse_fbimg <> 0, usesLight(0)->shaded, usesLight(0)->texture),_
+                                                           iif(usesLight(1)->shaded.diffuse_fbimg <> 0, usesLight(1)->shaded, usesLight(1)->texture),_
+                                                           iif(usesLight(2)->shaded.diffuse_fbimg <> 0, usesLight(2)->shaded, usesLight(2)->texture))
+                end select                    
+            end if
+			
+		case ANIM_GLOW
+
+            drawImg.putGLOW(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1, glowValue)
+
+		end select
+		
+    end with                                                           
+                               
+end sub
+
+sub Animation.drawImageLit(scnbuff as uinteger ptr, x as integer, y as integer, x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
+                           lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
+                           cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0)   
+    Dim as Vector2D off
+    dim as integer start_x, start_y
+    dim as integer a_x, a_y
+    dim as integer b_x, b_y
+    dim as integer drawW, drawH
+    dim as integer pos_x, pos_y
+    dim as integer usesLight_N, i
+    dim as LightPair ptr usesLight(0 to 2)
+    dim as zimage  drawImg
+    with data_->animations[currentAnim]
+		
+        fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
+        usesLight_N = 0
+        
+        select case data_->drawMode
+        case ANIM_TRANS
+            pos_x = x + off.x
+            pos_y = y + off.y
+            for i = 0 to lightList_N-1
+                if ((lightList[i]->texture.x - lightList[i]->texture.w*0.5) <= (pos_x + (x1 - x0))) andALso _
+                   ((lightList[i]->texture.x + lightList[i]->texture.w*0.5 - 1) >= pos_x) andALso _
+                   ((lightList[i]->texture.y - lightList[i]->texture.h*0.5) <= (pos_y + (y1 - y0))) andALso _
+                   ((lightList[i]->texture.y + lightList[i]->texture.h*0.5 - 1) >= pos_y) then
+                   
+                    usesLight(usesLight_N) = lightList[i]
+                    usesLight_N += 1
+                                           
+                    if usesLight_N = 3 then exit for
+                end if
+            next i
+                          
+            if forceShading = 1 then
+                select case usesLight_N
+                case 0
+                    drawImg.putTRANS_0xLight(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1,_
+                                             ambientLight)
+                case 1
+                    drawImg.putTRANS_1xLight(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1,_
+                                             ambientLight, usesLight(0)->texture)
+                case 2
+                    drawImg.putTRANS_2xLight(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1,_
+                                             ambientLight, usesLight(0)->texture, usesLight(1)->texture)
+                case 3
+                    drawImg.putTRANS_3xLight(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1,_
+                                             ambientLight, usesLight(0)->texture, usesLight(1)->texture, usesLight(2)->texture)
+                end select
+            else
+                select case usesLight_N
+                case 0
+                    drawImg.putTRANS_0xLight(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1,_
+                                             ambientLight)
+                case 1
+                    drawImg.putTRANS_1xLight(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1,_
+                                             ambientLight, iif(usesLight(0)->shaded.diffuse_fbimg <> 0, usesLight(0)->shaded, usesLight(0)->texture))
+                case 2
+                    drawImg.putTRANS_2xLight(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1,_
+                                             ambientLight, iif(usesLight(0)->shaded.diffuse_fbimg <> 0, usesLight(0)->shaded, usesLight(0)->texture),_
+                                                           iif(usesLight(1)->shaded.diffuse_fbimg <> 0, usesLight(1)->shaded, usesLight(1)->texture))
+                case 3
+                    drawImg.putTRANS_3xLight(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1,_
+                                             ambientLight, iif(usesLight(0)->shaded.diffuse_fbimg <> 0, usesLight(0)->shaded, usesLight(0)->texture),_
+                                                           iif(usesLight(1)->shaded.diffuse_fbimg <> 0, usesLight(1)->shaded, usesLight(1)->texture),_
+                                                           iif(usesLight(2)->shaded.diffuse_fbimg <> 0, usesLight(2)->shaded, usesLight(2)->texture))
+                end select                    
+            end if
+			
+		case ANIM_GLOW
+
+            drawImg.putGLOW(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1, glowValue)
+
+		end select
+		
+    end with          
+
+end sub                           

@@ -154,8 +154,8 @@ function GameSpace.go() as integer
 		step_draw()
         
         locate 1,1
-        print using "Frame Load %: ##.##"; (processTime / (1000 / FPS_TARGET)) * 100
-        print spy.body.p
+        'print using "Frame Load %: ##.##"; (processTime / (1000 / FPS_TARGET)) * 100
+        'print spy.body.p
 
         
         step_input()
@@ -214,7 +214,7 @@ sub GameSpace.step_input()
 end sub
 
 sub GameSpace.vibrateScreen()
-    vibcount = 4
+    vibcount = 8
 end sub
 
 sub GameSpace.hardSwitchMusic(filename as string)
@@ -275,14 +275,14 @@ sub GameSpace.step_draw()
     graphicFX.drawEffects(scnbuff, camera, ACTIVE)
     RECORD_PROFILE(4)
     
-    START_PROFILE(5)
-    spy.drawPlayer(scnbuff)
-    RECORD_PROFILE(5)
-    
     START_PROFILE(6)
 	dynControl.drawDynamics(scnbuff, ACTIVE)
     RECORD_PROFILE(6)
     
+    START_PROFILE(5)
+    spy.drawPlayer(scnbuff)
+    RECORD_PROFILE(5)
+     
     START_PROFILE(1)
 	lvlData.drawLayers(scnbuff, ACTIVE_COVER, camera.x(), camera.y(), Vector2D(0, shake))'
     RECORD_PROFILE(1)
@@ -444,12 +444,24 @@ sub GameSpace.step_process()
     camera.setY(int(camera.y()))
     
     if vibcount > 0 then
-        shake = ((vibcount mod 2) * 2 - 1) * 5
+        shake = (((vibcount/3) mod 2) * 2 - 1) * 4
     else
         shake = 0
     end if
     
-
+	tracker.step_record(keypress(SC_DELETE))
+    START_PROFILE(1)
+    if isSwitching = 0 then
+		#ifdef DEBUG
+			world.step_time(0.01667)
+		#else
+			for i = 1 to 3
+				world.step_time(0.0055555)
+			next i
+		#endif
+	end if
+    RECORD_PROFILE(1)
+    
     if keypress(SC_RIGHT) then
         dire = 1
     elseif keypress(SC_LEFT) then
@@ -554,18 +566,7 @@ sub GameSpace.step_process()
 		doGameEnd()
 	end if
     
-	tracker.step_record(keypress(SC_DELETE))
-    START_PROFILE(1)
-    if isSwitching = 0 then
-		#ifdef DEBUG
-			world.step_time(0.01667)
-		#else
-			for i = 1 to 3
-				world.step_time(0.0055555)
-			next i
-		#endif
-	end if
-    RECORD_PROFILE(1)
+
     
     RECORD_PROFILE(0)
     for i = 0 to 9

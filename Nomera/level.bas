@@ -25,6 +25,7 @@ constructor level
     layerData = 0
     snowfall = 0
     tilesets = 0
+    shouldLightObjects = 0
     blocks = 0
     destroyedBlockMemory.init(sizeof(destroyedBlocks_t))
     portalZonesNum = 0
@@ -687,6 +688,7 @@ sub level.flush()
         stall(100)
     #endif
     if lvlName <> "" then
+        shouldLightObjects = 0
         if coldata <> 0 then deallocate(coldata)
         for i = 0 to tilesets_N - 1
             deallocate(tilesets[i].set_name)
@@ -745,6 +747,23 @@ function Level.getDefaultPos() as Vector2D
 	return Vector2D(default_x * 16, default_y * 16)
 end function
 
+function level.getLightList(byref lightList_p as LightPair ptr ptr) as integer
+    lightList_p = lightList
+    return lightList_N
+end function
+
+function level.shouldLight() as integer
+    return shouldLightObjects
+end function
+
+function level.getObjectAmbientLevel() as integer
+    return objectAmbientLevel
+end function
+
+function level.getHiddenObjectAmbientLevel() as integer
+    return hiddenObjectAmbientLevel
+end function
+
 sub level.processLights()
     dim as integer i
     dim as windowCircleIntersectData_t wdata
@@ -783,9 +802,7 @@ sub level.processLights()
                 imageSet(lightList[i]->shaded.specular_fbimg, &hff000000, _
                          lightList[i]->last_tl_x, lightList[i]->last_tl_y, _
                          lightList[i]->last_br_x, lightList[i]->last_br_y)
-                         
-                
-             
+              
                 cornerX = lightList[i]->texture.x - lightList[i]->texture.w*0.5
                 cornerY = lightList[i]->texture.y - lightList[i]->texture.h*0.5
                 
@@ -952,7 +969,7 @@ sub level.processLights()
             end if
         end if        
     next i
-
+             
 end sub
 
 sub level.process(t as double)
@@ -1004,10 +1021,15 @@ sub level.load(filename as string)
     get #f,,lvlWidth
     get #f,,lvlHeight
     get #f,,snowfall
+    get #f,,objField(0)
+    get #f,,objectAmbientLevel
+    get #f,,hiddenObjectAmbientLevel
     get #f,,default_x
     get #f,,default_y
     get #f,,strdata
     
+    shouldLightObjects = objField(0)
+    if shouldLightObjects = 65535 then shouldLightObjects = 0
     loadedMusic = strdata
     
     get #f,,tilesets_N

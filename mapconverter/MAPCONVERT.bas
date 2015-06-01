@@ -4,7 +4,7 @@
 #include "dir.bi"
 #include "file.bi"
 #include "fbpng.bi"
-
+#include "vbcompat.bi"
 
 Enum MaskResult_e
     SUBSET
@@ -292,6 +292,9 @@ dim as zstring * 128 music_file
 dim as ushort default_x
 dim as ushort default_y
 dim as ushort snowfall
+dim as ushort shouldLight = 65535
+dim as integer objectAmbientLevel = &hffffffff
+dim as integer hiddenObjectAmbientLevel = &hffffffff
 dim as ushort map_width, map_height
 dim as ushort N_tilesets, N_layers, N_objects
 
@@ -303,6 +306,7 @@ redim as set_t tilesets(0)
 redim as layer_t layers(0)
 redim as object_t objects(0)
 redim as integer ptr setImages(0)
+redim as integer ptr setImages_norm(0)
 '-------------------------------------
 
 
@@ -674,6 +678,12 @@ do
                         default_y = val(pieces(1))
                     elseif left(lcase(item_tag), 5) = "music" then
                         music_file = item_content
+                    elseif left(lcase(item_tag), 13) = "light objects" then
+                        shouldLight = 1
+                    elseif left(lcase(item_tag), 13) = "ambient level" then
+                        objectAmbientLevel = val(item_content)
+                    elseif left(lcase(item_tag), 20) = "hidden ambient level" then    
+                        hiddenObjectAmbientLevel = val(item_content)                        
                     end if
                 elseif propertyType = 3 then
                     select case objects(N_objects - 1).object_type
@@ -908,6 +918,9 @@ dim as integer byCol, byRow, oldCol
 dim as integer xpos, ypos, w
 
 redim as integer ptr setImages(N_tilesets)
+redim as integer ptr setImages_norm(N_tilesets)
+dim as string normFilename
+
 dim as HashTable combinedTiles
 dim as HashTable rotatedTiles
 dim as integer foundOneRotated = 0
@@ -926,9 +939,20 @@ for i = 0 to N_tilesets - 1
     else
         setImages(i) = png_load(tilesets(i).set_filename)
     end if
+    
+    normFilename = left(tilesets(i).set_filename, len(tilesets(i).set_filename) - 4) + "_surface"
+    if fileexists(normFilename + ".bmp") then
+        setImages_norm(i) = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
+        bload normFilename+".bmp", setImages_norm(i)        
+    elseif fileexists(normFilename + ".png") then
+        setImages_norm(i) = png_load(normFilename+".png")
+    else
+        setImages_norm(i) = imagecreate(tilesets(i).set_width, tilesets(i).set_height)
+    end if
 next i
 N_tilesets += 1
 setImages(N_tilesets - 1) = imagecreate(320, curRotatedHeight)
+setImages_norm(N_tilesets - 1) = imagecreate(320, curRotatedHeight)
 redim preserve as set_t tilesets(0 to N_tilesets-1)
 
 tilesets(N_tilesets - 1).set_name     = map_name + "_rotated"
@@ -1051,8 +1075,9 @@ for i = 0 to N_layers - 1
              
                                 if col <> &hffff00ff then 
                                     setImages(N_tilesets - 1)[8 + ppos(X_) + ppos(Y_) * 320] = col
-                                    
                                 end if
+                                setImages_norm(N_tilesets - 1)[8 + ppos(X_) + ppos(Y_) * 320] = point(xpos, ypos, setImages_norm(curSet))
+                                
                                 ppos(byCol) += pdir(byCol)
                                 xpos += 1
                             wend
@@ -1076,16 +1101,24 @@ next i
 '32x21
 if foundOneRotated = 0 then 
     imagedestroy(setImages(N_tilesets - 1))
+    imagedestroy(setImages_norm(N_tilesets - 1))
     N_tilesets -= 1
 else
     tilesets(N_tilesets - 1).set_width = 320
     curRotatedHeight = (int(N_rotated / 20) + 1) * 16
     tilesets(N_tilesets - 1).set_height = curRotatedHeight
     tilesets(N_tilesets - 1).used = 0
+    
     tempRotatedImg = imagecreate(320, curRotatedHeight)
     put tempRotatedImg,(0,0), setImages(N_tilesets - 1), (0,0)-(319, curRotatedHeight - 1), PSET
     imagedestroy(setImages(N_tilesets - 1))
     setImages(N_tilesets - 1) = tempRotatedImg
+    
+    tempRotatedImg = imagecreate(320, curRotatedHeight)
+    put tempRotatedImg,(0,0), setImages_norm(N_tilesets - 1), (0,0)-(319, curRotatedHeight - 1), PSET
+    imagedestroy(setImages_norm(N_tilesets - 1))
+    setImages_norm(N_tilesets - 1) = tempRotatedImg    
+    
     highTileValue += 20 * int(curRotatedHeight / 16)
 end if
 
@@ -1109,6 +1142,7 @@ curRange = ACTIVE
 type mergeStack_t
     as integer ptr mask
     as integer ptr image
+    as integer ptr image_norm
     as integer     flags
     as single      depth
     as integer     ambientLevel
@@ -1123,6 +1157,7 @@ end type
 type imageTilePair_t
     as integer tilenum
     as integer ptr image   
+    as integer ptr image_norm
 end type
 type auxTable_t
     as Hashtable   hashedImageLists
@@ -1141,7 +1176,7 @@ dim as string searchKey
 
 dim as mergeStack_t tempStackItem
 dim as integer N_runs = 0, curFlags, pushRun = 0, findFullCoverage, deleteTile
-dim as integer ptr curMask, coverageMask, foMask, dMask, sMask, curImage, tempMaskImg, storeImg
+dim as integer ptr curMask, coverageMask, foMask, dMask, sMask, curImage, tempMaskImg, storeImg, curImage_norm, storeImg_norm
 dim as integer stackPos, tileX, tileY, remInd, isAnim, animSearch, firstInLoop, activeLayer
 dim as integer ptr cmpImg(0 to 1)
 dim as integer tileEmpty, maskComp, numTilesSet
@@ -1153,13 +1188,14 @@ dim as List tilesetListHashes
 dim as List ptr tempTileList
 dim as auxTable_t ptr tempTable
 dim as imageTilePair_t ptr tempITPair
-dim as integer ptr curAtlas
+dim as integer ptr curAtlas, curAtlas_norm
 dim curfile as string
 dim as string setname
 dim f2 as integer = freefile
-dim as integer ptr curTilePtr
+dim as integer ptr curTilePtr, curTilePtr_norm
 
 curTilePtr = imagecreate(16,16)
+curTilePtr_norm = imagecreate(16,16)
 
 tilesetListHashes.init(sizeof(auxTable_t ptr))
 
@@ -1174,6 +1210,16 @@ Do
             bload "tilesets\" & curfile, curAtlas
         end if
         
+        normFilename = left(curfile, len(curfile) - 4) + "_norm"
+        if fileexists(normFilename+".bmp") then
+            curAtlas_norm = imagecreate(320,4096)
+            bload "tilesets\" & normFilename & ".bmp", curAtlas_norm           
+        elseif fileexists(normFilename+".png") then
+            curAtlas_norm = png_load("tilesets\" & normFilename & ".png")
+        else
+            curAtlas_norm = imagecreate(320,4096)
+        end if
+        
         tileA = 0
         
         tempTable = new auxTable_t
@@ -1184,13 +1230,20 @@ Do
         do
             tileX = (tileA mod 20) * 16
             tileY = int(tileA / 20) * 16
+            
             put curTilePtr, (0,0), curAtlas, (tileX,tileY)-(tileX+15,tileY+15), PSET
+            put curTilePtr_norm, (0,0), curAtlas_norm, (tileX,tileY)-(tileX+15,tileY+15), PSET
+            
             if imageIsNotEmpty(curTilePtr) then
                 imgTag = hashImage(curTilePtr)
                 tempITPair = new imageTilePair_t
                 tempITPair->tilenum = highTileValue + numTilesSet
+                
                 tempITPair->image = imagecreate(16,16)
+                tempITPair->image_norm = imagecreate(16,16)
                 put tempITPair->image, (0,0), curTilePtr, PSET
+                put tempITPair->image_norm, (0,0), curTilePtr_norm, PSET
+
                 numTilesSet += 1
                 if tempTable->hashedImageLists.exists(imgTag) then
                     tempTileList = *cast(List ptr ptr, tempTable->hashedImageLists.retrieve(imgTag))
@@ -1242,13 +1295,13 @@ sMask = imagecreate(16, 16, 0)
 curMask = imagecreate(16, 16, 0)
 coverageMask = imagecreate(16, 16, 0)
 curImage = imagecreate(16,16,0)
+curImage_norm = imagecreate(16,16,0)
 tempMaskImg = imagecreate(16,16,0)
 cmpImg(0) = imagecreate(16,16,0)
 cmpImg(1) = imagecreate(16,16,0)
 
-
 dim as integer ptr mergedTiles = imagecreate(320, 4096)
-
+dim as integer ptr mergedTiles_norm = imagecreate(320, 4096)
 
 print
 print
@@ -1282,7 +1335,9 @@ for activeLayer = 0 to 3
                     next j
                     tileX = (tileNum * 16) mod ((tilesets(curSet).set_width \ 16) * 16)
                     tileY = int((tileNum * 16) / ((tilesets(curSet).set_width \ 16) * 16)) * 16
+                    
                     put curImage, (0,0), setImages(curSet), (tileX, tileY)-(tileX+15, tileY+15), PSET
+                    put curImage_norm, (0,0), setImages_norm(curSet), (tileX, tileY)-(tileX+15, tileY+15), PSET
 
                     if imageIsNotEmpty(curImage) then
                                         
@@ -1358,8 +1413,12 @@ for activeLayer = 0 to 3
                                                 
                                                 mergeStack(N_runs - 1).layer = i
                                                 put mergeStack(N_runs - 1).mask, (0,0), curMask, OR
+                                                
                                                 put curImage, (0,0), mergeStack(N_runs - 1).image, TRANS
+                                                put curImage_norm, (0,0), mergeStack(N_runs - 1).image_norm, TRANS
+
                                                 put mergeStack(N_runs - 1).image, (0,0), curImage, PSET
+                                                put mergeStack(N_runs - 1).image_norm, (0,0), curImage_norm, PSET                                                
                                                                                             
                                                 pushRun = 0
                                                 exit for
@@ -1428,6 +1487,7 @@ for activeLayer = 0 to 3
                             mergeStack(N_runs - 1).ambientLevel = layers(i).ambientLevel
                             mergeStack(N_runs - 1).flags = curFlags
                             mergeStack(N_runs - 1).image = imagecreate(16, 16, 0)
+                            mergeStack(N_runs - 1).image_norm = imagecreate(16, 16, 0)                            
                             
                             if isAnim = 1 then
                                 mergeStack(N_runs - 1).newTile = 0
@@ -1437,6 +1497,7 @@ for activeLayer = 0 to 3
                             else
                                 mergeStack(N_runs - 1).newTile = 1
                             end if
+                            put mergeStack(N_runs - 1).image_norm, (0,0), curImage_norm, PSET                            
                             put mergeStack(N_runs - 1).image, (0,0), curImage, PSET
                             put mergeStack(N_runs - 1).mask, (0,0), curMask, OR
 
@@ -1545,12 +1606,15 @@ for activeLayer = 0 to 3
                                 end if
                             else
                                 put mergedTiles, ((N_merges mod 20) * 16, (N_merges \ 20) * 16), mergeStack(j).image, PSET
+                                put mergedTiles_norm, ((N_merges mod 20) * 16, (N_merges \ 20) * 16), mergeStack(j).image_norm, PSET                                
                                 
                                 N_merges += 1
                                 
                                 tempITPair = new imageTilePair_t
                                 tempITPair->image = imagecreate(16,16)
+                                tempITPair->image_norm = imagecreate(16,16)
                                 put tempITPair->image, (0,0), mergeStack(j).image, PSET
+                                put tempITPair->image_norm, (0,0), mergeStack(j).image_norm, PSET                                
                                 tempITPair->tilenum = N_merges - 1
                                 tempTileList->push_back(@tempITPair)
                                 
@@ -1561,6 +1625,7 @@ for activeLayer = 0 to 3
                         loop
                     else
                         put mergedTiles, ((N_merges mod 20) * 16, (N_merges \ 20) * 16), mergeStack(j).image, PSET
+                        put mergedTiles_norm, ((N_merges mod 20) * 16, (N_merges \ 20) * 16), mergeStack(j).image_norm, PSET
 
                         N_merges += 1
                         
@@ -1569,7 +1634,9 @@ for activeLayer = 0 to 3
                         
                         tempITPair = new imageTilePair_t
                         tempITPair->image = imagecreate(16,16)
+                        tempITPair->image_norm = imagecreate(16,16)                        
                         put tempITPair->image, (0,0), mergeStack(j).image, PSET
+                        put tempITPair->image_norm, (0,0), mergeStack(j).image_norm, PSET                        
                         tempITPair->tilenum = N_merges - 1
                         
                         tempTileList->push_back(@tempITPair)
@@ -1588,6 +1655,11 @@ next activeLayer
 tempRotatedImg = imagecreate(320, (int(N_merges / 20) + 1) * 16)
 put tempRotatedImg, (0,0), mergedTiles, (0,0)-(319, (int(N_merges / 20) + 1) * 16 - 1), PSET
 swap tempRotatedImg, mergedTiles
+imagedestroy tempRotatedImg
+
+tempRotatedImg = imagecreate(320, (int(N_merges / 20) + 1) * 16)
+put tempRotatedImg, (0,0), mergedTiles_norm, (0,0)-(319, (int(N_merges / 20) + 1) * 16 - 1), PSET
+swap tempRotatedImg, mergedTiles_norm
 imagedestroy tempRotatedImg
 
 dim as integer newOrder = 0
@@ -1623,18 +1695,34 @@ if N_merges > 0 then
         .set_firstID = highTileValue
         .used = 1
         .tilePropList = 0
+        
+             
+        tempImg = imagecreate(.set_width, .set_height)
+        alphaImg = imagecreate(.set_width, .set_height)
+        put tempImg, (0,0), mergedTiles_norm, (0,0)-(.set_width-1,.set_height-1), PSET
+        line alphaImg, (0,0)-(.set_width-1, .set_height-1), &hff000000, BF
+        put tempImg, (0,0), alphaImg, OR        
+        line alphaImg, (0,0)-(.set_width-1, .set_height-1), &hff008080, BF
+        put alphaImg, (0,0), tempImg, TRANS 
+        bsave "tilesets\" & .set_name & "_norm" & ".bmp", alphaImg
+        imageDestroy(tempImg)
+        imagedestroy(alphaImg)
+        
+
         tempImg = imagecreate(.set_width, .set_height)
         put tempImg, (0,0), mergedTiles, (0,0)-(.set_width-1,.set_height-1), PSET
         alphaImg = imagecreate(.set_width, .set_height)
         line alphaImg, (0,0)-(.set_width-1, .set_height-1), &hff000000, BF
         put tempImg, (0,0), alphaImg, OR
-        imagedestroy(alphaImg)
         png_save("tilesets\" & .set_filename, tempImg)
         imageDestroy(tempImg)
+        imagedestroy(alphaImg)
+
     end with
 end if
 
 imagedestroy(mergedTiles)
+imagedestroy(mergedTiles_norm)
 
 print "Refactoring tile instances..."
 dim as integer ptr tempTilesetCopy
@@ -1689,6 +1777,9 @@ put #f,,map_name
 put #f,,map_width
 put #f,,map_height
 put #f,,snowfall
+put #f,,shouldLight
+put #f,,objectAmbientLevel
+put #f,,hiddenObjectAmbientLevel
 put #f,,default_x
 put #f,,default_y
 put #f,,music_file

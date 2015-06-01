@@ -18,6 +18,8 @@ enum Item_Type_e
 	ITEM_BOMB
     ITEM_LIGHT
 	ITEM_DYNAMICPLATFORM
+    ITEM_SMALLOSCILLOSCOPE
+    ITEM_NIXIEFLICKER
 end enum
 
 'for bomb, first 3 bits define bomb type.
@@ -32,6 +34,8 @@ type Item
 		declare sub setPos(v as Vector2D)
         declare sub setLightModeData(minValue as double, maxValue as double, mode as integer)
 		declare function getPos() as Vector2D
+        declare sub setSize(s as Vector2D)
+        declare function getSize() as Vector2D
 		declare sub getBounds(byref a as Vector2D, byref b as Vector2D)
 		declare sub drawItem(scnbuff as integer ptr)
 		declare sub drawItemTop(scnbuff as integer ptr)
@@ -66,9 +70,12 @@ type Item
 		as ObjectLink  link
 		as integer       anims_n
 		as Animation ptr anims
+        as Vector2D     size
+        as Vector2D     p
 		as integer     	data0
 		as integer     	data1
 		as integer		data2
+        as integer      data3
 end type
 
 

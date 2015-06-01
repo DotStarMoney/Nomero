@@ -67,10 +67,13 @@ type Level
         declare function getDefaultPos() as Vector2D
         declare sub flushDestroyedBlockMemory()
         declare function checkDestroyedBlocks(x as integer, y as integer) as integer
-       
+        declare function getLightList(byref lightList_p as LightPair ptr ptr) as integer 
 		declare function getCoverageLayerBlocks(x0 as integer, y0 as integer,_
 												x1 as integer, y1 as integer,_
 												byref data_ as Level_CoverageBlockInfo_t ptr) as integer
+        declare function shouldLight() as integer
+        declare function getObjectAmbientLevel() as integer
+        declare function getHiddenObjectAmbientLevel() as integer
        
         dim as integer justLoaded
     private:
@@ -100,6 +103,9 @@ type Level
         dim as integer noVisuals
         dim as LightPair ptr ptr lightList
         dim as integer lightList_N
+        dim as integer shouldLightObjects
+        dim as integer objectAmbientLevel
+        dim as integer hiddenObjectAmbientLevel
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum

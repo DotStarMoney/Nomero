@@ -10,10 +10,10 @@ for y = 0 to 511
         light = 1 - rad
         light = light^18 * 3
         if light > 1 then light = 1
-        pset (x, y), rgb(light*128, light*192, light*255)
+        pset (x, y), rgb(light*255, light*64, light*0)
     next x
 next y
 
-bsave "hilight2.bmp",0
+bsave "hilight.bmp",0
 
 sleep

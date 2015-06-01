@@ -5,6 +5,7 @@
 #include "gamespace.bi"
 #include "dynamiccontroller.bi"
 #include "leveltypes.bi"
+#include "level.bi"
 #include "effects3d.bi"
 
 
@@ -83,11 +84,23 @@ sub Player.loadAnimations(filename as string)
 end sub
 
 sub Player.drawPlayer(scnbuff as uinteger ptr)
-	if harmedFlashing > 0 then
-		if chargeFlicker < 4 then anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
-	else
-		anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
-	end if
+    dim as integer numLights
+    dim as LightPair ptr ptr lights
+    
+    if link.level_ptr->shouldLight() then
+        numLights = link.level_ptr->getLightList(lights)
+        if harmedFlashing > 0 then
+            if chargeFlicker < 4 then anim.drawAnimationLit(scnbuff, body.p.x(), body.p.y(), lights, numLights, link.level_ptr->getObjectAmbientLevel())
+        else
+            anim.drawAnimationLit(scnbuff, body.p.x(), body.p.y(), lights, numLights, link.level_ptr->getObjectAmbientLevel(),,,1)
+        end if
+    else
+        if harmedFlashing > 0 then
+            if chargeFlicker < 4 then anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
+        else
+            anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
+        end if
+    end if
 end sub
 
 sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer)
@@ -851,7 +864,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
     
     static as double a = 0
     a += 0.01
-    drawHexPrism(scnbuff, 55, 440, a, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+    'drawHexPrism(scnbuff, 55, 440, a, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
 
     
 end sub
