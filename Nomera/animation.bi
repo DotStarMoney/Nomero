@@ -24,6 +24,7 @@ enum Anim_DrawType_e
 	ANIM_GLOW
 	ANIM_ALPHA
 	ANIM_TRANS
+    ANIM_NONE
 end enum
 
 
@@ -94,14 +95,18 @@ type Animation
         declare sub setGlow(glow as integer)
  
         declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, _
-                                  cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
+                                  cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, typeOverride as integer = ANIM_NONE)
+                                  
+                                  
         declare sub drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integer, _
                                      lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
-                                     cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0)
-                                     
+                                     cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0, typeOverride as integer = ANIM_NONE)
+                                                                          
+        
         declare sub drawImageLit(scnbuff as uinteger ptr, x as integer, y as integer, x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
                                      lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
-                                     cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0)                                     
+                                     cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0, typeOverride as integer = ANIM_NONE)      
+                                     
                                      
         declare sub drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as integer, anim as integer, frame as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
         

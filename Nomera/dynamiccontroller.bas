@@ -6,7 +6,7 @@
 #include "gamespace.bi"
 #include "item.bi"
 
-#define N_OBJ_TYPES 5
+#define N_OBJ_TYPES 6
 
 dim as NamesTypes_t ptr DynamicController.namesTypesTable = 0
 dim as integer          DynamicController.hasFilledTable = 0
@@ -26,6 +26,7 @@ constructor DynamicController
 		namesTypesTable[2] = NamesTypes_t("BEAR", OBJ_ENEMY, 0)
         namesTypesTable[3] = NamesTypes_t("NIXIE FLICKER", OBJ_ITEM, ITEM_NIXIEFLICKER)
         namesTypesTable[4] = NamesTypes_t("SMALL OSCILLOSCOPE", OBJ_ITEM, ITEM_SMALLOSCILLOSCOPE)
+        namesTypesTable[5] = NamesTypes_t("INTERFACE", OBJ_ITEM, ITEM_INTERFACE)
 	end if
 	objects.init(sizeof(DynamicObjectType_t))
 	spawnZones.init(sizeof(SpawnZone_t))

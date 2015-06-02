@@ -144,6 +144,7 @@ enum RangeSet_t
     ACTIVE_COVER
     ACTIVE
     BACKGROUND
+    ACTIVE_FRONT
 end enum
 
 enum EffectType_t
@@ -630,6 +631,8 @@ do
                         layers(N_layers - 1).inRangeSet = BACKGROUND
                     elseif left(lcase(item_tag), 12) = "active cover" then
                         layers(N_layers - 1).inRangeSet = ACTIVE_COVER
+                    elseif left(lcase(item_tag), 12) = "active front" then
+                        layers(N_layers - 1).inRangeSet = ACTIVE_FRONT                  
                     elseif left(lcase(item_tag), 6) = "active" then
                         layers(N_layers - 1).inRangeSet = ACTIVE
                     elseif left(lcase(item_tag), 12) = "destructible" then
@@ -773,10 +776,12 @@ do
                         curObjDepth = FOREGROUND
                     elseif left(lcase(item_tag), 10) = "background" then 
                         curObjDepth = BACKGROUND
+                    elseif left(lcase(item_tag), 12) = "active front" then 
+                        curObjDepth = ACTIVE_FRONT   
                     elseif left(lcase(item_tag), 12) = "active cover" then 
                         curObjDepth = ACTIVE_COVER
                     elseif left(lcase(item_tag), 6) = "active" then 
-                        curObjDepth = ACTIVE
+                        curObjDepth = ACTIVE           
                     end if
                 end if
             end if
@@ -1305,7 +1310,7 @@ dim as integer ptr mergedTiles_norm = imagecreate(320, 4096)
 
 print
 print
-for activeLayer = 0 to 3
+for activeLayer = 0 to 4
     select case activeLayer
     case 0
         curRange = BACKGROUND
@@ -1315,6 +1320,8 @@ for activeLayer = 0 to 3
         curRange = ACTIVE_COVER
     case 3
         curRange = FOREGROUND
+    case 4
+        curRange = ACTIVE_FRONT
     end select
     for q = 0 to map_width*map_height - 1
         locate Csrlin - 2, 1: print space(20)

@@ -1,0 +1,8 @@
+      #IMAGE NAME
+"hudspinner.png"
+      #IMAGE SIZE
+288,96
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+0

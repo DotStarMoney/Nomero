@@ -681,7 +681,7 @@ sub Animation.drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as 
 end sub
         
 
-sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
+sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, typeOverride as integer = ANIM_NONE)
     Dim as Vector2D off
     dim as integer start_x, start_y
     dim as integer a_x, a_y
@@ -689,11 +689,15 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer,
     dim as integer pos_x, pos_y
     dim as integer drawW, drawH
     dim as zimage  drawImg
+    dim as Anim_DrawType_e drawMode
     with data_->animations[currentAnim]
 		
         fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
+       
+        drawMode = data_->drawMode        
+        if typeOverride <> ANIM_NONE then drawMode = typeOverride
         
-        select case data_->drawMode
+        select case drawMode
         case ANIM_TRANS
               
             drawImg.putTRANS(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1)
@@ -709,7 +713,7 @@ end sub
 
 sub Animation.drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integer, _
                                lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
-                               cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0)
+                               cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer, typeOverride as integer = ANIM_NONE)
     Dim as Vector2D off
     dim as integer start_x, start_y
     dim as integer a_x, a_y
@@ -717,6 +721,7 @@ sub Animation.drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integ
     dim as integer pos_x, pos_y
     dim as integer drawW, drawH
     dim as integer usesLight_N, i
+    dim as Anim_DrawType_e drawMode
     dim as LightPair ptr usesLight(0 to 2)
     dim as zimage  drawImg
     with data_->animations[currentAnim]
@@ -724,7 +729,10 @@ sub Animation.drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integ
         fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
         usesLight_N = 0
         
-        select case data_->drawMode
+        drawMode = data_->drawMode        
+        if typeOverride <> ANIM_NONE then drawMode = typeOverride
+        
+        select case drawMode
         case ANIM_TRANS
             pos_x = x + off.x
             pos_y = y + off.y
@@ -788,7 +796,7 @@ end sub
 
 sub Animation.drawImageLit(scnbuff as uinteger ptr, x as integer, y as integer, x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
                            lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
-                           cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0)   
+                           cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0, typeOverride as integer = ANIM_NONE)   
     Dim as Vector2D off
     dim as integer start_x, start_y
     dim as integer a_x, a_y
@@ -796,6 +804,7 @@ sub Animation.drawImageLit(scnbuff as uinteger ptr, x as integer, y as integer, 
     dim as integer drawW, drawH
     dim as integer pos_x, pos_y
     dim as integer usesLight_N, i
+    dim as Anim_DrawType_e drawMode
     dim as LightPair ptr usesLight(0 to 2)
     dim as zimage  drawImg
     with data_->animations[currentAnim]
@@ -803,7 +812,10 @@ sub Animation.drawImageLit(scnbuff as uinteger ptr, x as integer, y as integer, 
         fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
         usesLight_N = 0
         
-        select case data_->drawMode
+        drawMode = data_->drawMode
+        if typeOverride <> ANIM_NONE then drawMode = typeOverride
+        
+        select case drawMode
         case ANIM_TRANS
             pos_x = x + off.x
             pos_y = y + off.y

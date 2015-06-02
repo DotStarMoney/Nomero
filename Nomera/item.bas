@@ -158,13 +158,33 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
         data0 = 0
         lightState = 1
     case ITEM_SMALLOSCILLOSCOPE
-        anims_n = 1
+        anims_n = 2
 		anims = new Animation[anims_n]
         anims[0].load("smallscope.txt")
         anims[0].play()
+        anims[1].load("smallscope.txt")
+        anims[1].play()       
+        anims[1].hardSwitch(1)
         steps = int(rnd * 30)
         for i = 0 to steps: anims[0].step_animation(): next i
         lightState = 0
+    case ITEM_INTERFACE
+        
+        anims_n = 3
+		anims = new Animation[anims_n]
+        anims[0].load("interface.txt")
+        anims[0].play()
+        anims[1].load("interface.txt")
+        anims[1].play()       
+        anims[1].hardSwitch(1)
+        anims[2].load("interface.txt")
+        anims[2].play()       
+        anims[2].hardSwitch(2)
+        lightState = 0   
+        minValue = 0
+        data1 = 0
+        data2 = int(rnd * 10) + 10
+
     case ITEM_NIXIEFLICKER
         anims_n = 3
 		anims = new Animation[anims_n]
@@ -193,7 +213,8 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
         lightState = 1
         minValue = 0
         
-        data2 = 3
+        data2 = 0
+        data0 = 0
         for i = 0 to 5
             cast(integer ptr, data3)[i] = int(rnd * 36)
         next i
@@ -251,12 +272,27 @@ sub Item.drawItem(scnbuff as integer ptr)
     case ITEM_LIGHT
         ''
     case ITEM_SMALLOSCILLOSCOPE
+
+        if link.level_ptr->shouldLight() then
+            anims[1].drawAnimationLit(scnbuff, p.x, p.y,_
+                                      lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
+                                      link.gamespace_ptr->camera,,,ANIM_TRANS)            
+        else
+            anims[1].drawAnimation(scnbuff, p.x, p.y, link.gamespace_ptr->camera,,ANIM_TRANS)
+        end if
+        anims[0].drawAnimation(scnbuff, p.x, p.y, link.gamespace_ptr->camera,,ANIM_GLOW)
+    case ITEM_INTERFACE
         if link.level_ptr->shouldLight() then
             anims[0].drawAnimationLit(scnbuff, p.x, p.y,_
                                       lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
-                                      link.gamespace_ptr->camera, 0)            
+                                      link.gamespace_ptr->camera)            
         else
             anims[0].drawAnimation(scnbuff, p.x, p.y, link.gamespace_ptr->camera)
+        end if        
+        anims[1].drawAnimation(scnbuff, p.x, p.y, link.gamespace_ptr->camera)        
+
+        if data1 = 1 then
+            anims[2].drawAnimation(scnbuff, p.x, p.y, link.gamespace_ptr->camera)        
         end if
     case ITEM_NIXIEFLICKER
         for i = 0 to 5
@@ -398,17 +434,33 @@ function Item.process(t as double) as integer
         light.texture.x = p.x + size.x * 0.5
         light.texture.y = p.y + size.y * 0.5
         light.shaded.x = light.texture.x
-        light.shaded.y = light.texture.y    
-        minValue += 1
-        if minValue >= 2 then
-            minValue = 0
-            lightState = 1 - lightState
-            for i = 0 to 5
-                cast(integer ptr, data3)[i] = int(rnd * 36)
-            next i
-        end if
-        
+        light.shaded.y = light.texture.y  
 
+        'data2 -= 1
+        'if data2 <= 0 then 
+        '    data2 = int(rnd * 50) + 1
+        '    data0 = 1 - data0
+        'end if
+            
+        if data0 = 0 then
+            minValue += 1
+            if minValue >= 2 then
+                minValue = 0
+                lightState = 1 - lightState
+                for i = 0 to 5
+                    cast(integer ptr, data3)[i] = int(rnd * 36)
+                next i
+            end if
+        else
+            lightState = 0
+        end if
+    case ITEM_INTERFACE
+        minValue += 1
+        if minValue >= data2 then
+            minValue = 0
+            data1 = 1 - data1
+            data2 = int(rnd * 10) + 10
+        end if
   	case else
 		return 1
 	end select

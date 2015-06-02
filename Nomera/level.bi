@@ -121,6 +121,8 @@ type Level
         dim as List background_layer
         dim as List active_layer
         dim as List activeCover_layer
+        dim as List activeFront_layer
+        
         
         dim as EffectController_ ptr graphicFX_
         

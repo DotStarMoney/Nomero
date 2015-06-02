@@ -12,6 +12,7 @@ enum orderType
     ACTIVE_COVER = 1
     ACTIVE = 2
     BACKGROUND = 3
+    ACTIVE_FRONT = 4
 end enum
 
 enum shapeType

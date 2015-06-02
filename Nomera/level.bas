@@ -43,6 +43,8 @@ constructor level
     background_layer.init(sizeof(integer))
     active_layer.init(sizeof(integer))
     activeCover_layer.init(sizeof(integer))
+    activeFront_layer.init(sizeof(integer))
+    
     pendingPortalSwitch = 0
     reconnect = 0
     #ifdef DEBUG
@@ -121,6 +123,8 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
         curList = @foreground_layer
     case ACTIVE_COVER
 		curList = @activeCover_layer
+    case ACTIVE_FRONT
+    	curList = @activeFront_layer
     end select
 
     
@@ -702,6 +706,7 @@ sub level.flush()
         if layerData <> 0 then deallocate(layerData)
         background_layer.flush()
         active_layer.flush()
+        activeFront_layer.flush()
         activeCover_layer.flush()
         foreground_layer.flush()
         falloutZones.rollReset()
@@ -826,7 +831,7 @@ sub level.processLights()
                 if br_x >= lvlWidth then br_x = lvlWidth - 1
                 if br_y >= lvlHeight then br_y = lvlHeight - 1
                 
-                for order = 0 to 3
+                for order = 0 to 4
                 
                     select case order
                     case BACKGROUND
@@ -837,6 +842,8 @@ sub level.processLights()
                         curList = @foreground_layer
                     case ACTIVE_COVER
                         curList = @activeCover_layer
+                    case ACTIVE_FRONT
+                        curList = @activeFront_layer                    
                     end select
                 
                     BEGIN_LIST(curLayer, (*curList))
@@ -937,7 +944,7 @@ sub level.processLights()
                 if br_x >= lvlWidth then br_x = lvlWidth - 1
                 if br_y >= lvlHeight then br_y = lvlHeight - 1
                 
-                for order = 0 to 3
+                for order = 0 to 4
                     select case order
                     case BACKGROUND
                         curList = @background_layer
@@ -947,6 +954,8 @@ sub level.processLights()
                         curList = @foreground_layer
                     case ACTIVE_COVER
                         curList = @activeCover_layer
+                    case ACTIVE_FRONT
+                        curList = @activeFront_layer
                     end select
                 
                     BEGIN_LIST(curLayer, (*curList))
@@ -1162,6 +1171,8 @@ sub level.load(filename as string)
                 foreground_layer.push_back(@layerInt)
             case ACTIVE_COVER
 				activeCover_layer.push_back(@layerInt)
+            case ACTIVE_FRONT
+ 				activeFront_layer.push_back(@layerInt)           
             end select
             
             lvb = 0
