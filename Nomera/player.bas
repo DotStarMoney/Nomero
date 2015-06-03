@@ -43,9 +43,15 @@ constructor Player
     bombs = 10
     revealSilo = 0
     coverValue = 0.65
+    
+    spinnerAngle = 0
+    spinnerAngleTarget = 0
+    spinnerAngleAcc = 0 
+    spinnerAngleV = 0
 
     loadAnimations("mrspy.txt")
 	
+    spinnerItem = 0
     anim.play()
     items.init(sizeof(Item ptr))
     explodeAllHoldFrames_time = 60
@@ -303,6 +309,7 @@ sub Player.processControls(dire as integer, jump as integer,_
                            ups as integer, fire as integer,_
                            shift as integer, numbers() as integer, _
                            explodeAll as integer, deactivateAll as integer,_
+                           turnstyle as integer,_
                            t as double)
     dim as Vector2D gtan
     dim as double curSpeed, oSpeed
@@ -703,6 +710,33 @@ sub Player.processControls(dire as integer, jump as integer,_
 		end if
 		lastNumbers(i) = numbers(i)  
     next i
+    
+    if turnstyle = -1 then
+        spinnerAngleTarget += 1.0472
+        spinnerItem += 1
+        link.soundeffects_ptr->playSound(SND_SPINNER)
+    elseif turnstyle = 1 then
+        spinnerAngleTarget -= 1.0472
+        spinnerItem -= 1
+        link.soundeffects_ptr->playSound(SND_SPINNER)
+    end if
+  
+    if spinnerItem >= 6 then 
+        spinnerItem -= 6
+    elseif spinnerItem < 0 then
+        spinnerItem += 6
+    end if
+        
+    spinnerAngleAcc += sqr(abs(spinnerAngleTarget - spinnerAngle)) * sgn(spinnerAngleTarget - spinnerAngle) * 0.028 - spinnerAngleV * 0.40
+    spinnerAngleV += spinnerAngleAcc
+    spinnerAngleV *= 0.4
+    spinnerAngle += spinnerAngleAcc
+    if (abs(spinnerAngleTarget - spinnerAngle) < 0.01) andAlso (abs(spinnerAngleAcc) < 0.01) then
+        spinnerAngleAcc = 0
+        spinnerAngleV = 0
+        spinnerAngle = spinnerAngleTarget 
+    end if
+        
         
     lastUps = ups
     lastFire = fire
@@ -861,10 +895,8 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
 	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera)	
     
-    
-    static as double a = 0
-    a += 0.01
-    'drawHexPrism(scnbuff, 55, 440, a, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+
+    drawHexPrism(scnbuff, 60, 440, spinnerAngle, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
 
     
 end sub

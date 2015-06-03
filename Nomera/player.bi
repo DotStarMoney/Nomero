@@ -53,6 +53,7 @@ type Player
                                     ups as integer, fire as integer,_
                                     shift as integer, numbers() as integer,_
                                     explodeAll as integer, deactivateAll as integer,_
+                                    turnstyle as integer,_
                                     t as double)
         declare sub processItems(t as double)
         declare sub drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
@@ -150,6 +151,13 @@ type Player
         as LevelSwitch_t pendingSwitchData
         as Vector2D lastVel
         as integer landedSFXFrames
+        
+        as integer spinnerItem
+        as double spinnerAngle
+        as double spinnerAngleTarget
+        as double spinnerAngleAcc
+        as double spinnerAngleV
+        
 End type
 
 #endif

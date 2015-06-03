@@ -213,6 +213,7 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
         lightState = 1
         minValue = 0
         
+        data1 = 0
         data2 = 0
         data0 = 0
         for i = 0 to 5
@@ -362,7 +363,7 @@ end function
 
 
 function Item.process(t as double) as integer
-	dim as integer i
+	dim as integer i, value
     
     
 	select case itemType
@@ -436,23 +437,38 @@ function Item.process(t as double) as integer
         light.shaded.x = light.texture.x
         light.shaded.y = light.texture.y  
 
-        'data2 -= 1
-        'if data2 <= 0 then 
-        '    data2 = int(rnd * 50) + 1
-        '    data0 = 1 - data0
-        'end if
-            
-        if data0 = 0 then
+        'when data2 countdown started
+        data2 += 1
+        
+        if data2 < 603 then
             minValue += 1
             if minValue >= 2 then
                 minValue = 0
                 lightState = 1 - lightState
                 for i = 0 to 5
-                    cast(integer ptr, data3)[i] = int(rnd * 36)
+                    if data2 > (300 + i*60) then
+                        select case i
+                        case 0
+                            value = 30
+                        case 1
+                            value = 31
+                        case 2
+                            value = 11
+                        case 3
+                            value = 0
+                        case 4
+                            value = 7
+                        case 5
+                            value = 6
+                        end select 
+                    else
+                        value = int(rnd * 36)
+                    end if
+                    cast(integer ptr, data3)[i] = value
                 next i
             end if
         else
-            lightState = 0
+            lightState = 1
         end if
     case ITEM_INTERFACE
         minValue += 1

@@ -257,3 +257,47 @@ sub drawHexPrism(scnptr as integer ptr, x as integer, y as integer,_
     next i
     
 end sub
+sub drawMode7Ground(dst as integer ptr, src as integer ptr,_
+                        xOff as double, zOff as double,_
+                        horiz as integer = -200, s as double = 30, fov as integer = 256)
+    
+    dim as integer d_offset, offset
+    dim as integer x, y, colR, colG, colB
+    dim as double  sx, ipz, v, vdiv, nvdiv
+    dim as integer hw, hh
+    dim as integer ptr srcPxls, dstPxls
+    dim as integer destStride,destW, destH
+    dim as integer yStart, yEnd, col
+    
+    imageinfo src,,,,,srcPxls
+    imageinfo dst,destW,destH,,destStride,dstPxls
+    
+    destStride shr= 2
+    
+    hw = destW * 0.5
+    hh = destH * 0.5
+
+    d_offset = (hh + 30) * destStride 
+    yStart = -fov
+    yEnd = -fov + hh - 1 - 30
+    
+    for y = yStart to yEnd - 1
+        if (y + fov) <> 0 then
+            ipz = 1.0 / (y + fov)
+            offset = (int((y * ipz) * s + zOff) and 255) shl 8
+            sx = (-hw * ipz) * s + xOff
+            ipz *= s
+            v = (-1 + abs(ipz))
+            if v < 1 then v = 1
+            vdiv = 1 / sqr(v)
+            for x = -hw to hw - 1
+                col = srcPxls[offset + (int(sx) and 255)]
+                dstPxls[d_offset] = col
+                d_offset += 1
+                sx += ipz
+            next x
+        else
+            d_offset += destStride
+        end if
+    next y
+end sub

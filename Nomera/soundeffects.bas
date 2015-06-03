@@ -19,6 +19,7 @@ sub SoundEffects.init()
 	sounds(SND_DRIP) 		= FSOUND_SAMPLE_Load(FSOUND_FREE,"drip.wav",0,0,0)
 	sounds(SND_HURT) 		= FSOUND_SAMPLE_Load(FSOUND_FREE,"hurt.wav",0,0,0)
 	sounds(SND_DEATH)		= FSOUND_SAMPLE_Load(FSOUND_FREE,"death.wav",0,0,0)
+    sounds(SND_SPINNER)     = FSOUND_SAMPLE_Load(FSOUND_FREE,"hudspinner2.wav",0,0,0)
 end sub
 
 sub SoundEffects.setLink(link_ as objectLink)

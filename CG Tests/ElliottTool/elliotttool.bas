@@ -148,7 +148,7 @@ if success = 0 then
             xdif = dataX[y*imgW+x] * scale
             ydif = dataY[y*imgW+x] * scale
             if point(x, y, diffuse_map) <> &hffff00ff then
-                pset surface_map, (x, y), (rgb(point(x, y, specular_map), ydif + 128, xdif + 128) and &h00ffffff)
+                pset surface_map, (x, y), (rgb(point(x, y, specular_map), ydif + 128, xdif + 128) and &hFFffffff)
             else
                 pset surface_map, (x, y), &hffff00ff             
             end if

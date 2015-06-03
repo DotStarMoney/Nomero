@@ -1,7 +1,298 @@
 #include "utility.bi"
 #include "constants.bi"
 #include "debug.bi"
+#include "fbgfx.bi"
 
+'_______________________________________________________________________________
+type sse_t field = 1
+	s(0 to 3) as single
+end type
+
+type mmx_t field = 1
+	i(0 to 1) as integer
+end type
+'________________
+const pi_180 = pi / 180
+sub rotozoom_alpha2( byref dst as FB.IMAGE ptr = 0, byref src as const FB.IMAGE ptr, byval positx as integer, byval posity as integer, byref angle as integer,_
+                     byref zoomx as single = 0, byref zoomy as single = 0, byval transcol as uinteger = &hffff00ff, byval alphalvl as integer = 255, byref offsetx as integer = 0, byref offsety as integer = 0 )
+    
+	'Rotozoom for 32-bit FB.Image by Dr_D(Dave Stanley), yetifoot(Simon Nash) and Mysoft(Gregori Macario Harbs)
+	'No warranty implied... use at your own risk ;) 
+    
+	dim as sse_t sse0, sse1, sse2, sse3, sse4, sse5
+	dim as integer nx = any, ny = any
+	dim as single tcdzx = any, tcdzy = any, tsdzx = any, tsdzy = any
+	dim as integer sw2 = any, sh2 = any, dw = any, dh = any
+	dim as single tc = any, ts = any
+	dim as uinteger ptr dstptr = any, srcptr = any
+	dim as integer startx = any, endx = any, starty = any, endy = any
+	dim as integer x(3), y(3)
+	dim as integer xa = any, xb = any, ya = any, yb = any
+	dim as integer dstpitch = any
+	dim as integer srcpitch = any, srcwidth = any, srcheight = any
+	Dim As Ulongint mask1 = &H00FF00FF00FF00FFULL'&H000000FF00FF00FFULL mask change copies src alpha
+	dim as integer x_draw_len = any, y_draw_len = any
+	dim as short alphalevel(3) = {alphalvl,alphalvl,alphalvl,alphalvl}
+    
+    if alphalvl <0 then
+        alphalvl = 0
+    elseif alphalvl>255 then
+        alphalvl = 255
+    end if
+    
+	if zoomx = 0 then exit sub
+    if zoomy = 0 then zoomy = zoomx
+    If src = 0 Then Exit Sub
+
+	if dst = 0 then
+		dstptr = screenptr
+		screeninfo dw,dh,,,dstpitch
+    else
+		dstptr = cast( uinteger ptr, dst + 1 )
+		dw = dst->width
+		dh = dst->height
+		dstpitch = dst->pitch
+    end if
+    
+	srcptr = cast( uinteger ptr, src + 1 )
+   
+	sw2 = src->width\2
+	sh2 = src->height\2
+	srcpitch = src->pitch
+	srcwidth = src->width
+	srcheight = src->height
+  
+    
+	tc = cos( angle * pi_180 )
+	ts = sin( angle * pi_180 )
+	tcdzx = tc/zoomx
+	tcdzy = tc/zoomy
+	tsdzx = ts/zoomx
+	tsdzy = ts/zoomy
+    
+	xa = sw2 * tc * zoomx + sh2  * ts * zoomx
+	ya = sh2 * tc * zoomy - sw2  * ts * zoomy
+    
+	xb = sh2 * ts * zoomx - sw2  * tc * zoomx
+	yb = sw2 * ts * zoomy + sh2  * tc * zoomy
+
+    Dim As Integer centerx = -(offsetx*(tc*zoomx) + offsety*(ts*zoomx)) + offsetx
+    Dim As Integer centery = -(offsety*(tc*zoomy) - offsetx*(ts*zoomy)) + offsety
+
+	x(0) = sw2-xa
+	x(1) = sw2+xa
+	x(2) = sw2-xb
+	x(3) = sw2+xb
+	y(0) = sh2-ya
+	y(1) = sh2+ya
+	y(2) = sh2-yb
+	y(3) = sh2+yb
+    
+	for i as integer = 0 to 3
+		for j as integer = i to 3
+			if x(i)>=x(j) then
+				swap x(i), x(j)
+            end if
+        next
+    next
+	startx = x(0)
+	endx = x(3)
+    
+	for i as integer = 0 to 3
+		for j as integer = i to 3
+			if y(i)>=y(j) then
+				swap y(i), y(j)
+            end if
+        next
+    next
+	starty = y(0)
+	endy = y(3)
+    
+	positx-=sw2
+	posity-=sh2
+    positx+=centerx
+    posity+=centery
+	if posity+starty<0 then starty = -posity
+	if positx+startx<0 then startx = -positx
+	if posity+endy<0 then endy = -posity
+	if positx+endx<0 then endx = -positx
+    
+	if positx+startx>(dw-1) then startx = (dw-1)-positx
+	if posity+starty>(dh-1) then starty = (dh-1)-posity
+	if positx+endx>(dw-1) then endx = (dw-1)-positx
+	if posity+endy>(dh-1) then endy = (dh-1)-posity
+	if startx = endx or starty = endy then exit sub
+    
+	ny = starty - sh2
+	nx = startx - sw2
+    
+	dstptr += dstpitch * (starty + posity) \ 4
+    
+	x_draw_len = (endx - startx)' + 1
+	y_draw_len = (endy - starty)' + 1
+    
+	sse1.s(0) = tcdzx
+	sse1.s(1) = tsdzx
+    
+	sse2.s(0) = -(ny * tsdzy)
+	sse2.s(1) = (ny * tcdzy)
+    
+	sse3.s(0) = -tsdzy
+	sse3.s(1) = tcdzy
+    
+	sse4.s(0) = (nx * tcdzx) + sw2
+	sse4.s(1) = (nx * tsdzx) + sh2
+    
+	if x_draw_len = 0 then exit sub
+	if y_draw_len = 0 then exit sub
+    
+	cptr( any ptr, dstptr ) += (startx + positx) * 4
+    
+	dim as any ptr ptr row_table = callocate( srcheight * sizeof( any ptr ) )
+	dim as any ptr p = srcptr
+    
+	for i as integer = 0 to srcheight - 1
+		row_table[i] = p
+		p += srcpitch
+    next i
+    
+	asm
+		.balign 4
+        
+        movups xmm1, [sse1]
+        movups xmm2, [sse2]
+        movups xmm3, [sse3]
+        movups xmm4, [sse4]
+        
+		.balign 4
+		y_inner4:
+        
+        ' _mx = nxtc + sw2
+        ' _my = nxts + sh2
+        movaps xmm0, xmm4
+        
+        ' _dstptr = cptr( any ptr, dstptr )
+        mov edi, dword ptr [dstptr]
+        
+        ' _x_draw_len = x_draw_len
+        mov ecx, dword ptr [x_draw_len]
+        
+        ' _mx += -nyts
+        ' _my += nytc
+        addps xmm0, xmm2
+        
+		.balign 4
+		x_inner4:
+        
+        ' get _mx and _my out of sse reg
+        cvtps2pi mm0, xmm0
+        
+        ' mx = mmx0.i(0)
+        movd esi, mm0
+        
+        ' shift mm0 so my is ready
+        psrlq mm0, 32
+        
+        ' if (mx >= srcwidth) or (mx < 0) then goto no_draw3
+        cmp esi, dword ptr [srcwidth]
+        jae no_draw4
+        
+        ' my = mmx0.i(1)
+        movd edx, mm0
+        
+        ' if (my >= srcheight) or (my < 0) then goto no_draw3
+        cmp edx, dword ptr [srcheight]
+        jae no_draw4
+        
+        ' _srcptr = srcbyteptr + (my * srcpitch) + (mx shl 2)
+        shl esi, 2
+        mov eax, dword ptr [row_table]
+        add esi, dword ptr [eax+edx*4]
+        
+        '_srccol = *cptr( uinteger ptr, _srcptr )
+        mov eax, dword ptr [esi]
+        
+'        ' if (_srccol and &HFF000000) = 0 then goto no_draw3
+'        test eax, &HFF000000
+'        jz no_draw4
+        
+        ' if _srccol = transcol then goto no_draw3
+        cmp eax, dword ptr [transcol]
+        je no_draw4
+        
+        ' blend
+        
+        ' load src pixel and dst pixel mmx, with unpacking
+        punpcklbw mm0, dword ptr [esi]
+        punpcklbw mm1, dword ptr [edi]
+        
+        ' shift them to the right place
+        psrlw mm0, 8                ' mm0 = 00sa00sr00sg00sb
+        psrlw mm1, 8                ' mm1 = 00da00dr00dg00db
+        
+        ' Prepare alpha
+        
+	    'changed by mysoft
+        movq      mm3, [alphalevel]      ' mm2 = 00sa00xx00xx00xx
+        movq      mm2, mm0
+        
+        punpckhwd mm2, mm2          ' mm2 = 00sa00sa00xx00xx
+        punpckhdq mm2, mm2          ' mm2 = 00sa00sa00sa00sa
+        pmullw    mm2, mm3
+        psrlw     mm2, 8
+        
+        
+        ' Perform blend
+        psubw mm0, mm1              ' (sX - dX)
+        pmullw mm0, mm2             ' (sX - dX) * sa
+        psrlq mm0, 8                ' mm0 = 00aa00rr00gg00bb
+        paddw mm0, mm1              ' ((sX - dX) * sa) + dX
+        pand mm0, qword ptr [mask1] ' mask off alpha and high parts
+        
+        ' repack to 32 bit
+        packuswb mm0, mm0
+        
+        ' store in destination
+        movd dword ptr [edi], mm0
+        
+		.balign 4
+		no_draw4:
+        
+        ' _mx += tcdzx
+        ' _my += tsdzx
+        addps xmm0, xmm1
+        
+        ' _dstptr += 4
+        add edi, 4
+        
+        ' _x_draw_len -= 1
+        sub ecx, 1
+        
+        jnz x_inner4
+        
+		x_end4:
+        
+        ' nyts += tsdzy
+        ' nytc += tcdzy
+        addps xmm2, xmm3
+        
+        ' cptr( any ptr, dstptr ) += dstpitch
+        mov eax, dword ptr [dstpitch]
+        add dword ptr [dstptr], eax
+        
+        ' y_draw_len -= 1
+        sub dword ptr [y_draw_len], 1
+        
+        jnz y_inner4
+        
+		y_end4:
+        
+        emms
+    end asm
+    
+	deallocate( row_table )
+    
+end sub
 
 function min overload(x as double, y as double) as double
     if x < y then 

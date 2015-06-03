@@ -58,6 +58,7 @@ type GameSpace
         as integer vibCount
         as string curMusic
         as integer switchTracks
+        as integer lastTurnstyleInput
         as integer ptr fadeoutTex
         
         as PathTracker tracker

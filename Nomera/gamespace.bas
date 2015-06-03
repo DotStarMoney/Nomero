@@ -17,7 +17,7 @@ using fb
 constructor GameSpace()
 	dim as ObjectLink link
     randomize timer
-    
+     
     link.gamespace_ptr = @this
     link.level_ptr = @lvlData
     link.tinyspace_ptr = @world
@@ -120,6 +120,7 @@ constructor GameSpace()
     stallTime_mili = 15
     movingFrmAvg = 0
     shake = 0 
+    lastTurnstyleInput = 0
       
     timeBeginPeriod(SLEEP_RESOLUTION)
 
@@ -153,7 +154,7 @@ function GameSpace.go() as integer
         startTime = timer
 		step_draw()
         
-        locate 1,1
+        'locate 1,1
         'print using "Frame Load %: ##.##"; (processTime / (1000 / FPS_TARGET)) * 100
         'print spy.body.p
 
@@ -211,6 +212,8 @@ sub GameSpace.step_input()
     keypress(SC_9) = multikey(SC_9)
     keypress(SC_Q) = multikey(SC_Q)
     keypress(SC_W) = multikey(SC_W)
+    keypress(SC_A) = multikey(SC_A)
+    keypress(SC_S) = multikey(SC_S)
 end sub
 
 sub GameSpace.vibrateScreen()
@@ -252,10 +255,6 @@ sub GameSpace.step_draw()
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
                   
-                  
-    'line scnbuff, (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
-    '              (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5), 0, BF
-    
 	
     START_PROFILE(3)
     
@@ -387,7 +386,7 @@ sub GameSpace.step_draw()
     next i
     
     window screen (0,0)-(SCRX*2-1,SCRY*2-1)
-    draw string (0, 8), "Time % to draw static layers: " + str(int((timeProfiles(1) / timeProfiles(3))*100)), 0
+    draw string (0, 8),  "Time % to draw static layers: " + str(int((timeProfiles(1) / timeProfiles(3))*100)), 0
     draw string (0, 16), "Time % to draw snow: " + str(int((timeProfiles(2) / timeProfiles(3))*100)),0
     draw string (0, 24), "Time % to draw projectiles and one shots: " + str(int((timeProfiles(4) / timeProfiles(3))*100)),0
     draw string (0, 32), "Time % to draw player and overlay: " + str(int((timeProfiles(5) / timeProfiles(3))*100)), 0
@@ -405,7 +404,7 @@ sub GameSpace.step_process()
     #define RECORD_PROFILE(X) timeAdd(X) += timer - startTime(X)
     
     dim as integer i, dire, jump, ups, fire, explodeAll, deactivateAll
-    dim as integer numbers(0 to 9)
+    dim as integer numbers(0 to 9), turnstyle, turnstyleInput
 
     dim as double tM, tS, totalT, startTotalT
     dim as double timeAdd(0 to 9), startTime(0 to 9)
@@ -491,6 +490,19 @@ sub GameSpace.step_process()
         fire = 0
     end if
     
+    turnstyle = 0
+    if keypress(SC_A) then
+        turnstyle = -1
+    elseif keypress(SC_S) then
+        turnstyle = 1
+    end if
+    
+    if lastTurnstyleInput = 0 andalso turnstyle <> 0 then
+        turnstyleInput = turnstyle
+    else
+        turnstyleInput = 0       
+    end if
+        
     numbers(0) = keypress(SC_1)
     numbers(1) = keypress(SC_2)
     numbers(2) = keypress(SC_3)
@@ -515,9 +527,9 @@ sub GameSpace.step_process()
 	if keypress(SC_N) then tracker.pause()
 	
 	if isSwitching <> 1 andAlso lockAction <> 1 then
-    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), numbers(), explodeAll, deactivateAll, 0.01667)
+    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), numbers(), explodeAll, deactivateAll, turnstyleInput, 0.01667)
     elseif lockAction = 1 then
-    	spy.processControls(0, 0, 0, 0, 0, numbers(), 0, 0, 0.01667)
+    	spy.processControls(0, 0, 0, 0, 0, numbers(), 0, 0, turnstyleInput, 0.01667)
     end if
     spy.processItems(0.01667)
     if lvlData.usesSnow() = 1 then 
@@ -577,8 +589,9 @@ sub GameSpace.step_process()
         timeProfiles(i) = timeProfiles(i) * 0.90 + 0.10 * timeAdd(i)
     next i
     'print int((timeProfiles(1) / timeProfiles(0)) * 100)
-    
+    lastTurnstyleInput = turnstyle
 end sub
+
 sub GameSpace.doGameEnd()
 	#macro sync()
 		screenlock	

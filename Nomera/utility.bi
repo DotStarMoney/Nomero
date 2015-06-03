@@ -1,9 +1,13 @@
 #ifndef UTILITY_BI
 #define UTILITY_BI
 
+#include "fbgfx.bi"
 #include "vector2d.bi"
 
 #define PI 3.14159265359
+
+declare sub rotozoom_alpha2( byref dst as FB.IMAGE ptr = 0, byref src as const FB.IMAGE ptr, byval positx as integer, byval posity as integer, byref angle as integer,_
+                             byref zoomx as single = 0, byref zoomy as single = 0, byval transcol as uinteger = &hffff00ff, byval alphalvl as integer = 255, byref offsetx as integer = 0, byref offsety as integer = 0 )
 
 declare function min overload(x as double, y as double) as double
 declare function min overload(x as integer, y as integer) as integer

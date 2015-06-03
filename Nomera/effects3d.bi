@@ -24,5 +24,9 @@ declare sub drawHexPrism(scnptr as integer ptr, x as integer, y as integer,_
                          tex as integer ptr, img_w as integer, img_h as integer,_
                          dispFlags as integer)
        
-       
+declare sub drawMode7Ground(dstPxls as integer ptr, srcPxls as integer ptr,_
+                        xOff as double, zOff as double,_
+                        horiz as integer = -200, s as double = 30, fov as integer = 256)
+    
+    
 #endif
