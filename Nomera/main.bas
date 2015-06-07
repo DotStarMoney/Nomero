@@ -34,14 +34,18 @@ FSOUND_Init(44100, 16, 0)
         dim as double scrollPercent(0 to 4)
         dim as double scrollAdd(0 to 4), t
         dim as integer i, fps, f, h, frameCount, treeT, alphaT
+        dim as integer menuMusic_channel, alphaVal
         dim as single scale
         dim as double groundScroll, animate, treeX, treeY, treeZ
         dim as zimage logo, baseTexture, mist
         dim as zimage mountain(0 to 2), back
         dim as zimage trees, menulogo
+        dim as zimage lensflare
+        dim as zimage sunflare
         dim as PointLight logoLight
         dim as Vector2D treePos(0 to MAX_TREES-1)
         dim as integer treeType(0 to MAX_TREES-1)
+        dim as integer ptr menuMusic
         randomize timer
 
         mist.load("mist.png")
@@ -52,6 +56,8 @@ FSOUND_Init(44100, 16, 0)
         back.load("menubacksun.png")
         trees.load("menutrees.png")
         menulogo.load("menulogo.png")
+        lensflare.load("lensflare.png")
+        sunflare.load("sunflare.png")
         
         logoLight.diffuse_fbimg = png_load("Lights\Golden_diffuse.png")
         logoLight.specular_fbimg = png_load("Lights\Golden_specular.png")
@@ -69,6 +75,10 @@ FSOUND_Init(44100, 16, 0)
             scrollPercent(i) = rnd * SCRX
         next i
         groundScroll = 0
+        
+        menuMusic = FSOUND_Stream_Open("menu.ogg", FSOUND_LOOP_NORMAL, 0, 0) 
+        FSOUND_Stream_Play menuMusic_channel, menuMusic
+        FSOUND_SetVolumeAbsolute(menuMusic_channel, 128)
         
         randomize 4
         for i = 0 to MAX_TREES-1
@@ -101,7 +111,7 @@ FSOUND_Init(44100, 16, 0)
         do
 
             
-            animate = sin(frameCount * 0.004)
+            animate = sin((frameCount * 0.003) + 3)
 
             groundScroll = animate * 30
             
@@ -116,19 +126,21 @@ FSOUND_Init(44100, 16, 0)
 
             put scnbuff, (0,0), back.getData(), PSET
             for i = 0 to 2
-                scale = 1+(1-animate)*0.03*(1+i*0.2)
+                scale = 1+(1-animate)*0.008*(1+i*0.3)
                 rotozoom_alpha2(cast(FB.IMAGE ptr, scnbuff), cast(FB.IMAGE ptr, mountain(2 - i).getData()), 320, 165, 0, scale, scale, ,255)
             next i
             
             drawMode7Ground(scnbuff, baseTexture.getData(),0,groundScroll,, 100)
             
+            window screen (0,0)-(640,480)
             for i = 0 to MAX_TREES-1
                 treeZ = treePos(i).y + animate*65
                 treeX = SCRX*0.5 + treePos(i).x * (256 / treeZ)
                 treeY = SCRY*0.5 + 200 * (256 / treeZ)
-                put scnbuff, (treeX-20, treeY-31), trees.getData(), (treeType(i)*41,0)-(treeType(i)*41+40, 110), ALPHA
+                trees.putGLOW(scnbuff, treeX-20, treeY-31,treeType(i)*41,0,treeType(i)*41+40, 110, &hffffffff)
             next i
-            
+            window screen
+           
             
             for i = 0 to 4
                 h = 250+i^2*(10 - (1+animate)*2)
@@ -143,20 +155,27 @@ FSOUND_Init(44100, 16, 0)
             next i
             
             
-            logoLight.x = cos(frameCount * 0.005) * 200 + SCRX*0.5
-            logoLight.y = sin(frameCount * 0.005) * 100 + 110
+            logoLight.x = cos(frameCount * 0.003 + 3) * 200 + SCRX*0.5
+            logoLight.y = sin(frameCount * 0.003 + 3) * 100 + 110
             
             window screen (0,0)-(640,480)
-            ''''''''''''''''''''''' FIGURE OUT WHY COORDS NO GOOD '''''''''''''''''''''''
-            menulogo.putTRANS_1xLight(scnbuff, SCRX*0.5 - 200, 10, 0,0,397,198, &hA0A0A0, logoLight)
-            '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+            menulogo.putTRANS_1xLight(scnbuff, SCRX*0.5 - 200, 10, 0,0,397,198, &h404040, logoLight)
+            
+            alphaVal = int((((1 + -animate)*0.5)^(0.4) * 250) * rnd^(0.1)) shl 24
+            sunflare.putGLOW(scnbuff, SCRX*0.5 - 69,-11,0,0,134,108, &hffffff or alphaVal)
+            
+            alphaVal = int(((1 + -animate) * 90) * rnd^(0.1)) shl 24
+            for i = 0 to 4
+                lensflare.putGLOW(scnbuff, 270+i*35, i*35-10,i*127,0,i*127+126, 126, &hffffff or alphaVal)
+            next i
+            
             window screen
             
+            line scnbuff, (0,0)-(SCRX-1,SCRY-1),0, B
             
             'draw string scnbuff, (0,0), str(fps), 0
         
             groundScroll += 1
-        
         
             sync()
             f += 1
@@ -176,9 +195,12 @@ FSOUND_Init(44100, 16, 0)
         back.flush()
         trees.flush()
         menulogo.flush()
+        lensflare.flush()
+        sunflare.flush()
         png_destroy(logoLight.diffuse_fbimg)
         png_destroy(logoLight.specular_fbimg)
-
+        FSOUND_Stream_Stop  menuMusic
+        FSOUND_Stream_Close menuMusic
     #endif
 #endif
 
