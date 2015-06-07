@@ -402,7 +402,7 @@ sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					flipFlags as integer,_
 					src_x as integer, src_y as integer,_
 					img_width as integer, img_height as integer,_
-					dest_x as integer, dest_y as integer)
+					dest_x as integer, dest_y as integer, treatAsNorm as integer = 0)
 	
 	#define X_ 0
 	#define Y_ 1
@@ -414,7 +414,8 @@ sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 	dim as integer byCol, byRow, oldCol
 	dim as integer xpos, ypos, w
 	dim as integer rt, xtn, ytn
-	dim as integer xpn, ypn, col
+	dim as integer xpn, ypn, col, bx, by
+    dim as integer flipX, flipY
 	dim as integer pitchSrc, pitchDest
 	dim as byte ptr dataSrc, dataDest
 	
@@ -508,10 +509,21 @@ sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 			ppos(byCol) = oldCol
 			xpos = xtn
 			while ppos(byCol) <> pdes(byCol)
-				
-				col = *cast(integer ptr, @dataSrc[xpos*4 + ypos*pitchSrc])  
-				*cast(integer ptr, @dataDest[ppos(X_)*4 + ppos(Y_)*pitchDest]) = col
-				
+				                  
+                                  
+                col = *cast(integer ptr, @dataSrc[xpos*4 + ypos*pitchSrc])  
+                if treatAsNorm = 1 then
+                    bx = (col and &hff) - 128
+                    by = ((col shr 8) and &hff) - 128
+                    
+                    if byRow = X_ then swap bx, by
+                    if pdir(X_) < 0 then bx = (-bx - 1)
+                    if pdir(Y_) < 0 then by = (-by - 1)                
+                
+                    col = (col and &hFFFF0000) or ((by + 128) shl 8) or (bx + 128)
+                end if
+                *cast(integer ptr, @dataDest[ppos(X_)*4 + ppos(Y_)*pitchDest]) = col
+
 				ppos(byCol) += pdir(byCol)
 				xpos += 1
 			wend

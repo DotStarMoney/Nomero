@@ -2,20 +2,20 @@
 
 dim as double i
 dim as integer c
-dim as integer frames = 7
+dim as integer frames = 5
 
-screenres 128*frames,128,32
+screenres 32*frames,32,32
 
-dim as integer ptr radar = imagecreate(128*frames, 128)
+dim as integer ptr radar = imagecreate(32*frames, 32)
 
-c = rgb(160, 200, 255)
-line (0,0)-(128*frames-1, 127), &hff00ff, BF
+c = rgb(255,0,0)
+line (0,0)-(32*frames-1, 32), &hffff00ff, BF
 for i = 0 to frames-1
-    circle (63.5 + i * 128, 63.5), (i+1) * int(64/frames), c,,,,F
-    circle (63.5 + i * 128, 63.5), (i+0.3) * 68.2/frames, &hff00ff,,,,F
-    
+    circle (16 + i * 32, 16), (i+1) * int(16/frames), c,,,,F  
+        circle (16 + i * 32, 16), 0.7*(i+1) * int(16/frames) + i*0.3, &hffff00ff,,,,F    
+
 next i
-get (0,0)-(128*frames-1,127), radar
+get (0,0)-(32*frames-1, 31), radar
 bsave "radarping.bmp", radar
 
 sleep

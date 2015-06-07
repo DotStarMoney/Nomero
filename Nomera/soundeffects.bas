@@ -20,6 +20,7 @@ sub SoundEffects.init()
 	sounds(SND_HURT) 		= FSOUND_SAMPLE_Load(FSOUND_FREE,"hurt.wav",0,0,0)
 	sounds(SND_DEATH)		= FSOUND_SAMPLE_Load(FSOUND_FREE,"death.wav",0,0,0)
     sounds(SND_SPINNER)     = FSOUND_SAMPLE_Load(FSOUND_FREE,"hudspinner2.wav",0,0,0)
+    sounds(SND_SIGNAL)      = FSOUND_SAMPLE_Load(FSOUND_FREE,"signal.wav",0,0,0)
 end sub
 
 sub SoundEffects.setLink(link_ as objectLink)
@@ -37,6 +38,9 @@ sub SoundEffects.playSound(s as SoundEffect_e)
 		FSOUND_SetLoopMode(chnl, FSOUND_LOOP_OFF)
 	else
 		chnl = FSOUND_PlaySound(FSOUND_FREE, sounds(s))
+        if s = SND_SPINNER orElse s = SND_SIGNAL then
+            FSOUND_SetVolumeAbsolute chnl, 64
+        end if
 		FSOUND_SetLoopMode(chnl, FSOUND_LOOP_OFF)
 	end if
 end sub

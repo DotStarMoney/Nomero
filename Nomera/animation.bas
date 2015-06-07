@@ -710,7 +710,7 @@ sub Animation.fetchImageData(animNum as integer, frameNum as integer, rotatedFla
 				copyImageRotate(data_->image.getData(), rotateTemp, rotatedFlag, start_x, start_y, drawW, drawH, 0, 0) 
                 if data_->image.getNorm() <> 0 then 
                     rotateTempNorm = imagecreate(newW, newH)
-                    copyImageRotate(data_->image.getNorm(), rotateTempNorm, rotatedFlag, start_x, start_y, drawW, drawH, 0, 0) 
+                    copyImageRotate(data_->image.getNorm(), rotateTempNorm, rotatedFlag, start_x, start_y, drawW, drawH, 0, 0, 1) 
                 end if    
                 tempRotGroup->rotatedGroup[rotatedFlag].create(drawW, drawH, rotateTemp, rotateTempNorm)
 				drawW = newW

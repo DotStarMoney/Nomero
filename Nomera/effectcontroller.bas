@@ -41,6 +41,7 @@ sub EffectController.setParent(ose_ptr as OneShotEffects ptr, _
     oneshots = ose_ptr
     particles = pc_ptr
 end sub
+
          
 sub EffectController.create(effect_name as string,_
                             effect_type as EffectControllerType_e,_

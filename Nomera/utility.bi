@@ -112,7 +112,7 @@ declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					        flipFlags as integer,_
 					        src_x as integer, src_y as integer,_
 					        img_width as integer, img_height as integer,_
-					        dest_x as integer, dest_y as integer)
+					        dest_x as integer, dest_y as integer, treatAsNorm as integer = 0)
                             
 declare sub pointCastTexture(dest1 as integer ptr, dest2 as integer ptr,_
                              source1 As Integer Ptr, source2 as integer ptr,_

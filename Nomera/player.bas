@@ -488,7 +488,7 @@ sub Player.processControls(dire as integer, jump as integer,_
                 jumpHoldFrames = 0
             end if
             
-			if ups = 1 then
+			if ups = 1 andAlso isTriggering = 0 then
                 anim.switch(5)
 			end if
         
@@ -745,6 +745,9 @@ sub Player.processControls(dire as integer, jump as integer,_
 				items.insert(hasBomb(i), @newItem)
 			end if
 		elseif numbers(i) andAlso hasBomb(i) andAlso (lastNumbers(i) = 0) then
+            link.oneshoteffects_ptr->create(body.p + Vector2D(((facing*2)-1)*12, -9), LITTLE_PULSE,,2)
+			link.soundeffects_ptr->playSound(SND_SIGNAL)
+
 			newItem = *cast(Item ptr ptr, items.retrieve(hasBomb(i)))
 			newItem->setData1(1)
 			items.remove(hasBomb(i))
@@ -940,7 +943,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera)	
     
 
-    drawHexPrism(scnbuff, 60, 440, spinnerAngle, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+    drawHexPrism(scnbuff, 62, 440, spinnerAngle, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
 
     
 end sub

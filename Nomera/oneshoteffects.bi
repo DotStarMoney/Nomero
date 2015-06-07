@@ -13,6 +13,7 @@ enum EffectType_
     RADAR
     WATER_SPLASH
     FLASH
+    LITTLE_PULSE
 end enum
 
 type Effect_t
