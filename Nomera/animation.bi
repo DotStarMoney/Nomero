@@ -10,6 +10,7 @@ enum ANIM_TYPE
     ANIM_ONE_SHOT
     ANIM_LOOP
     ANIM_STILL
+    ANIM_LOOP_BACK_FROM_RELEASE
 end enum
 enum ANIM_RELEASE_TYPE
     ANIM_TO_COMPLETION
@@ -129,6 +130,7 @@ type Animation
         declare sub step_OneShot()
         declare sub step_Loop()
         declare sub step_Still()
+        declare sub step_LoopBackFromRelease()
         declare sub fetchImageData(animNum as integer, frameNum as integer, rotatedFlag as integer,_
 				                   byref imgdata as zimage, byref drawW as integer, byref drawH as integer, byref offset as Vector2D,_
 				                   byref start_x as integer, byref start_y as integer)

@@ -24,13 +24,15 @@ sub drawMode7(dstPxls as integer ptr, srcPxls as integer ptr,_
     
     for y = yStart to yEnd - 1
         if (y + fov) <> 0 then
-            ipz = 1.0 / (y + fov)
+            
+            ipz = s / (y + fov)
             offset = (int((y * ipz + zOff) * s) and 255) shl 8
             sx = (-hw * ipz + xOff) * s
-            ipz *= s
             v = (-1 + abs(ipz))
             if v < 1 then v = 1
             vdiv = 1 / sqr(v)
+            
+            
             for x = -hw to hw - 1
                 col = srcPxls[offset + (int(sx) and 255)]
                 dstPxls[d_offset] = col

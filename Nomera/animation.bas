@@ -101,15 +101,6 @@ sub Animation.load(filename as string)
                         
                         .image.load(filepath + imageName)
                         
-                        /'
-                        if right(imageName, 3) = "bmp" then
-							.image = imagecreate(.w, .h)
-							bload imageName, .image
-						else
-							.image = png_load(imageName)
-						end if
-                        '/
-                        
                         readStep = 200
                     case 200
 						curText = mid(lne, 2, len(lne)-2)
@@ -147,6 +138,8 @@ sub Animation.load(filename as string)
                             .animations[curAnim].anim_type = ANIM_LOOP
                         elseif pieces(0) = "ONE SHOT" then
                             .animations[curAnim].anim_type = ANIM_ONE_SHOT
+                        elseif pieces(0) = "LOOP BACK FROM RELEASE" then
+                            .animations[curAnim].anim_type = ANIM_LOOP_BACK_FROM_RELEASE                            
                         end if
                         if pieces(1) = "TO COMPLETION" then
                             .animations[curAnim].anim_release_type = ANIM_TO_COMPLETION
@@ -159,7 +152,7 @@ sub Animation.load(filename as string)
                         elseif pieces(1) = "REVERSE" then
                             .animations[curAnim].anim_release_type = ANIM_REVERSE
                         elseif pieces(1) = "JUMP TO RELEASE THEN REVERSE" then
-                            .animations[curAnim].anim_release_type = ANIM_JUMP_TO_RELEASE_THEN_REVERSE
+                            .animations[curAnim].anim_release_type = ANIM_JUMP_TO_RELEASE_THEN_REVERSE           
                         end if
                         if pieces(2) = "YES" then
                             .animations[curAnim].usePerFrameDelay = 1
@@ -295,6 +288,8 @@ sub Animation.step_animation()
             step_OneShot()
         case ANIM_LOOP
             step_Loop()
+        case ANIM_LOOP_BACK_FROM_RELEASE
+            step_LoopBackFromRelease()
         end select
     end if
 end sub
@@ -338,7 +333,7 @@ sub Animation.step_OneShot()
             select case .anim_release_type
             case ANIM_TO_COMPLETION
                 advance()
-                if currentFrame >= .frame_n orElse reachedEnd = 1 then 
+                if drawFrame >= .frame_n orElse reachedEnd = 1 then 
                     applySwitch()                    
                 end if
             case ANIM_INSTANT
@@ -407,6 +402,94 @@ sub Animation.step_OneShot()
     end with
 end sub
 
+sub Animation.step_LoopBackFromRelease()
+    dim as integer lastFrame
+    dim as integer i
+    dim as integer shouldApplySwitch
+    dim as integer shouldAdvance
+    with data_->animations[currentAnim]
+        if isReleasing = 0 then
+            advance()
+            if currentFrame >= .release_frames[0] then 
+                if .release_frames[0] = (.frame_n - 1) then reachedEnd = 1 
+                currentFrame = .frame_loopPoint
+            else 
+                reachedEnd = 0
+            end if
+        else
+            select case .anim_release_type
+            case ANIM_TO_COMPLETION
+                advance()
+                if drawFrame >= .frame_n orElse reachedEnd = 1 then 
+                    applySwitch()                    
+                end if
+            case ANIM_INSTANT
+                applySwitch()
+            case ANIM_FINISH_FRAME
+                lastFrame = currentFrame
+                advance()
+                if currentFrame <> lastFrame orElse reachedEnd = 1 then 
+                    applySwitch()
+                end if
+            case ANIM_AFTER_RELEASE_POINT
+                lastFrame = currentFrame
+                shouldApplySwitch = 0
+                advance()
+                if currentFrame >= .frame_n then currentFrame = .frame_loopPoint
+                for i = 0 to .release_frames_n
+                    if lastFrame = .release_frames[i] then
+                        if lastFrame <> currentFrame then 
+                            shouldApplySwitch = 1
+                        end if
+                        exit for
+                    end if
+                next i
+                if shouldApplySwitch then
+                    applySwitch()
+                end if
+            case ANIM_REVERSE
+                delayCounter -= speed
+                shouldAdvance = 0
+                if delayCounter <= 0 then
+                    shouldAdvance = 1
+                    if .usePerFrameDelay = 1 then
+                        delayCounter = .frame_data[currentFrame].delay 
+                    else
+                        delayCounter = .frame_delay
+                    end if
+                end if
+                
+                if shouldAdvance = 1 then
+                    currentFrame -= 1
+                    if currentFrame = -1 then
+                        currentFrame = 0
+                        applySwitch()
+                    end if
+                end if
+            case ANIM_JUMP_TO_RELEASE_THEN_REVERSE
+                delayCounter -= speed
+                shouldAdvance = 0
+                if delayCounter <= 0 then
+                    shouldAdvance = 1
+                    if .usePerFrameDelay = 1 then
+                        delayCounter = .frame_data[currentFrame].delay 
+                    else
+                        delayCounter = .frame_delay
+                    end if
+                end if
+                
+                if shouldAdvance = 1 then
+                    currentFrame -= 1
+                    if currentFrame = -1 then
+                        currentFrame = 0
+                        applySwitch()
+                    end if
+                end if
+            end select
+        end if
+    end with
+end sub
+
 sub Animation.step_Loop()
     dim as integer lastFrame
     dim as integer i
@@ -425,7 +508,7 @@ sub Animation.step_Loop()
             select case .anim_release_type
             case ANIM_TO_COMPLETION
                 advance()
-                if currentFrame >= .frame_n orElse reachedEnd = 1 then 
+                if drawFrame >= .frame_n orElse reachedEnd = 1 then 
                     applySwitch()                    
                 end if
             case ANIM_INSTANT
@@ -724,6 +807,7 @@ sub Animation.drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integ
     dim as Anim_DrawType_e drawMode
     dim as LightPair ptr usesLight(0 to 2)
     dim as zimage  drawImg
+    
     with data_->animations[currentAnim]
 		
         fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y

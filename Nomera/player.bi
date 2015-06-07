@@ -117,6 +117,8 @@ type Player
         
         as integer lastNumbers(0 to 9)
         as integer hasBomb(0 to 9)
+        as integer lastHasBomb(0 to 9)
+        as integer cantPlace(0 to 9)
         as Player_bombData bombData(0 to 9)
         
         as double  coverValue

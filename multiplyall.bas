@@ -14,8 +14,8 @@ close #f
 dim as integer ptr img1 = imagecreate(w, h)
 dim as integer ptr img2 = imagecreate(w, h)
 
-bload "colorcomb3.bmp", img1
-bload "mrspy2.bmp", img2
+bload "silo1.bmp", img1
+bload "silo0.bmp", img2
 
 dim as integer x, y
 for y = 0 to h-1

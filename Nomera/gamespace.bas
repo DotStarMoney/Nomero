@@ -162,6 +162,7 @@ function GameSpace.go() as integer
         step_input()
         step_process()
         processTime = 1000*(timer - startTime)
+                
         sleep(SLEEP_RESOLUTION * stallTime_mili)
         frameTime = timer - startTime
         if keypress(SC_ESCAPE) then exit do

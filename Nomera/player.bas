@@ -40,7 +40,7 @@ constructor Player
     health = 100
     chargeFlicker = 0
     charge = 0
-    bombs = 10
+    bombs = 0
     revealSilo = 0
     coverValue = 0.65
     
@@ -87,30 +87,36 @@ sub Player.loadAnimations(filename as string)
     anim.load(filename)
     silhouette.load(left(filename, len(filename) - 4) & "_s.txt")
     hudspinner.load("hudspinner.txt")
+    
 end sub
 
 sub Player.drawPlayer(scnbuff as uinteger ptr)
     dim as integer numLights
     dim as LightPair ptr ptr lights
-    
+ 
     if link.level_ptr->shouldLight() then
         numLights = link.level_ptr->getLightList(lights)
         if harmedFlashing > 0 then
-            if chargeFlicker < 4 then anim.drawAnimationLit(scnbuff, body.p.x(), body.p.y(), lights, numLights, link.level_ptr->getObjectAmbientLevel())
+            if chargeFlicker < 4 then anim.drawAnimationLit(scnbuff, body.p.x(), body.p.y(), lights, numLights, link.level_ptr->getObjectAmbientLevel(),,4*facing)
         else
-            anim.drawAnimationLit(scnbuff, body.p.x(), body.p.y(), lights, numLights, link.level_ptr->getObjectAmbientLevel(),,,1)
+            anim.drawAnimationLit(scnbuff, body.p.x(), body.p.y(), lights, numLights, link.level_ptr->getObjectAmbientLevel(),,4*facing,1)
         end if
     else
         if harmedFlashing > 0 then
-            if chargeFlicker < 4 then anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
+            if chargeFlicker < 4 then anim.drawAnimation(scnbuff, body.p.x(), body.p.y(),,4*facing)
         else
-            anim.drawAnimation(scnbuff, body.p.x(), body.p.y())
+            anim.drawAnimation(scnbuff, body.p.x(), body.p.y(),,4*facing)
         end if
     end if
+    
 end sub
 
 sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer)
-	anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy)
+    if harmedFlashing > 0 then
+        if chargeFlicker < 4 then anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy,,4*facing)
+    else
+        anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy,,4*facing)
+    end if
 end sub
 
 function Player.beingHarmed() as integer
@@ -313,9 +319,9 @@ sub Player.processControls(dire as integer, jump as integer,_
                            t as double)
     dim as Vector2D gtan
     dim as double curSpeed, oSpeed
-    dim as integer addSpd, ptype, spikes
-    dim as integer deactivateGroup
-    dim as integer i
+    dim as integer addSpd, ptype, spikes, animateTrigger 
+    dim as integer deactivateGroup, canTrigger
+    dim as integer i, isTriggering
     dim as Item ptr newItem
     dim as LevelSwitch_t ls
     dim as GameSpace ptr gsp
@@ -328,13 +334,59 @@ sub Player.processControls(dire as integer, jump as integer,_
 	_ups_ = ups
 	_shift_ = shift
     
+    canTrigger = 0
+    animateTrigger = 0
+    if dire = 0 andAlso jump = 0 andAlso parent->isGrounded(body_i, this.groundDot) then canTrigger = 1
+
+    for i = 0 to 9
+        if numbers(i) = 0 then cantPlace(i) = 0
+    next i
+    if canTrigger = 0 then
+        for i = 0 to 9
+            if hasBomb(i) then numbers(i) = 0  
+            if numbers(i) then
+                cantPlace(i) = 1
+            end if
+        next i
+        explodeAll = 0
+        deactivateAll = 0
+        isTriggering = 0
+    else
+        for i = 0 to 9
+            if lastHasBomb(i) = 0 andAlso hasBomb(i) <> 0 then cantPlace(i) = 1
+            if cantPlace(i) then 
+                numbers(i) = 0
+                animateTrigger = 0
+            end if
+            if numbers(i) <> 0 andAlso cantPlace(i) = 0 then 
+                isTriggering = 1 
+                if hasBomb(i) then animateTrigger = 1
+            end if
+        next i
+        if explodeAll orElse deactivateAll then 
+            isTriggering = 1      
+            animateTrigger = 1
+        end if
+    end if
+    if isTriggering = 1 then
+        if anim.getAnimation() <> 6 orElse anim.getFrame <> 3 then
+            for i = 0 to 9
+                if hasBomb(i) then numbers(i) = 0  
+            next i
+            explodeAll = 0
+            deactivateAll = 0    
+        end if
+    end if
+    for i = 0 to 9
+        lastHasBomb(i) = hasBomb(i)
+    next i
     
     if state <> ON_LADDER andAlso ups <> 0 andAlso (onLadder() = 1) _
        andAlso lastUps = 0 then
         state = ON_LADDER
         jumpHoldFrames = 0
         anim.setSpeed(1)
-        anim.hardSwitch(6)
+        anim.hardSwitch(3)
         this.body.friction = this.stopFriction
         this.body.v = Vector2D(0,0)
         isJumping = 0
@@ -392,9 +444,9 @@ sub Player.processControls(dire as integer, jump as integer,_
 			
             curSpeed = curSpeed + this.acc * t
             if this.body.v.y() < 0 then
-                if jumpHoldFrames = 0 then anim.hardSwitch(3)
+                if jumpHoldFrames = 0 then anim.hardSwitch(1) 'running
             else
-                anim.hardSwitch(3)
+                anim.hardSwitch(1)
                 jumpHoldFrames = 0
             end if
             if shift = 0 then
@@ -412,9 +464,9 @@ sub Player.processControls(dire as integer, jump as integer,_
         elseif dire = -1 andalso ups <> 1 then
             facing = 0
             if this.body.v.y() < 0 then
-                if jumpHoldFrames = 0 then anim.hardSwitch(2)
+                if jumpHoldFrames = 0 then anim.hardSwitch(1)
             else
-                anim.hardSwitch(2)
+                anim.hardSwitch(1)
                 jumpHoldFrames = 0
             end if
 
@@ -430,18 +482,14 @@ sub Player.processControls(dire as integer, jump as integer,_
             this.body.friction = 0
         else
 			if this.body.v.y() < 0 then
-                if jumpHoldFrames = 0 andAlso ups <> 1 then anim.switch(facing)
+                if jumpHoldFrames = 0 andAlso ups <> 1 andAlso isTriggering = 0 then anim.switch(0)
             else
-                if ups <> 1 then anim.switch(facing)
+                if ups <> 1 andAlso isTriggering = 0 then anim.switch(0)
                 jumpHoldFrames = 0
             end if
             
 			if ups = 1 then
-				if facing = 1 then
-					anim.switch(10)
-				else
-					anim.switch(9)
-				end if 
+                anim.switch(5)
 			end if
         
             curSpeed = curSpeed * this.cutSpeed
@@ -461,11 +509,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 
         if state <> JUMPING andAlso jumpHoldFrames = 0 then 
             if groundSwitchAnimFrames = 0 then 
-                if facing = 0 then
-                    anim.hardSwitch(7)
-                elseif facing = 1 then
-                    anim.hardSwitch(8)
-                end if
+                anim.hardSwitch(4)
             end if
             state = FREE_FALLING
         else
@@ -501,6 +545,10 @@ sub Player.processControls(dire as integer, jump as integer,_
         lastGrounded = 0
     end if   
     
+    if isTriggering = 1 andAlso animateTrigger = 1 then 
+        if anim.getAnimation() <> 6 then anim.switch(6)
+    end if
+    
     if lastJumpMemory > 0 then
 		if freeJump > 0 andAlso isJumping = 0 then
 			freeJump = 0
@@ -509,14 +557,11 @@ sub Player.processControls(dire as integer, jump as integer,_
 			link.soundeffects_ptr->playSound(SND_JUMP)
 			isJumping = 1
 			jumpBoostFrames = this.boostFrames
-			if facing = 0 then 
-				anim.hardSwitch(4)
-			else
-				anim.hardSwitch(5)
-			end if
+			anim.hardSwitch(2)
 			this.body.v = Vector2D(this.body.v.x(),0) - Vector2D(0, this.jumpImpulse)
 		end if
 	end if
+    
     if lastJumpMemory > 0 then lastJumpMemory -= 1
 
     lastJump = jump
@@ -736,7 +781,6 @@ sub Player.processControls(dire as integer, jump as integer,_
         spinnerAngleV = 0
         spinnerAngle = spinnerAngleTarget 
     end if
-        
         
     lastUps = ups
     lastFire = fire
