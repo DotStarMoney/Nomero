@@ -74,6 +74,7 @@ type Level
         declare function shouldLight() as integer
         declare function getObjectAmbientLevel() as integer
         declare function getHiddenObjectAmbientLevel() as integer
+        declare sub drawBackgroundEffects(scnbuff as integer ptr)
        
         dim as integer justLoaded
     private:
@@ -91,6 +92,7 @@ type Level
         dim as integer reconnect
         dim as ushort ptr coldata
         dim as string lvlName
+        dim as double auroraTranslate
         dim as ushort lvlWidth
         dim as ushort lvlHeight
         dim as ushort snowfall
@@ -105,7 +107,9 @@ type Level
         dim as integer lightList_N
         dim as integer shouldLightObjects
         dim as integer objectAmbientLevel
+        dim as integer drawAurora
         dim as integer hiddenObjectAmbientLevel
+        dim as zimage auroraTexture
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum

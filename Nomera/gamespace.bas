@@ -144,18 +144,24 @@ sub GameSpace.setMusicVolume(v as integer)
 end sub
         
 function GameSpace.go() as integer
-    dim as double startTime, processTime
+    dim as double startTime, processTime, oneSecondMaxLoad, secondTimer
+    dim as double load
     dim as byte ptr trackerEx
     dim as integer  dataSize
     stallTime_mili = 1
     step_process()
+    secondTimer = timer
+    oneSecondMaxLoad = 0
     do
 		
         startTime = timer
 		step_draw()
         
-        'locate 1,1
-        'print using "Frame Load %: ##.##"; (processTime / (1000 / FPS_TARGET)) * 100
+        locate 1,1
+        load = (processTime / (1000 / FPS_TARGET)) * 100
+        if load > oneSecondMaxLoad then oneSecondMaxLoad = load
+        print using "Frame Load %: ##.##"; load
+        print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
         'print spy.body.p
 
         
@@ -175,6 +181,10 @@ function GameSpace.go() as integer
 			stallTime_mili -= 1
 			if stallTime_mili < 0 then stallTime_mili = 0
 		end if
+        if Timer - secondTimer >= 1 then
+            oneSecondMaxLoad = 0
+            secondTimer = timer
+        end if
     loop 
     
 	kill pathFile
@@ -262,6 +272,7 @@ sub GameSpace.step_draw()
     START_PROFILE(1)
     lvlData.drawLayers(scnbuff, BACKGROUND, camera.x(), camera.y(), Vector2D(0, 0))
     RECORD_PROFILE(1)
+    
     
     START_PROFILE(2)
     if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)
@@ -385,7 +396,7 @@ sub GameSpace.step_draw()
     for i = 0 to 9
         timeProfiles(i) = timeProfiles(i) * 0.90 + 0.10 * timeAdd(i)
     next i
-    
+    /'
     window screen (0,0)-(SCRX*2-1,SCRY*2-1)
     draw string (0, 8),  "Time % to draw static layers: " + str(int((timeProfiles(1) / timeProfiles(3))*100)), 0
     draw string (0, 16), "Time % to draw snow: " + str(int((timeProfiles(2) / timeProfiles(3))*100)),0
@@ -393,7 +404,7 @@ sub GameSpace.step_draw()
     draw string (0, 32), "Time % to draw player and overlay: " + str(int((timeProfiles(5) / timeProfiles(3))*100)), 0
     draw string (0, 40), "Time % to draw dynamic objects: " + str(int((timeProfiles(6) / timeProfiles(3))*100)),0
     draw string (0, 48), "Time % to draw to buffer out of screen refresh time " + str(int((timeProfiles(3) / timeProfiles(0))*100)),0
-    
+    '/
 end sub
     
 

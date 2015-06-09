@@ -1,1 +1,1 @@
-Nomera NixieTube.map
+Nomera testAurora3.map

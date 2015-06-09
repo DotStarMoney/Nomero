@@ -294,6 +294,7 @@ dim as ushort default_x
 dim as ushort default_y
 dim as ushort snowfall
 dim as ushort shouldLight = 65535
+dim as ushort aurora = 65535
 dim as integer objectAmbientLevel = &hffffffff
 dim as integer hiddenObjectAmbientLevel = &hffffffff
 dim as ushort map_width, map_height
@@ -672,9 +673,11 @@ do
                     end with
                 elseif propertyType = 2 then
                     if left(lcase(item_tag), 4) = "snow" then
-                        if left(lcase(item_content), 2) = "on" then
+                        'if left(lcase(item_content), 2) = "on" then
                             snowfall = 1
-                        end if
+                        'end if
+                    elseif left(lcase(item_tag), 6) = "aurora" then
+                        aurora = 1
                     elseif left(lcase(item_tag), 13) = "default start" then
                         split item_content,,,pieces()
                         default_x = val(pieces(0))
@@ -1784,6 +1787,7 @@ put #f,,map_name
 put #f,,map_width
 put #f,,map_height
 put #f,,snowfall
+put #f,,aurora
 put #f,,shouldLight
 put #f,,objectAmbientLevel
 put #f,,hiddenObjectAmbientLevel

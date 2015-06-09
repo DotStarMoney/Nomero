@@ -943,7 +943,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera)	
     
 
-    drawHexPrism(scnbuff, 62, 440, spinnerAngle, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+    drawHexPrism(scnbuff, 57, 445, spinnerAngle, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
 
     
 end sub

@@ -28,5 +28,7 @@ declare sub drawMode7Ground(dstPxls as integer ptr, srcPxls as integer ptr,_
                         xOff as double, zOff as double,_
                         horiz as integer = -200, s as double = 30, fov as integer = 256)
     
-    
+declare sub drawMode7Ceiling(dst as integer ptr, src as integer ptr,_
+                             xOff as double, zOff as double,_
+                             horiz as integer = -200, s as double = 30, fov as integer = 256)   
 #endif

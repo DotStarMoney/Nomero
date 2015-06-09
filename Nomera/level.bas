@@ -9,6 +9,7 @@
 #include "soundeffects.bi"
 #include "item.bi"
 #include "fbpng.bi"
+#include "effects3d.bi"
 #include "gamespace.bi"
 
 dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
@@ -44,9 +45,10 @@ constructor level
     active_layer.init(sizeof(integer))
     activeCover_layer.init(sizeof(integer))
     activeFront_layer.init(sizeof(integer))
-    
+    auroraTranslate = 0
     pendingPortalSwitch = 0
     reconnect = 0
+    auroraTexture.load("aurora.png")
     #ifdef DEBUG
 		if collisionBlox = 0 then
 			collisionBlox = png_load("CShapes.png")
@@ -334,7 +336,9 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
             next xscan
         next yscan
     end if
-   
+    if layerData[lyr].depth = 0 then 
+        drawMode7Ceiling(scnbuff, auroraTexture.getData(), auroraTranslate, auroraTranslate, -70)   
+    end if
 end sub
 
 destructor level
@@ -785,9 +789,7 @@ sub level.processLights()
     dim as integer order, cornerX, cornerY
     dim as integer x0, y0, x1, y1
     dim as integer dposx, dposy
-    
-    'add bump map support to mapconvert
-    
+        
     lightList_N = link.dynamiccontroller_ptr->populateLightList(lightList)    
     
     screen_tl = link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5 - Vector2D(128, 128)
@@ -928,6 +930,7 @@ sub level.processLights()
                                  wdata.dx1, wdata.dy1, _
                                  lightList[i]->texture.w*0.5, lightList[i]->texture.h*0.5,_
                                  lightList[i]->texture.w*0.5, &hffff00ff)
+                
             
                 lightList[i]->last_tl_x = tex_tl_x
                 lightList[i]->last_tl_y = tex_tl_y
@@ -983,6 +986,13 @@ end sub
 
 sub level.process(t as double)
     processLights()
+    auroraTranslate += 0.007
+end sub
+
+sub level.drawBackgroundEffects(scnbuff as integer ptr) 
+    if drawAurora <> 65535 then
+        drawMode7Ceiling(scnbuff, auroraTexture.getData(), auroraTranslate, auroraTranslate, -20)   
+    end if
 end sub
 
 sub level.load(filename as string)
@@ -1030,12 +1040,15 @@ sub level.load(filename as string)
     get #f,,lvlWidth
     get #f,,lvlHeight
     get #f,,snowfall
+    get #f,,objField(2)
     get #f,,objField(0)
     get #f,,objectAmbientLevel
     get #f,,hiddenObjectAmbientLevel
     get #f,,default_x
     get #f,,default_y
     get #f,,strdata
+    
+    drawAurora = objField(2)
     
     shouldLightObjects = objField(0)
     if shouldLightObjects = 65535 then shouldLightObjects = 0
