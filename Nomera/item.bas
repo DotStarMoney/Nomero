@@ -1,6 +1,7 @@
 #include "item.bi"
 #include "gamespace.bi"
 #include "projectilecollection.bi"
+#include "itemtypes.bi"
 
 dim as uinteger ptr Item.BOMB_COLORS = 0
 
@@ -83,21 +84,39 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
 	select case itemType
 	case ITEM_BOMB
 		body = TinyBody(Vector2D(0,0), 8, 10)
-		orientation = (itemFlavor_ and &h11000) shr 3
+		orientation = (itemFlavor_ and &b11000) shr 3
 		itemFlavor = (itemFlavor_ and &b111)
 		data0 = 0
 		data1 = 0
+        data3 = 0
+        data4 = 0
 		anims_n = 3
 		anims = new Animation[anims_n]
+       
 		anims[0].load("mines.txt")
 		anims[1].load("silhouette.txt")
 		anims[2].load("ledflash.txt")
-		anims[0].play()
+
+        select case itemFlavor
+        case 0 
+            anims[0].hardSwitch(0)
+            anims[1].hardSwitch(0)
+        case 3
+            anims[0].hardSwitch(3)
+            anims[1].hardSwitch(2)        
+        case 4
+            anims[0].hardSwitch(1)
+            anims[1].hardSwitch(1)   
+            
+            data5 = cast(integer, new ElectricMine_ArcData_t[4])
+            data2 = 0
+        end select
+        
+        anims[2].hardSwitch(0)
+        anims[0].play()
 		anims[1].play()
 		anims[2].play()
-		anims[0].hardSwitch(itemFlavor)
-		anims[1].hardSwitch(itemFlavor)
-		anims[2].hardSwitch(0)
+        
 		body.friction = 20
 		select case orientation
 		case 0
@@ -240,11 +259,8 @@ end function
 sub Item.getBounds(byref a as Vector2D, byref b as Vector2D)
 	select case itemType
 	case ITEM_BOMB
-		select case itemFlavor
-		case 0
-			a = anims[0].getOffset() + body.p
-			b = a + Vector2D(anims[0].getWidth(), anims[0].getHeight())
-		end select
+        a = anims[0].getOffset() + body.p
+        b = a + Vector2D(anims[0].getWidth(), anims[0].getHeight())
     case ITEM_LIGHT
         a = body.p
         b = body.p
@@ -268,6 +284,10 @@ sub Item.drawItem(scnbuff as integer ptr)
 	case ITEM_BOMB
 		select case itemFlavor
 		case 0
+			anims[0].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
+        case 3
+			anims[0].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)        
+        case 4
 			anims[0].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
 		end select
     case ITEM_LIGHT
@@ -317,17 +337,39 @@ sub Item.drawItemTop(scnbuff as integer ptr)
 	dim as integer col
 	select case itemType
 	case ITEM_BOMB
-		select case itemFlavor
-		case 0
-			if data0 then
-				anims[1].setGlow(BOMB_COLORS[data0 - 1])
-				anims[1].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
-			end if
-			anims[2].drawAnimation(scnbuff, body.p.x - 3, body.p.y - 16, link.gamespace_ptr->camera)
-			col = BOMB_COLORS[data0 - 1]
-			addColor col, &h101010
-			drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col
-		end select
+        select case itemFlavor
+        case 0
+            if data0 then
+                anims[1].setGlow(BOMB_COLORS[data0 - 1])
+                anims[1].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
+            end if
+            anims[2].drawAnimation(scnbuff, body.p.x, body.p.y - 16, link.gamespace_ptr->camera)
+            col = BOMB_COLORS[data0 - 1]
+            addColor col, &h101010
+            drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col
+        case 3
+            
+            if data0 then
+                anims[1].setGlow(BOMB_COLORS[data0 - 1])
+                anims[1].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
+            end if
+            anims[2].drawAnimation(scnbuff, body.p.x - 1, body.p.y - 16, link.gamespace_ptr->camera)
+            col = BOMB_COLORS[data0 - 1]
+            addColor col, &h101010
+            drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col   
+                        
+        case 4
+            if data4 = 0 then
+                if data0 then
+                    anims[1].setGlow(BOMB_COLORS[data0 - 1])
+                    anims[1].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
+                end if
+                anims[2].drawAnimation(scnbuff, body.p.x - 1, body.p.y - 14, link.gamespace_ptr->camera)
+                col = BOMB_COLORS[data0 - 1]
+                addColor col, &h101010
+                drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col   
+            end if
+        end select
     case ITEM_LIGHT
 
 	case else
@@ -342,7 +384,16 @@ sub Item.flush()
         imagedestroy(light.shaded.specular_fbimg)
         imagedestroy(light.occlusion_fbimg)
     end if
-    if data3 <> 0 then delete(cast(integer ptr, data3))
+    select case itemType
+    case ITEM_INTERFACE
+    
+        if data3 <> 0 then delete(cast(integer ptr, data3))
+    case ITEM_BOMB
+        select case itemFlavor
+        case 4
+            if data5 <> 0 then delete(cast(ElectricMine_ArcData_t ptr, data5))
+        end select
+    end select
 end sub
 
 function Item.getFlavor() as integer
@@ -364,6 +415,10 @@ end function
 
 function Item.process(t as double) as integer
 	dim as integer i, value
+    dim as double randAngle
+    dim as double dist
+    dim as Vector2D v, pt
+    dim as ElectricMine_ArcData_t ptr elecData
     
     
 	select case itemType
@@ -376,33 +431,95 @@ function Item.process(t as double) as integer
 		else
 			freeFallingFrames = 0
 		end if
-		if (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
-			link.player_ptr->removeItemReference(cast(integer, @this))
-			
-			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
-			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
-			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
-			link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
-			link.oneshoteffects_ptr->create(body.p, FLASH,,1)
+        select case itemFlavor
+        case 0
+            if (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
 
-			link.soundeffects_ptr->playSound(SND_EXPLODE)
+            
+                link.player_ptr->removeItemReference(cast(integer, @this))
 
-			for i = 1 to 5
-				link.projectilecollection_ptr->create(body.p, Vector2D(rnd*2 - 1.0, rnd*2 - 1.0) * (300 + rnd*700), DETRITIS)
-			next i
-			
-			link.gamespace_ptr->vibrateScreen()
-	
-			link.level_ptr->addFallout(body.p.x(), body.p.y())
-			
-			return 1
-		elseif (data1 = 2) then
-			link.player_ptr->removeItemReference(cast(integer, @this))
+                link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
+                link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
+                link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(body.p, FLASH,,1)
 
-			'puff o' smoke and deactivate effect
-			
-			return 1
-		end if
+                link.soundeffects_ptr->playSound(SND_EXPLODE)
+
+                for i = 1 to 5
+                    link.projectilecollection_ptr->create(body.p, Vector2D(rnd*2 - 1.0, rnd*2 - 1.0) * (300 + rnd*700), DETRITIS)
+                next i
+                
+                link.gamespace_ptr->vibrateScreen()
+        
+                link.level_ptr->addFallout(body.p.x(), body.p.y())
+                return 1
+            elseif (data1 = 2) then
+
+                'puff o' smoke and deactivate effect
+                
+                return 1
+            end if
+        case 3
+            if (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
+                link.player_ptr->removeItemReference(cast(integer, @this))
+
+                
+                return 1
+            elseif (data1 = 2) then
+
+                'puff o' smoke and deactivate effect
+                
+                return 1
+            end if
+        case 4
+            elecData = cast(ElectricMine_ArcData_t ptr, data5)
+            if (data1 = 2) andAlso (data4 = 0) then
+            
+            
+                return 1
+            elseif (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) andALso (data4 = 0) then
+                data3 = ELECMINE_TIME
+                data4 = 1
+                link.oneshoteffects_ptr->create(body.p, ELECTRIC_FLASH,,1)
+                link.soundeffects_ptr->playSound(SND_EXPLODE_3)
+
+                for i = 0 to MAX_RAYCAST_ATTEMPTS - 1
+                    randAngle = rnd*PI*2
+                    v = Vector2D(cos(randAngle), sin(randAngle))*RAYCAST_DIST
+                    dist = link.tinyspace_ptr->raycast(body.p, v, pt)
+                    if dist >= 0 then
+                   
+                        elecData[data2].arcID = link.electricarc_ptr->create()
+                        link.electricarc_ptr->setPoints(elecData[data2].arcID, body.p + (Vector2D(rnd,rnd)-Vector2D(0.5,0.5))*8, pt)
+                        
+                        data2 += 1
+                        if data2 = 4 then exit for
+                    end if
+                next i
+                
+                link.soundeffects_ptr->playSound(SND_ARC)
+                
+                anims[0].hardSwitch(2)
+
+            end if
+            
+            if data4 then
+                data3 -= 1
+                
+            
+                if data3 = 0 then
+                    if data2 > 0 then
+                        for i = 0 to data2 - 1
+                            link.electricarc_ptr->destroy(elecData[i].arcID)
+                        next i
+                    end if
+                    link.oneshoteffects_ptr->create(body.p, BLUE_FLASH,,1)
+                    link.player_ptr->removeItemReference(cast(integer, @this))
+                    return 1
+                end if
+            end if    
+        end select
     case ITEM_LIGHT
         light.texture.x = body.p.x
         light.texture.y = body.p.y

@@ -8,6 +8,7 @@
 #include "level.bi"
 #include "effects3d.bi"
 
+#define MIN_BOMB_TILE_POS -37
 
 constructor Player
 	dim as integer i
@@ -50,6 +51,7 @@ constructor Player
     spinnerAngleV = 0
 
     loadAnimations("mrspy.txt")
+    bombListTiles.load("bomblist.png")
 	
     spinnerItem = 0
     anim.play()
@@ -62,6 +64,7 @@ constructor Player
 		hasBomb(i) = 0
 		bombData(i).isSwitching = 0
 		bombData(i).curState = TOO_CLOSE
+        bombData(i).tilePosY = MIN_BOMB_TILE_POS
 		deactivateGroupFlag(i) = 0
 	next i
 end constructor
@@ -718,14 +721,28 @@ sub Player.processControls(dire as integer, jump as integer,_
     for i = 0 to 9
 		if numbers(i) andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) then
 			if parent->isGrounded(body_i, this.groundDot) andAlso (parent->getArbiterN(body_i) > 0) then 
-				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, 0)
+        
+				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, spinnerItem)
+                 
+                select case spinnerItem
+                case 0
+                    link.soundeffects_ptr->playSound(SND_PLACE_APMINE)
+                case 4
+                    link.soundeffects_ptr->playSound(SND_PLACE_ELECMINE)
+                end select
+                 
 				newItem->setData0(i + 1)
 				newItem->setData2(hasBomb(i))
 				hasBomb(i) = cast(integer, newItem)
-				
+
 				bombPos = newItem->getPos()
+                
+                bombData(i).bombType = spinnerItem
+                
+                
 				d = bombPos - (body.p - Vector2D(0, 13))
 				if d.magnitude() > (BOMB_TRANS_DIST + i*2) then
+               
 					newItem->getBounds(a_bound, b_bound)
 					if(boxbox(link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 - Vector2D(1,1) * SCREEN_IND_BOUND, _
 							  link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 + Vector2D(1,1) * SCREEN_IND_BOUND, _
@@ -741,8 +758,9 @@ sub Player.processControls(dire as integer, jump as integer,_
 				bombData(i).switchFrame = BOMB_TRANS_FRAMES
 				bombData(i).isSwitching = 1
 				bombData(i).animating = 1
-				
+               	
 				items.insert(hasBomb(i), @newItem)
+            
 			end if
 		elseif numbers(i) andAlso hasBomb(i) andAlso (lastNumbers(i) = 0) then
             link.oneshoteffects_ptr->create(body.p + Vector2D(((facing*2)-1)*12, -9), LITTLE_PULSE,,2)
@@ -761,11 +779,11 @@ sub Player.processControls(dire as integer, jump as integer,_
     
     if turnstyle = -1 then
         spinnerAngleTarget += 1.0472
-        spinnerItem += 1
+        spinnerItem -= 1
         link.soundeffects_ptr->playSound(SND_SPINNER)
     elseif turnstyle = 1 then
         spinnerAngleTarget -= 1.0472
-        spinnerItem -= 1
+        spinnerItem += 1
         link.soundeffects_ptr->playSound(SND_SPINNER)
     end if
   
@@ -811,8 +829,9 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	dim as Vector2D d, arrow, a_bound, b_bound
 	dim as Vector2D as_bound, bs_bound
 	dim as Vector2D p(0 to 2)
-	dim as double ang, rd
-	dim as double shrink, colSin
+	dim as double ang, rd, posY
+	dim as double shrink, colSin, totalWidth, curPosX, thisWidth
+    dim as double tilePlaceX(0 to 9)
 	dim as integer i, col, col2, q
 
 	center = -link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5
@@ -931,6 +950,26 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 			end if
 		end if
 	next i
+    
+    totalWidth = 0
+    for i = 0 to 9
+        thisWidth = bombData(i).tilePosY + 32
+        if thisWidth < 0 then thisWidth = 0
+        tilePlaceX(i) = totalWidth - (32 - thisWidth)*0.5
+        totalWidth += thisWidth
+    next i
+    
+    LOCK_TO_SCREEN()
+    for i = 0 to 9     
+        tilePlaceX(i) -= totalWidth * 0.5
+        posY = 5 + bombData(i).tilePosY
+        if posY > -32 then
+            bombListTiles.putTRANS(scnbuff, SCRX*0.5 + tilePlaceX(i), posY, i*32, 0, i*32+31, 31)
+            bombListTiles.putTRANS(scnbuff, SCRX*0.5 + tilePlaceX(i), posY, bombData(i).bombType*32, 32, bombData(i).bombType*32+31, 63)
+        end if
+    next i
+    UNLOCK_TO_SCREEN()
+  
 	
 	BEGIN_HASH(curItem_, items)
 		curItem = *curItem_
@@ -940,8 +979,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	END_HASH()
 	
 	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
-	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera)	
-    
+	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
 
     drawHexPrism(scnbuff, 57, 445, spinnerAngle, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
 
@@ -956,6 +994,13 @@ sub Player.processItems(t as double)
 	dim as Vector2D d, a_bound, b_bound
 	
 	for bombNumber = 0 to 9
+        if hasBomb(bombNumber) then
+            bombData(bombNumber).tilePosY += 6
+            if bombData(bombNumber).tilePosY > 0 then bombData(bombNumber).tilePosY = 0 
+        else
+            bombData(bombNumber).tilePosY -= 6
+            if bombData(bombNumber).tilePosY < MIN_BOMB_TILE_POS then bombData(bombNumber).tilePosY = MIN_BOMB_TILE_POS 
+        end if
 		if bombData(bombNumber).animating then
 			
 			

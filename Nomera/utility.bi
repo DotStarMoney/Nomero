@@ -107,6 +107,7 @@ declare sub addColor(byref a as integer, byref b as integer)
 declare sub subColor(byref ac as integer, byref bc as integer)
 
 declare sub pmapFix(byref x as integer, byref y as integer)
+declare function pmapFixV(v as Vector2D) as Vector2D
 
 declare sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 					        flipFlags as integer,_

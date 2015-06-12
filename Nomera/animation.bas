@@ -117,7 +117,7 @@ sub Animation.load(filename as string)
                         if .animations_n = 0 then
                             exit while
                         else
-                            .animations = new Animation_t[.animations_n] 'allocate(sizeof(Animation_t) * .animations_n)
+                            .animations = new Animation_t[.animations_n] 
                             curAnim = -1
                             readStep = 100
                         end if
@@ -224,7 +224,7 @@ sub Animation.load(filename as string)
         animHash.insert(filename, @data_)
     end if
     currentAnim = data_->defaultAnim
-
+    
     currentFrame = 0
     drawFrame = 0
     delayCounter = 0
@@ -747,14 +747,15 @@ sub Animation.drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as 
     with data_->animations[anim]
 		
         fetchImageData anim, frame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
-                
+        
+        
         select case data_->drawMode
         case ANIM_TRANS
 		
             drawImg.putTRANS(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1)
 			
 		case ANIM_GLOW
-        
+
             drawImg.putGLOW(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1, glowValue)
 						
 		end select
@@ -777,12 +778,13 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer,
 		
         fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
        
+       
         drawMode = data_->drawMode        
         if typeOverride <> ANIM_NONE then drawMode = typeOverride
         
         select case drawMode
         case ANIM_TRANS
-              
+
             drawImg.putTRANS(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1)
 			
 		case ANIM_GLOW

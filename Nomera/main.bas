@@ -36,7 +36,7 @@ FSOUND_Init(44100, 16, 0)
 		dim as uinteger ptr scnbuff
         dim as double scrollPercent(0 to 4)
         dim as double scrollAdd(0 to 4), t
-        dim as integer i, fps, f, h, frameCount, treeT, alphaT, selectedOption, quitMenu
+        dim as integer i, fps, f, h, frameCount, treeT, alphaT, selectedOption, quitMenu, pressSelect_last
         dim as integer menuMusic_channel, alphaVal, letterW, letterH, dire, lastDire, pressSelect
         dim as single scale
         dim as double groundScroll, animate, treeX, treeY, treeZ, titlePosition
@@ -74,7 +74,7 @@ FSOUND_Init(44100, 16, 0)
         logoLight.specular_fbimg = png_load("Lights\Golden_specular.png")
         logoLight.w = 512
         logoLight.h = 512
-
+        pressSelect_last = 0
         
         
 		scnbuff = imagecreate(SCRX, SCRY)
@@ -158,7 +158,8 @@ FSOUND_Init(44100, 16, 0)
                 end if
             end if
             
-            if pressSelect then 
+            if pressSelect andAlso (pressSelect_last = 0) then 
+                FSOUND_SetLoopMode(FSOUND_PlaySound(FSOUND_FREE, menuSound(1)), FSOUND_LOOP_OFF)
                 if selectedOption <> 1 then quitMenu = 1
             end if
             
@@ -238,7 +239,7 @@ FSOUND_Init(44100, 16, 0)
             
             line scnbuff, (0,0)-(SCRX-1,SCRY-1),0, B
             'draw string scnbuff, (0,0), str(fps), 0            
-            draw string scnbuff, (550, 471), "Build V1.0b", 0
+            draw string scnbuff, (540, 471), "Build V1.0b", 0
         
             groundScroll += 1
             
@@ -253,6 +254,7 @@ FSOUND_Init(44100, 16, 0)
                 t = timer
             end if
             lastDire = dire
+            pressSelect_last = pressSelect
         loop until quitMenu
         
         baseTexture.flush()
@@ -271,7 +273,7 @@ FSOUND_Init(44100, 16, 0)
         FSOUND_Stream_Stop  menuMusic
         FSOUND_Stream_Close menuMusic
         'for i = 0 to 2
-        '    FSOUND_Sample_Upload menuSound(i)
+        '    FSOUND_Sample_Unload menuSound(i)
         'next i
     #endif
 #endif

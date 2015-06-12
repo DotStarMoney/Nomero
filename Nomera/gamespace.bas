@@ -28,6 +28,7 @@ constructor GameSpace()
     link.effectcontroller_ptr = @graphicFX
     link.soundeffects_ptr = @soundFX
     link.pathtracker_ptr = @tracker
+    link.electricarc_ptr = @arcEffects
     
     graphicFX.setLink(link)
     triggers.setLink(link)
@@ -38,6 +39,7 @@ constructor GameSpace()
     dynControl.setLink(link)
     lvlData.setLink(link)
 	projectiles.setLink(link)
+    
 
 
     movingFrmAvg = 0.016
@@ -68,8 +70,7 @@ constructor GameSpace()
     
     projectiles.setEffectsGenerator(@effects)
     
-    hud_image = imagecreate(154, 65)
-	bload "hud.bmp", hud_image
+    arcEffects.init(SCRX, SCRY)
 	
 	currentMusic = 0
     music(0) = 0
@@ -121,6 +122,7 @@ constructor GameSpace()
     movingFrmAvg = 0
     shake = 0 
     lastTurnstyleInput = 0
+    
       
     timeBeginPeriod(SLEEP_RESOLUTION)
 
@@ -144,14 +146,17 @@ sub GameSpace.setMusicVolume(v as integer)
 end sub
         
 function GameSpace.go() as integer
-    dim as double startTime, processTime, oneSecondMaxLoad, secondTimer
+    dim as double startTime, processTime, oneSecondMaxLoad, secondTimer, oneSecondAvg, oneSecondAvgLast
     dim as double load
     dim as byte ptr trackerEx
-    dim as integer  dataSize
+    dim as integer  dataSize, frames
     stallTime_mili = 1
     step_process()
     secondTimer = timer
     oneSecondMaxLoad = 0
+    frames = 0
+    oneSecondAvg = 0
+    oneSecondAvgLast =0
     do
 		
         startTime = timer
@@ -160,8 +165,11 @@ function GameSpace.go() as integer
         locate 1,1
         load = (processTime / (1000 / FPS_TARGET)) * 100
         if load > oneSecondMaxLoad then oneSecondMaxLoad = load
-        print using "Frame Load %: ##.##"; load
-        print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
+        oneSecondAvg += load
+        'print using "Frame Load %: ##.##"; load
+        'print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
+        'print using "One Second Average Load %: ##.##"; oneSecondAvgLast
+        
         'print spy.body.p
 
         
@@ -169,6 +177,7 @@ function GameSpace.go() as integer
         step_process()
         processTime = 1000*(timer - startTime)
                 
+                                
         sleep(SLEEP_RESOLUTION * stallTime_mili)
         frameTime = timer - startTime
         if keypress(SC_ESCAPE) then exit do
@@ -183,8 +192,12 @@ function GameSpace.go() as integer
 		end if
         if Timer - secondTimer >= 1 then
             oneSecondMaxLoad = 0
+            oneSecondAvgLast = oneSecondAvg / frames
+            oneSecondAvg = 0
+            frames = 0
             secondTimer = timer
         end if
+        frames += 1
     loop 
     
 	kill pathFile
@@ -315,10 +328,13 @@ sub GameSpace.step_draw()
     projectiles.draw_collection(scnbuff)
     RECORD_PROFILE(4)
 
+    arcEffects.drawArcs(scnbuff)
+    
     START_PROFILE(2)
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     RECORD_PROFILE(2)
 
+    
     START_PROFILE(5)
     spy.drawOverlay(scnbuff, Vector2D(0, shake))
     RECORD_PROFILE(5)
@@ -552,11 +568,12 @@ sub GameSpace.step_process()
     graphicFX.processFrame(camera)
  
     effects.proc_effects(0.01667)
+    arcEffects.stepArcs(0.01667)
+
         
     if lvlData.mustReconnect() = 1 then reconnectCollision()
     triggers.process(0.01667)
     
-
         
     if isSwitching = 1 then
 		switchFrame += 64

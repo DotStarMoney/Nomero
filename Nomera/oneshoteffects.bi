@@ -13,6 +13,8 @@ enum EffectType_
     RADAR
     WATER_SPLASH
     FLASH
+    BLUE_FLASH
+    ELECTRIC_FLASH
     LITTLE_PULSE
 end enum
 
@@ -22,6 +24,7 @@ type Effect_t
     as Animation anim
     as integer firstDraw
     as EffectType_ fx
+    as integer isFlash
     as integer endIt
 end type
 

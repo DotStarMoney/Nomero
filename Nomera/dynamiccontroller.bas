@@ -175,7 +175,13 @@ function DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Ty
 
 	curItem = new Item
 	curItem->setLink(link)
+    
+
+    
 	curItem->init(itemType_, itemFlavor_, fast)
+    
+  
+    
     curItem->setPos(position)
     curItem->setLightModeData(minValue, maxValue, mode)
 	

@@ -873,7 +873,7 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
 	col_offset(1) = colOffset
 	col_offset(2) = colOffset
 	col_offset(3) = colOffset
-		
+
     
     asm
                 movdqu		xmm6,		[zeroReg]
@@ -946,7 +946,8 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
                 jnz         bitblt_ag_rows
         
     end asm
-
+    
+ 
 end sub
 
 sub bitblt_transMulMix(dest as uinteger ptr,_
@@ -1214,6 +1215,25 @@ sub pmapFix(byref x as integer, byref y as integer)
     if x > SCRX*0.5 then x -= 1
     if y > SCRY*0.5 then y -= 1
 end sub
+
+function pmapFixV(v as Vector2D) as Vector2D
+    dim as double x_r, y_r
+    dim as Vector2D vr
+    x_r = v.xs
+    y_r = v.ys
+    x_r = pmap(x_r, 0)
+    y_r = pmap(y_r, 1)
+    #ifdef SCALE_2X
+        vr.xs = int(x_r / 2)
+        vr.ys = int(y_r / 2)
+    #else
+        vr.xs = x_r
+        vr.ys = y_r
+    #endif
+    if vr.xs > int(SCRX*0.5) then vr.xs -= 1
+    if vr.ys > int(SCRY*0.5) then vr.ys -= 1
+    return vr
+end function
 
 function AnyClip(px as integer, py as integer ,_
                  sx as integer, sy as integer ,_

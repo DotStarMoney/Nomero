@@ -28,7 +28,7 @@ sub ElectricArc.reset_construct()
         toneMap_setup = 1
         for i = 0 to 255
             tone = ((i/255)^(expval))*255
-            toneMap(i) = rgb(tone*0.7, tone*0.6, tone)
+            toneMap(i) = rgb(tone*0.7, tone*0.8, tone)
         next i
     end if
     generate = 0
@@ -953,10 +953,11 @@ sub ElectricArc.setPoints(id as integer, a as Vector2D, b as Vector2D)
     isDifferent = 0
     curArc = ArcHash.retrieve(id)
     if curArc then
-        'if (curArc->a <> a) orElse (curArc->b <> b) then isDifferent = 1
+        if (curArc->a <> a) orElse (curArc->b <> b) then isDifferent = 1
         curArc->a = a
         curArc->b = b
  
+        if isDifferent then curArc->p *= 0.75
     end if
 end sub
 sub ElectricArc.getPoints(id as integer, byref a as Vector2D, byref b as Vector2D)
@@ -980,6 +981,16 @@ sub ElectricArc.resetArc(id as integer)
     curArc = ArcHash.retrieve(id)
     if curArc then curArc->p = 0
 end sub
+function ElectricArc.isSnapFrame(id as integer) as integer
+    dim as ElectricArc_ArcData_t ptr curArc
+    curArc = ArcHash.retrieve(id)
+    if curArc then
+        if curArc->p = 0 then
+            return 1
+        end if
+    end if
+end function
+
 sub ElectricArc.destroy(id as integer)
     dim as ElectricArc_ArcData_t ptr curArc
     curArc = ArcHash.retrieve(id)
@@ -1046,8 +1057,8 @@ sub ElectricArc.drawArcs(scnbuff as integer ptr)
     BEGIN_HASH(curArc, ArcHash)
         drawStack_ptr = 0
         curNode = 0
-        curA = curArc->a
-        curB = curArc->b
+        curA = pmapFixV(curArc->a)
+        curB = pmapFixV(curArc->b)
         
         do
             while curNode < ((curArc->curSplit + 1) * 0.5) - 1

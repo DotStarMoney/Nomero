@@ -33,6 +33,8 @@ end enum
 type Player_bombData
 	as Player_BombIndicateState curState
 	as Player_BombIndicateState nextState
+    as double  tilePosY
+    as integer bombType
 	as integer isSwitching
 	as integer switchFrame
 	as Vector2D bombP
@@ -144,6 +146,7 @@ type Player
         as Animation hudspinner
         as Animation anim
         as Animation silhouette
+        as zimage bombListTiles
         as integer revealSilo
         
         as integer lastFire 

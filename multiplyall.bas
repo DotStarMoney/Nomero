@@ -5,7 +5,7 @@ dim as integer w, h, f, r, g, b, col
 f = freefile
 
 
-open "colorcomb3.bmp" for binary access read as #f
+open "silo0.bmp" for binary access read as #f
 get #f, 19, w
 get #f, 23, h
 close #f
@@ -14,7 +14,7 @@ close #f
 dim as integer ptr img1 = imagecreate(w, h)
 dim as integer ptr img2 = imagecreate(w, h)
 
-bload "silo1.bmp", img1
+bload "colorcomb3.bmp", img1
 bload "silo0.bmp", img2
 
 dim as integer x, y

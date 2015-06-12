@@ -12,9 +12,11 @@ type projectilecollection_ 	as projectilecollection
 type dynamiccontroller_ 	as dynamiccontroller
 type soundeffects_			as soundeffects
 type pathtracker_			as pathtracker
+type electricarc_           as electricarc
 
 
 type ObjectLink
+    as electricarc_ ptr          electricarc_ptr
 	as pathtracker_ ptr			 pathtracker_ptr
 	as gamespace_ ptr            gamespace_ptr
 	as level_ ptr                level_ptr

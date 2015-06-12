@@ -77,6 +77,8 @@ type Item
 		as integer     	data1
 		as integer		data2
         as integer      data3
+        as integer      data4
+        as integer      data5
 end type
 
 

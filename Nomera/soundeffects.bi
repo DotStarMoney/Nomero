@@ -4,7 +4,7 @@
 
 #include "objectlink.bi"
 
-#define NUM_SOUNDS 14
+#define NUM_SOUNDS 19
 
 enum SoundEffect_e
 	SND_EXPLODE_1
@@ -22,6 +22,12 @@ enum SoundEffect_e
 	SND_EXPLODE
     SND_SPINNER
     SND_SIGNAL
+    SND_PLACE_APMINE
+    SND_PLACE_ELECMINE
+    SND_EXPLODE_3
+    SND_ARC1
+    SND_ARC2
+    SND_ARC
 end enum
 
 type SoundEffects
@@ -29,11 +35,13 @@ type SoundEffects
 		declare constructor()
 		declare sub init()
 		declare sub setLink(link_ as objectLink)
-		declare sub playSound(s as SoundEffect_e)
+		declare function playSound(s as SoundEffect_e) as integer
+        declare sub stopSound(chnl as integer) 
 		
 	private:
 		as ObjectLink link
 		as integer ptr sounds(0 to NUM_SOUNDS - 1)
+        as integer volume(0 to NUM_SOUNDS - 1)
 end type
 	
 
