@@ -154,6 +154,18 @@ declare sub imageSet(fbimg_ptr as integer ptr, value as integer, _
                      tl_y as integer,_
                      br_x as integer,_
                      br_y as integer)
+                     
+declare sub bitblt_addRGBA_Clip(dest as uinteger ptr,_
+                                xpos_ as integer, ypos_ as integer,_
+                                src  as uinteger ptr,_
+                                src_x0_ as integer, src_y0_ as integer,_
+                                src_x1_ as integer, src_y1_ as integer)
+                                
+declare sub bitblt_prealpha(dest as uinteger ptr,_
+                            xpos_ as integer, ypos_ as integer,_
+                            src  as uinteger ptr,_
+                            src_x0_ as integer, src_y0_ as integer,_
+                            src_x1_ as integer, src_y1_ as integer)
 
 type windowCircleIntersectData_t
     as integer tl_x

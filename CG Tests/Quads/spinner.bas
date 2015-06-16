@@ -288,12 +288,12 @@ bload "HUD turnstyle.bmp", image
 angle = 0
 do
     'cls
-    line buffer, (0,0)-(639, 479), 0, BF
+    line buffer, (0,0)-(639, 479), &Hffffff, BF
     
-    drawHexPrism buffer, 320, 240, angle, 300, 260, image, 48, 48, &b0000000000111111
+    drawHexPrism buffer, 320, 240, angle, 100, 95, image, 48, 48, &b0000000000111111
 
     put (0,0), buffer, PSET
-    
+/'    
     if multikey(SC_W) then
         if leftRelease = 1 then
             angleTarget -= 1.0472
@@ -321,8 +321,9 @@ do
         angleV = 0
         angle = angleTarget 
     end if
-    
-    sleep 16
+'/
+    angle += 0.0003
+    'sleep 16
 loop until multikey(1)
 
 sleep

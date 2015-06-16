@@ -90,32 +90,51 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
 		data1 = 0
         data3 = 0
         data4 = 0
-		anims_n = 3
-		anims = new Animation[anims_n]
-       
-		anims[0].load("mines.txt")
-		anims[1].load("silhouette.txt")
-		anims[2].load("ledflash.txt")
+
 
         select case itemFlavor
         case 0 
+        	anims_n = 3
+            anims = new Animation[anims_n]           
+            anims[0].load("mines.txt")
+            anims[1].load("silhouette.txt")
+            anims[2].load("ledflash.txt")
+            
             anims[0].hardSwitch(0)
             anims[1].hardSwitch(0)
         case 3
+            anims_n = 4
+            anims = new Animation[anims_n]           
+            anims[0].load("mines.txt")
+            anims[1].load("silhouette.txt")
+            anims[2].load("ledflash.txt")
+            anims[3].load("smokerel.txt")
+            
+            anims[3].play()
+            
             anims[0].hardSwitch(3)
             anims[1].hardSwitch(2)        
         case 4
+            anims_n = 3
+            anims = new Animation[anims_n]           
+            anims[0].load("mines.txt")
+            anims[1].load("silhouette.txt")
+            anims[2].load("ledflash.txt")
+            
+            
             anims[0].hardSwitch(1)
             anims[1].hardSwitch(1)   
             
             data5 = cast(integer, new ElectricMine_ArcData_t[4])
-            data2 = 0
+            data6 = 0
         end select
         
-        anims[2].hardSwitch(0)
-        anims[0].play()
-		anims[1].play()
-		anims[2].play()
+        if anims_n <> 0 then
+            anims[2].hardSwitch(0)
+            anims[0].play()
+            anims[1].play()
+            anims[2].play()
+        end if
         
 		body.friction = 20
 		select case orientation
@@ -238,6 +257,34 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
         for i = 0 to 5
             cast(integer ptr, data3)[i] = int(rnd * 36)
         next i
+    case ITEM_COVERSMOKE
+		body = TinyBody(Vector2D(0,0), 16, 10)
+		    
+        data0 = 0
+        data1 = 0
+        data2 = 1
+        data3 = COVERSMOKE_LIFETIME
+        data6 = 0
+        anims_n = 1
+        anims = new Animation[anims_n]   
+        anims[0].load("coversmoke.txt")
+        anims[0].play()
+            
+ 
+        itemFlavor = itemFlavor_
+        
+        if itemFlavor = 0 then 
+            body.noCollide = 1
+            data0 = 10000 * 0.17
+        else
+            body_i = link.tinyspace_ptr->addBody(@body)
+        end if
+        
+        
+    
+    	body.friction = 0
+        body.elasticity = 0.4+rnd*0.3
+        lightState = 0
 	case else
 		anims_n = 0
 	end select
@@ -270,7 +317,7 @@ sub Item.getBounds(byref a as Vector2D, byref b as Vector2D)
 end sub
 
 sub Item.drawItem(scnbuff as integer ptr)
-	dim as integer orBits, frame
+	dim as integer orBits, frame, value
     dim as LightPair ptr ptr lights
     dim as integer numLights, posX, posY, i
     
@@ -286,7 +333,8 @@ sub Item.drawItem(scnbuff as integer ptr)
 		case 0
 			anims[0].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
         case 3
-			anims[0].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)        
+			anims[0].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)      
+
         case 4
 			anims[0].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
 		end select
@@ -334,7 +382,7 @@ end sub
 
 sub Item.drawItemTop(scnbuff as integer ptr)
 	dim as integer orBits
-	dim as integer col
+	dim as integer col, value
 	select case itemType
 	case ITEM_BOMB
         select case itemFlavor
@@ -348,16 +396,23 @@ sub Item.drawItemTop(scnbuff as integer ptr)
             addColor col, &h101010
             drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col
         case 3
-            
-            if data0 then
-                anims[1].setGlow(BOMB_COLORS[data0 - 1])
-                anims[1].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
+            if data4 = 0 then
+                if data0 then
+                    anims[1].setGlow(BOMB_COLORS[data0 - 1])
+                    anims[1].drawAnimation(scnbuff, body.p.x, body.p.y, link.gamespace_ptr->camera)
+                end if
+                anims[2].drawAnimation(scnbuff, body.p.x - 1, body.p.y - 16, link.gamespace_ptr->camera)
+                col = BOMB_COLORS[data0 - 1]
+                addColor col, &h101010
+                drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col   
+            end if        
+            if data4 = 1 then 
+                value = 50 + data3*2
+                if value > 255 then value = 255
+                value = ((value/255.0)^0.5)*255
+                anims[3].setGlow(&h00ffffff or (value shl 24))
+                anims[3].drawAnimation(scnbuff, body.p.x-2, body.p.y-7, link.gamespace_ptr->camera) 
             end if
-            anims[2].drawAnimation(scnbuff, body.p.x - 1, body.p.y - 16, link.gamespace_ptr->camera)
-            col = BOMB_COLORS[data0 - 1]
-            addColor col, &h101010
-            drawStringShadow scnbuff, body.p.x - 20, body.p.y - 20, iif(data0 < 10, str(data0), "0"), col   
-                        
         case 4
             if data4 = 0 then
                 if data0 then
@@ -372,6 +427,8 @@ sub Item.drawItemTop(scnbuff as integer ptr)
         end select
     case ITEM_LIGHT
 
+    case ITEM_COVERSMOKE
+        ''
 	case else
 	
 	end select
@@ -412,12 +469,17 @@ function Item.getLightingData() as LightPair ptr
     return @light
 end function
 
+sub Item.setVel(v as Vector2D)
+    body.v = v
+end sub
 
 function Item.process(t as double) as integer
-	dim as integer i, value
+	dim as integer i, value, dx, dy, x0, y0, x1, y1
+    dim as integer ptr img
     dim as double randAngle
     dim as double dist
     dim as Vector2D v, pt
+    dim as Item ptr newItem
     dim as ElectricMine_ArcData_t ptr elecData
     
     
@@ -436,7 +498,7 @@ function Item.process(t as double) as integer
             if (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
 
             
-                link.player_ptr->removeItemReference(cast(integer, @this))
+                'link.player_ptr->removeItemReference(cast(integer, @this))
 
                 link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
                 link.oneshoteffects_ptr->create(body.p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
@@ -455,28 +517,41 @@ function Item.process(t as double) as integer
                 link.level_ptr->addFallout(body.p.x(), body.p.y())
                 return 1
             elseif (data1 = 2) then
-
+                
                 'puff o' smoke and deactivate effect
                 
                 return 1
             end if
         case 3
-            if (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) then
-                link.player_ptr->removeItemReference(cast(integer, @this))
+            if data4 = 0 then
+                if (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) andALso (data4 = 0) then
+                    link.soundeffects_ptr->playSound(SND_EXPLODE_4)
+                    data4 = 1
+                    data3 = SMOKEMINE_TIME                    
+                    if (freeFallingFrames >= MINE_FREEFALL_MAX) andAlso data1 = 0 then 
+                        link.player_ptr->removeItemReference(cast(integer, @this))
+                    end if
+                    
+                   
+                elseif (data1 = 2) then
+                    'puff o' smoke and deactivate effect
+                    return 1
+                end if
+            elseif data4 = 1 then
+                data3 -= 1
+            	anims[3].step_animation()
 
+                if (data3 mod 2) = 0 then 
+                    newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, -100), ITEM_COVERSMOKE, data3 mod 4)
+                    newItem->setVel(Vector2D(((2.0*rnd) - 1.0)*80.0, -100 - rnd*25))   
+                end if
                 
-                return 1
-            elseif (data1 = 2) then
-
-                'puff o' smoke and deactivate effect
-                
-                return 1
+                if data3 = 4 then link.oneshoteffects_ptr->create(body.p, SMOKE,,1)
+                if data3 = 0 then return 1
             end if
         case 4
             elecData = cast(ElectricMine_ArcData_t ptr, data5)
-            if (data1 = 2) andAlso (data4 = 0) then
-            
-            
+            if (data1 = 2) andAlso (data4 = 0) then            
                 return 1
             elseif (data1 = 1) orElse (freeFallingFrames >= MINE_FREEFALL_MAX) andALso (data4 = 0) then
                 data3 = ELECMINE_TIME
@@ -490,32 +565,41 @@ function Item.process(t as double) as integer
                     dist = link.tinyspace_ptr->raycast(body.p, v, pt)
                     if dist >= 0 then
                    
-                        elecData[data2].arcID = link.electricarc_ptr->create()
-                        link.electricarc_ptr->setPoints(elecData[data2].arcID, body.p + (Vector2D(rnd,rnd)-Vector2D(0.5,0.5))*8, pt)
-                        
-                        data2 += 1
-                        if data2 = 4 then exit for
+                        elecData[data6].arcID = link.electricarc_ptr->create()
+                        elecData[data6].bPos = (Vector2D(0,rnd)-Vector2D(0,0.5))*10 - Vector2D(1,4)
+                        elecData[data6].endPos = pt
+                        link.electricarc_ptr->setPoints(elecData[data6].arcID, body.p + elecData[data6].bPos, pt)
+       
+                        data6 += 1
+                        if data6 = 4 then exit for
                     end if
                 next i
                 
                 link.soundeffects_ptr->playSound(SND_ARC)
                 
                 anims[0].hardSwitch(2)
-
+                
+                if (freeFallingFrames >= MINE_FREEFALL_MAX) andAlso data1 = 0 then 
+                    link.player_ptr->removeItemReference(cast(integer, @this))
+                end if
             end if
             
             if data4 then
                 data3 -= 1
+                if data6 > 0 then
+                    for i = 0 to data6 - 1
+                        link.electricarc_ptr->setPoints(elecData[i].arcID, body.p + elecData[i].bPos, elecData[i].endPos)
+                    next i
+                end if
                 
-            
                 if data3 = 0 then
-                    if data2 > 0 then
-                        for i = 0 to data2 - 1
+                    if data6 > 0 then
+                        for i = 0 to data6 - 1
                             link.electricarc_ptr->destroy(elecData[i].arcID)
                         next i
                     end if
+                    
                     link.oneshoteffects_ptr->create(body.p, BLUE_FLASH,,1)
-                    link.player_ptr->removeItemReference(cast(integer, @this))
                     return 1
                 end if
             end if    
@@ -594,6 +678,42 @@ function Item.process(t as double) as integer
             data1 = 1 - data1
             data2 = int(rnd * 10) + 10
         end if
+    case ITEM_COVERSMOKE
+        anims[0].setSpeed(data2)
+        anims[0].step_animation()
+        body.f = Vector2D(0, -body.m * DEFAULT_GRAV) * (0.7 + ((data0 / 10000.0)^(2))*0.3)
+        body.v = body.v * ((COVERSMOKE_DAMPING_MAX - 1) * (data1 / 10000.0) + 1)
+        
+        if body.v.magnitude() < 2.0 then body.noCollide = 1 
+        
+        if itemFlavor = 0 then
+            body.v = body.v + ((Vector2D(0, body.m * DEFAULT_GRAV) + body.f) / body.m) * t
+            body.p = body.p + body.v*t
+        end if
+        
+        if body.didCollide then 
+            body.v *= 0.75
+            body.didCollide = 0
+        end if
+         
+         /'
+        if data3 >= 290 then
+            anims[0].setGlow(&h00ffffff or int(((300 - data3) / 10.0) * 255) shl 24)
+        elseif data3 >= 60 then
+            anims[0].setGlow(&hffffffff)
+        else
+            anims[0].setGlow(&h00ffffff or int((data3 / 60.0) * 255) shl 24)        
+        end if
+        '/
+        
+        anims[0].drawAnimation(link.level_ptr->getSmokeTexture(), body.p.x, body.p.y,,,,-link.gamespace_ptr->camera + Vector2D(SCRX*0.5, SCRY*0.5))
+        
+        data0 += 100
+        data1 += 10
+        data3 -= 1
+        if data0 > 10000 then data0 = 10000
+        if data1 > 10000 then data1 = 10000
+        if anims[0].done then return 1
   	case else
 		return 1
 	end select

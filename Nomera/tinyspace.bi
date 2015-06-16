@@ -11,7 +11,7 @@
 #include "arbiter.bi"
 
 #define MAX_DYNAMICS 8
-#define MAX_BODIES 64
+#define MAX_BODIES 128
 #define MAX_SEGS 640
 #define MAX_ARBS 6
 #define DEFAULT_GRAV 620.0

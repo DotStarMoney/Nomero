@@ -24,8 +24,10 @@ sub SoundEffects.init()
     sounds(SND_PLACE_APMINE)   = FSOUND_SAMPLE_Load(FSOUND_FREE,"AntiPersonnelMine.wav",0,0,0)   :volume(SND_PLACE_APMINE)   = 128
     sounds(SND_PLACE_ELECMINE) = FSOUND_SAMPLE_Load(FSOUND_FREE,"ElectricMine.wav",0,0,0)        :volume(SND_PLACE_ELECMINE) = 200
     sounds(SND_EXPLODE_3)      = FSOUND_SAMPLE_Load(FSOUND_FREE,"ElecBlast.wav",0,0,0)           :volume(SND_EXPLODE_3)      = 100
-    sounds(SND_ARC1)           = FSOUND_SAMPLE_Load(FSOUND_FREE,"Arc1PO.wav",0,0,0)              :volume(SND_ARC1)           = 32
-    sounds(SND_ARC2)           = FSOUND_SAMPLE_Load(FSOUND_FREE,"Arc2PO.wav",0,0,0)              :volume(SND_ARC2)           = 32      
+    sounds(SND_ARC1)           = FSOUND_SAMPLE_Load(FSOUND_FREE,"Arc1PO.wav",0,0,0)              :volume(SND_ARC1)           = 56
+    sounds(SND_ARC2)           = FSOUND_SAMPLE_Load(FSOUND_FREE,"Arc2PO.wav",0,0,0)              :volume(SND_ARC2)           = 56
+    sounds(SND_PLACE_GASMINE)  = FSOUND_SAMPLE_Load(FSOUND_FREE,"SmokeMinePlace.wav",0,0,0)      :volume(SND_PLACE_GASMINE)  = 255
+    sounds(SND_EXPLODE_4)      = FSOUND_SAMPLE_Load(FSOUND_FREE,"SmokeMineBlast.wav",0,0,0)      :volume(SND_EXPLODE_4)      = 64
 end sub
 
 sub SoundEffects.setLink(link_ as objectLink)

@@ -957,7 +957,7 @@ sub ElectricArc.setPoints(id as integer, a as Vector2D, b as Vector2D)
         curArc->a = a
         curArc->b = b
  
-        if isDifferent then curArc->p *= 0.75
+        'if isDifferent then curArc->p *= 0.75
     end if
 end sub
 sub ElectricArc.getPoints(id as integer, byref a as Vector2D, byref b as Vector2D)

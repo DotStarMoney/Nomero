@@ -89,7 +89,7 @@ sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = 
         data_.anim.load("bullet.txt")
         data_.anim.hardSwitch(0)
         data_.anim.play()
-        data_.flavor = BULLET
+        data_.flavor = BULLET   
     end select
     data_ptr = proj_list.push_back(@data_)
 
@@ -212,7 +212,7 @@ sub ProjectileCollection.proc_collection(t as double)
 					parent_level->addFallout(cur.body.p.x(), cur.body.p.y(), 1)
 					
 					deleteMe = 1
-				end if
+				end if          
 			end select
 			p = curNode->body.p
 			if p.x() < 0 orElse p.y() < 0 orElse _

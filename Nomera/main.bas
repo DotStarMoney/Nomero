@@ -275,20 +275,25 @@ FSOUND_Init(44100, 16, 0)
         'for i = 0 to 2
         '    FSOUND_Sample_Unload menuSound(i)
         'next i
+        
+        if selectedOption = 0 then
+
+            Dim as GameSpace gameNomera
+
+
+            gameNomera.go
+            
+            end
+        end if
     #endif
 #endif
 
 
 
-
-if selectedOption = 0 then
-
-    Dim as GameSpace gameNomera
+Dim as GameSpace gameNomera
 
 
-    gameNomera.go
-    
-end if
+gameNomera.go
 
 
 end

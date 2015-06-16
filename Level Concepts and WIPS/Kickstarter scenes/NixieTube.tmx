@@ -6,7 +6,6 @@
   <property name="hidden ambient level" value="&amp;h0F0F0F0F"/>
   <property name="light objects" value=""/>
   <property name="music" value="TestTheme.ogg"/>
-  <property name="snow" value="off"/>
  </properties>
  <tileset firstgid="1" name="Collision" tilewidth="16" tileheight="16">
   <image source="CShapes.bmp" trans="ff00ff" width="336" height="64"/>

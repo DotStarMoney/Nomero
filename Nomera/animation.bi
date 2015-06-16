@@ -24,6 +24,7 @@ end enum
 enum Anim_DrawType_e
 	ANIM_GLOW
 	ANIM_ALPHA
+    ANIM_PREALPHA
 	ANIM_TRANS
     ANIM_NONE
 end enum
@@ -96,7 +97,7 @@ type Animation
         declare sub setGlow(glow as integer)
  
         declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, _
-                                  cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, typeOverride as integer = ANIM_NONE)
+                                  cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, typeOverride as integer = ANIM_NONE, adj as Vector2D = Vector2D(0,0))
                                   
                                   
         declare sub drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integer, _

@@ -618,7 +618,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 	chargeFlicker = (chargeFlicker + 1) mod 8
 	computeCoverage()
 	if covered > coverValue then
-		revealSilo += 8
+		revealSilo += 16
 		if revealSilo > 255 then revealSilo = 255
 	else
 		revealSilo -= 8
@@ -727,6 +727,8 @@ sub Player.processControls(dire as integer, jump as integer,_
                 select case spinnerItem
                 case 0
                     link.soundeffects_ptr->playSound(SND_PLACE_APMINE)
+                case 3
+                    link.soundeffects_ptr->playSound(SND_PLACE_GASMINE)                
                 case 4
                     link.soundeffects_ptr->playSound(SND_PLACE_ELECMINE)
                 end select
@@ -738,7 +740,6 @@ sub Player.processControls(dire as integer, jump as integer,_
 				bombPos = newItem->getPos()
                 
                 bombData(i).bombType = spinnerItem
-                
                 
 				d = bombPos - (body.p - Vector2D(0, 13))
 				if d.magnitude() > (BOMB_TRANS_DIST + i*2) then
@@ -962,7 +963,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
     LOCK_TO_SCREEN()
     for i = 0 to 9     
         tilePlaceX(i) -= totalWidth * 0.5
-        posY = 5 + bombData(i).tilePosY
+        posY = (SCRY - 32 - 5) - bombData(i).tilePosY
         if posY > -32 then
             bombListTiles.putTRANS(scnbuff, SCRX*0.5 + tilePlaceX(i), posY, i*32, 0, i*32+31, 31)
             bombListTiles.putTRANS(scnbuff, SCRX*0.5 + tilePlaceX(i), posY, bombData(i).bombType*32, 32, bombData(i).bombType*32+31, 63)
@@ -981,7 +982,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
 	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
 
-    drawHexPrism(scnbuff, 57, 445, spinnerAngle, 46, 43, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+    drawHexPrism(scnbuff, 55, 448, spinnerAngle, 42, 40, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
 
     
 end sub

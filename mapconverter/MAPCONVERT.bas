@@ -292,7 +292,7 @@ dim as zstring * 128 map_name
 dim as zstring * 128 music_file
 dim as ushort default_x
 dim as ushort default_y
-dim as ushort snowfall
+dim as ushort snowfall = 0
 dim as ushort shouldLight = 65535
 dim as ushort aurora = 65535
 dim as integer objectAmbientLevel = &hffffffff
@@ -675,6 +675,7 @@ do
                     if left(lcase(item_tag), 4) = "snow" then
                         'if left(lcase(item_content), 2) = "on" then
                             snowfall = 1
+                            beep
                         'end if
                     elseif left(lcase(item_tag), 6) = "aurora" then
                         aurora = 1

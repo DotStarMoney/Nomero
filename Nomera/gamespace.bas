@@ -166,9 +166,9 @@ function GameSpace.go() as integer
         load = (processTime / (1000 / FPS_TARGET)) * 100
         if load > oneSecondMaxLoad then oneSecondMaxLoad = load
         oneSecondAvg += load
-        'print using "Frame Load %: ##.##"; load
-        'print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
-        'print using "One Second Average Load %: ##.##"; oneSecondAvgLast
+        print using "Frame Load %: ##.##"; load
+        print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
+        print using "One Second Average Load %: ##.##"; oneSecondAvgLast
         
         'print spy.body.p
 
@@ -334,14 +334,16 @@ sub GameSpace.step_draw()
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
     RECORD_PROFILE(2)
 
+
+    START_PROFILE(6)
+    dynControl.drawDynamics(scnbuff, FOREGROUND)
+    lvlData.drawSmoke(scnbuff)
+    RECORD_PROFILE(6)
+
     
     START_PROFILE(5)
     spy.drawOverlay(scnbuff, Vector2D(0, shake))
     RECORD_PROFILE(5)
-
-    START_PROFILE(6)
-    dynControl.drawDynamics(scnbuff, FOREGROUND)
-    RECORD_PROFILE(6)
     
     window screen (0,0)-(SCRX-1,SCRY-1)
     
@@ -548,8 +550,8 @@ sub GameSpace.step_process()
     vibcount -= 1
     
     
-    dynControl.process(0.01667)
     lvlData.process(0.01667)
+    dynControl.process(0.01667)
     
 	if keypress(SC_M) then tracker.record()
 	if keypress(SC_N) then tracker.pause()

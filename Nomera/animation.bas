@@ -109,7 +109,9 @@ sub Animation.load(filename as string)
 						elseif curText = "ALPHA" then
 							.drawMode = ANIM_ALPHA						
 						elseif curText = "GLOW" then
-							.drawMode = ANIM_GLOW							
+							.drawMode = ANIM_GLOW			
+                        elseif curText = "PREALPHA" then
+                            .drawMode = ANIM_PREALPHA
 						end if
 						readStep = 2
                     case 2
@@ -765,7 +767,7 @@ sub Animation.drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as 
 end sub
         
 
-sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, typeOverride as integer = ANIM_NONE)
+sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, typeOverride as integer = ANIM_NONE, adj as Vector2D = Vector2D(0,0))
     Dim as Vector2D off
     dim as integer start_x, start_y
     dim as integer a_x, a_y
@@ -785,12 +787,16 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer,
         select case drawMode
         case ANIM_TRANS
 
-            drawImg.putTRANS(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1)
+            drawImg.putTRANS(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1)
 			
 		case ANIM_GLOW
 
-            drawImg.putGLOW(scnbuff, x + off.x, y + off.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1, glowValue)
-
+            drawImg.putGLOW(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1, glowValue)
+            
+        case ANIM_PREALPHA
+        
+            drawImg.putPREALPHA(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1)
+            
 		end select
 		
     end with    

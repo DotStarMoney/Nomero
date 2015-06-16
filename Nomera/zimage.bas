@@ -102,7 +102,7 @@ sub zimage.putGLOW(dest_fbimg as integer ptr, posX as integer, posY as integer,_
              
     dim as integer npx, npy
     dim as integer sdx0, sdy0, sdx1, sdy1
-    
+        
     pmapFix(posX, posY)
     
     if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
@@ -110,10 +110,30 @@ sub zimage.putGLOW(dest_fbimg as integer ptr, posX as integer, posY as integer,_
         sdy0 += y0
         sdx1 += x0
         sdy1 += y0
+        
   
         bitblt_alphaGlow(dest_fbimg, npx, npy, diffuse_fbimg, sdx0, sdy0, sdx1, sdy1, colOffset)
                      
     end if         
+end sub
+
+sub zimage.putPREALPHA(dest_fbimg as integer ptr, posX as integer, posY as integer,_
+                       x0 as integer, y0 as integer, x1 as integer, y1 as integer)
+    dim as integer npx, npy
+    dim as integer sdx0, sdy0, sdx1, sdy1
+        
+    pmapFix(posX, posY)
+    
+    if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
+        sdx0 += x0
+        sdy0 += y0
+        sdx1 += x0
+        sdy1 += y0
+        
+        bitblt_prealpha(dest_fbimg, npx, npy, diffuse_fbimg, sdx0, sdy0, sdx1, sdy1)
+                     
+    end if                                           
+                       
 end sub
              
 sub zimage.putTRANS_0xLight(dest_fbimg as integer ptr, posX as integer, posY as integer,_

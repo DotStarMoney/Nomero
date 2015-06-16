@@ -45,6 +45,7 @@ constructor level
     active_layer.init(sizeof(integer))
     activeCover_layer.init(sizeof(integer))
     activeFront_layer.init(sizeof(integer))
+    smokeTexture = imagecreate(SCRX, SCRY, 0)
     auroraTranslate = 0
     pendingPortalSwitch = 0
     reconnect = 0
@@ -336,7 +337,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
             next xscan
         next yscan
     end if
-    if layerData[lyr].depth = 0 then 
+    if layerData[lyr].depth = 0 andAlso (drawAurora <> 65535) then 
         drawMode7Ceiling(scnbuff, auroraTexture.getData(), auroraTranslate, auroraTranslate, -70)   
     end if
 end sub
@@ -984,9 +985,23 @@ sub level.processLights()
              
 end sub
 
+function level.getSmokeTexture() as integer ptr
+    return smokeTexture
+end function
+
 sub level.process(t as double)
+    imageSet(smokeTexture, &hFF000000, 0, 0, SCRX-1, SCRY-1)
     processLights()
-    auroraTranslate += 0.007
+    if drawAurora then auroraTranslate += 0.007
+end sub
+
+sub level.drawSmoke(scnbuff as integer ptr)
+    LOCK_TO_SCREEN()
+       
+        'line smokeTexture, (13,13)-(100,100), &hC0400040, BF
+        bitblt_prealpha(scnbuff, 0, 0, smokeTexture, 0, 0, SCRX-1, SCRY-1)
+        
+    UNLOCK_TO_SCREEN()
 end sub
 
 sub level.drawBackgroundEffects(scnbuff as integer ptr) 
@@ -1047,6 +1062,8 @@ sub level.load(filename as string)
     get #f,,default_x
     get #f,,default_y
     get #f,,strdata
+    
+    
     
     drawAurora = objField(2)
     

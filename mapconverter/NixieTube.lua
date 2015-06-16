@@ -11,8 +11,7 @@ return {
     ["default start"] = "4, 34",
     ["hidden ambient level"] = "&h0F0F0F0F",
     ["light objects"] = "",
-    ["music"] = "TestTheme.ogg",
-    ["snow"] = "off"
+    ["music"] = "TestTheme.ogg"
   },
   tilesets = {
     {

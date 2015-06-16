@@ -7,8 +7,6 @@
 #include "animation.bi"
 #include "pointlight.bi"
 
-#define BOMB_STICKYNESS 0
-#define MINE_FREEFALL_MAX 30
 
 enum Item_Type_e
 	ITEM_KEY
@@ -21,6 +19,7 @@ enum Item_Type_e
     ITEM_SMALLOSCILLOSCOPE
     ITEM_INTERFACE
     ITEM_NIXIEFLICKER
+    ITEM_COVERSMOKE
 end enum
 
 'for bomb, first 3 bits define bomb type.
@@ -33,6 +32,7 @@ type Item
 		declare destructor()
 		declare sub init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast as integer)
 		declare sub setPos(v as Vector2D)
+        declare sub setVel(v as Vector2D)
         declare sub setLightModeData(minValue as double, maxValue as double, mode as integer)
 		declare function getPos() as Vector2D
         declare sub setSize(s as Vector2D)
@@ -79,6 +79,8 @@ type Item
         as integer      data3
         as integer      data4
         as integer      data5
+        as integer      data6
+        as integer      data7
 end type
 
 

@@ -950,6 +950,279 @@ sub bitblt_alphaGlow(dest as uinteger ptr,_
  
 end sub
 
+sub bitblt_prealpha(dest as uinteger ptr,_
+                    xpos as integer, ypos as integer,_
+                    src  as uinteger ptr,_
+                    src_x0 as integer, src_y0 as integer,_
+                    src_x1 as integer, src_y1 as integer)
+    
+    #macro MIX_STEP()
+										
+		movhlps		xmm1,		xmm0    
+		
+		punpcklbw 	xmm0, 		xmm6
+		punpcklbw 	xmm1, 		xmm6
+		movdqu		xmm2,		xmm0
+		movdqu		xmm3,		xmm1
+        
+		pshufhw		xmm0,		xmm0,				&hff
+		pshuflw		xmm0,		xmm0,				&hff
+		
+		pshufhw		xmm1,		xmm1,				&hff
+		pshuflw		xmm1,		xmm1,				&hff
+        
+		movhlps		xmm5,		xmm4    		
+		
+		punpcklbw 	xmm4, 		xmm6
+		punpcklbw 	xmm5, 		xmm6
+        
+        pmullw      xmm4,       xmm0
+        pmullw      xmm5,       xmm1
+        psrlw       xmm4,       8
+        psrlw       xmm5,       8
+        
+        pand        xmm2,       xmm7
+        pand        xmm3,       xmm7
+        paddusw     xmm2,       xmm4
+        paddusw     xmm3,       xmm5
+        
+		packuswb	xmm2,		xmm3			
+		
+    #endmacro
+    
+    #macro MIX_STEP_HALF()
+						
+		punpcklbw 	xmm0, 		xmm6
+		movdqu		xmm2,		xmm0
+	
+		pshufhw		xmm0,		xmm0,				&hff
+		pshuflw		xmm0,		xmm0,				&hff
+				
+		punpcklbw 	xmm4, 		xmm6
+		
+        pmullw      xmm4,       xmm0
+        psrlw       xmm4,       8   
+        
+        pand        xmm2,       xmm7
+        paddusw     xmm2,       xmm4
+
+		packuswb	xmm2,		xmm3			
+		
+    #endmacro
+    
+	static as integer zeroReg(0 to 3) = {&h00000000, &h00000000, &h00000000, &h00000000}    
+    static as integer maskReg(0 to 3) = {&hffffffff, &h0000ffff, &hffffffff, &h0000ffff}
+    
+    dim as byte ptr dest_pxls, src_pxls
+    dim as integer  dest_w, dest_h
+    dim as integer  src_w, src_h
+    dim as integer  target_w, target_h
+    dim as integer  dest_row_adv, src_row_adv
+    
+    imageinfo dest,dest_w,dest_h,,dest_row_adv,dest_pxls
+    imageinfo src,src_w,src_h,,src_row_adv,src_pxls
+    
+    dest_pxls += (xpos shl 2) + ypos*dest_row_adv
+    src_pxls  += (src_x0 shl 2) + src_y0*src_row_adv
+    
+    target_w = (src_x1 - src_x0 + 1)
+    target_h = (src_y1 - src_y0 + 1)
+    
+    if target_h < 1 then exit sub
+    
+    dest_row_adv -= target_w shl 2
+    src_row_adv  -= target_w shl 2    
+    
+    asm
+                movdqu		xmm6,		[zeroReg]
+                movdqu      xmm7,       [maskReg]
+
+                mov         esi,        [src_pxls]
+                mov         edi,        [dest_pxls]
+                
+                mov         eax,        [target_w]
+                mov         ebx,        [target_h]
+                    
+        bitblt_prea_rows:
+                
+                mov         ecx,        eax
+
+                cmp         ecx,        4
+                jl          bitblt_prea_2pxls
+                
+        bitblt_prea_cols:
+        
+                movdqu		xmm0,		[esi]		
+                movdqu		xmm4,		[edi]			
+                
+                MIX_STEP()	
+                
+                movdqu		[edi],		xmm2
+               
+                add         esi,        16
+                add         edi,        16
+                        
+                sub			ecx,		4
+                cmp         ecx,        4
+                jge         bitblt_prea_cols
+        
+        bitblt_prea_2pxls:        
+                
+                test        ecx,        2
+                jz          bitblt_prea_1pxls
+ 
+                movq		xmm0,		[esi]		
+                movq		xmm4,		[edi]
+                
+                MIX_STEP_HALF()
+                
+                movq        [edi],      xmm2
+
+                add         esi,        8
+                add         edi,        8
+ 
+        bitblt_prea_1pxls:
+        
+                test        ecx,        1
+                jz          bitblt_prea_nextRow
+        
+                movd        xmm0,       [esi]
+                movd        xmm4,       [edi]
+                
+                MIX_STEP_HALF()
+                
+                movd        [edi],      xmm2
+        
+                add         esi,        4
+                add         edi,        4 
+                
+        bitblt_prea_nextRow:
+        
+                add         esi,        [src_row_adv]
+                add         edi,        [dest_row_adv]
+                
+                dec         ebx
+                jnz         bitblt_prea_rows
+        
+    end asm                    
+                    
+end sub
+
+sub bitblt_addRGBA_Clip(dest as uinteger ptr,_
+                        xpos_ as integer, ypos_ as integer,_
+                        src  as uinteger ptr,_
+                        src_x0_ as integer, src_y0_ as integer,_
+                        src_x1_ as integer, src_y1_ as integer)
+           
+    'in player compute coverage, take chunk from levelsmoke texture, trans blit on blocks, 
+    '   count up transparencies instead of straight add to compute coverage, divide total by 255
+    
+    #macro PLOT()
+        paddusb     xmm0,       xmm1    
+    #endmacro
+
+    dim as byte ptr dest_pxls, src_pxls
+    dim as integer  dest_w, dest_h
+    dim as integer  src_w, src_h
+    dim as integer  target_w, target_h
+    dim as integer  dest_row_adv, src_row_adv
+    dim as integer  xpos, ypos
+    dim as integer  src_x0, src_y0, src_x1, src_y1
+        
+    imageinfo dest,dest_w,dest_h,,dest_row_adv,dest_pxls
+    imageinfo src,src_w,src_h,,src_row_adv,src_pxls
+      
+    if anyClip(xpos_, ypos_, src_x1_ - src_x0_ + 1, src_y1_ - src_y0_ + 1, _
+               0, 0, dest_w - 1, dest_h - 1,_
+               xpos, ypos, src_x0, src_y0, src_x1, src_y1) then
+  
+        src_x0 += src_x0_
+        src_y0 += src_y0_
+        src_x1 += src_x0_
+        src_y1 += src_y0_      
+  
+        dest_pxls += (xpos shl 2) + ypos*dest_row_adv
+        src_pxls  += (src_x0 shl 2) + src_y0*src_row_adv
+        
+        target_w = (src_x1 - src_x0 + 1)
+        target_h = (src_y1 - src_y0 + 1)
+        
+        if target_h < 1 then exit sub
+        
+        dest_row_adv -= target_w shl 2
+        src_row_adv  -= target_w shl 2    
+  
+        asm
+                    
+                    mov         esi,        [src_pxls]
+                    mov         edi,        [dest_pxls]
+                    
+                    mov         eax,        [target_w]
+                    mov         ebx,        [target_h]
+                        
+            bitblt_arc_rows:
+                    
+                    mov         ecx,        eax
+
+                    cmp         ecx,        4
+                    jl          bitblt_arc_2pxls
+                    
+            bitblt_arc_cols:
+            
+                    movdqu      xmm0,       [esi]
+                    movdqu      xmm1,       [edi]
+                    PLOT()
+                    movdqu      [edi],      xmm0
+                                   
+                    add         esi,        16
+                    add         edi,        16
+                            
+                    sub			ecx,		4
+                    cmp         ecx,        4
+                    jge         bitblt_arc_cols
+            
+            bitblt_arc_2pxls:        
+                    
+                    test        ecx,        2
+                    jz          bitblt_arc_1pxls
+     
+                    movq        xmm0,       [esi]
+                    movq        xmm1,       [edi]
+                    
+                    PLOT()
+                    
+                    movq        [edi],      xmm0
+                    
+                    add         esi,        8
+                    add         edi,        8
+     
+            bitblt_arc_1pxls:
+            
+                    test        ecx,        1
+                    jz          bitblt_arc_nextRow
+            
+                    movd        xmm0,       [esi]
+                    movd        xmm1,       [edi]
+                    
+                    PLOT()
+                    
+                    movd        [edi],      xmm0
+                            
+                    add         esi,        4
+                    add         edi,        4 
+                    
+            bitblt_arc_nextRow:
+            
+                    add         esi,        [src_row_adv]
+                    add         edi,        [dest_row_adv]
+                    
+                    dec         ebx
+                    jnz         bitblt_arc_rows
+        end asm                       
+                          
+    end if         
+end sub
+
 sub bitblt_transMulMix(dest as uinteger ptr,_
                        xpos as integer, ypos as integer,_
                        src  as uinteger ptr,_
