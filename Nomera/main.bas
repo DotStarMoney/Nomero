@@ -46,6 +46,7 @@ FSOUND_Init(44100, 16, 0)
         dim as zimage lensflare
         dim as zimage letters
         dim as zimage sunflare
+        dim as zimage subtitle
         dim as PointLight logoLight
         dim as Vector2D treePos(0 to MAX_TREES-1)
         dim as integer treeType(0 to MAX_TREES-1)
@@ -64,6 +65,7 @@ FSOUND_Init(44100, 16, 0)
         lensflare.load("lensflare.png")
         sunflare.load("sunflare.png")
         letters.load("menuletters.png")
+        subtitle.load("dsmsub.png")
         
         menuSound(0) = FSOUND_SAMPLE_Load(FSOUND_FREE,"menuSwitch.wav",0,0,0)
         menuSound(1) = FSOUND_SAMPLE_Load(FSOUND_FREE,"menuSelect.wav",0,0,0)
@@ -235,6 +237,8 @@ FSOUND_Init(44100, 16, 0)
                 end if
             next i
             
+            'subtitle.putTrans(scnbuff, 190+titlePosition, 230, 0, 0, 142, 56)
+
             window screen
             
             line scnbuff, (0,0)-(SCRX-1,SCRY-1),0, B
@@ -283,8 +287,9 @@ FSOUND_Init(44100, 16, 0)
 
             gameNomera.go
             
-            end
+        
         end if
+        end
     #endif
 #endif
 

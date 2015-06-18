@@ -31,6 +31,10 @@ sub Animation.init()
     completed = 0
     isReleasing = 0
     speed = 1
+    x0 = 0
+    y0 = 0
+    x1 = 0
+    y1 = 0
 end sub
 
 
@@ -765,7 +769,18 @@ sub Animation.drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as 
     end with    								    
 								    
 end sub
-        
+
+sub Animation.setClippingBoundaries(x0_ as integer, y0_ as integer, x1_ as integer, y1_ as integer)
+    x0 = x0_
+    y0 = y0_
+    x1 = x1_
+    y1 = y1_
+end sub
+
+sub Animation.setPrealphaTarget(target as integer ptr)
+    preAlphaTarget = target
+end sub
+
 
 sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, typeOverride as integer = ANIM_NONE, adj as Vector2D = Vector2D(0,0))
     Dim as Vector2D off
@@ -787,16 +802,19 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer,
         select case drawMode
         case ANIM_TRANS
 
-            drawImg.putTRANS(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1)
+            drawImg.putTRANS(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x + x0, start_y + y0, start_x + drawW - 1 - x1, start_y + drawH - 1 - y1)
 			
 		case ANIM_GLOW
 
-            drawImg.putGLOW(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1, glowValue)
+            drawImg.putGLOW(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x + x0, start_y + y0, start_x + drawW - 1 - x1, start_y + drawH - 1 - y1, glowValue)
             
         case ANIM_PREALPHA
         
-            drawImg.putPREALPHA(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x, start_y, start_x + drawW - 1, start_y + drawH - 1)
-            
+            drawImg.putPREALPHA(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x + x0, start_y + y0, start_x + drawW - 1 - x1, start_y + drawH - 1 - y1)
+        case ANIM_PREALPHA_TARGET
+
+            drawImg.putPREALPHA_TARGET(scnbuff, preAlphaTarget, x + off.x + adj.x, y + off.y + adj.y, start_x + x0, start_y + y0, start_x + drawW - 1 - x1, start_y + drawH - 1 - y1)
+        
 		end select
 		
     end with    

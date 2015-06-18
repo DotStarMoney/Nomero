@@ -52,6 +52,10 @@ constructor Player
 
     loadAnimations("mrspy.txt")
     bombListTiles.load("bomblist.png")
+    
+    hudDigits.load("digits.png")
+    healthindi.load("hindicator.png")
+    objectiveimg.load("objective.png")
 	
     spinnerItem = 0
     anim.play()
@@ -67,6 +71,9 @@ constructor Player
         bombData(i).tilePosY = MIN_BOMB_TILE_POS
 		deactivateGroupFlag(i) = 0
 	next i
+    for i = 0 to 5
+        spinnerCount(i) = 16
+    next i
 end constructor
 
 function Player.getState() as PlayerState
@@ -137,21 +144,32 @@ sub Player.computeCoverage()
 	dim as integer i
 	dim as integer ptr playerImg
 	dim as integer xpos, ypos, w, h
+    dim as Vector2D tl, br
+    
 	dim as Level_CoverageBlockInfo_t ptr blocks_
 	
 	pposx = body.p.x() + anim.getOffset().x
 	pposy = body.p.y() + anim.getOffset().y	
-	comptex = imagecreate((int((anim.getWidth() - 1) shr 4) + 1) shl 4, (int((anim.getHeight() - 1) shr 4) + 1) shl 4)
+    
+    'only works because character is a multiple of 16
+	comptex = imagecreate((int((anim.getWidth() - 1) shr 4) + 1) shl 4, (int((anim.getHeight() - 1) shr 4) + 1) shl 4, &h00000000)
 	
 	numblocks_ = link.level_ptr->getCoverageLayerblocks(pposx, pposy,_
 													   pposx+anim.getWidth()-1,pposy+anim.getHeight()-1,_
 													   blocks_)
+                                                       
+    tl = Vector2D(pposx, pposy) - link.gamespace_ptr->camera + Vector2D(SCRX, SCRY)*0.5
+    br = tl + Vector2D(anim.getWidth() - 1, anim.getHeight() - 1)
+    if br.x >= 0 andAlso br.y >= 0 andALso tl.x <= (SCRX - 1) andALso tl.y <= (SCRY - 1) then
+        tl = Vector2D(max(0.0, tl.x), max(0.0, tl.y))
+        br = Vector2D(min(SCRX - 1.0, br.x), min(SCRY - 1.0, br.y))
+        bitblt_invertPset(comptex, 0, 0, link.level_ptr->getSmokeTexture(), tl.x, tl.y, br.x, br.y)
+    end if
 													   
 	for i = 0 to numblocks_ - 1
-		put comptex, (blocks_[i].rpx - pposx, blocks_[i].rpy - pposy), blocks_[i].img, (blocks_[i].x0, blocks_[i].y0)-(blocks_[i].x1, blocks_[i].y1), TRANS
+        bitblt_trans_clip(comptex, blocks_[i].rpx - pposx, blocks_[i].rpy - pposy, blocks_[i].img, blocks_[i].x0, blocks_[i].y0, blocks_[i].x1, blocks_[i].y1)
 	next i
-	
-	
+
 	anim.getFrameImageData(playerImg, xpos, ypos, w, h)
 	
 	'only works because character is a multiple of 16
@@ -719,9 +737,9 @@ sub Player.processControls(dire as integer, jump as integer,_
     anim.step_animation()
        
     for i = 0 to 9
-		if numbers(i) andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) then
+		if numbers(i) andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) andAlso spinnerCount(spinnerItem) > 0 then
 			if parent->isGrounded(body_i, this.groundDot) andAlso (parent->getArbiterN(body_i) > 0) then 
-        
+                spinnerCount(spinnerItem) -= 1
 				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, spinnerItem)
                  
                 select case spinnerItem
@@ -804,6 +822,14 @@ sub Player.processControls(dire as integer, jump as integer,_
         spinnerAngle = spinnerAngleTarget 
     end if
         
+    
+    if spinnerCount(spinnerItem) > 9999 then 
+        spinnerCount(spinnerItem) = 9999
+    elseif spinnerCount(spinnerItem) < 0 then
+        spinnerCount(spinnerItem) = 0
+    end if
+    
+        
     lastUps = ups
     lastFire = fire
     lastSpikes = onSpikes() 
@@ -824,7 +850,7 @@ end sub
 sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
 	dim as Item ptr curItem
 	dim as Item ptr ptr curItem_
-	dim as Vector2D center
+	dim as Vector2D center, curPos
 	dim as Vector2D bombPos
 	dim as Vector2d scnPos, offsetV
 	dim as Vector2D d, arrow, a_bound, b_bound
@@ -834,6 +860,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	dim as double shrink, colSin, totalWidth, curPosX, thisWidth
     dim as double tilePlaceX(0 to 9)
 	dim as integer i, col, col2, q
+    dim as integer digits(0 to 3), nd
 
 	center = -link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5
 	as_bound = link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 
@@ -965,8 +992,8 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
         tilePlaceX(i) -= totalWidth * 0.5
         posY = (SCRY - 32 - 5) - bombData(i).tilePosY
         if posY > -32 then
-            bombListTiles.putTRANS(scnbuff, SCRX*0.5 + tilePlaceX(i), posY, i*32, 0, i*32+31, 31)
-            bombListTiles.putTRANS(scnbuff, SCRX*0.5 + tilePlaceX(i), posY, bombData(i).bombType*32, 32, bombData(i).bombType*32+31, 63)
+            bombListTiles.putTRANS(scnbuff, 45 + SCRX*0.5 + tilePlaceX(i), posY, i*32, 0, i*32+31, 31)
+            bombListTiles.putTRANS(scnbuff, 45 + SCRX*0.5 + tilePlaceX(i), posY, bombData(i).bombType*32, 32, bombData(i).bombType*32+31, 63)
         end if
     next i
     UNLOCK_TO_SCREEN()
@@ -982,8 +1009,35 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
 	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
 
-    drawHexPrism(scnbuff, 55, 448, spinnerAngle, 42, 40, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
-
+    drawHexPrism(scnbuff, 52, 448, spinnerAngle, 42, 40, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+    
+    LOCK_TO_SCREEN()
+    
+    hudDigits.putTRANS(scnbuff, 100, 449, 0,34,67,52)
+    hudDigits.putTRANS(scnbuff, 111, 453, 0,0,15,15)
+    
+    curPos = Vector2D(150, 453)
+    nd = intToBCD(spinnerCount(spinnerItem), @digits(0))
+    for i = 0 to nd - 1
+        hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,0, 23 + digits(i)*8,15)
+        curPos -= Vector2D(8, 0)
+    next i
+   
+    hudDigits.putTRANS(scnbuff, 560, 449, 0,34,67,52)
+    hudDigits.putTRANS(scnbuff, 571, 453, 0,16,15,31)
+   
+    curPos = Vector2D(610, 453)
+    nd = intToBCD(142, @digits(0))
+    for i = 0 to nd - 1
+        hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,16, 23 + digits(i)*8,31)
+        curPos -= Vector2D(8, 0)
+    next i
+    
+    healthindi.putTrans(scnbuff, 12, 12, 0, 0, 31, 31)
+    objectiveimg.putTrans(scnbuff, 538, 5, 0, 0, 95, 63)
+    objectiveimg.putTrans(scnbuff, 538, 5, 96, 0, 191, 63)
+    
+    UNLOCK_TO_SCREEN()
     
 end sub
 

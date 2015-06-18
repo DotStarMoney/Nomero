@@ -30,6 +30,7 @@ type SpawnZone_t
 	as Vector2D               p
 	as Vector2D               size
     as Item_Type_e            itemNumber
+    as integer                flavor
 end type
 
 type NamesTypes_t
@@ -50,6 +51,7 @@ type DynamicController
 		declare destructor
 		declare sub setLink(link_ as ObjectLink)
 		declare sub addSpawnZone(spawn_objectName as string,_
+                                 flavor as integer,_
 							     respawn as SpawnZoneDespawnType_e,_
 								 p as Vector2D, size as Vector2D,_
 								 count_ as integer = 1,_

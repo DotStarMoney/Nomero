@@ -231,6 +231,7 @@ type objectSpawner_t
     as zstring * 128 spawn_objectName
     as single spawn_time
     as ushort spawn_count
+    as ushort flavor
     as ushort spawn_respawnType
 end type
 
@@ -594,6 +595,7 @@ do
                                         tempObjSpawner->spawn_objectName = ""
                                         tempObjSpawner->spawn_count = 1
                                         tempObjSpawner->spawn_respawnType = SPAWN_ONCE
+                                        tempObjSpawner->flavor = 0
                                     end select
                                 end if
                             end if
@@ -773,6 +775,8 @@ do
                             tempObjSpawner->spawn_time = val(item_content)
                         elseif left(lcase(item_tag), 5) = "count" then
                             tempObjSpawner->spawn_count = val(item_content)
+                        elseif left(lcase(item_tag), 6) = "flavor" then
+                            tempObjSpawner->flavor = val(item_content)
                         end if
                     end select  
                 elseif propertyType = 4 then
@@ -1881,6 +1885,7 @@ for i = 0 to N_objects - 1
         case SPAWN
             tempObjSpawner = .data_
             put #f,,tempObjSpawner->spawn_objectName
+            put #f,,tempObjSpawner->flavor            
             put #f,,tempObjSpawner->spawn_respawnType
             put #f,,tempObjSpawner->spawn_count
             put #f,,tempObjSpawner->spawn_time

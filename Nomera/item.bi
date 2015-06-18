@@ -20,6 +20,8 @@ enum Item_Type_e
     ITEM_INTERFACE
     ITEM_NIXIEFLICKER
     ITEM_COVERSMOKE
+    ITEM_LASEREMITTER
+    ITEM_LASERRECEIVER
 end enum
 
 'for bomb, first 3 bits define bomb type.

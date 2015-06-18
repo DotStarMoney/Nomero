@@ -1180,8 +1180,8 @@ function Tinyspace.raycast(p as Vector2D, v as Vector2D,_
 	end_y   = min(cint(br.y()), block_n_rows - 1)
 	
 	skipSearch = 0
-	if start_x >= end_x orElse end_x < start_x orElse _
-	   start_y >= end_y orElse end_y < start_y then
+	if start_x > end_x orElse end_x < start_x orElse _
+	   start_y > end_y orElse end_y < start_y then
 	   skipSearch = 1
 	end if 
 	
@@ -1191,7 +1191,7 @@ function Tinyspace.raycast(p as Vector2D, v as Vector2D,_
 		roi_y0 = start_y
 		roi_x1 = end_x
 		roi_y1 = end_y
-
+        
 		redim as integer usedSpace(start_x to end_x, start_y to end_y)
 		
 		

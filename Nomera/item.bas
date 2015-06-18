@@ -3,6 +3,16 @@
 #include "projectilecollection.bi"
 #include "itemtypes.bi"
 
+#macro DRAW_LIT_ANIMATION(_ANIM_, _X_, _Y_, _FLAGS_)
+    if link.level_ptr->shouldLight() then
+        anims[_ANIM_].drawAnimationLit(scnbuff, _X_, _Y_,_
+                                  lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
+                                  link.gamespace_ptr->camera,_FLAGS_,,ANIM_TRANS)            
+    else
+        anims[_ANIM_].drawAnimation(scnbuff, _X_, _Y_, link.gamespace_ptr->camera,_FLAGS_,ANIM_TRANS)
+    end if  
+#endmacro
+
 dim as uinteger ptr Item.BOMB_COLORS = 0
 
 constructor Item()
@@ -81,6 +91,7 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
 	flush()
     body_i = -1
     fast = fast_p
+    lightState = 0
 	select case itemType
 	case ITEM_BOMB
 		body = TinyBody(Vector2D(0,0), 8, 10)
@@ -285,6 +296,35 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
     	body.friction = 0
         body.elasticity = 0.4+rnd*0.3
         lightState = 0
+    case ITEM_LASEREMITTER
+    	itemFlavor = itemFlavor_
+
+        anims_n = 2
+        anims = new Animation[anims_n]
+        anims[0].load("laser.txt")
+        anims[0].play()
+        anims[1].load("laser.txt")
+        anims[1].play()
+        anims[1].hardSwitch(4)
+        anims[1].setPrealphaTarget(link.level_ptr->getSmokeTexture())
+        
+        data0 = 0
+    case ITEM_LASERRECEIVER
+        itemFlavor = itemFlavor_
+
+        anims_n = 3
+        anims = new Animation[anims_n]
+        anims[0].load("laser.txt")
+        anims[0].play()
+        anims[0].hardSwitch(1)
+        anims[1].load("laser.txt")
+        anims[1].play()
+        anims[1].hardSwitch(2)
+        anims[2].load("laser.txt")
+        anims[2].play()
+        anims[2].hardSwitch(3)
+        
+        data0 = 0        
 	case else
 		anims_n = 0
 	end select
@@ -317,8 +357,10 @@ sub Item.getBounds(byref a as Vector2D, byref b as Vector2D)
 end sub
 
 sub Item.drawItem(scnbuff as integer ptr)
-	dim as integer orBits, frame, value
+	dim as integer orBits, frame, value, length
     dim as LightPair ptr ptr lights
+    dim as Vector2d ptn, start, curPos
+    dim as integer ptr tempImg, iw, ih
     dim as integer numLights, posX, posY, i
     
     if link.level_ptr->shouldLight() then
@@ -374,7 +416,35 @@ sub Item.drawItem(scnbuff as integer ptr)
                                   lights, numLights, iif(lightState = 0, &h404040, &hFF8080),_
                                   link.gamespace_ptr->camera, 0) 
         next i
-    
+    case ITEM_LASEREMITTER
+        if itemFlavor = 1 then
+            ptn = p + Vector2D(0, size.y*0.5)
+            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0)            
+        else
+            ptn = p + Vector2D(-32 + size.x, size.y*0.5)
+            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4)
+        end if
+
+        
+    case ITEM_LASERRECEIVER
+        if itemFlavor = 1 then
+            ptn = p + Vector2D(0, size.y*0.5)
+            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0)
+            if data0 then
+                anims[1].drawAnimation(scnbuff, ptn.x, ptn.y)        
+            else
+                anims[2].drawAnimation(scnbuff, ptn.x, ptn.y)        
+            end if
+        else
+            ptn = p + Vector2D(-32 + size.x, size.y*0.5)
+            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4)
+            if data0 then
+                anims[1].drawAnimation(scnbuff, ptn.x, ptn.y,,4)        
+            else
+                anims[2].drawAnimation(scnbuff, ptn.x, ptn.y,,4)        
+            end if
+        end if
+
 	case else
 	
 	end select
@@ -383,6 +453,9 @@ end sub
 sub Item.drawItemTop(scnbuff as integer ptr)
 	dim as integer orBits
 	dim as integer col, value
+    dim as Vector2d start, curPos
+    dim as integer length
+        
 	select case itemType
 	case ITEM_BOMB
         select case itemFlavor
@@ -426,9 +499,39 @@ sub Item.drawItemTop(scnbuff as integer ptr)
             end if
         end select
     case ITEM_LIGHT
-
+        ''
     case ITEM_COVERSMOKE
         ''
+    case ITEM_LASEREMITTER
+        if itemFlavor = 1 then
+            start = p + Vector2D(13, 16)
+            length = data1
+            curPos = start
+            length -= 12
+            while length >= 32
+                anims[1].drawAnimation(scnbuff, curPos.x, curPos.y,,,ANIM_PREALPHA_TARGET)        
+                curPos += Vector2D(32, 0)
+                length -= 32
+            wend
+            anims[1].setClippingBoundaries(0, 0, 32 - length, 0)
+            anims[1].drawAnimation(scnbuff, curPos.x, curPos.y,,,ANIM_PREALPHA_TARGET)        
+            anims[1].setClippingBoundaries(0, 0, 0, 0)
+        else
+            start = p + Vector2D(size.x - 13, 16)
+            length = data1
+            curPos = start
+            length -= 12
+            while length >= 32
+                anims[1].drawAnimation(scnbuff, curPos.x - 32, curPos.y,,,ANIM_PREALPHA_TARGET)        
+                curPos -= Vector2D(32, 0)
+                length -= 32
+            wend
+            anims[1].setClippingBoundaries(32 - length, 0, 0, 0)
+            anims[1].drawAnimation(scnbuff, curPos.x - 32, curPos.y,,,ANIM_PREALPHA_TARGET)        
+            anims[1].setClippingBoundaries(32 - length, 0, 0, 0)
+        end if
+    case ITEM_LASERRECEIVER
+        
 	case else
 	
 	end select
@@ -515,6 +618,11 @@ function Item.process(t as double) as integer
                 link.gamespace_ptr->vibrateScreen()
         
                 link.level_ptr->addFallout(body.p.x(), body.p.y())
+                
+                if (freeFallingFrames >= MINE_FREEFALL_MAX) andAlso data1 = 0 then 
+                    link.player_ptr->removeItemReference(cast(integer, @this))
+                end if
+                    
                 return 1
             elseif (data1 = 2) then
                 
@@ -542,7 +650,7 @@ function Item.process(t as double) as integer
             	anims[3].step_animation()
 
                 if (data3 mod 2) = 0 then 
-                    newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, -100), ITEM_COVERSMOKE, data3 mod 4)
+                    newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, -100 + (SMOKEMINE_TIME - data3)*0.25), ITEM_COVERSMOKE, data3 mod 4)
                     newItem->setVel(Vector2D(((2.0*rnd) - 1.0)*80.0, -100 - rnd*25))   
                 end if
                 
@@ -643,7 +751,7 @@ function Item.process(t as double) as integer
         
         if data2 < 603 then
             minValue += 1
-            if minValue >= 2 then
+            if minValue >= 3 then
                 minValue = 0
                 lightState = 1 - lightState
                 for i = 0 to 5
@@ -706,7 +814,9 @@ function Item.process(t as double) as integer
         end if
         '/
         
-        anims[0].drawAnimation(link.level_ptr->getSmokeTexture(), body.p.x, body.p.y,,,,-link.gamespace_ptr->camera + Vector2D(SCRX*0.5, SCRY*0.5))
+        LOCK_TO_SCREEN()
+            anims[0].drawAnimation(link.level_ptr->getSmokeTexture(), body.p.x, body.p.y,,,,-link.gamespace_ptr->camera + Vector2D(SCRX*0.5, SCRY*0.5))
+        UNLOCK_TO_SCREEN()
         
         data0 += 100
         data1 += 10
@@ -714,6 +824,16 @@ function Item.process(t as double) as integer
         if data0 > 10000 then data0 = 10000
         if data1 > 10000 then data1 = 10000
         if anims[0].done then return 1
+    case ITEM_LASEREMITTER
+        select case itemFlavor
+        case 0
+            dist = link.tinyspace_ptr->raycast(p + Vector2D(size.x - 13, 16), Vector2D(-SCRX, 0), pt)
+        case 1
+            dist = link.tinyspace_ptr->raycast(p + Vector2D(13, 16), Vector2D(SCRX, 0), pt)
+        end select
+        data1 = dist
+    case ITEM_LASERRECEIVER
+        ''
   	case else
 		return 1
 	end select

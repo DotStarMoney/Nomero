@@ -162,6 +162,11 @@ type Player
         as double spinnerAngleTarget
         as double spinnerAngleAcc
         as double spinnerAngleV
+        as integer spinnerCount(0 to 5)
+        
+        as zimage hudDigits
+        as zimage healthindi
+        as zimage objectiveimg
         
 End type
 

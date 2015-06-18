@@ -24,6 +24,11 @@ type zImage
         declare sub putGLOW(dest_fbimg as integer ptr, posX as integer, posY as integer,_
                              x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
                              colOffset as integer = &h00000000)
+                             
+        declare sub putPREALPHA_TARGET(dest_fbimg as integer ptr, prealphasource_fbimg as integer ptr, _
+                                       posX as integer, posY as integer,_
+                                       x0 as integer, y0 as integer, x1 as integer, y1 as integer)                     
+                                                          
         declare sub putPREALPHA(dest_fbimg as integer ptr, posX as integer, posY as integer,_
                                 x0 as integer, y0 as integer, x1 as integer, y1 as integer)
                                                           

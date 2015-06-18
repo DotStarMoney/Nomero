@@ -166,9 +166,9 @@ function GameSpace.go() as integer
         load = (processTime / (1000 / FPS_TARGET)) * 100
         if load > oneSecondMaxLoad then oneSecondMaxLoad = load
         oneSecondAvg += load
-        print using "Frame Load %: ##.##"; load
-        print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
-        print using "One Second Average Load %: ##.##"; oneSecondAvgLast
+        'print using "Frame Load %: ##.##"; load
+        'print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
+        'print using "One Second Average Load %: ##.##"; oneSecondAvgLast
         
         'print spy.body.p
 
@@ -336,8 +336,8 @@ sub GameSpace.step_draw()
 
 
     START_PROFILE(6)
-    dynControl.drawDynamics(scnbuff, FOREGROUND)
     lvlData.drawSmoke(scnbuff)
+    dynControl.drawDynamics(scnbuff, FOREGROUND)
     RECORD_PROFILE(6)
 
     

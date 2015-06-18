@@ -26,6 +26,7 @@ enum Anim_DrawType_e
 	ANIM_ALPHA
     ANIM_PREALPHA
 	ANIM_TRANS
+    ANIM_PREALPHA_TARGET
     ANIM_NONE
 end enum
 
@@ -92,7 +93,8 @@ type Animation
         declare sub play()
         declare sub restart()
         declare function done() as integer
-        
+        declare sub setClippingBoundaries(x0_ as integer, y0_ as integer, x1_ as integer, y1_ as integer)
+        declare sub setPrealphaTarget(target as integer ptr)
         declare sub setSpeed(s as integer)
         declare sub setGlow(glow as integer)
  
@@ -151,6 +153,11 @@ type Animation
         as integer isReleasing
         as integer pendingSwitch
         as integer speed
+        as integer x0
+        as integer y0
+        as integer x1
+        as integer y1
+        as integer ptr preAlphaTarget
     
         static as HashTable animHash
         static as integer initAnimHash

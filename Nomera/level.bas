@@ -996,12 +996,9 @@ sub level.process(t as double)
 end sub
 
 sub level.drawSmoke(scnbuff as integer ptr)
-    LOCK_TO_SCREEN()
        
-        'line smokeTexture, (13,13)-(100,100), &hC0400040, BF
-        bitblt_prealpha(scnbuff, 0, 0, smokeTexture, 0, 0, SCRX-1, SCRY-1)
+    bitblt_prealpha(scnbuff, 0, 0, smokeTexture, 0, 0, SCRX-1, SCRY-1)
         
-    UNLOCK_TO_SCREEN()
 end sub
 
 sub level.drawBackgroundEffects(scnbuff as integer ptr) 
@@ -1305,10 +1302,12 @@ sub level.load(filename as string)
             portals.insert(tempPortal.a, tempPortal.b, @tempPortal)
         case SPAWN
 			get #f,,strdata
+            get #f,,tempObj.object_flavor
 			get #f,,objField(0)
 			get #f,,objField(1)
 			get #f,,tempSingleField
 			link.dynamiccontroller_ptr->addSpawnZone(strdata,_
+                                                     tempObj.object_flavor,_
 													 objField(0),_
 													 tempObj.p,_
 													 tempObj.size,_

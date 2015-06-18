@@ -24,7 +24,7 @@ for y = 0 to h-1
     for x = 0 to w-1
         a = point(x, y, img) and &hff
         col = a
-        col = (rgb(255, 255, 255) and &h00ffffff) or (a shl 24)
+        col = (rgb(192,192,192) and &h00ffffff) or (a shl 24)
         pset img, (x, y), col
     next x
 next y

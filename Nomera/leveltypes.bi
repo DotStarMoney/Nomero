@@ -17,6 +17,7 @@ end enum
 
 type Object_t
     as zstring * 128 object_name
+    as ushort object_flavor
     as ushort object_type
     as ushort object_shape
     as ushort inRangeSet

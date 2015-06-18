@@ -86,7 +86,7 @@ declare function compareTrans(src0 as uinteger ptr,_
 							  src0_x as integer, src0_y as integer,_
 							  src1 as uinteger ptr,_
 							  src1_x as integer, src1_y as integer,_
-							  w as integer, h as integer) as integer
+							  w as integer, h as integer) as double
 
                              
 declare sub triangle_AHS(dest as integer ptr = 0,_
@@ -166,6 +166,25 @@ declare sub bitblt_prealpha(dest as uinteger ptr,_
                             src  as uinteger ptr,_
                             src_x0_ as integer, src_y0_ as integer,_
                             src_x1_ as integer, src_y1_ as integer)
+                            
+declare sub bitblt_prealpha_target(dest as uinteger ptr,_
+                                   alphasrc as uinteger ptr,_
+                                   xpos_ as integer, ypos_ as integer,_
+                                   src  as uinteger ptr,_
+                                   src_x0_ as integer, src_y0_ as integer,_
+                                   src_x1_ as integer, src_y1_ as integer)
+                            
+declare sub bitblt_invertPset(dest as uinteger ptr,_
+                              xpos as integer, ypos as integer,_
+                              src  as uinteger ptr,_
+                              src_x0 as integer, src_y0 as integer,_
+                              src_x1 as integer, src_y1 as integer)      
+
+declare sub bitblt_trans_clip(dest as uinteger ptr,_
+                              xpos_ as integer, ypos_ as integer,_
+                              src  as uinteger ptr,_
+                              src_x0_ as integer, src_y0_ as integer,_
+                              src_x1_ as integer, src_y1_ as integer)                                  
 
 type windowCircleIntersectData_t
     as integer tl_x
@@ -180,4 +199,5 @@ declare function windowCircleIntersect(tl as Vector2d, br as Vector2d,_
                                        p as Vector2d, r as double, byref ret as windowCircleIntersectData_t) as integer
 
 
+declare function intToBCD(value as integer, bcd as integer ptr) as integer
 #endif 

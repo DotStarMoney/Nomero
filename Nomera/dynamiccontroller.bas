@@ -6,7 +6,7 @@
 #include "gamespace.bi"
 #include "item.bi"
 
-#define N_OBJ_TYPES 6
+#define N_OBJ_TYPES 8
 
 dim as NamesTypes_t ptr DynamicController.namesTypesTable = 0
 dim as integer          DynamicController.hasFilledTable = 0
@@ -27,6 +27,8 @@ constructor DynamicController
         namesTypesTable[3] = NamesTypes_t("NIXIE FLICKER", OBJ_ITEM, ITEM_NIXIEFLICKER)
         namesTypesTable[4] = NamesTypes_t("SMALL OSCILLOSCOPE", OBJ_ITEM, ITEM_SMALLOSCILLOSCOPE)
         namesTypesTable[5] = NamesTypes_t("INTERFACE", OBJ_ITEM, ITEM_INTERFACE)
+        namesTypesTable[6] = NamesTypes_t("LASER EMITTER", OBJ_ITEM, ITEM_LASEREMITTER)
+        namesTypesTable[7] = NamesTypes_t("LASER RECEIVER", OBJ_ITEM, ITEM_LASERRECEIVER)
 	end if
 	objects.init(sizeof(DynamicObjectType_t))
 	spawnZones.init(sizeof(SpawnZone_t))
@@ -136,6 +138,7 @@ function DynamicController.populateLightList(ll as LightPair ptr ptr) as integer
 end function
 
 sub DynamicController.addSpawnZone(objectName as string,_
+                                   flavor as integer,_
 								   respawn as SpawnZoneDespawnType_e,_
 								   p as Vector2D, size as Vector2D,_
 								   count_ as integer = 1,_
@@ -153,6 +156,7 @@ sub DynamicController.addSpawnZone(objectName as string,_
 	if objType = OBJ_NONE then exit sub
 	
     zone.itemNumber = namesTypesTable[i].itemNumber_
+    zone.flavor = flavor
 	zone.hasMember = 0
 	zone.spawn_time  = time_
 	zone.spawn_count = count_
@@ -183,6 +187,7 @@ function DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Ty
   
     
     curItem->setPos(position)
+   
     curItem->setLightModeData(minValue, maxValue, mode)
 	
 	dobj.object_type = OBJ_ITEM
@@ -237,7 +242,7 @@ sub DynamicController.addItem(sz as SpawnZone_t)
 
 	curItem = new Item
 	curItem->setLink(link)
-	curItem->init(sz.itemNumber, 0, 0)
+	curItem->init(sz.itemNumber, sz.flavor, 0)
     curItem->setPos(sz.p)
     curItem->setSize(sz.size)
     	
