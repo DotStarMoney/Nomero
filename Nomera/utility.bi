@@ -19,7 +19,7 @@ declare Sub Split(Text As String, Delim As String = " ", Count As Long = -1, Ret
 
 declare sub parallaxAdjust(byref p_x as double, byref p_y as double,_
                            cam_x as double, cam_y as double,_
-                           lvlWidth as integer, lvlHeight as integer,_
+                           centerX as double, centerY as double,_
                            depth as double)
     
 declare function rndRange(a as double, b as double) as double
@@ -81,6 +81,9 @@ declare sub bitblt_transMulMix(dest as uinteger ptr,_
 declare function countTrans(src as uinteger ptr,_
 							src_x0 as integer, src_y0 as integer,_
                             src_x1 as integer, src_y1 as integer) as integer
+                            
+declare function raycastImage(src as uinteger ptr, byref startx as integer, byref starty as integer,_
+                              dirx as integer, diry as integer) as integer
 
 declare function compareTrans(src0 as uinteger ptr,_
 							  src0_x as integer, src0_y as integer,_
@@ -184,7 +187,8 @@ declare sub bitblt_trans_clip(dest as uinteger ptr,_
                               xpos_ as integer, ypos_ as integer,_
                               src  as uinteger ptr,_
                               src_x0_ as integer, src_y0_ as integer,_
-                              src_x1_ as integer, src_y1_ as integer)                                  
+                              src_x1_ as integer, src_y1_ as integer)       
+                              
 
 type windowCircleIntersectData_t
     as integer tl_x

@@ -97,6 +97,7 @@ type GameSpace
         as integer       pathFileNum
         
         as integer   keypress(0 to 255)
+        as integer   last_keypress(0 to 255)
         as uinteger ptr scnbuff
 		as double movingFrmAvg
 		as integer stallTime_mili

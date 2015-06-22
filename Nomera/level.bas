@@ -26,6 +26,7 @@ constructor level
     layerData = 0
     snowfall = 0
     tilesets = 0
+    windyMistLayers_n = 0
     shouldLightObjects = 0
     blocks = 0
     destroyedBlockMemory.init(sizeof(destroyedBlocks_t))
@@ -50,6 +51,7 @@ constructor level
     pendingPortalSwitch = 0
     reconnect = 0
     auroraTexture.load("aurora.png")
+    mistTexture.load("mist2.png")
     #ifdef DEBUG
 		if collisionBlox = 0 then
 			collisionBlox = png_load("CShapes.png")
@@ -103,9 +105,9 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
     dim as integer tl_x, tl_y
     dim as integer br_x, br_y
     dim as double  x, y
-    dim as integer i, num, j
-    dim as Vector2D a, b
-    dim as integer ocx, ocy
+    dim as integer i, num, j, wlayer
+    dim as Vector2D a, b, drawP, shift
+    dim as integer ocx, ocy, fade
     dim as integer ptr falloutBlend
     dim as Level_FalloutType ptr ptr flist
     dim as Level_FalloutType ptr cur
@@ -142,7 +144,7 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
             if layerData[i].parallax < 255 then
                 parallaxAdjust(x, y,_
                                cam_x, cam_y,_
-                               lvlWidth * 16, lvlHeight * 16,_
+                               lvlCenterX, lvlCenterY,_ 'lvlWidth * 16 * 0.5, lvlHeight * 16 * 0.5,_
                                layerData[i].depth)
                 ocx = cam_x
                 ocy = cam_y
@@ -215,9 +217,22 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
             else
                 drawLayer(scnbuff, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
             end if
+            
+            if layerData[i].windyMistLayer <> -1 then
+                wlayer = layerData[i].windyMistLayer
+                shift = (link.gamespace_ptr->camera - Vector2D(lvlWidth, lvlHeight)*8)*(1 - layerData[i].depth)
+                fade = 255 * layerData[i].depth^(0.02)
+                if fade > 250 then fade = 250
+                for j = 0 to windyMistLayers[wlayer].objects_n - 1
+                    drawP = windyMistLayers[wlayer].objects[j].p + shift
+                    mistTexture.putGLOW(scnbuff, drawP.x, drawP.y, 0, 0, mistTexture.getWidth() - 1, mistTexture.getHeight() - 1, &h007f7fff or (fade shl 24))
+                next j
+            end if
         else
             exit do
         end if
+        
+        
     loop
     
     #ifdef DEBUG
@@ -246,7 +261,7 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
 			next ys
 		end if
 	#endif
-   
+      
     if falloutBlend <> 0 then imagedestroy falloutBlend
 
 end sub
@@ -266,6 +281,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     dim as integer retrieve
     dim as double newcx, newcy
     dim as integer tilePosX, tilePosY
+    dim as double ax, ay
     dim as Level_EffectData tempEffect
     
     if tl_x > br_x then swap tl_x, br_x
@@ -276,8 +292,11 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     if br_y > lvlHeight - 1 then br_y = lvlHeight - 1    
     
     if layerData[lyr].parallax < 8 then
-        x = (cam_x - (lvlWidth * 0.5 * 16)) * (1-layerData[lyr].depth)
-        y = (cam_y - (lvlHeight * 0.5 * 16)) * (1-layerData[lyr].depth)
+        ax = 0
+        ay = 0
+        parallaxAdjust(ax, ay, cam_x, cam_y, lvlCenterX, lvlCenterY, layerData[lyr].depth)
+        x = ax
+        y = ay
     end if
    
 	
@@ -563,7 +582,6 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
     br_x = max(0, min(br_x, lvlWidth - 1))
     br_y = max(0, min(br_y, lvlHeight - 1))      
 
-	link.dynamiccontroller_ptr->explosionAlert(Vector2D(x,y))
 	link.player_ptr->explosionAlert(Vector2D(x,y))
 	
 	link.effectcontroller_ptr->explodeEffects(Vector2D(x,y))
@@ -696,6 +714,7 @@ sub level.flush()
         prinTLOG "phlusch"
         stall(100)
     #endif
+    highestLayerIndex = -1
     if lvlName <> "" then
         shouldLightObjects = 0
         if coldata <> 0 then deallocate(coldata)
@@ -707,6 +726,12 @@ sub level.flush()
         for i = 0 to blocks_N - 1
             if blocks[i] <> 0 then deallocate(blocks[i])
         next i
+        if windyMistLayers <> 0 then
+            for i = 0 to windyMistLayers_n - 1
+                if windyMistLayers[i].objects <> 0 then deallocate(windyMistLayers[i].objects)
+            next i
+            deallocate(windyMistLayers)
+        end if
         if blocks <> 0 then deallocate(blocks)
         if layerData <> 0 then deallocate(layerData)
         background_layer.flush()
@@ -742,6 +767,8 @@ sub level.flush()
         graphicFX_->flush()
         link.projectilecollection_ptr->flush()
         link.dynamiccontroller_ptr->flush()
+        windyMistLayers_n = 0
+        windyMistLayers = 0
     end if
     #ifdef DEBUG
         prinTLOG "Fin-e"
@@ -773,6 +800,21 @@ end function
 function level.getHiddenObjectAmbientLevel() as integer
     return hiddenObjectAmbientLevel
 end function
+
+sub level.processMist()
+    dim as integer i, q
+    for i = 0 to windyMistLayers_n - 1
+        for q = 0 to windyMistLayers[i].objects_n - 1
+            windyMistLayers[i].objects[q].p += Vector2D(-windyMistLayers[i].objects[q].zd, 0)*35
+            if windyMistLayers[i].objects[q].p.x < windyMistLayers[i].tl.x then
+                windyMistLayers[i].objects[q].p = Vector2D(windyMistLayers[i].br.x, _
+                                                           (windyMistLayers[i].br.y - windyMistLayers[i].tl.y)*rnd + windyMistLayers[i].tl.y)  
+                windyMistLayers[i].objects[q].zd = windyMistLayers[i].zdepth * (0.9 + rnd*0.2)
+            end if
+        next q
+    next i
+
+end sub
 
 sub level.processLights()
     dim as integer i
@@ -992,6 +1034,7 @@ end function
 sub level.process(t as double)
     imageSet(smokeTexture, &hFF000000, 0, 0, SCRX-1, SCRY-1)
     processLights()
+    if windyMist <> 65535 then processMist()
     if drawAurora then auroraTranslate += 0.007
 end sub
 
@@ -1012,7 +1055,7 @@ sub level.load(filename as string)
     dim as TinyBlock block
     dim as ushort lyr
     dim as uinteger blockNumber, layerInt
-    dim as integer row_c, tilePosX, tilePosY, transPxls
+    dim as integer row_c, tilePosX, tilePosY, transPxls, checkAllLayers
     dim as string  strdata_n
     dim as ZString * 128 strdata
     dim as Level_VisBlock ptr lvb
@@ -1058,9 +1101,13 @@ sub level.load(filename as string)
     get #f,,hiddenObjectAmbientLevel
     get #f,,default_x
     get #f,,default_y
+    get #f,,lvlCenterX
+    get #f,,lvlCenterY
     get #f,,strdata
     
-    
+    '''''
+    windyMist = 1
+    '''''
     
     drawAurora = objField(2)
     
@@ -1189,18 +1236,67 @@ sub level.load(filename as string)
             get #f,,layerData[lyr].receiver
             get #f,,layerData[lyr].occluding
             
+            layerData[lyr].windyMistLayer = -1
+            if windyMist <> 65535 then
+                if layerData[lyr].depth < 1.0 then 
+                    windyMistLayers_n += 1
+                    windyMistLayers = reallocate(windyMistLayers, sizeof(MistLayer_t) * windyMistLayers_n)
+                    windyMistLayers[windyMistLayers_n - 1].layerNum = layerInt
+                    windyMistLayers[windyMistLayers_n - 1].objects_n = 0
+                    windyMistLayers[windyMistLayers_n - 1].objects = 0
+                    layerData[lyr].windyMistLayer = windyMistLayers_n - 1
+                end if
+            end if
+            
             select case layerData[lyr].inRangeSet
             case BACKGROUND
                 background_layer.push_back(@layerInt)
+                if highestLayerIndex <> -1 then
+                    if layerData[highestLayerIndex].inRangeSet = BACKGROUND then
+                        highestLayerIndex = layerInt
+                    end if
+                end if
             case ACTIVE
                 active_layer.push_back(@layerInt)
+                if highestLayerIndex <> -1 then
+                    if layerData[highestLayerIndex].inRangeSet = BACKGROUND orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE then
+                        highestLayerIndex = layerInt
+                    end if
+                end if
             case FOREGROUND
                 foreground_layer.push_back(@layerInt)
+                if highestLayerIndex <> -1 then
+                    if layerData[highestLayerIndex].inRangeSet = BACKGROUND orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE_FRONT orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE_COVER orElse _
+                       layerData[highestLayerIndex].inRangeSet = FOREGROUND then 
+                        highestLayerIndex = layerInt
+                    end if
+                end if
             case ACTIVE_COVER
 				activeCover_layer.push_back(@layerInt)
+                if highestLayerIndex <> -1 then
+                    if layerData[highestLayerIndex].inRangeSet = BACKGROUND orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE_FRONT orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE_COVER then
+                        highestLayerIndex = layerInt
+                    end if
+                end if
             case ACTIVE_FRONT
  				activeFront_layer.push_back(@layerInt)           
+                if highestLayerIndex <> -1 then
+                    if layerData[highestLayerIndex].inRangeSet = BACKGROUND orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE orElse _
+                       layerData[highestLayerIndex].inRangeSet = ACTIVE_FRONT then
+                        highestLayerIndex = layerInt
+                    end if
+                end if
             end select
+            
+            if highestLayerIndex = -1 then highestLayerIndex = layerInt
             
             lvb = 0
             lvb = allocate(sizeof(Level_VisBlock) * lvlWidth * lvlHeight)
@@ -1253,6 +1349,24 @@ sub level.load(filename as string)
             
         end if
     next i
+    
+    if windyMist <> 65535 then
+        checkAllLayers = 1
+        for i = 0 to windyMistLayers_n - 1
+            if windyMistLayers[i].layerNum = highestLayerIndex then 
+                checkAllLayers = 0
+                exit for
+            end if
+        next i
+        if checkAllLayers then
+            windyMistLayers_n += 1
+            windyMistLayers = reallocate(windyMistLayers, sizeof(MistLayer_t) * windyMistLayers_n)
+            windyMistLayers[windyMistLayers_n - 1].layerNum = highestLayerIndex
+            windyMistLayers[windyMistLayers_n - 1].objects_n = 0       
+            windyMistLayers[windyMistLayers_n - 1].objects = 0
+            layerData[highestLayerIndex].windyMistLayer = windyMistLayers_n - 1
+        end if
+    end if
     
     #ifdef DEBUG
         printlog "Loading objects..."
@@ -1347,10 +1461,33 @@ sub level.load(filename as string)
     falloutZones.init(lvlWidth*16, lvlHeight*16, sizeof(Level_FalloutType))
     pendingPortalSwitch = 0
     justLoaded = 1
+    
+    if windyMist <> 65535 then prepareWindyMistLayers()
+    
 	#ifdef DEBUG
         printlog "Loading complete!"
         stall(100)
     #endif
+end sub
+
+sub Level.prepareWindyMistLayers()
+    dim as integer i, q
+    dim as Vector2D lvlCenter, screenDim, newPos
+    lvlCenter = Vector2D(lvlWidth, lvlHeight) * 8
+    screenDim = Vector2D(SCRX, SCRY)
+    for i = 0 to windyMistLayers_n - 1
+        windyMistLayers[i].zdepth = layerData[windyMistLayers[i].layerNum].depth
+        windyMistLayers[i].objects_n = MIST_OBJECTS_PER_LAYER
+        windyMistLayers[i].objects = allocate(windyMistLayers[i].objects_n * sizeof(MistObject_t))
+        windyMistLayers[i].tl = (lvlCenter - screenDim*0.5) * (1 - layerData[windyMistLayers[i].layerNum].depth) - Vector2D(mistTexture.getWidth(), mistTexture.getHeight())
+        windyMistLayers[i].br = (lvlCenter + screenDim*0.5) + (lvlCenter*2 - (lvlCenter + screenDim*0.5)) * layerData[windyMistLayers[i].layerNum].depth
+        for q = 0 to windyMistLayers[i].objects_n - 1
+            newPos = windyMistLayers[i].br - windyMistLayers[i].tl
+            newPos = Vector2D(newPos.x * rnd, newPos.y * rnd) + windyMistLayers[i].tl
+            windyMistLayers[i].objects[q].p = newPos
+            windyMistLayers[i].objects[q].zd = windyMistLayers[i].zdepth * (0.9 + rnd*0.2)
+        next q
+    next i
 end sub
 
 sub Level.overrideCurrentMusicFile(filename as string)

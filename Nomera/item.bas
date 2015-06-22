@@ -3,11 +3,32 @@
 #include "projectilecollection.bi"
 #include "itemtypes.bi"
 
-#macro DRAW_LIT_ANIMATION(_ANIM_, _X_, _Y_, _FLAGS_)
+#macro PREP_LIGHTS(_DIFFFILE_, _SPECFILE_, _ANIM0_, _ANIM1_)
+    anims[_ANIM0_].load(_DIFFFILE_)
+    anims[_ANIM1_].load(_SPECFILE_)
+    light.texture.diffuse_fbimg = anims[_ANIM0_].getRawImage()
+    light.texture.specular_fbimg = anims[_ANIM1_].getRawImage()
+    lw = anims[_ANIM0_].getRawZImage()->getWidth()
+    lh = anims[_ANIM0_].getRawZImage()->getHeight()
+    light.texture.x = 0
+    light.texture.y = 0
+    light.texture.w = lw
+    light.texture.h = lh
+    light.shaded = light.texture
+    light.shaded.diffuse_fbimg = imagecreate(lw, lh)
+    light.shaded.specular_fbimg = imagecreate(lw, lh)   
+    light.occlusion_fbimg = imagecreate(lw, lh)
+    light.last_tl_x = 0
+    light.last_tl_y = 0
+    light.last_br_x = lw - 1
+    light.last_br_y = lh - 1
+#endmacro
+
+#macro DRAW_LIT_ANIMATION(_ANIM_, _X_, _Y_, _FLAGS_, _FORCE_)
     if link.level_ptr->shouldLight() then
         anims[_ANIM_].drawAnimationLit(scnbuff, _X_, _Y_,_
                                   lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
-                                  link.gamespace_ptr->camera,_FLAGS_,,ANIM_TRANS)            
+                                  link.gamespace_ptr->camera,_FLAGS_,_FORCE_,ANIM_TRANS)            
     else
         anims[_ANIM_].drawAnimation(scnbuff, _X_, _Y_, link.gamespace_ptr->camera,_FLAGS_,ANIM_TRANS)
     end if  
@@ -87,11 +108,13 @@ end function
 sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as integer = 0)
     dim as string lightFilename
     dim as integer lw, lh, i, steps
+    dim as Vector2d t_p, t_size
 	itemType = itemType_
 	flush()
     body_i = -1
     fast = fast_p
     lightState = 0
+    itemFlavor = itemFlavor_
 	select case itemType
 	case ITEM_BOMB
 		body = TinyBody(Vector2D(0,0), 8, 10)
@@ -217,6 +240,37 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
         steps = int(rnd * 30)
         for i = 0 to steps: anims[0].step_animation(): next i
         lightState = 0
+    case ITEM_LARGEOSCILLOSCOPE
+        anims_n = 2
+		anims = new Animation[anims_n]
+        anims[0].load("bigoscilloscope.txt")
+        anims[0].play()
+        
+        anims[1].load("bigoscilloscope.txt")
+        anims[1].play()       
+        
+        if itemFlavor = 1 then
+            anims[1].hardSwitch(2)
+        else
+            anims[1].hardSwitch(1)
+        end if
+        steps = int(rnd * 30)
+        for i = 0 to steps: anims[0].step_animation(): next i
+        lightState = 0  
+    case ITEM_FREQUENCYCOUNTER
+        anims_n = 2
+		anims = new Animation[anims_n]
+        anims[0].load("freqcounter.txt")
+        anims[0].play()
+        anims[1].load("freqcounter.txt")
+        anims[1].play()       
+        if itemFlavor = 1 then
+            anims[1].hardSwitch(2)
+        else
+            anims[1].hardSwitch(1)
+        end if
+        data0 = 0
+        data1 = int(rnd * 60) + 30
     case ITEM_INTERFACE
         
         anims_n = 3
@@ -233,6 +287,47 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
         minValue = 0
         data1 = 0
         data2 = int(rnd * 10) + 10
+    case ITEM_TANDY2000
+    
+        anims_n = 2
+        anims = new Animation[anims_n]
+        anims[0].load("tandy2000.txt")
+        anims[0].play()
+        anims[0].hardSwitch(2)
+        anims[1].load("tandy2000.txt")
+        anims[1].play()       
+        if itemFlavor = 1 then
+            anims[1].hardSwitch(1)
+        else
+            anims[1].hardSwitch(0)
+        end if
+        
+        steps = int(rnd * 30)
+        for i = 0 to steps: anims[0].step_animation(): next i
+    case ITEM_ALIENSPINNER
+    
+        anims_n = 6
+        anims = new Animation[anims_n]
+        anims[0].load("alienspinner.txt")
+        anims[0].hardSwitch(3)
+        anims[1].load("alienspinner.txt")
+        anims[1].hardSwitch(2)
+        anims[1].play()
+        
+        anims[2].load("alienspinner.txt")
+        anims[2].hardSwitch(0)
+        anims[3].load("alienspinner.txt")
+        anims[3].hardSwitch(1)
+        
+        
+        data0 = 0                  
+        data1 = int(rnd * 60) + 30 
+        data2 = 1                  
+        
+        data3 = 1                  
+        data4 = 0                  
+        
+        PREP_LIGHTS("Lights\Cyan_Diffuse.txt", "Lights\Cyan_Specular.txt", 4, 5)   
 
     case ITEM_NIXIEFLICKER
         anims_n = 3
@@ -299,7 +394,7 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
     case ITEM_LASEREMITTER
     	itemFlavor = itemFlavor_
 
-        anims_n = 2
+        anims_n = 3
         anims = new Animation[anims_n]
         anims[0].load("laser.txt")
         anims[0].play()
@@ -307,7 +402,14 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
         anims[1].play()
         anims[1].hardSwitch(4)
         anims[1].setPrealphaTarget(link.level_ptr->getSmokeTexture())
+        anims[2].load("laserhit.txt")
+        anims[2].play()
+        'anims[2].setGlow(&hffb0f0ff)
+        link.player_ptr->getBounds(t_p, t_size)
+
+        data3 = cast(integer, imagecreate(t_size.x, 1))
         
+
         data0 = 0
     case ITEM_LASERRECEIVER
         itemFlavor = itemFlavor_
@@ -392,6 +494,24 @@ sub Item.drawItem(scnbuff as integer ptr)
             anims[1].drawAnimation(scnbuff, p.x, p.y, link.gamespace_ptr->camera,,ANIM_TRANS)
         end if
         anims[0].drawAnimation(scnbuff, p.x, p.y, link.gamespace_ptr->camera,,ANIM_GLOW)
+    case ITEM_LARGEOSCILLOSCOPE    
+        DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0)            
+        anims[0].drawAnimation(scnbuff, p.x, p.y,,,ANIM_GLOW)
+    case ITEM_FREQUENCYCOUNTER
+        DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0)            
+        if data0 = 0 then anims[0].drawAnimation(scnbuff, p.x, p.y,,,ANIM_GLOW)     
+    case ITEM_TANDY2000
+        DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0)            
+        anims[0].drawAnimation(scnbuff, p.x, p.y)     
+    case ITEM_ALIENSPINNER
+        DRAW_LIT_ANIMATION(0, p.x, p.y + 32, 0, 1)
+        if data3 = 1 then anims[1].drawAnimation(scnbuff, p.x, p.y + 32,,,ANIM_GLOW)     
+        anims[2].drawImageLit(scnbuff, p.x, p.y, data0*32, 0, data0*32 + 31, 31,_
+                              lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),,,1,ANIM_TRANS)
+        if lightState then
+            anims[3].drawImageLit(scnbuff, p.x, p.y, 160 + data0*32, 0, data0*32 + 191, 31,_
+                                  lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),,,,ANIM_GLOW)
+        end if
     case ITEM_INTERFACE
         if link.level_ptr->shouldLight() then
             anims[0].drawAnimationLit(scnbuff, p.x, p.y,_
@@ -419,17 +539,17 @@ sub Item.drawItem(scnbuff as integer ptr)
     case ITEM_LASEREMITTER
         if itemFlavor = 1 then
             ptn = p + Vector2D(0, size.y*0.5)
-            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0)            
+            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0, 0)            
         else
             ptn = p + Vector2D(-32 + size.x, size.y*0.5)
-            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4)
+            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4, 0)
         end if
 
         
     case ITEM_LASERRECEIVER
         if itemFlavor = 1 then
             ptn = p + Vector2D(0, size.y*0.5)
-            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0)
+            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0, 0)
             if data0 then
                 anims[1].drawAnimation(scnbuff, ptn.x, ptn.y)        
             else
@@ -437,7 +557,7 @@ sub Item.drawItem(scnbuff as integer ptr)
             end if
         else
             ptn = p + Vector2D(-32 + size.x, size.y*0.5)
-            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4)
+            DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4, 0)
             if data0 then
                 anims[1].drawAnimation(scnbuff, ptn.x, ptn.y,,4)        
             else
@@ -507,7 +627,7 @@ sub Item.drawItemTop(scnbuff as integer ptr)
             start = p + Vector2D(13, 16)
             length = data1
             curPos = start
-            length -= 12
+            if data2 = 0 then length -= 12
             while length >= 32
                 anims[1].drawAnimation(scnbuff, curPos.x, curPos.y,,,ANIM_PREALPHA_TARGET)        
                 curPos += Vector2D(32, 0)
@@ -518,9 +638,9 @@ sub Item.drawItemTop(scnbuff as integer ptr)
             anims[1].setClippingBoundaries(0, 0, 0, 0)
         else
             start = p + Vector2D(size.x - 13, 16)
-            length = data1
+            length = data1 
             curPos = start
-            length -= 12
+            if data2 = 0 then length -= 12
             while length >= 32
                 anims[1].drawAnimation(scnbuff, curPos.x - 32, curPos.y,,,ANIM_PREALPHA_TARGET)        
                 curPos -= Vector2D(32, 0)
@@ -529,6 +649,9 @@ sub Item.drawItemTop(scnbuff as integer ptr)
             anims[1].setClippingBoundaries(32 - length, 0, 0, 0)
             anims[1].drawAnimation(scnbuff, curPos.x - 32, curPos.y,,,ANIM_PREALPHA_TARGET)        
             anims[1].setClippingBoundaries(32 - length, 0, 0, 0)
+        end if
+        if data2 = 1 then
+            anims[2].drawAnimation(scnbuff, start.x + data1, start.y)                
         end if
     case ITEM_LASERRECEIVER
         
@@ -553,6 +676,8 @@ sub Item.flush()
         case 4
             if data5 <> 0 then delete(cast(ElectricMine_ArcData_t ptr, data5))
         end select
+    case ITEM_LASEREMITTER
+        if data3 <> 0 then imagedestroy(cast(integer ptr, data3))
     end select
 end sub
 
@@ -577,15 +702,19 @@ sub Item.setVel(v as Vector2D)
 end sub
 
 function Item.process(t as double) as integer
-	dim as integer i, value, dx, dy, x0, y0, x1, y1
+	dim as integer i, value, dx, dy, x0, y0, x1, y1, hitdist, firstX, firstY
+    dim as integer length, hit, nextDir
     dim as integer ptr img
     dim as double randAngle
     dim as double dist
-    dim as Vector2D v, pt
+    dim as Vector2D v, pt, tl, br, hitsize
     dim as Item ptr newItem
     dim as ElectricMine_ArcData_t ptr elecData
     
-    
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
 	select case itemType
 	case ITEM_BOMB
 		anims[0].step_animation()
@@ -739,7 +868,20 @@ function Item.process(t as double) as integer
         if data1 <> 0 then return 1
     case ITEM_SMALLOSCILLOSCOPE
         anims[0].step_animation()
-        
+    case ITEM_LARGEOSCILLOSCOPE
+        anims[0].step_animation()    
+    case ITEM_FREQUENCYCOUNTER
+        data1 -= 1
+        if data1 <= 0 then
+            data0 = 1 - data0
+            if data0 = 0 then
+                data1 = int(rnd * 120) + 30
+            elseif data0 = 1 then
+                data1 = 2
+            end if
+        end if
+    case ITEM_TANDY2000
+        anims[0].step_animation()    
     case ITEM_NIXIEFLICKER
         light.texture.x = p.x + size.x * 0.5
         light.texture.y = p.y + size.y * 0.5
@@ -751,7 +893,7 @@ function Item.process(t as double) as integer
         
         if data2 < 603 then
             minValue += 1
-            if minValue >= 3 then
+            if minValue >= 2 then
                 minValue = 0
                 lightState = 1 - lightState
                 for i = 0 to 5
@@ -786,6 +928,61 @@ function Item.process(t as double) as integer
             data1 = 1 - data1
             data2 = int(rnd * 10) + 10
         end if
+    case ITEM_ALIENSPINNER
+        anims[1].step_animation()
+        if anims[1].done() andALso data3 = 1 then 
+            data3 = 0
+            data4 = 60
+        end if
+        if data4 > 0 then data4 -= 1
+        if data4 <= 0 andALso data3 = 0 then
+            data3 = 1
+            anims[1].restart()
+            anims[1].play()
+        end if
+        
+        if data2 = 1 then
+            if data1 = 0 then
+                nextDir = data2
+                if data0 = 3 then
+                    data1 = int(rnd * 120) + 60
+                    data2 = -1
+                else
+                    data1 = 3
+                end if
+                data0 += nextDir
+            else
+                data1 -= 1
+            end if
+        elseif data2 = -1 then
+            if data1 = 0 then
+                nextDir = data2
+                if data0 = 1 then
+                    data1 = int(rnd * 120) + 60
+                    data2 = 1
+                else
+                    data1 = 3
+                end if
+                data0 += nextDir
+            else
+                data1 -= 1
+            end if        
+        end if
+        
+        if (data0 > 0 andAlso data0 < 4) orElse (data1 > 60) then
+            if (int(rnd * 60) < 5) then 
+                lightState = 0
+            else
+                lightState = 1
+            end if
+        else
+            lightState = 0
+        end if
+        light.texture.x = p.x + size.x * 0.5
+        light.texture.y = p.y + 8 + data0 * 3
+        light.shaded.x = light.texture.x
+        light.shaded.y = light.texture.y  
+  
     case ITEM_COVERSMOKE
         anims[0].setSpeed(data2)
         anims[0].step_animation()
@@ -825,12 +1022,53 @@ function Item.process(t as double) as integer
         if data1 > 10000 then data1 = 10000
         if anims[0].done then return 1
     case ITEM_LASEREMITTER
+        link.player_ptr->getBounds(tl, hitsize)
+        br = tl + hitsize
+        data2 = 0
+        hit = 0
         select case itemFlavor
         case 0
             dist = link.tinyspace_ptr->raycast(p + Vector2D(size.x - 13, 16), Vector2D(-SCRX, 0), pt)
+            if (tl.y <= (p.y + 16)) andAlso (br.y >= (p.y + 16)) andAlso (tl.x <= (p.x + size.x - 13)) then
+                firstX = br.x - min(p.x + size.x - 13, br.x)
+                length = firstX
+                firstY = tl.y - (p.y + 16)
+                img = cast(integer ptr, data3)
+                line img, (0, 0)-(hitsize.x - 1, 0), &hffff00ff
+                link.player_ptr->drawPlayerInto(img, length, firstY, 1)
+                if raycastImage(img, hitsize.x - 1 - length, 0, -1, 0) then
+                    hit = 1
+                    if firstX > 0 then
+                        length = length - firstX
+                    else
+                        length = (p.x + size.x - 13) - (br.x - length)
+                    end if
+                end if
+            end if
         case 1
             dist = link.tinyspace_ptr->raycast(p + Vector2D(13, 16), Vector2D(SCRX, 0), pt)
+            if (tl.y <= (p.y + 16)) andAlso (br.y >= (p.y + 16)) andAlso (br.x >= (p.x + 13)) then
+                firstX = max(p.x + 13, tl.x) - tl.x
+                length = firstX
+                firstY = tl.y - (p.y + 16)
+                img = cast(integer ptr, data3)
+                line img, (0, 0)-(hitsize.x - 1, 0), &hffff00ff
+                link.player_ptr->drawPlayerInto(img, length, firstY, 1)
+                if raycastImage(img, length, 0, 1, 0) then
+                    hit = 1
+                    if firstX > 0 then
+                        length = length - firstX
+                    else
+                        length = (tl.x + length) - (p.x + 13)
+                    end if
+                end if
+            end if
         end select
+        if length < dist andAlso hit then 
+            dist = length
+            data2 = 1
+        end if
+        if dist = -1 then dist = 0
         data1 = dist
     case ITEM_LASERRECEIVER
         ''

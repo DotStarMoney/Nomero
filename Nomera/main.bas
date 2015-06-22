@@ -221,8 +221,8 @@ FSOUND_Init(44100, 16, 0)
                 case 2
                     letterW = 84
                 end select
-                letters.putGLOW(scnbuff, (SCRX-letterW)*0.5+titlePosition*3+textOffsetX(i), 260+i*60, 0, i*2*39, letterW-1, i*2*39+38, &hffA0A0A0)
-                letters.putGLOW(scnbuff, (SCRX-letterW)*0.5+titlePosition*3+textOffsetX(i), 260+i*60, 0, (i + 0.5)*2*39, letterW-1, (i + 0.5)*2*39+38, &h00ffffff or (textRedX(i) shl 24))
+                letters.putGLOW(scnbuff, (SCRX-letterW)*0.5+titlePosition*3+textOffsetX(i), 285+i*60, 0, i*2*39, letterW-1, i*2*39+38, &hffA0A0A0)
+                letters.putGLOW(scnbuff, (SCRX-letterW)*0.5+titlePosition*3+textOffsetX(i), 285+i*60, 0, (i + 0.5)*2*39, letterW-1, (i + 0.5)*2*39+38, &h00ffffff or (textRedX(i) shl 24))
 
                 if selectedOption = i then
                     textOffsetX(i) += ((30 - textOffsetX(i))^0.2)*0.3
@@ -237,7 +237,8 @@ FSOUND_Init(44100, 16, 0)
                 end if
             next i
             
-            'subtitle.putTrans(scnbuff, 190+titlePosition, 230, 0, 0, 142, 56)
+            subtitle.putTrans(scnbuff, 205, 215+titlePosition, 0, 0, 94, 38)
+            subtitle.putTrans(scnbuff, 310, 215+titlePosition, 95, 0, 241, 38)
 
             window screen
             

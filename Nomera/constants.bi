@@ -3,7 +3,7 @@
 
 #include "debug.bi"
 
-#define SCALE_2X
+'#define SCALE_2X
 #define SCRX 640
 #define SCRY 480
 
@@ -13,6 +13,7 @@ enum orderType
     ACTIVE = 2
     BACKGROUND = 3
     ACTIVE_FRONT = 4
+    OVERLAY = 5
 end enum
 
 enum shapeType

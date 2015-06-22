@@ -7,6 +7,7 @@
 #include "zimage.bi"
 
 #define LIGHT_EFFECT_VALUE 5
+#define MIST_OBJECTS_PER_LAYER 30
 
 enum ObjectType_t
     EFFECT
@@ -92,6 +93,7 @@ Type Level_LayerData
     as ushort isFallout
     as ushort illuminated
     as integer ambientLevel
+    as integer windyMistLayer
     as ushort coverage
     as ushort receiver
     as ushort occluding
@@ -133,6 +135,19 @@ type LevelSwitch_t
     as string fileName
     as string portalName
     as PortalDirection_t facing
+end type
+
+type MistObject_t
+    as Vector2D p
+    as double zd
+end type
+type MistLayer_t
+    as MistObject_t ptr objects
+    as integer objects_n
+    as double zdepth
+    as integer layerNum
+    as Vector2D tl
+    as Vector2D br
 end type
 
 

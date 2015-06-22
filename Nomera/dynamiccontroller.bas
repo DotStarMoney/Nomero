@@ -1,12 +1,12 @@
 #include "dynamiccontroller.bi"
 #include "tinyspace.bi"
-#include "enemy.bi"
 #include "utility.bi"
 #include "soundeffects.bi"
 #include "gamespace.bi"
 #include "item.bi"
+#include "constants.bi"
 
-#define N_OBJ_TYPES 8
+#define N_OBJ_TYPES 9
 
 dim as NamesTypes_t ptr DynamicController.namesTypesTable = 0
 dim as integer          DynamicController.hasFilledTable = 0
@@ -21,16 +21,18 @@ constructor DynamicController
 	if hasFilledTable = 0 then
 		hasFilledTable = 1
 		namesTypesTable = allocate(sizeof(NamesTypes_t) * N_OBJ_TYPES)
-		namesTypesTable[0] = NamesTypes_t("SOLDIER 1", OBJ_ENEMY, 0)
-		namesTypesTable[1] = NamesTypes_t("SOLDIER 2", OBJ_ENEMY, 0)
-		namesTypesTable[2] = NamesTypes_t("BEAR", OBJ_ENEMY, 0)
-        namesTypesTable[3] = NamesTypes_t("NIXIE FLICKER", OBJ_ITEM, ITEM_NIXIEFLICKER)
-        namesTypesTable[4] = NamesTypes_t("SMALL OSCILLOSCOPE", OBJ_ITEM, ITEM_SMALLOSCILLOSCOPE)
-        namesTypesTable[5] = NamesTypes_t("INTERFACE", OBJ_ITEM, ITEM_INTERFACE)
-        namesTypesTable[6] = NamesTypes_t("LASER EMITTER", OBJ_ITEM, ITEM_LASEREMITTER)
-        namesTypesTable[7] = NamesTypes_t("LASER RECEIVER", OBJ_ITEM, ITEM_LASERRECEIVER)
+        namesTypesTable[0]  = NamesTypes_t("NIXIE FLICKER", OBJ_ITEM, ITEM_NIXIEFLICKER)
+        namesTypesTable[1]  = NamesTypes_t("SMALL OSCILLOSCOPE", OBJ_ITEM, ITEM_SMALLOSCILLOSCOPE)
+        namesTypesTable[2]  = NamesTypes_t("INTERFACE", OBJ_ITEM, ITEM_INTERFACE)
+        namesTypesTable[3]  = NamesTypes_t("LASER EMITTER", OBJ_ITEM, ITEM_LASEREMITTER)
+        namesTypesTable[4]  = NamesTypes_t("LASER RECEIVER", OBJ_ITEM, ITEM_LASERRECEIVER)
+        namesTypesTable[5]  = NamesTypes_t("BIG OSCILLOSCOPE", OBJ_ITEM, ITEM_LARGEOSCILLOSCOPE)
+        namesTypesTable[6]  = NamesTypes_t("FREQUENCY COUNTER", OBJ_ITEM, ITEM_FREQUENCYCOUNTER)
+        namesTypesTable[7] = NamesTypes_t("TANDY2000", OBJ_ITEM, ITEM_TANDY2000)
+        namesTypesTable[8] = NamesTypes_t("ALIEN SPINNER", OBJ_ITEM, ITEM_ALIENSPINNER)
 	end if
-	objects.init(sizeof(DynamicObjectType_t))
+	objects_active.init(sizeof(DynamicObjectType_t))
+    objects_activefront.init(sizeof(DynamicObjectType_t))
 	spawnZones.init(sizeof(SpawnZone_t))
 end constructor
 
@@ -42,7 +44,9 @@ sub DynamicController.flush()
 	dim as SpawnZone_t ptr         szptr
 	dim as DynamicObjectType_t ptr dynObj
 	dim as Item ptr curItem
-
+    dim as List ptr objectList
+    dim as integer i
+    
 	spawnZones.rollReset()
 	do
 		szptr = spawnZones.roll()
@@ -54,25 +58,31 @@ sub DynamicController.flush()
 	loop
 	spawnZones.flush()
 	
-	
-	objects.rollReset()
-	do
-		dynObj = objects.roll()
-		if dynObj <> 0 then
-			if dynObj->object_type = OBJ_ENEMY then
-				link.tinyspace_ptr->removeBody(cast(Enemy ptr, dynObj->data_)->body_i)
-				delete (cast(Enemy ptr, dynObj->data_))
-            elseif dynObj->object_type = OBJ_ITEM then
-                'BOMB MEMORY, dont delete what should hang around
-                curItem = dynObj->data_
-                delete(curItem)
+	for i = 0 to 1
+        select case i
+        case 0
+            objectList = @objects_active
+        case 1
+            objectList = @objects_activefront
+        end select
+   
+    
+        objectList->rollReset()
+        do
+            dynObj = objectList->roll()
+            if dynObj <> 0 then
+                if dynObj->object_type = OBJ_ITEM then
+                    'BOMB MEMORY, dont delete what should hang around
+                    curItem = dynObj->data_
+                    delete(curItem)
 
-			end if
-		else
-			exit do
-		end if
-	loop
-	objects.flush()
+                end if
+            else
+                exit do
+            end if
+        loop
+        objectList->flush()
+    next i
 
 end sub
 
@@ -80,26 +90,12 @@ sub DynamicController.setLink(link_ as ObjectLink)
 	link = link_
 end sub
 
-sub DynamicController.explosionAlert(p as Vector2D)
-	dim as DynamicObjectType_t ptr dobj
-	objects.rollReset()
-	do
-		dobj = objects.roll()
-		if dobj <> 0 then
-			if dobj->object_type = OBJ_ENEMY then
-				cast(Enemy ptr, dobj->data_)->explosionAlert(p)
-			end if
-		else
-			exit do
-		end if
-	loop
-end sub
-
 function DynamicController.populateLightList(ll as LightPair ptr ptr) as integer
     dim as DynamicObjectType_t ptr dobj
     dim as Item ptr ditem
     dim as ListNodeRoll_t tempR
-    dim as integer nlights
+    dim as integer nlights, i
+    dim as List ptr objectList
     dim as LightPair ptr lp
     dim as Vector2d scn_a, scn_b
     dim as Vector2d light_a, light_b
@@ -109,30 +105,39 @@ function DynamicController.populateLightList(ll as LightPair ptr ptr) as integer
     
     nlights = 0
     
-    tempR = objects.bufferRoll()
+    for i = 0 to 1
+        select case i
+        case 0
+            objectList = @objects_active
+        case 1
+            objectList = @objects_activefront
+        end select
     
-    BEGIN_LIST(dobj, objects)
-    
-        if dobj->object_type = OBJ_ITEM then
-            ditem = cast(Item ptr, dobj->data_)
-            if ditem->hasLight() then
-            
-                lp = ditem->getLightingData()
-                light_a = Vector2D(lp->texture.x, lp->texture.y) - Vector2D(lp->texture.w, lp->texture.h)*0.5 - Vector2D(128, 128)
-                light_b = Vector2D(lp->texture.x, lp->texture.y) + Vector2D(lp->texture.w, lp->texture.h)*0.5 + Vector2D(128, 128)
-                
-                if (light_a.x < scn_b.x) andAlso (light_b.x > scn_a.x) andAlso _
-                   (light_a.y < scn_b.y) andAlso (light_b.y > scn_a.y) then
+        tempR = objectList->bufferRoll()
+        BEGIN_LIST(dobj, (*objectList))
 
-                    ll[nlights] = lp
-                    nlights += 1
-                end if
+            if dobj->object_type = OBJ_ITEM then
+                ditem = cast(Item ptr, dobj->data_)
+                if ditem->hasLight() then
                 
+                    lp = ditem->getLightingData()
+                    light_a = Vector2D(lp->texture.x, lp->texture.y) - Vector2D(lp->texture.w, lp->texture.h)*0.5 - Vector2D(128, 128)
+                    light_b = Vector2D(lp->texture.x, lp->texture.y) + Vector2D(lp->texture.w, lp->texture.h)*0.5 + Vector2D(128, 128)
+                    
+                    if (light_a.x < scn_b.x) andAlso (light_b.x > scn_a.x) andAlso _
+                       (light_a.y < scn_b.y) andAlso (light_b.y > scn_a.y) then
+
+                        ll[nlights] = lp
+                        nlights += 1
+                    end if
+                    
+                end if
             end if
-        end if
+            
+        END_LIST()
+        objectList->setRoll(tempR)
         
-    END_LIST()
-    objects.setRoll(tempR)
+    next i
    
     return nlights
 end function
@@ -173,68 +178,31 @@ sub DynamicController.addSpawnZone(objectName as string,_
 end sub
 
 function DynamicController.addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer,_
-                                      minValue as double, maxValue as double, mode as integer, fast as integer) as Item ptr
+                                      minValue as double, maxValue as double, mode as integer, fast as integer, order as orderType = ACTIVE) as Item ptr
 	dim as Item ptr curItem
 	dim as DynamicObjectType_t dobj
 
 	curItem = new Item
-	curItem->setLink(link)
-    
-
-    
-	curItem->init(itemType_, itemFlavor_, fast)
-    
-  
-    
-    curItem->setPos(position)
-   
+	curItem->setLink(link)    
+	curItem->init(itemType_, itemFlavor_, fast)    
+    curItem->setPos(position)   
     curItem->setLightModeData(minValue, maxValue, mode)
 	
 	dobj.object_type = OBJ_ITEM
 	dobj.data_ = curItem
+    dobj.order = order
 	
-	objects.push_back(@dobj)
+    if order = ACTIVE then
+        objects_active.push_back(@dobj)
+    elseif order = ACTIVE_FRONT then
+        objects_activefront.push_back(@dobj)
+    end if
 	
 	return dobj.data_
     
 end function
 
-sub DynamicController.addEnemy(sz as SpawnZone_t)
-	dim as string objName
-	dim as Enemy ptr newEnemy
-	dim as DynamicObjectType_t dobj
-	
-	objName = ucase(*(sz.spawn_objectName))
-	
-	newEnemy = new Enemy
-	newEnemy->setParent(link.tinyspace_ptr, link.level_ptr,_
-	                    link.projectilecollection_ptr,_
-	                    link.gamespace_ptr,_
-	                    link.player_ptr)            
-	
-	select case objName
-	case "SOLDIER 1"
-		newEnemy->loadType(SOLDIER_1)
-	case "SOLDIER 2"
-		newEnemy->loadType(SOLDIER_2)
-	case "BEAR"
-		newEnemy->loadType(BEAR)
-	end select
-	
-	newEnemy->body.r = 18
-    newEnemy->body.m = 5
-    newEnemy->body.p = Vector2D(sz.p.x() + sz.size.x() * 0.5,_
-                                sz.p.y() + sz.size.y() - newEnemy->body.r)
-    newEnemy->body.friction = 2        
-	newEnemy->body_i = link.tinyspace_ptr->addBody(@(newEnemy->body))
-           
-	dobj.object_type = OBJ_ENEMY
-	dobj.data_ = newEnemy
 
-	newEnemy->setLink(link)
-
-	objects.push_back(@dobj)
-end sub
 
 sub DynamicController.addItem(sz as SpawnZone_t)
 	dim as Item ptr curItem
@@ -248,18 +216,19 @@ sub DynamicController.addItem(sz as SpawnZone_t)
     	
 	dobj.object_type = OBJ_ITEM
 	dobj.data_ = curItem
+    dobj.order = ACTIVE
 	
-	objects.push_back(@dobj)
+	objects_active.push_back(@dobj)
 	   
 end sub
 								   
 sub DynamicController.process(t as double)
 	dim as SpawnZone_t ptr szptr
 	dim as DynamicObjectType_t ptr dobj
-	dim as Enemy ptr enemyDelete
 	dim as Item ptr curItem
 	dim as integer spawnOne, shouldDelete, i
 	dim as ListNodeRoll_t lnr
+    dim as List ptr objectList
 
 	spawnZones.rollReset()
 	do
@@ -270,13 +239,10 @@ sub DynamicController.process(t as double)
 				szptr->isNew = 0
 				spawnOne = 1
 			end if
-			'run despawn logic on enemy death flag (hasMember = 0)
 			
 			if spawnOne = 1 andAlso szptr->hasMember = 0 then
 				szptr->hasMember = 1
-				select case szptr->spawn_type
-				case OBJ_ENEMY
-					addEnemy(*szptr)			
+				select case szptr->spawn_type			
 				case OBJ_ITEM
 					addItem(*szptr)
 				end select
@@ -286,67 +252,87 @@ sub DynamicController.process(t as double)
 		end if
 	loop
 	
-	objects.rollReset()
-	do
-		dobj = objects.roll()
-		if dobj <> 0 then
-			if dobj->object_type = OBJ_ENEMY then
-				lnr = objects.bufferRoll()
-				shouldDelete = cast(Enemy ptr, dobj->data_)->process(t)
-				objects.setRoll(lnr)
-				if shouldDelete = 1 then
-					for i = 0 to 3
-						link.oneshoteffects_ptr->create(cast(Enemy ptr, dobj->data_)->body.p + Vector2D(rnd * 48 - 24, rnd * 48 - 24),SMOKE,Vector2D(0,-2))
-						link.projectilecollection_ptr->create(cast(Enemy ptr, dobj->data_)->body.p, Vector2D(rnd*2 - 1, -1) * (300 + rnd*300), HEART)
-					next i
-					link.soundeffects_ptr->playSound(SND_DEATH)
-					link.tinyspace_ptr->removeBody(cast(Enemy ptr, dobj->data_)->body_i)
-					delete (cast(Enemy ptr, dobj->data_))
-					objects.rollRemove()
-				end if
-				
-			elseif dobj->object_type = OBJ_ITEM then
-				curItem = dobj->data_
-				
-				lnr = objects.bufferRoll()
-				shouldDelete = curItem->process(t)
-				objects.setRoll(lnr)
-                
-				if shouldDelete then
-					delete (cast(Item ptr, dobj->data_))
-					objects.rollRemove()
-				end if
-			end if
-		else
-			exit do
-		end if
-	loop
-	
+    for i = 0 to 1
+        select case i
+        case 0
+            objectList = @objects_active
+        case 1
+            objectList = @objects_activefront
+        end select
+    
+        objectList->rollReset()
+        do
+            dobj = objectList->roll()
+            if dobj <> 0 then
+                if dobj->object_type = OBJ_ITEM then
+                    curItem = dobj->data_
+                    
+                    lnr = objectList->bufferRoll()
+                    shouldDelete = curItem->process(t)
+                    objectList->setRoll(lnr)
+                    
+                    if shouldDelete then
+                        delete (cast(Item ptr, dobj->data_))
+                        objectList->rollRemove()
+                    end if
+                end if
+            else
+                exit do
+            end if
+        loop
+	next i
 	
 end sub
 
 sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = 0)
 	dim as DynamicObjectType_t ptr dobj
-	
-	objects.rollReset()
-	do
-		dobj = objects.roll()
-		if dobj <> 0 then
-			if dobj->object_type = OBJ_ENEMY then
-				if order = 1 then
-					cast(Enemy ptr, dobj->data_)->drawEnemy(scnbuff)
-				end if
-			elseif dobj->object_type = OBJ_ITEM then
-				if order = 2 then
-					cast(Item ptr, dobj->data_)->drawItem(scnbuff)
-				elseif order = 0 then
-					cast(Item ptr, dobj->data_)->drawItemTop(scnbuff)
-				end if
-			end if
-		else
-			exit do
-		end if
-	loop
-	
+	dim as List ptr objectList
+    dim as integer i
+    
+    if order <> OVERLAY then
+        select case order
+        case ACTIVE
+            objectList = @objects_active
+        case ACTIVE_FRONT
+            objectList = @objects_activefront
+        case else
+            exit sub
+        end select
+        
+    
+        objectList->rollReset()
+        do
+            dobj = objectList->roll()
+            if dobj <> 0 then
+                if dobj->object_type = OBJ_ITEM then
+                    cast(Item ptr, dobj->data_)->drawItem(scnbuff)
+                end if
+            else
+                exit do
+            end if
+        loop
+    else
+        for i = 0 to 1
+        
+            select case i
+            case 0
+                objectList = @objects_active
+            case 1
+                objectList = @objects_activefront
+            end select
+    
+            objectList->rollReset()
+            do
+                dobj = objectList->roll()
+                if dobj <> 0 then
+                    if dobj->object_type = OBJ_ITEM then
+                        cast(Item ptr, dobj->data_)->drawItemTop(scnbuff)
+                    end if
+                else
+                    exit do
+                end if
+            loop
+        next i
+	end if
 end sub
 

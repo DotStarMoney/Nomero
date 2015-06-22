@@ -70,6 +70,7 @@ sub Animation.load(filename as string)
     else
         filePath = left(filename, slashP)
     end if 
+  
     if animHash.exists(filename) = 1 then
         data_ = *cast(AnimationData_t ptr ptr, animHash.retrieve(filename))
     else
@@ -230,6 +231,7 @@ sub Animation.load(filename as string)
         animHash.insert(filename, @data_)
     end if
     currentAnim = data_->defaultAnim
+
     
     currentFrame = 0
     drawFrame = 0
@@ -279,6 +281,7 @@ sub Animation.restart()
     delayCounter = 0 
     reachedEnd = 0
     completed = 0
+    drawFrame = 0
 end sub
 sub Animation.play()
     isPaused = 0
@@ -684,12 +687,13 @@ sub Animation.fetchImageData(animNum as integer, frameNum as integer, rotatedFla
     dim as integer ptr rotateTemp, rotateTempNorm
 	dim as integer i
 	dim as integer newW, newH
-
+    
 	with data_->animations[animNum]
-	
+
         offset = .frame_offset
 		start_x = ((.frame_startCell + frameNum) * .frame_width) mod data_->w
 		start_y = (((.frame_startCell + frameNum) * .frame_width) \ data_->w) * .frame_height
+
 		if .frame_hasData = 1 then
             offset += .frame_data[frameNum].offset
         end if
@@ -697,6 +701,7 @@ sub Animation.fetchImageData(animNum as integer, frameNum as integer, rotatedFla
 		drawH = .frame_height
 				   
 		if (rotatedFlag = 0) orElse (rotatedFlag > 7) then
+
 			imgdata = data_->image
         else
         
@@ -792,20 +797,19 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer,
     dim as zimage  drawImg
     dim as Anim_DrawType_e drawMode
     with data_->animations[currentAnim]
-		
+		  
         fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
-       
        
         drawMode = data_->drawMode        
         if typeOverride <> ANIM_NONE then drawMode = typeOverride
-        
+ 
         select case drawMode
         case ANIM_TRANS
 
             drawImg.putTRANS(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x + x0, start_y + y0, start_x + drawW - 1 - x1, start_y + drawH - 1 - y1)
 			
 		case ANIM_GLOW
-
+            
             drawImg.putGLOW(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x + x0, start_y + y0, start_x + drawW - 1 - x1, start_y + drawH - 1 - y1, glowValue)
             
         case ANIM_PREALPHA
@@ -858,7 +862,6 @@ sub Animation.drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integ
                     if usesLight_N = 3 then exit for
                 end if
             next i
-                          
             if forceShading = 1 then
                 select case usesLight_N
                 case 0

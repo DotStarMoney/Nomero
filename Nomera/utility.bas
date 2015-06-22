@@ -381,11 +381,11 @@ end function
 
 sub parallaxAdjust(byref p_x as double, byref p_y as double,_
                   cam_x as double, cam_y as double,_
-                  lvlWidth as integer, lvlHeight as integer,_
+                  centerX as double, centerY as double,_
                   depth as double)
                     
-    p_x += (cam_x - (lvlWidth * 0.5)) * (1-depth)
-    p_y += (cam_y - (lvlHeight * 0.5)) * (1-depth)
+    p_x += (cam_x - centerX) * (1-depth)
+    p_y += (cam_y - centerY) * (1-depth)
 end sub
 
 sub stall(mili as integer)
@@ -1832,6 +1832,24 @@ function countTrans(src as uinteger ptr,_
 		h -= 1
 	wend
 	return count
+end function
+
+function raycastImage(src as uinteger ptr, byref startx as integer, byref starty as integer,_
+                      dirx as integer, diry as integer) as integer
+                              
+    dim as integer w, h, x, y, coff, pitch
+	dim as integer ptr data_
+	imageinfo src, w, h, , pitch, data_
+	pitch shr= 2
+	data_ += startx + starty * pitch 
+    coff = diry*pitch + dirx
+	while (startx >= 0) andALso (startx < w) andALso (starty >= 0) andAlso (starty < h) 
+		if (*data_ and &h00ffffff) <> &h00ff00ff then return 1
+        data_ += coff
+		startx += dirx
+        starty += diry
+    wend
+	return 0                                                    
 end function
 
 function compareTrans(src0 as uinteger ptr,_

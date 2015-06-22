@@ -80,8 +80,9 @@ type Level
        
         dim as integer justLoaded
     private:
-        
+        declare sub prepareWindyMistLayers()
         declare sub processLights()
+        declare sub processMist()
         declare sub putDispatch(scnbuff as integer ptr,_
                                 block as Level_VisBlock,_
                                 x as integer, y as integer,_
@@ -98,6 +99,8 @@ type Level
         dim as ushort lvlWidth
         dim as ushort lvlHeight
         dim as ushort snowfall
+        dim as ushort lvlCenterX
+        dim as ushort lvlCenterY
         dim as objectLink link
         dim as string loadedMusic
         dim as ushort default_x
@@ -113,7 +116,12 @@ type Level
         dim as integer hiddenObjectAmbientLevel
         dim as zimage auroraTexture
         dim as integer ptr smokeTexture
-
+        dim as integer highestLayerIndex
+        
+        dim as ushort windyMist
+        dim as MistLayer_t ptr windyMistLayers
+        dim as integer windyMistLayers_n
+        dim as zimage mistTexture
         
         dim as BoundingBox_t portalZones(0 to MAX_ZONES - 1)
         dim as integer       portalZonesNum

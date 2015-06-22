@@ -8,7 +8,9 @@
 #include "level.bi"
 #include "effects3d.bi"
 
-#define MIN_BOMB_TILE_POS -37
+#define MIN_BOMB_TILE_POS -46
+#define MIN_ITEM_BAR_POS -22
+#define ITEM_BAR_LIFE 300
 
 constructor Player
 	dim as integer i
@@ -44,6 +46,8 @@ constructor Player
     bombs = 0
     revealSilo = 0
     coverValue = 0.65
+    itemBarLife = ITEM_BAR_LIFE
+    itemBarPos = MIN_ITEM_BAR_POS
     
     spinnerAngle = 0
     spinnerAngleTarget = 0
@@ -55,8 +59,10 @@ constructor Player
     
     hudDigits.load("digits.png")
     healthindi.load("hindicator.png")
-    objectiveimg.load("objective.png")
-	
+	hudTrim.load("hudtrim.png")
+    detectmeter.load("dmeter.png")
+    huditembar.load("huditembar.png")
+    
     spinnerItem = 0
     anim.play()
     items.init(sizeof(Item ptr))
@@ -121,11 +127,19 @@ sub Player.drawPlayer(scnbuff as uinteger ptr)
     
 end sub
 
-sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer)
-    if harmedFlashing > 0 then
-        if chargeFlicker < 4 then anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy,,4*facing)
+sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer, positionless as integer = 0)
+    if positionless = 0 then
+        if harmedFlashing > 0 then
+            if chargeFlicker < 4 then anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy,,4*facing)
+        else
+            anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy,,4*facing)
+        end if
     else
-        anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy,,4*facing)
+        if harmedFlashing > 0 then
+            if chargeFlicker < 4 then anim.drawAnimation(destbuff, posx - anim.getOffset().x(), posy - anim.getOffset().y(),,4*facing)
+        else
+            anim.drawAnimation(destbuff, posx - anim.getOffset().x(), posy - anim.getOffset().y(),,4*facing)
+        end if    
     end if
 end sub
 
@@ -336,7 +350,7 @@ sub Player.processControls(dire as integer, jump as integer,_
                            ups as integer, fire as integer,_
                            shift as integer, numbers() as integer, _
                            explodeAll as integer, deactivateAll as integer,_
-                           turnstyle as integer,_
+                           turnstyle as integer, activate as integer,_
                            t as double)
     dim as Vector2D gtan
     dim as double curSpeed, oSpeed
@@ -740,7 +754,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 		if numbers(i) andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) andAlso spinnerCount(spinnerItem) > 0 then
 			if parent->isGrounded(body_i, this.groundDot) andAlso (parent->getArbiterN(body_i) > 0) then 
                 spinnerCount(spinnerItem) -= 1
-				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, spinnerItem)
+				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, spinnerItem,,,,,ACTIVE_FRONT)
                  
                 select case spinnerItem
                 case 0
@@ -827,6 +841,14 @@ sub Player.processControls(dire as integer, jump as integer,_
         spinnerCount(spinnerItem) = 9999
     elseif spinnerCount(spinnerItem) < 0 then
         spinnerCount(spinnerItem) = 0
+    end if
+    
+    if activate then 
+        if itemBarLife = 0 then 
+            itemBarLife = ITEM_BAR_LIFE
+        else
+            itemBarLife = 0
+        end if
     end if
     
         
@@ -979,6 +1001,26 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 		end if
 	next i
     
+    	
+	BEGIN_HASH(curItem_, items)
+		curItem = *curItem_
+		'if curItem->getType() <> ITEM_BOMB then
+		'	curItem->drawItem(scnbuff)
+		'end if
+	END_HASH()
+    
+	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
+	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
+
+    
+    LOCK_TO_SCREEN()
+    
+    '216 -> 180
+    hudTrim.putTRANS(scnbuff, SCRX*0.5 - 180, 425, 0, 0, 470, 49)
+    drawHexPrism(scnbuff, 68, 452, spinnerAngle, 42, 40, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+    
+    
+    /'
     totalWidth = 0
     for i = 0 to 9
         thisWidth = bombData(i).tilePosY + 32
@@ -986,60 +1028,65 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
         tilePlaceX(i) = totalWidth - (32 - thisWidth)*0.5
         totalWidth += thisWidth
     next i
+    '/
     
-    LOCK_TO_SCREEN()
     for i = 0 to 9     
-        tilePlaceX(i) -= totalWidth * 0.5
-        posY = (SCRY - 32 - 5) - bombData(i).tilePosY
+        tilePlaceX(i) = i * 33 + 224'-= totalWidth * 0.5
+        posY = (SCRY - 32 - 14) - bombData(i).tilePosY
         if posY > -32 then
-            bombListTiles.putTRANS(scnbuff, 45 + SCRX*0.5 + tilePlaceX(i), posY, i*32, 0, i*32+31, 31)
-            bombListTiles.putTRANS(scnbuff, 45 + SCRX*0.5 + tilePlaceX(i), posY, bombData(i).bombType*32, 32, bombData(i).bombType*32+31, 63)
+            bombListTiles.putTRANS(scnbuff, tilePlaceX(i), posY, i*32, 0, i*32+31, 31)
+            bombListTiles.putTRANS(scnbuff, tilePlaceX(i), posY, bombData(i).bombType*32, 32, bombData(i).bombType*32+31, 63)
         end if
     next i
-    UNLOCK_TO_SCREEN()
   
+    
 	
-	BEGIN_HASH(curItem_, items)
-		curItem = *curItem_
-		'if curItem->getType() <> ITEM_BOMB then
-		'	curItem->drawItem(scnbuff)
-		'end if
-	END_HASH()
-	
-	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
-	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
-
-    drawHexPrism(scnbuff, 52, 448, spinnerAngle, 42, 40, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
     
-    LOCK_TO_SCREEN()
     
-    hudDigits.putTRANS(scnbuff, 100, 449, 0,34,67,52)
-    hudDigits.putTRANS(scnbuff, 111, 453, 0,0,15,15)
-    
-    curPos = Vector2D(150, 453)
+    curPos = Vector2D(194, 434)
     nd = intToBCD(spinnerCount(spinnerItem), @digits(0))
     for i = 0 to nd - 1
         hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,0, 23 + digits(i)*8,15)
         curPos -= Vector2D(8, 0)
     next i
    
-    hudDigits.putTRANS(scnbuff, 560, 449, 0,34,67,52)
-    hudDigits.putTRANS(scnbuff, 571, 453, 0,16,15,31)
-   
-    curPos = Vector2D(610, 453)
+    
+    curPos = Vector2D(194, 455)
     nd = intToBCD(142, @digits(0))
     for i = 0 to nd - 1
         hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,16, 23 + digits(i)*8,31)
         curPos -= Vector2D(8, 0)
     next i
     
-    healthindi.putTrans(scnbuff, 12, 12, 0, 0, 31, 31)
-    objectiveimg.putTrans(scnbuff, 538, 5, 0, 0, 95, 63)
-    objectiveimg.putTrans(scnbuff, 538, 5, 96, 0, 191, 63)
+    drawDetectMeter(scnbuff, (sin(timer * 0.5) + 1) * 50)
+    
+    huditembar.putTRANS(scnbuff, 0, itemBarPos, 0, 0, 639, 21)
+    
     
     UNLOCK_TO_SCREEN()
     
 end sub
+sub Player.drawDetectMeter(scnbuff as integer ptr, lvl as integer)
+    dim as integer nPieces, i, posx, posy
+    static as integer pieces(0 to 20, 0 to 1) = _
+                             {{3, 3}, {7, 3}, {11, 3}, {15, 3}, {19, 3}, {23, 3}, {27, 3}, _
+                              {31, 3}, {35, 3}, {39, 4}, {42, 5}, {45, 8}, {47, 11}, {49, 15}, _
+                              {49, 19}, {49, 23}, {49, 27}, {49, 31}, {49, 35}, {49, 39}, {49, 43}}
+    if lvl > 100 then 
+        lvl = 100
+    elseif lvl < 0 then
+        lvl = 0
+    end if
+    detectmeter.putTRANS(scnbuff, 564, 419, 0, 0, 53, 48)
+    nPieces = (lvl / 100.0) * 20
+    for i = 0 to nPieces
+        posx = 564 + pieces(i, 0)
+        posy = 419 + pieces(i ,1)
+        detectmeter.putTRANS(scnbuff, posx, posy, 54+i*4, 0, 57+i*4, 3)
+    next i
+    
+end sub
+
 
 sub Player.processItems(t as double)
 	dim as Item ptr curItem
@@ -1047,6 +1094,16 @@ sub Player.processItems(t as double)
 	dim as integer bombNumber
 	dim as Vector2D bombPos
 	dim as Vector2D d, a_bound, b_bound
+    
+    if itemBarLife > 0 then
+        itemBarPos += 4
+        if itemBarPos > 0 then itemBarPos = 0
+        itemBarLife -= 1
+    else
+        itemBarPos -= 4
+        if itembarPos < MIN_ITEM_BAR_POS then itemBarPos = MIN_ITEM_BAR_POS
+    end if
+    
 	
 	for bombNumber = 0 to 9
         if hasBomb(bombNumber) then

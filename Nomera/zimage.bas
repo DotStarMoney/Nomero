@@ -91,7 +91,7 @@ end sub
 
 sub zimage.putTRANS(dest_fbimg as integer ptr, posX as integer, posY as integer,_
                     x0 as integer, y0 as integer, x1 as integer, y1 as integer)
-     
+
     put dest_fbimg, (posX, posY), diffuse_fbimg, (x0, y0)-(x1, y1), TRANS      
 end sub
 

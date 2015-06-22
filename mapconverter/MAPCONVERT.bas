@@ -293,6 +293,8 @@ dim as zstring * 128 map_name
 dim as zstring * 128 music_file
 dim as ushort default_x
 dim as ushort default_y
+dim as ushort pcenter_x
+dim as ushort pcenter_y
 dim as ushort snowfall = 0
 dim as ushort shouldLight = 65535
 dim as ushort aurora = 65535
@@ -345,7 +347,7 @@ dim as integer     tag_index_n = 0
 dim as string filename, lne, item_tag, item_content, tempMap
 redim as string pieces(0 to 0)
 dim as tag_index_t ti_pair
-dim as integer f, itemNestLevel, itemIndex, curPos, curTile
+dim as integer f, itemNestLevel, itemIndex, curPos, curTile, hasCenter
 dim as integer dataline, curChar, row, col, colIndex, propertyline = 0
 dim as integer propertyType = 0, isObject, readObjects, curObjDepth
 dim as tileEffect_t tempEffect
@@ -355,6 +357,7 @@ dim as string ls, rs
 
 screenres 640,480,32
 
+hasCenter = 0
 
 filename = command(1)
 if len(filename) = 0 then end
@@ -677,10 +680,14 @@ do
                     if left(lcase(item_tag), 4) = "snow" then
                         'if left(lcase(item_content), 2) = "on" then
                             snowfall = 1
-                            beep
                         'end if
-                    elseif left(lcase(item_tag), 6) = "aurora" then
+                    elseif left(lcase(item_tag), 6) = "aurora" then                    
                         aurora = 1
+                    elseif left(lcase(item_tag), 15) = "parallax center" then   
+                        split item_content,,,pieces()
+                        pcenter_x = val(pieces(0)) * 16
+                        pcenter_y = val(pieces(1)) * 16
+                        hasCenter = 1
                     elseif left(lcase(item_tag), 13) = "default start" then
                         split item_content,,,pieces()
                         default_x = val(pieces(0))
@@ -1781,6 +1788,13 @@ for i = 0 to N_tilesets - 1
     tilesets(i).set_filename = "tilesets\" & tilesets(i).set_filename
 next i
 
+if hasCenter = 0 then
+    pcenter_x = map_width * 0.5 * 16
+    pcenter_y = map_height * 0.5 * 16
+end if
+
+
+
 Print "Using " & str(totalSets) & " tilesets..."
 
 print "Writing file..."
@@ -1798,6 +1812,8 @@ put #f,,objectAmbientLevel
 put #f,,hiddenObjectAmbientLevel
 put #f,,default_x
 put #f,,default_y
+put #f,,pcenter_x
+put #f,,pcenter_y 
 put #f,,music_file
 put #f,,totalSets
 for i = 0 to N_tilesets - 1

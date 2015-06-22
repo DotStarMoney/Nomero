@@ -5,10 +5,10 @@
 #include "list.bi"
 #include "objectlink.bi"
 #include "item.bi"
+#include "constants.bi"
 #include "pointlight.bi"
 
 enum DynamicObjectType_e
-	OBJ_ENEMY
 	OBJ_ITEM
 	OBJ_NONE
 end enum
@@ -43,6 +43,7 @@ end type
 type DynamicObjectType_t
 	as DynamicObjectType_e object_type
 	as any ptr             data_
+    as orderType           order
 end type
 
 type DynamicController
@@ -61,17 +62,17 @@ type DynamicController
 		declare sub drawDynamics(scnbuff as integer ptr, order as integer = 0)
 		declare sub flush()
 		declare function addOneItem(position as Vector2D, itemType_ as Item_Type_e, itemFlavor_ as integer = 0,_
-                                    minValue as double = 1, maxValue as double = 1, mode as integer = 0, fast as integer = 65535) as Item ptr
+                                    minValue as double = 1, maxValue as double = 1, mode as integer = 0, fast as integer = 65535, order as orderType = ACTIVE) as Item ptr
 		declare function populateLightList(ll as LightPair ptr ptr) as integer
 	private:
 		static as NamesTypes_t ptr namesTypesTable
 		static as integer          hasFilledTable
 		
-		declare sub addEnemy(sz as SpawnZone_t)
 		declare sub addItem(sz as SpawnZone_t)
 		
 		as ObjectLink link
-		as List objects
+		as List objects_active
+        as List objects_activeFront
 		as List spawnZones
 end type
 	

@@ -55,13 +55,13 @@ type Player
                                     ups as integer, fire as integer,_
                                     shift as integer, numbers() as integer,_
                                     explodeAll as integer, deactivateAll as integer,_
-                                    turnstyle as integer,_
+                                    turnstyle as integer, activate as integer,_
                                     t as double)
         declare sub processItems(t as double)
         declare sub drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
         declare sub loadAnimations(filename as string)
         declare sub drawPlayer(scnbuff as uinteger ptr)
-        declare sub drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer)
+        declare sub drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer, positionless as integer = 0)
         declare function getState() as PlayerState
         declare sub explosionAlert(p as Vector2D)
         declare sub harm(p as Vector2D, amount as integer)
@@ -108,6 +108,7 @@ type Player
         declare function onSpikes() as integer
         declare sub computeCoverage()
         declare sub switch(ls as LevelSwitch_t)
+        declare sub drawDetectMeter(scnbuff as integer ptr, level as integer)
         
         as HashTable items
         
@@ -164,9 +165,14 @@ type Player
         as double spinnerAngleV
         as integer spinnerCount(0 to 5)
         
+        as integer itemBarLife
+        as integer itemBarPos
+        
         as zimage hudDigits
         as zimage healthindi
-        as zimage objectiveimg
+        as zimage hudTrim
+        as zimage detectmeter
+        as zimage huditembar
         
 End type
 

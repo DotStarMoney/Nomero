@@ -16,6 +16,7 @@ using fb
 
 constructor GameSpace()
 	dim as ObjectLink link
+    dim as integer i
     randomize timer
      
     link.gamespace_ptr = @this
@@ -78,8 +79,8 @@ constructor GameSpace()
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    'FSOUND_Stream_Play currentMusic, music(currentMusic)
-    'FSOUND_SetVolumeAbsolute(currentMusic, 128)
+    FSOUND_Stream_Play currentMusic, music(currentMusic)
+    FSOUND_SetVolumeAbsolute(currentMusic, 255)
         
     switchTracks = 0
     
@@ -101,7 +102,7 @@ constructor GameSpace()
     foregroundSnow.setSpeed(700)
     
     tracker.init(link)
-            
+           
    
     pathfile = lvlData.getName() & "_pathing.dat"
     if fileexists(pathfile) then
@@ -116,6 +117,10 @@ constructor GameSpace()
     end if
     
     tracker.pause()
+    
+    for i = 0 to 255
+        last_keypress(i) = 0
+    next i
 	
     scnbuff = imagecreate(640,480)
     stallTime_mili = 15
@@ -166,9 +171,9 @@ function GameSpace.go() as integer
         load = (processTime / (1000 / FPS_TARGET)) * 100
         if load > oneSecondMaxLoad then oneSecondMaxLoad = load
         oneSecondAvg += load
-        'print using "Frame Load %: ##.##"; load
-        'print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
-        'print using "One Second Average Load %: ##.##"; oneSecondAvgLast
+        print using "Frame Load %: ##.##"; load
+        print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
+        print using "One Second Average Load %: ##.##"; oneSecondAvgLast
         
         'print spy.body.p
 
@@ -238,6 +243,7 @@ sub GameSpace.step_input()
     keypress(SC_W) = multikey(SC_W)
     keypress(SC_A) = multikey(SC_A)
     keypress(SC_S) = multikey(SC_S)
+    keypress(SC_SPACE) = multikey(SC_SPACE)
 end sub
 
 sub GameSpace.vibrateScreen()
@@ -305,6 +311,7 @@ sub GameSpace.step_draw()
     
     START_PROFILE(1)
     lvlData.drawLayers(scnbuff, ACTIVE_FRONT, camera.x(), camera.y(), Vector2D(0, shake))
+    dynControl.drawDynamics(scnbuff, ACTIVE_FRONT)
     RECORD_PROFILE(1)    
     
     START_PROFILE(5)
@@ -315,20 +322,12 @@ sub GameSpace.step_draw()
 	lvlData.drawLayers(scnbuff, ACTIVE_COVER, camera.x(), camera.y(), Vector2D(0, shake))'
     RECORD_PROFILE(1)
 
-    START_PROFILE(6)
-	dynControl.drawDynamics(scnbuff, ACTIVE_COVER)
-    RECORD_PROFILE(6)
     
     START_PROFILE(1)
     lvlData.drawLayers(scnbuff, FOREGROUND, camera.x(), camera.y(), Vector2D(0, shake))
     RECORD_PROFILE(1)
 
-    START_PROFILE(4)
-    effects.draw_effects(scnbuff)
-    projectiles.draw_collection(scnbuff)
-    RECORD_PROFILE(4)
 
-    arcEffects.drawArcs(scnbuff)
     
     START_PROFILE(2)
     if lvlData.usesSnow() = 1 then foregroundSnow.drawFlakes(scnbuff, camera)
@@ -337,7 +336,12 @@ sub GameSpace.step_draw()
 
     START_PROFILE(6)
     lvlData.drawSmoke(scnbuff)
-    dynControl.drawDynamics(scnbuff, FOREGROUND)
+    arcEffects.drawArcs(scnbuff)
+
+    effects.draw_effects(scnbuff)
+    projectiles.draw_collection(scnbuff)
+    
+    dynControl.drawDynamics(scnbuff, OVERLAY)
     RECORD_PROFILE(6)
 
     
@@ -434,7 +438,7 @@ sub GameSpace.step_process()
     #define RECORD_PROFILE(X) timeAdd(X) += timer - startTime(X)
     
     dim as integer i, dire, jump, ups, fire, explodeAll, deactivateAll
-    dim as integer numbers(0 to 9), turnstyle, turnstyleInput
+    dim as integer numbers(0 to 9), turnstyle, turnstyleInput, activate
 
     dim as double tM, tS, totalT, startTotalT
     dim as double timeAdd(0 to 9), startTime(0 to 9)
@@ -550,6 +554,12 @@ sub GameSpace.step_process()
     vibcount -= 1
     
     
+    if keypress(SC_SPACE) andAlso (last_keypress(SC_SPACE) = 0) then 
+        activate = 1
+    else
+        activate = 0
+    end if
+    
     lvlData.process(0.01667)
     dynControl.process(0.01667)
     
@@ -557,9 +567,9 @@ sub GameSpace.step_process()
 	if keypress(SC_N) then tracker.pause()
 	
 	if isSwitching <> 1 andAlso lockAction <> 1 then
-    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), numbers(), explodeAll, deactivateAll, turnstyleInput, 0.01667)
+    	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), numbers(), explodeAll, deactivateAll, turnstyleInput, activate, 0.01667)
     elseif lockAction = 1 then
-    	spy.processControls(0, 0, 0, 0, 0, numbers(), 0, 0, turnstyleInput, 0.01667)
+    	spy.processControls(0, 0, 0, 0, 0, numbers(), 0, 0, 0, 0, 0.01667)
     end if
     spy.processItems(0.01667)
     if lvlData.usesSnow() = 1 then 
@@ -621,6 +631,9 @@ sub GameSpace.step_process()
     next i
     'print int((timeProfiles(1) / timeProfiles(0)) * 100)
     lastTurnstyleInput = turnstyle
+    for i = 0 to 255
+        last_keypress(i) = keypress(i)
+    next i
 end sub
 
 sub GameSpace.doGameEnd()
