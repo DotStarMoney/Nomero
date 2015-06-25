@@ -55,7 +55,6 @@ type Circle2D extends Shape2D
         as double r
 end type
 
-'NOTE: assumes correctly ordered method calls of general shape only
 type Polygon2D extends Shape2D
     public:
         declare constructor()
@@ -64,7 +63,8 @@ type Polygon2D extends Shape2D
         
         declare sub set(points_ as Vector2D ptr, points_n_ as integer)
         declare sub setPoint(i as integer, p as Vector2D)
-        declare sub offset(o as Vector2D)
+        declare sub setOffset(o as Vector2D)
+        declare function getOffset() as Vector2D
         
         declare function getPoint_N() as integer
         declare function getPoint(i as integer) as Vector2D
@@ -104,29 +104,19 @@ type Polygon2D extends Shape2D
         as integer ptr sub_points_n
         as Vector2D ptr ptr sub_points
         
+        as Vector2D offset
 end type
 
 declare function intersect2D_pp(a as Point2D ptr, b as Point2D ptr) as integer
 declare function intersect2D_ps(a as Point2D ptr, b as Rectangle2D ptr) as integer
 declare function intersect2D_pc(a as Point2D ptr, b as Circle2D ptr) as integer
 declare function intersect2D_py(a as Point2D ptr, b as Polygon2D ptr) as integer
-
 declare function intersect2D_ss(a as Rectangle2D ptr, b as Rectangle2D ptr) as integer
 declare function intersect2D_sc(a as Rectangle2D ptr, b as Circle2D ptr) as integer
 declare function intersect2D_sy(a as Rectangle2D ptr, b as Polygon2D ptr) as integer
-
 declare function intersect2D_cc(a as Circle2D ptr, b as Circle2D ptr) as integer
 declare function intersect2D_cy(a as Circle2D ptr, b as Polygon2D ptr) as integer
-
 declare function intersect2D_yy(a as Polygon2D ptr, b as Polygon2D ptr) as integer
-
 declare function intersect2D(a as Shape2D, b as Shape2D) as integer
-
-
-
-
-
-
-
     
 #endif
