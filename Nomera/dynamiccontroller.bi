@@ -1,17 +1,15 @@
 #ifndef DYNAMICCONTROLLER_BI
 #define DYNAMICCONTROLLER_BI
 
+#include "objects\headers\itemtypes.bi"
 #include "vector2d.bi"
 #include "list.bi"
 #include "objectlink.bi"
 #include "item.bi"
 #include "constants.bi"
 #include "pointlight.bi"
-
-enum DynamicObjectType_e
-	OBJ_ITEM
-	OBJ_NONE
-end enum
+#include "hashtable.bi"
+#include "keybank.bi"
 
 enum SpawnZoneDespawnType_e
 	SPAWN_TIMED
@@ -31,13 +29,6 @@ type SpawnZone_t
 	as Vector2D               size
     as Item_Type_e            itemNumber
     as integer                flavor
-end type
-
-type NamesTypes_t
-	declare constructor(name_p as string, type_p as DynamicObjectType_e, itemNumber_p as Item_Type_e)
-	as zstring * 32        name_
-	as DynamicObjectType_e type_
-    as Item_Type_e         itemNumber_
 end type
 
 type DynamicObjectType_t
@@ -65,11 +56,12 @@ type DynamicController
                                     minValue as double = 1, maxValue as double = 1, mode as integer = 0, fast as integer = 65535, order as orderType = ACTIVE) as Item ptr
 		declare function populateLightList(ll as LightPair ptr ptr) as integer
 	private:
-		static as NamesTypes_t ptr namesTypesTable
-		static as integer          hasFilledTable
 		
 		declare sub addItem(sz as SpawnZone_t)
 		
+        as KeyBank itemIdGenerator
+        as Hashtable itemId
+        
 		as ObjectLink link
 		as List objects_active
         as List objects_activeFront

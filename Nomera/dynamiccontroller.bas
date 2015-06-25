@@ -6,10 +6,7 @@
 #include "item.bi"
 #include "constants.bi"
 
-#define N_OBJ_TYPES 9
-
-dim as NamesTypes_t ptr DynamicController.namesTypesTable = 0
-dim as integer          DynamicController.hasFilledTable = 0
+#include "objects\headers\gen_namestypestable.bi"
 
 constructor NamesTypes_t(name_p as string, type_p as DynamicObjectType_e, itemNumber_p as Item_Type_e)
 	this.name_ = name_p
@@ -18,19 +15,6 @@ constructor NamesTypes_t(name_p as string, type_p as DynamicObjectType_e, itemNu
 end constructor
 
 constructor DynamicController
-	if hasFilledTable = 0 then
-		hasFilledTable = 1
-		namesTypesTable = allocate(sizeof(NamesTypes_t) * N_OBJ_TYPES)
-        namesTypesTable[0]  = NamesTypes_t("NIXIE FLICKER", OBJ_ITEM, ITEM_NIXIEFLICKER)
-        namesTypesTable[1]  = NamesTypes_t("SMALL OSCILLOSCOPE", OBJ_ITEM, ITEM_SMALLOSCILLOSCOPE)
-        namesTypesTable[2]  = NamesTypes_t("INTERFACE", OBJ_ITEM, ITEM_INTERFACE)
-        namesTypesTable[3]  = NamesTypes_t("LASER EMITTER", OBJ_ITEM, ITEM_LASEREMITTER)
-        namesTypesTable[4]  = NamesTypes_t("LASER RECEIVER", OBJ_ITEM, ITEM_LASERRECEIVER)
-        namesTypesTable[5]  = NamesTypes_t("BIG OSCILLOSCOPE", OBJ_ITEM, ITEM_LARGEOSCILLOSCOPE)
-        namesTypesTable[6]  = NamesTypes_t("FREQUENCY COUNTER", OBJ_ITEM, ITEM_FREQUENCYCOUNTER)
-        namesTypesTable[7] = NamesTypes_t("TANDY2000", OBJ_ITEM, ITEM_TANDY2000)
-        namesTypesTable[8] = NamesTypes_t("ALIEN SPINNER", OBJ_ITEM, ITEM_ALIENSPINNER)
-	end if
 	objects_active.init(sizeof(DynamicObjectType_t))
     objects_activefront.init(sizeof(DynamicObjectType_t))
 	spawnZones.init(sizeof(SpawnZone_t))
@@ -153,14 +137,14 @@ sub DynamicController.addSpawnZone(objectName as string,_
 	dim as integer i
 	objType = OBJ_NONE
 	for i = 0 to N_OBJ_TYPES - 1
-		if ucase(objectName) = namesTypesTable[i].name_ then
-			objType = namesTypesTable[i].type_
+		if ucase(objectName) = namesTypesTable(i).name_ then
+			objType = namesTypesTable(i).type_
 			exit for
 		end if
 	next i
 	if objType = OBJ_NONE then exit sub
 	
-    zone.itemNumber = namesTypesTable[i].itemNumber_
+    zone.itemNumber = namesTypesTable(i).itemNumber_
     zone.flavor = flavor
 	zone.hasMember = 0
 	zone.spawn_time  = time_

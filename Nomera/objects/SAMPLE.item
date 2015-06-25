@@ -1,0 +1,98 @@
+'#elevator
+
+'sample script showing usage of object compiler. (must start with #OBJECT NAME
+'where OBJECT NAME is as it would appear in the namesTypes table)
+
+
+'added to header if not in function or signal/slot block
+'can have macros, consts, types, whatever. all are prefixed with item_objectname_
+
+type _OBJECT_DATA_ 'assigned and allocated to "data" if present
+    as integer okay
+    as double yes
+    
+end type
+type test_type
+
+    as integer temp
+    as string test2
+end type
+
+const buhnz as integer = 4
+
+
+
+'---------------------------------
+
+function _init()
+    'added as case in init
+
+
+
+end function
+
+
+'---------------------------------
+
+function _flush()
+    'added to flush
+
+end function
+
+
+'---------------------------------
+
+
+function _draw()
+    'added to draw
+
+end function
+
+'----------------------------------
+
+function _drawOverlay()
+    'added to draw top
+
+end function
+
+'----------------------------------
+
+function _run()
+    'added to process
+
+    '''''' demonstration of throwing signals ''''''''
+    throw($reachedTop("timeTaken = 20"))
+    
+    queryTargets(slotSet, "SHOCK TARGET", Circle2D(Vector2D(p.x, p.y), 10))
+    querySlots(slotSet, "FRY ELECTRONICS")
+    queryValues(valueSet, "CURRENT POSITION")
+    
+    slotSet.throw("severity = 10")
+    
+    value = getValue(Parameter("TUBE A ID"), "CURRENT POSITION")  
+    ''''''''''''''''''''''''''''''''''''''''''''''''
+
+    'return 0 to keep, 1 to destroy
+end function
+
+'-----------------------------------
+
+signal $reachedTop(timeTaken as integer)
+signal $reachedBottom(timeTaken as integer)
+
+slot $breakDown(severity as integer)
+
+
+end slot
+
+parameter "TUBE A ID", string
+
+publish target "SHOCK TARGET", Square2D(Vector2D(0, 0), Vector2D(size.x, size.y)), $breakDown 'contained in hash table so objects can access these god forbid
+publish slot "FRY ELECTRONICS", $breakDown
+publish value "CURRENT POSITION", Vector2D 'can query individual items this way
+
+
+' Square2D(tl, br)
+' Circle2D(p, r)
+' Point2D(p)
+' Polygon2d({x0, x1, x2, x3, x4, x5, x6, ...})

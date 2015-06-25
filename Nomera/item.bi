@@ -8,7 +8,9 @@
 #include "pointlight.bi"
 
 
-enum Item_Type_e
+
+/'
+enum _Item_Type_e
 	ITEM_KEY
 	ITEM_INTELLIGENCE
 	ITEM_SECRETFURNITURE
@@ -27,6 +29,16 @@ enum Item_Type_e
     ITEM_TANDY2000
     ITEM_ALIENSPINNER
 end enum
+
+union objectData
+    as integer test1
+    as integer test2
+
+end union
+'/
+
+#include "objects\headers\gen_itemdefines.bi"
+'has all prefixed types
 
 'for bomb, first 3 bits define bomb type.
 '	next 2 bits are orientation
@@ -87,6 +99,7 @@ type Item
         as integer      data5
         as integer      data6
         as integer      data7
+        as _objectData_u  data_ 
 end type
 
 

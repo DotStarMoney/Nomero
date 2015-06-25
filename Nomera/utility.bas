@@ -2040,10 +2040,10 @@ function circleBox(px as double, py as double, rad as double,_
     x *= x
     dy = y1 - py
     dy *= dy
-    if x + dy < rad then return 1
+    if x + dy <= rad then return 1
     dy = y2 - py
     dy *= dy
-    if x + dy < rad then return 1
+    if x + dy <= rad then return 1
     y = py
     if y < y1 then
         y = y1
@@ -2056,10 +2056,10 @@ function circleBox(px as double, py as double, rad as double,_
     y *= y
     dx = x1 - px
     dx *= dx
-    if y + dx < rad then return 1
+    if y + dx <= rad then return 1
     dx = x2 - px
     dx *= dx
-    if y + dx < rad then return 1
+    if y + dx <= rad then return 1
     if c = 0 then return 1
     return 0
 end function 
