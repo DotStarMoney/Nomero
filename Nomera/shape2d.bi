@@ -7,6 +7,11 @@ type Shape2D extends Object
     public:
         declare abstract sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)    
 end type
+type EmptyShape2D extends Shape2D
+    public:
+        declare constructor()
+        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) 
+end type
 
 type Point2d extends Shape2D
     public:

@@ -1,6 +1,13 @@
 #include "shape2d.bi"
 #include "vector2d.bi"
 
+
+constructor EmptyShape2D()
+end constructor
+sub EmptyShape2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) 
+    tl_ = Vector2D(0,0)
+    br_ = Vector2D(0,0)
+end sub
 constructor Point2D()
 end constructor
 constructor Point2D(p_ as Vector2D)
@@ -698,7 +705,8 @@ function intersect2D_yy(a as Polygon2D ptr, b as Polygon2D ptr) as integer
 end function
 
 
-screenres 640,480,32
+screenres 640,480,32,2
+screenset 1,0
 
 dim as Vector2D samplePoly(0 to 10) = {Vector2D(183, 88), Vector2D(411, 117), Vector2D(329, 252), _
                                        Vector2D(497, 373), Vector2D(297, 418), Vector2D(264, 275), _
@@ -711,11 +719,7 @@ dim as Vector2D samplePoly2(0 to 6) = {Vector2D(-10, -30), Vector2D(0, -15), Vec
                                        Vector2D(-5, 0)}
 
 Dim as Polygon2D test, test2
-Dim as Point2D p
-dim as Circle2D c
-dim as Rectangle2D r
-dim as Vector2D tl, br
-dim as integer i, j, col, mx, my,x , y
+dim as integer i,mx, my, col
 
 test.set(@samplePoly(0), 11)
 test2.set(@samplePoly2(0), 7)
@@ -723,6 +727,8 @@ test2.set(@samplePoly2(0), 7)
 do
     cls
     getmouse mx, my
+    
+    
     randomize 11
     col = rgb(128 + rnd*128, 128+rnd * 128, 128+rnd*128)
     for i = 0 to test.getPoint_N() - 2
@@ -730,7 +736,6 @@ do
              (test.getPoint(i + 1).x, test.getPoint(i + 1).y), col
     next i
     
-    test.getBoundingBox(tl, br)
     col = rgb(128 + rnd*128, 128+rnd * 128, 128+rnd*128)
 
     for i = 0 to test2.getPoint_N() - 2
@@ -742,16 +747,11 @@ do
     
     
     
-    if intersect2D(test2, test) then print "IN"
+    if intersect2D(test2, test) then print "Bonk!"
 
-    'r.setTL(Vector2D(mx, my) - Vector2D(50, 33))
-    'r.setBR(Vector2D(mx, my) + Vector2D(50, 33))
-    'line (r.getTl().x, r.getTL().y)-(r.getBR().x, r.getBR().y), &h00ff00, B
-    'if intersect2D(r, test) then print "IN"
-    
-    'print intersect2D(p, test)
-    'line (tl.x, tl.y)-(br.x, br.y), &hffff00, B
+
     sleep 16
+    flip
 loop until multikey(1)
 
 

@@ -5,6 +5,12 @@
     #include "utility.bi"
 #endif
 
+
+#define MIN_CELLS 4
+#define MAX_CAPACITY 0.8
+#define EXPAND_FACTOR 2
+
+
 constructor HashTable(datasize as uinteger)
     ready_flag = 0
     data_ = 0
@@ -17,8 +23,7 @@ constructor HashTable()
 end constructor
 
 destructor HashTable()
-    flush()
-    deallocate(data_)
+    clean()
 end destructor
 
 sub HashTable.init(datasize as uinteger)
@@ -340,4 +345,27 @@ sub HashTable.flush()
     deallocate(data_)
     data_ = 0
     init(dataSizeBytes)
+end sub
+
+sub HashTable.clean()
+    dim as HashNode_t ptr curNode
+    dim as HashNode_t ptr nextNode
+    dim as integer i
+    for i = 0 to numCells - 1
+        curNode = data_[i]
+        while curNode <> 0 
+            nextNode = curNode->next_
+            
+            if curNode->key_type = KEY_STRING then
+                deallocate(curNode->key_string)
+            end if
+            deallocate(curNode->data_)
+            deallocate(curNode)
+            
+            curNode = nextNode
+        wend 
+    next i
+    numObjects = 0
+    deallocate(data_)
+    data_ = 0
 end sub

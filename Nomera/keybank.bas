@@ -18,6 +18,7 @@ sub KeyBank.relinquish(key as string)
     curNode_ = keys.retrieve(key)
     if curNode_ then
         deallocate(curNode_->memAddr)
+        curNode_->key = ""
         keys.delete(key)
     end if
 end sub
@@ -25,6 +26,7 @@ sub KeyBank.flush()
     dim as KeyBank_node_t ptr curNode_
     BEGIN_HASH(curNode_, keys)
         deallocate(curNode_->memAddr)
+        curNode_->key = ""
     END_HASH()
 end sub
 

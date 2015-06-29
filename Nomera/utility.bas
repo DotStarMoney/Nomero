@@ -371,8 +371,8 @@ Public Sub Split(Text As String, Delim As String, Count As Long, Ret() As String
     for x = 1 to ubound(Ret)-1
         Ret(x) = left(Ret(x), len(Ret(x))-1)
     next x
-   
 End Sub
+
 
 function rndRange(a as double, b as double) as double
     if b < a then swap a, b
@@ -1920,6 +1920,23 @@ function trimwhite(s as string) as string
 		s = left(s, len(s)-1)
 	wend
 	return s
+end function
+
+function stripwhite(s as string) as string
+    dim as integer i, quoteLevel
+    dim as string ret, curChar
+    ret = ""
+    quoteLevel = 0
+    for i = 1 to len(s)
+        curChar = mid(s, i, 1)
+        if curChar = "'" then quoteLevel = 1 - quoteLevel
+        if quoteLevel = 0 then
+            if (curChar <> " ") andAlso (curChar <> "\t") then ret += curChar
+        else
+            ret += curChar
+        end if
+    next i
+    return ret
 end function
 
 sub pmapFix(byref x as integer, byref y as integer)

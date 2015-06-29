@@ -20,40 +20,48 @@ end type
 
 const buhnz as integer = 4
 
+'all this shit gets prefixed
+function helpFunction(an_integer as integer) as string
+    return "okay"
+end function
+
 
 
 '---------------------------------
 
-function _init()
+sub _init()
     'added as case in init
 
 
 
-end function
+end sub
 
 
 '---------------------------------
 
-function _flush()
+sub _flush()
     'added to flush
 
-end function
+end sub
 
 
 '---------------------------------
 
 
-function _draw()
+sub _draw()
     'added to draw
 
-end function
+end sub
 
 '----------------------------------
 
-function _drawOverlay()
+sub _drawOverlay()
     'added to draw top
 
-end function
+end sub
+
+
+'optional _getBounds() function
 
 '----------------------------------
 
@@ -61,15 +69,19 @@ function _run()
     'added to process
 
     '''''' demonstration of throwing signals ''''''''
-    throw($reachedTop("timeTaken = 20"))
+    throw($reachedTop("timeTaken = (10f ; 120f)"))
     
-    queryTargets(slotSet, "SHOCK TARGET", Circle2D(Vector2D(p.x, p.y), 10))
-    querySlots(slotSet, "FRY ELECTRONICS")
-    queryValues(valueSet, "CURRENT POSITION")
+    queryTargetSlots(slotSet, "SHOCK TARGET", Circle2D(Vector2D(p.x, p.y), 10)) 'used to query stuff that has a target, so not everything
+    'queryTargetValues
+    querySlots(slotSet, "FRY ELECTRONICS") 
+    queryValues(valueSet, "CURRENT POSITION")                     'used to query all values 
     
-    slotSet.throw("severity = 10")
+    slotSet.throw("severity = 10.2f")
     
-    value = getValue(Parameter("TUBE A ID"), "CURRENT POSITION")  
+    value_ = getValue(Parameter("TUBE A ID"), "CURRENT POSITION")  'used to get values from specific item
+    
+    
+    'connect(id_A, signal_tag, id_B, slot_tag)
     ''''''''''''''''''''''''''''''''''''''''''''''''
 
     'return 0 to keep, 1 to destroy
@@ -87,8 +99,10 @@ end slot
 
 parameter "TUBE A ID", string
 
-publish target "SHOCK TARGET", Square2D(Vector2D(0, 0), Vector2D(size.x, size.y)), $breakDown 'contained in hash table so objects can access these god forbid
+'target makes it a spatial publish
+publish slot target "SHOCK TARGET", $breakDown, Square2D(Vector2D(0, 0), Vector2D(size.x, size.y)) 'contained in hash table so objects can access these god forbid
 publish slot "FRY ELECTRONICS", $breakDown
+
 publish value "CURRENT POSITION", Vector2D 'can query individual items this way
 
 

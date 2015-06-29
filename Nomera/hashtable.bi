@@ -2,10 +2,6 @@
 #define HASHTABLE_BI
 
 
-#define MIN_CELLS 4
-#define MAX_CAPACITY 0.8
-#define EXPAND_FACTOR 2
-
 #include "debug.bi"
 
 #macro BEGIN_HASH(x, y)
@@ -56,6 +52,7 @@ type HashTable
         declare sub resetRoll()
         declare function roll() as any ptr
         declare sub flush()
+        declare sub clean()
     private:
         declare function hashString(r_key as string)   as uinteger
         declare function hashInteger(r_key as integer) as uinteger
