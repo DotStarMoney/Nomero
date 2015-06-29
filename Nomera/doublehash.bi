@@ -93,7 +93,7 @@ type DoubleHash
     private:
         declare sub clean()
         declare function hashString(key as string)   as uinteger
-        declare function hashInteger(key as integer) as uinteger
+        declare function hashInteger(s_key as integer) as uinteger
         declare sub rehash1()
         declare sub rehash2()
         
@@ -109,6 +109,7 @@ type DoubleHash
 
         as DoubleHashNode_t ptr curRollNode
         as integer              curRollIndx
+        as integer              curRollTble
 end type
 
 

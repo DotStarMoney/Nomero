@@ -12,6 +12,7 @@
 #include "keybank.bi"
 #include "shape2d.bi"
 #include "hash2d.bi"
+#include "doublehash.bi"
 
 
 type DynamicController_publish_t
