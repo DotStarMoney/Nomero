@@ -6,7 +6,6 @@
 #include "tinybody.bi"
 #include "utility.bi"
 
-'#include blocks of functions used by methods including local functions
 
 #define ifVector2D(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_VECTOR2D, 1, 0)
 #define ifInteger(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_INTEGER, 1, 0)
@@ -18,6 +17,8 @@
 #define getDouble(_VTC_) _VTC_.data_.double_
 #define getString(_VTC_) *(_VTC_.data_.zstring)
 
+'#include blocks of functions used by methods including local functions and item
+'custom types and item custom defines/constants
 
 
 constructor Item()
@@ -70,8 +71,11 @@ sub Item.flush()
             end if
         end if
     END_HASH()
+    ID = ""
 end sub
-
+function Item.getID() as string
+    return ID
+end function
 
 function Item.process(t as double) as integer
     '#include itemProcesstable (will return value)
@@ -130,7 +134,9 @@ end sub
 function Item.isSignal(signal_tag as string) as integer
     return signalTable.exists(ucase(signal_tag))
 end function
-
+function Item.isSlot(slot_tag as string) as integer
+    return signalTable.exists(ucase(slot_tag))
+end function
 sub Item.setPos(v as Vector2D)
     p = v
 end sub
@@ -311,7 +317,7 @@ sub Item.fireSlot(slot_tag as string, parameter_string as string)
                 divPos = instr(paramSplit(i), "=")
                 paramName = ucase(left(paramSplit(i), divPos - 1))
                 valueString = right(paramSplit(i), len(paramSplit(i)) - divPos)
-                if pvPair_l > 0 then redim as _Item_slotValuePair_t pvPair(pvPair_l)
+                if pvPair_l > 0 then redim preserve as _Item_slotValuePair_t pvPair(pvPair_l)
                 valueFormToContainer(valueString, pvPair(pvPair_l).value_)
                 pvPair(pvPair_l).parameter_tag = paramName
                 pvPair_l += 1
@@ -328,7 +334,11 @@ sub Item.fireSlot(slot_tag as string, parameter_string as string)
         next i        
     end if
 end sub
-
+function Item.getValueContainer(value_tag as string) as _Item_valueContainer_t ptr
+    dim as _Item_valueContainer_t value_ptr
+    value_tag = ucase(value_tag)
+    return valueTable.retrieve(value_tag)
+end function
 sub Item.getValue(byref value_ as Vector2D, value_tag as string) 
     dim as _Item_valueContainer_t value_ptr
     value_tag = ucase(value_tag)

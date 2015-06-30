@@ -90,8 +90,8 @@ type DoubleHash
         declare sub resetRoll()
         declare function roll() as any ptr
         declare sub flush()
-    private:
         declare sub clean()
+    private:
         declare function hashString(key as string)   as uinteger
         declare function hashInteger(s_key as integer) as uinteger
         declare sub rehash1()

@@ -407,6 +407,7 @@ sub Polygon2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
     br_ = br + offset
 end sub
 function intersect2D(a as Shape2D, b as Shape2D) as integer
+    if (a is EmptyShape2D) orElse (b is EmptyShape2D) then return 0
     if a is Point2D then
         if b is Point2D then
             return intersect2D_pp(cast(Point2D ptr, @a), cast(Point2D ptr, @b))
@@ -703,56 +704,4 @@ function intersect2D_yy(a as Polygon2D ptr, b as Polygon2D ptr) as integer
     next k
     return 0
 end function
-
-
-screenres 640,480,32,2
-screenset 1,0
-
-dim as Vector2D samplePoly(0 to 10) = {Vector2D(183, 88), Vector2D(411, 117), Vector2D(329, 252), _
-                                       Vector2D(497, 373), Vector2D(297, 418), Vector2D(264, 275), _
-                                       Vector2D(100, 416), Vector2D(166, 303), Vector2D(74, 204), _
-                                       Vector2D(92, 94), Vector2D(180, 216)}
-                                       
-                                       
-dim as Vector2D samplePoly2(0 to 6) = {Vector2D(-10, -30), Vector2D(0, -15), Vector2D(18, -2.1),_
-                                       Vector2D(30, 26), Vector2D(5, 20), Vector2D(-20, 35),_
-                                       Vector2D(-5, 0)}
-
-Dim as Polygon2D test, test2
-dim as integer i,mx, my, col
-
-test.set(@samplePoly(0), 11)
-test2.set(@samplePoly2(0), 7)
-
-do
-    cls
-    getmouse mx, my
-    
-    
-    randomize 11
-    col = rgb(128 + rnd*128, 128+rnd * 128, 128+rnd*128)
-    for i = 0 to test.getPoint_N() - 2
-        line (test.getPoint(i).x, test.getPoint(i).y)-_
-             (test.getPoint(i + 1).x, test.getPoint(i + 1).y), col
-    next i
-    
-    col = rgb(128 + rnd*128, 128+rnd * 128, 128+rnd*128)
-
-    for i = 0 to test2.getPoint_N() - 2
-        line (test2.getPoint(i).x, test2.getPoint(i).y)-_
-             (test2.getPoint(i + 1).x, test2.getPoint(i + 1).y), col
-    next i
-    
-    test2.setOffset(Vector2D(mx, my))
-    
-    
-    
-    if intersect2D(test2, test) then print "Bonk!"
-
-
-    sleep 16
-    flip
-loop until multikey(1)
-
-
 

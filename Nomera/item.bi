@@ -7,9 +7,8 @@
 #include "shape2d.bi"
 #include "hashtable.bi"
 
-'holds per item prefixed types, per item #defines
+
 'item type pointer union for data_ and item_e table, slot_e table
-#include "objects\headers\gen_itemdefines.bi" 
 
 
 type _Item_valueTypes_e
@@ -56,6 +55,8 @@ type Item
 		declare sub setPos(v as Vector2D)
         declare sub setSize(s as Vector2D)
 
+        declare function getID() as string
+        
 		declare function getPos() as Vector2D
         declare function getSize() as Vector2D
         
@@ -77,8 +78,12 @@ type Item
         declare sub getValue(byref value_ as integer, value_tag as string) 
         declare sub getValue(byref value_ as double, value_tag as string) 
         declare sub getValue(byref value_ as string, value_tag as string) 
+        declare function getValueContainer(value_tag as string) as _Item_valueContainer_t ptr
         
         declare function isSignal(signal_tag as string) as integer
+        declare function isSlot(slot_tag as string) as integer
+        
+        declare static sub valueFormToContainer(value_form as string, byref valueC as _Item_valueContainer_t)
 	private:
         '#include blocks of function definitions used by methods
     
@@ -90,7 +95,6 @@ type Item
         declare static sub matchParameter(byref param_ as string,   paramater_tag as string, pvPair() as _Item_slotValuePair_t)
         
         
-        declare static sub valueFormToContainer(value_form as string, byref valueC as _Item_valueContainer_t)
         
         'calls dyncontroller getValue
         declare sub getOtherValue(byref value_ as Vector2D, ID_ as string, value_tag as string)

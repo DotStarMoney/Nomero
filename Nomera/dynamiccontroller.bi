@@ -14,7 +14,7 @@
 #include "hash2d.bi"
 #include "doublehash.bi"
 
-
+'item adds its own position to query shape
 type DynamicController_publish_t
     as Shape2D target
     as DynamicController_publish_t ptr ptr hash2Dindex 'for when target <> EmptyShape2D for quick removal
@@ -22,26 +22,33 @@ type DynamicController_publish_t
     as Item ptr item_
 end type
 
-type DynamicController_itemPair
+type DynamicController_itemPair_t
     as Item ptr item_
     as integer usedKeyBank
 end type
 
+type DynamicController_connectionNode_t
+    as Hashtable slots   'on slot name
+    as Hashtable signals 'on signal name
+end type
 type DynamicController_connectionIncoming_t
-    as zstring ptr incomingID
-    as zstring ptr incomingSignalTag
+    as DoubleHash incomingFromSignals 'on incoming from item ID, and incoming signal tag
 end type
 type DynamicController_connectionOutgoing_t
-    as DoubleHash destinations 'r_key is destination item, u_key is destination slot
+    as DoubleHash outgoingToSlots 'on outoing to item ID, and outoing to slot tag
+end type
+type DynamicController_connectionIncomingSource_t
+    as zstring ptr incomingId
+    as zstring ptr incomingSignalTag
+    as zstring ptr thisSlot
 end type
 type DynamicController_connectionOutgoingDestination_t
     as zstring ptr outgoingID
     as zstring ptr outgoingSlotTag
+    as zstring ptr thisSignal
 end type
-type DynamicController_connectionNode_t
-    as Hashtable outgoingSignals 
-    as DoubleHash incomingSignals
-end type
+
+
 
 
 type DynamicController
@@ -54,10 +61,10 @@ type DynamicController
 		declare sub setLink(link_ as ObjectLink)
 
 		declare sub process(t as double)
-		declare sub drawDynamics(scnbuff as integer ptr, order as integer = 0)
+		declare sub drawDynamics(scnbuff as integer ptr, order as integer = ACTIVE)
         
         declare function itemStringToType(item_tag as string) as Item_Type_e
-		declare function addItem(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
+		declare function addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
         
         declare function hasItem(ID_ as string) as integer
         
@@ -66,6 +73,7 @@ type DynamicController
         
         declare function getPos(ID_ as string) as Vector2D
         declare function getSize(ID_ as string) as Vector2D
+        declare sub getBounds(ID_ as string, byref a as Vector2D, byref b as Vector2D)
 
         declare sub removeItem(ID_ as string)
         
@@ -83,7 +91,7 @@ type DynamicController
         declare sub queryValues(value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
         declare sub querySlots(slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
         
-        'hidden calls from item inits
+        'hidden calls from item inits, can assign shape since parameter is properly constructed
         declare sub addPublishedValue(publishee_ID as string, value_tag as string, target as Shape2D = EmptyShape2D())
         declare sub addPublishedSlot(publishee_ID as string, slot_tag as string, target as Shape2D = EmptyShape2D())
 
@@ -93,7 +101,8 @@ type DynamicController
                                     
         '-------------------------------- aux functions -------------------------------------
 		declare function populateLightList(ll as LightPair ptr ptr) as integer 
-	private:
+    
+    private:
         declare sub _addStringToType_(tag as string, item_t as Item_Type_e)
         as Hashtable stringToTypeTable
         

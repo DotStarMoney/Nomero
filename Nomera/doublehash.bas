@@ -3,7 +3,7 @@
 
 
 #define MIN_CELLS 4
-#define MAX_CAPACITY 0.8
+#define MAX_CAPACITY 0.65
 #define EXPAND_FACTOR 2
 
 
