@@ -379,15 +379,6 @@ function findChar(text as string, searchChar as string, hirearchy as string = ""
     return 0
 end function
 
-sub getStringFromFile(filenum as integer, stringData as string)
-    dim as ubyte curASCII
-    stringData = ""
-    do
-        get #filenum,,curASCII
-        if curASCII then stringData += chr(curASCII)
-    loop while curASCII 
-end sub
-
 sub tokenize(text as string, ret() as string, delim as string = " ", max_ret as integer = -1, hirearchy as string = "")
     dim as integer curToken = 0
     dim as string curHire = ""

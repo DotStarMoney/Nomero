@@ -271,7 +271,7 @@ sub Item.valueFormToContainer(value_form as string, byref valueC as _Item_valueC
         'read as vector2d
         'remove parenthesis
         value_form = right(left(value_form, len(value_form) - 1), len(value_form) - 2)
-        cpos = instr(value_form, ";")
+        cpos = instr(value_form, ",")
         lstr = left(value_form, cpos - 1)
         rstr = right(value_form, len(value_form) - cpos)
         if ucase(right(lstr, 1) = "F") then lstr = left(lstr, len(lstr) - 1)
@@ -311,20 +311,27 @@ sub Item.fireSlot(slot_tag as string, parameter_string as string)
         slotNumer = slotE_ptr->slotE
         if parameter_string <> "" then
             parameter_string = trimwhite(parameter_string)
-            split(parameter_string, ",", 0, paramSplit)
+            tokenize(parameter_string, paramSplit, ",",, "()")
             pvPair_l = 0
             for i = 0 to ubound(paramSplit)
+                paramSplit(i) = trimwhite(paramSplit(i))
                 divPos = instr(paramSplit(i), "=")
                 paramName = ucase(left(paramSplit(i), divPos - 1))
-                valueString = right(paramSplit(i), len(paramSplit(i)) - divPos)
+                paramName = trimwhite(paramName)
+                valueString = stripwhite(right(paramSplit(i), len(paramSplit(i)) - divPos))             
                 if pvPair_l > 0 then redim preserve as _Item_slotValuePair_t pvPair(pvPair_l)
                 valueFormToContainer(valueString, pvPair(pvPair_l).value_)
                 pvPair(pvPair_l).parameter_tag = paramName
                 pvPair_l += 1
             next i
+        else
+            pvPair(0).parameter_tag = ""
+            pvPair(0).value_.type_ = _ITEM_VALUE_INTEGER
+            pvPair(i).value_.data_.integer_ = -1
         end if
         
-        '#include slotlookup table, will match parameters to pvPair (we pass it in to the slot functions)
+        
+        '#include slotlookup table, will matchParameters to pvPair (we pass it in to the slot functions)
     
     
         for i = 0 to ubound(pvPair)

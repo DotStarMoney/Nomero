@@ -1,7 +1,7 @@
 #ifndef DYNAMICCONTROLLER_BI
 #define DYNAMICCONTROLLER_BI
 
-#include "objects\headers\itemtypes.bi"
+#include "item.bi"
 #include "vector2d.bi"
 #include "list.bi"
 #include "objectlink.bi"
@@ -45,6 +45,7 @@ end type
 type DynamicController_connectionOutgoingDestination_t
     as zstring ptr outgoingID
     as zstring ptr outgoingSlotTag
+    as zstring ptr appendParameter
     as zstring ptr thisSignal
 end type
 
@@ -62,10 +63,7 @@ type DynamicController
 
 		declare sub process(t as double)
 		declare sub drawDynamics(scnbuff as integer ptr, order as integer = ACTIVE)
-        
-        declare function itemStringToType(item_tag as string) as Item_Type_e
-		declare function addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
-        
+
         declare function hasItem(ID_ as string) as integer
         
         declare sub setPos(ID_ as string, p_ as Vector2D)
@@ -76,6 +74,13 @@ type DynamicController
         declare sub getBounds(ID_ as string, byref a as Vector2D, byref b as Vector2D)
 
         declare sub removeItem(ID_ as string)
+        
+        '---------------- used by outside to create objects ---------------
+        declare function itemStringToType(item_tag as string) as Item_Type_e
+		declare function addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
+        declare sub setParameterFromString(param_string as string, ID_ as string, param_tag as string)
+        declare sub connect(signal_ID as string, signal_tag as string, slot_ID as string, slot_tag as string, parameter_string as string = "")
+        '------------------------------------------------------------------
         
         declare sub setParameter(param_ as Vector2D, ID_ as string, param_tag as string)
         declare sub setParameter(param_ as integer, ID_ as string, param_tag as string)
@@ -97,13 +102,14 @@ type DynamicController
 
         declare sub throw(signal_ID as string, signal_tag as string, parameter_string as string = "")
         declare sub fireSlot(ID_ as string, slot_tag as string, parameter_string as string = "")
-        declare sub connect(signal_ID as string, signal_tag as string, slot_ID as string, slot_tag as string)
                                     
         '-------------------------------- aux functions -------------------------------------
 		declare function populateLightList(ll as LightPair ptr ptr) as integer 
     
     private:
         declare sub _addStringToType_(tag as string, item_t as Item_Type_e)
+        declare function getItem(ID_ as string) as Item ptr
+
         as Hashtable stringToTypeTable
         
     

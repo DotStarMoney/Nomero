@@ -1,0 +1,78 @@
+'#frequency counter
+
+
+type ITEM_DATA 
+    as zstring ptr someText2
+    as Vector2D vec
+    as integer shouldDraw
+end type
+
+const buhnz as integer = 2
+
+
+parameter "flavor", integer
+signal $testSignal1
+signal $testSignal2
+
+'---------------------------------
+
+function _init()
+    data.someText2 = 0
+    data.shouldDraw = 0
+end function
+
+
+'---------------------------------
+
+function _flush()
+
+    if data.someText2 then deallocate(data.someText2)
+end function
+
+
+'---------------------------------
+
+
+function _draw()
+    dim as integer flavor
+    if data.shouldDraw then
+        getParameter(flavor, "flavor")
+
+        line (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff00ff, &h00ffff), Bf
+
+    
+    end if
+end function
+
+'----------------------------------
+
+function _drawOverlay()
+
+end function
+
+'----------------------------------
+
+function _run()
+
+    if int(rnd * 1000) = 0 then throw($testSignal1)
+    if int(rnd * 1000) = 0 then throw($testSignal2)
+
+    end function
+
+
+'-----------------------------------
+
+slot $testSlot3()
+
+    beep
+    beep
+    beep
+    
+end slot
+
+
+slot $explode()
+
+    link.soundeffects_ptr->playSound(SND_EXPLODE)
+
+end slot

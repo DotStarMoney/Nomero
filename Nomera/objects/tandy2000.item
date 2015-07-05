@@ -1,40 +1,58 @@
-'#elevator
+'#tandy2000
 
-'sample script showing usage of object compiler. (must start with #OBJECT NAME
-'where OBJECT NAME is as it would appear in the namesTypes table)
-
-
-'added to header if not in function or signal/slot block
-
-type _OBJECT_DATA_ 'assigned and allocated to "data" if present
-    as integer okay
-    as double yes
-    
+type notItemData_t
+    as integer      temp
+    as integer ptr  test2
 end type
-type test_type
 
-    as integer temp
-    as string test2
+type ITEM_DATA 
+    as integer testInt
+    as double  testDbl
+    as single  testSng
+    Vector2D   alright
+    as integer checkIt
+    as notItemData_t cheese
 end type
 
 const buhnz as integer = 4
 
+parameter "test vector2d", Vector2D
 
+
+signal   $justTrees
+signal $notImportant
+
+
+publish slot "my only slot", $myOnlySlot, Circle2D(Vector2D(0,0), 10.0)
+publish value "TESTVALUe", string
 
 '---------------------------------
 
 function _init()
-    'added as case in init
+    dim as integer rightoh
+    
+    data.testSng = 4.2
+    
+    data.cheese.test2 = 0
+    data.cheese.temp = 2
+    data.checkIt = 0
+    
+    rightOh = buhnz
 
-
-
+    setValue("its me", "TESTVALUE")
+    print rightOh
+    sleep
+    
 end function
 
 
 '---------------------------------
 
 function _flush()
-    'added to flush
+    'nothing here but us trees!
+    print "nothing here but us trees!"
+    beep
+    sleep
 
 end function
 
@@ -43,44 +61,54 @@ end function
 
 
 function _draw()
-    'added to draw
+    
+    line (p.x, p.y)-(p.x+size.x, p.y+size.y), &hffff00, BF
 
 end function
 
 '----------------------------------
 
 function _drawOverlay()
-    'added to draw top
+    
+    LOCK_SCREEN()
+        circle (10, 10), 10, &h00ff00
+        draw string (10, 10), str(data.alright)
+        if data.checkIt = 4 then draw string (10, 18), "EUREKA"
+    UNLOCK_SCREEN()
 
 end function
 
 '----------------------------------
 
 function _run()
-    'added to process
-
-    '''''' demonstration of throwing signals ''''''''
-    throw($reachedTop("timeTaken = 20"))
+   
     
-    queryTargets(targetSet, "SHOCK TARGET", Ball(Vector2D(p.x, p.y), 10))
-    queryKeys(keySet, "FRY ELECTRONICS")
+    getParameter(data.alright, "test vector2D")
     
-    keySet.throw("severity = 10")
-    ''''''''''''''''''''''''''''''''''''''''''''''''
-
-    'return 0 to keep, 1 to destroy
+    setValue(str(timer), "testvalue")
+    
 end function
 
 '-----------------------------------
 
-signal $reachedTop(timeTaken as integer)
-signal $reachedBottom(timeTaken as integer)
+/'
+    sub ITEM_TANDY2000_SLOT_MYONLYSLOT_SUB(pvPair() as _Item_slotValuePair_t)
+        dim aValue as integer
+        matchParameter(aValue, "AVALUE", pvPair)
+        
+        dim as integer localVariable
+        data_->checkIt = 1
+    
+    end sub
 
-slot $breakDown(severity as integer)
+'/
 
+
+slot $myOnlySlot(aValue as integer)
+    dim as integer localVariable
+
+    data.checkIt = 1
+    
 
 end slot
-
-publish target $shockTarget("SHOCK TARGET", Square(Vector2D(0, 0), Vector2D(size.x, size.y)), $breakDown) 'contained in hash table so objects can access these god forbid
-publish key $fryElevator("FRY ELECTRONICS", $breakDown)
 

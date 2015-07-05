@@ -5,6 +5,7 @@
 #include "file.bi"
 #include "fbpng.bi"
 #include "vbcompat.bi"
+#include "utility.bi"
 
 Enum MaskResult_e
     SUBSET
@@ -103,39 +104,7 @@ sub extractMask(dest as integer ptr, src as integer ptr, xoff as integer, yoff a
     next y
 end sub
 
-Public Sub Split(Text As String, Delim As String = " ", Count As Long = -1, Ret() As String)
 
-    Dim As Long x, p
-    If Count < 1 Then
-        Do
-            x = InStr(x + 1, Text, Delim)
-            p += 1
-        Loop Until x = 0
-        Count = p - 1
-    ElseIf Count = 1 Then
-        ReDim Ret(Count)
-        Ret(0) = Text
-    Else
-        Count -= 1
-    End If
-    Dim RetVal(Count) As Long
-    x = 0
-    p = 0
-    Do Until p = Count
-        x = InStr(x + 1,Text,Delim)
-        RetVal(p) = x
-        p += 1
-    Loop
-    ReDim Ret(Count)
-    Ret(0) = Left(Text, RetVal(0) - 1 )
-    p = 1
-    Do Until p = Count
-        Ret(p) = Mid(Text, RetVal(p - 1) + 1, RetVal(p) - RetVal(p - 1) )
-        p += 1
-    Loop
-    Ret(Count) = Mid(Text, RetVal(Count - 1) + 1)
-   
-End Sub
 
 #define trimQuotes(x) (mid(x, 2, len(x)-2))
 
@@ -227,12 +196,28 @@ enum SpawnerRespawnType_t
     SPAWN_FRAME
 end enum
 
+
+
 type objectSpawner_t
-    as zstring * 128 spawn_objectName
     as single spawn_time
     as ushort spawn_count
-    as ushort flavor
     as ushort spawn_respawnType
+    
+    as zstring ptr ID
+    as zstring ptr spawn_objectName
+    
+    as ushort     spawn_parameters_N
+    as zstring ptr ptr spawn_parameterNames
+    as zstring ptr ptr spawn_parameterValues
+    
+    as ushort     spawn_signals_N
+    as zstring ptr ptr spawn_signalNames
+    as zstring ptr ptr spawn_signalParameterStrings 
+    
+    as ushort  ptr         spawn_targets_N
+    as zstring ptr ptr ptr spawn_signalTargetIDs
+    as zstring ptr ptr ptr spawn_signalTargetSlots
+    
 end type
 
 
@@ -295,7 +280,8 @@ dim as ushort default_x
 dim as ushort default_y
 dim as ushort pcenter_x
 dim as ushort pcenter_y
-dim as ushort snowfall = 0
+dim as ushort snowfall = 65535
+dim as ushort windyMist = 65535
 dim as ushort shouldLight = 65535
 dim as ushort aurora = 65535
 dim as integer objectAmbientLevel = &hffffffff
@@ -313,7 +299,6 @@ redim as object_t objects(0)
 redim as integer ptr setImages(0)
 redim as integer ptr setImages_norm(0)
 '-------------------------------------
-
 
 type tag_index_t
     as string tag
@@ -342,17 +327,22 @@ dim as integer     tag_index_n = 0
     end if
 #endmacro
 
+#macro newZstring(_X_, _Y_)
+    (_X_) = allocate(len(_Y_) + 1)
+    *((_X_)) = (_Y_)
+#endmacro
+
 #define NUM_COLLISION_BLOCKS 84
 
 dim as string filename, lne, item_tag, item_content, tempMap
 redim as string pieces(0 to 0)
 dim as tag_index_t ti_pair
 dim as integer f, itemNestLevel, itemIndex, curPos, curTile, hasCenter
-dim as integer dataline, curChar, row, col, colIndex, propertyline = 0
-dim as integer propertyType = 0, isObject, readObjects, curObjDepth
+dim as integer dataline, curChar, row, col, colIndex, propertyline = 0, splitPos
+dim as integer propertyType = 0, isObject, readObjects, curObjDepth, curSplit
 dim as tileEffect_t tempEffect
 dim as tileEffect_t ptr tempEffectPtr
-dim as string ls, rs
+dim as string ls, rs, signalName, parameterString, slotID, slotName
 
 
 screenres 640,480,32
@@ -375,6 +365,7 @@ dataline = 0
 isObject = 0
 readObjects = 0
 curObjDepth = ACTIVE
+
 do
     'cls
  
@@ -388,7 +379,7 @@ do
     
     if dataline = 0 then
         if propertyline = 0 then
-            curPos = instr(lne,"=") 
+            curPos = findChar(lne,"=",,chr(34)) 
             if curPos < 1 then
                 if right(lne, 1) = "{" then
                     
@@ -595,10 +586,19 @@ do
                                         objects(N_objects - 1).data_ = allocate(sizeof(ObjectSpawner_t))
                                         tempObjSpawner = objects(N_objects - 1).data_
                                         tempObjSpawner->spawn_time = 0
-                                        tempObjSpawner->spawn_objectName = ""
+                                        tempObjSpawner->spawn_objectName = 0
                                         tempObjSpawner->spawn_count = 1
                                         tempObjSpawner->spawn_respawnType = SPAWN_ONCE
-                                        tempObjSpawner->flavor = 0
+                                        tempObjSpawner->ID = 0                                        
+                                        tempObjSpawner->spawn_parameters_N = 0
+                                        tempObjSpawner->spawn_parameterNames = 0
+                                        tempObjSpawner->spawn_parameterValues = 0
+                                        tempObjSpawner->spawn_signals_N = 0
+                                        tempObjSpawner->spawn_signalNames = 0
+                                        tempObjSpawner->spawn_signalParameterStrings = 0
+                                        tempObjSpawner->spawn_targets_N = 0
+                                        tempObjSpawner->spawn_signalTargetIDs = 0
+                                        tempObjSpawner->spawn_signalTargetSlots = 0
                                     end select
                                 end if
                             end if
@@ -617,7 +617,7 @@ do
                     tilesets(N_tilesets - 1).tilePropList->push_back(@tempEffect)
                 end if
             else
-                curPos = instr(lne,"=") 
+                curPos = findChar(lne,"=",,chr(34)) 
                 item_tag     = mid(lne, 3, curPos - 6)
                 item_content = right(lne, len(lne) - curPos - 1)
                 if right(item_content, 1) = "," then
@@ -683,6 +683,8 @@ do
                         'end if
                     elseif left(lcase(item_tag), 6) = "aurora" then                    
                         aurora = 1
+                    elseif left(lcase(item_tag), 10) = "windy mist" then
+                        windyMist = 1
                     elseif left(lcase(item_tag), 15) = "parallax center" then   
                         split item_content,,,pieces()
                         pcenter_x = val(pieces(0)) * 16
@@ -769,7 +771,7 @@ do
                         end if
                     case SPAWN
                         if left(lcase(item_tag), 5) = "spawn" then
-                            tempObjSpawner->spawn_objectName = item_content
+                            newZstring(tempObjSpawner->spawn_objectName, ucase(trimwhite(item_content)))
                         elseif left(lcase(item_tag), 7) = "respawn" then
                             if left(lcase(item_content), 5) = "timed" then
                                 tempObjSpawner->spawn_respawnType = SPAWN_TIMED
@@ -782,8 +784,66 @@ do
                             tempObjSpawner->spawn_time = val(item_content)
                         elseif left(lcase(item_tag), 5) = "count" then
                             tempObjSpawner->spawn_count = val(item_content)
-                        elseif left(lcase(item_tag), 6) = "flavor" then
-                            tempObjSpawner->flavor = val(item_content)
+                        elseif left(lcase(item_tag), 2) = "id" then
+                            item_content = ucase(trimwhite(item_content))
+                            newZstring(tempObjSpawner->id, item_content)
+                        elseif left(lcase(trimwhite(item_tag)), 2) = "p(" then                            
+                            item_tag = trimwhite(item_tag)
+                            item_tag = right(item_tag, len(item_tag) - 2)
+                            item_tag = left(item_tag, len(item_tag) - 1)
+                            item_tag = ucase(trimwhite(item_tag))
+                            item_content = stripwhite(item_content)
+
+                            tempObjSpawner->spawn_parameters_N += 1
+                            tempObjSpawner->spawn_parameterNames = reallocate(tempObjSpawner->spawn_parameterNames, sizeof(zstring ptr)*tempObjSpawner->spawn_parameters_N)
+                            tempObjSpawner->spawn_parameterValues = reallocate(tempObjSpawner->spawn_parameterValues, sizeof(zstring ptr)*tempObjSpawner->spawn_parameters_N)                            
+                            newZstring(tempObjSpawner->spawn_parameterNames[tempObjSpawner->spawn_parameters_N - 1], item_tag)
+                            newZstring(tempObjSpawner->spawn_parameterValues[tempObjSpawner->spawn_parameters_N - 1], item_content)
+
+                        elseif left(lcase(trimwhite(item_tag)), 7) = "signal(" then
+                            
+                            item_tag = trimwhite(item_tag)
+                            item_tag = right(item_tag, len(item_tag) - 7)
+                            item_tag = left(item_tag, len(item_tag) - 1)
+                            
+                            splitPos = instr(item_tag, ", ")
+                            if splitPos > 0 then
+                                signalName = ucase(trimwhite(left(item_tag, splitPos - 1)))
+                                parameterString = trimwhite(right(item_tag, len(item_tag) - splitPos))
+                            else
+                                signalName = ucase(trimwhite(item_tag))
+                                parameterString = ""
+                            end if
+                            
+                            tempObjSpawner->spawn_signals_N += 1
+                            tempObjSpawner->spawn_signalNames = reallocate(tempObjSpawner->spawn_signalNames, sizeof(zstring ptr)*tempObjSpawner->spawn_signals_N)
+                            tempObjSpawner->spawn_signalParameterStrings = reallocate(tempObjSpawner->spawn_signalParameterStrings, sizeof(zstring ptr)*tempObjSpawner->spawn_signals_N)     
+                            newZstring(tempObjSpawner->spawn_signalNames[tempObjSpawner->spawn_signals_N - 1], signalName)
+                            newZstring(tempObjSpawner->spawn_signalParameterStrings[tempObjSpawner->spawn_signals_N - 1], parameterString)   
+                            
+                            tokenize(item_content, pieces(), ",",, "()")
+                            
+                            tempObjSpawner->spawn_targets_N = reallocate(tempObjSpawner->spawn_targets_N, sizeof(ushort) * tempObjSpawner->spawn_signals_N)
+                            (tempObjSpawner->spawn_targets_N)[tempObjSpawner->spawn_signals_N - 1] = ubound(pieces) + 1
+                            
+                            tempObjSpawner->spawn_signalTargetIDs = reallocate(tempObjSpawner->spawn_signalTargetIDs, sizeof(zstring ptr ptr)*tempObjSpawner->spawn_signals_N)
+                            tempObjSpawner->spawn_signalTargetSlots = reallocate(tempObjSpawner->spawn_signalTargetSlots, sizeof(zstring ptr ptr)*tempObjSpawner->spawn_signals_N)   
+                            
+                            (tempObjSpawner->spawn_signalTargetIDs)[tempObjSpawner->spawn_signals_N - 1] = allocate(sizeof(zstring ptr) * (tempObjSpawner->spawn_targets_N)[tempObjSpawner->spawn_signals_N - 1])
+                            (tempObjSpawner->spawn_signalTargetSlots)[tempObjSpawner->spawn_signals_N - 1] = allocate(sizeof(zstring ptr) * (tempObjSpawner->spawn_targets_N)[tempObjSpawner->spawn_signals_N - 1])
+                           
+                            for curSplit = 0 to ubound(pieces)
+                                slotID = trimwhite(pieces(curSplit))
+                                slotID = right(slotID, len(slotID) - 5)
+                                slotID = left(slotID, len(slotID) - 1)
+                                splitPos = instr(slotID, ", ")
+                                slotName = trimwhite(right(slotID, len(slotID) - splitPos))
+                                slotID = trimwhite(left(slotID, splitPos - 1))
+                                newZstring(tempObjSpawner->spawn_signalTargetIDs[tempObjSpawner->spawn_signals_N - 1][curSplit], ucase(slotID))
+                                newZstring(tempObjSpawner->spawn_signalTargetSlots[tempObjSpawner->spawn_signals_N - 1][curSplit], ucase(slotName))
+                           next curSplit 
+                        
+                            
                         end if
                     end select  
                 elseif propertyType = 4 then
@@ -1807,6 +1867,7 @@ put #f,,map_width
 put #f,,map_height
 put #f,,snowfall
 put #f,,aurora
+put #f,,windyMist
 put #f,,shouldLight
 put #f,,objectAmbientLevel
 put #f,,hiddenObjectAmbientLevel
@@ -1875,6 +1936,8 @@ for i = 0 to N_layers - 1
     end if
 next i 
 
+#define safeZstring(_X_) iif(_X_, *(_X_) + chr(0), chr(0))
+
 put #f,,N_objects
 for i = 0 to N_objects - 1
     with objects(i)
@@ -1900,11 +1963,53 @@ for i = 0 to N_objects - 1
             put #f,,tempObjPortal->portal_direction
         case SPAWN
             tempObjSpawner = .data_
-            put #f,,tempObjSpawner->spawn_objectName
-            put #f,,tempObjSpawner->flavor            
+            
+            
+            put #f,,safeZstring(tempObjSpawner->spawn_objectName)
+            put #f,,safeZstring(tempObjSpawner->ID)
+            put #f,,tempObjSpawner->spawn_parameters_N
+            for q = 0 to tempObjSpawner->spawn_parameters_N - 1
+                put #f,,safeZstring(tempObjSpawner->spawn_parameterNames[q])
+                put #f,,safeZstring(tempObjSpawner->spawn_parameterValues[q])                
+            next q
+            put #f,,tempObjSpawner->spawn_signals_N
+            for q = 0 to tempObjSpawner->spawn_signals_N - 1
+                put #f,,safeZstring(tempObjSpawner->spawn_signalNames[q])
+                put #f,,safeZstring(tempObjSpawner->spawn_signalParameterStrings[q])         
+                put #f,,tempObjSpawner->spawn_targets_N[q]         
+                for j = 0 to tempObjSpawner->spawn_targets_N[q] - 1
+                    put #f,,safeZstring(tempObjSpawner->spawn_signalTargetIDs[q][j])
+                    put #f,,safeZstring(tempObjSpawner->spawn_signalTargetSlots[q][j])                     
+                next j
+            next q       
+            
             put #f,,tempObjSpawner->spawn_respawnType
             put #f,,tempObjSpawner->spawn_count
             put #f,,tempObjSpawner->spawn_time
+            
+            
+                        
+            
+            
+            
+            /'
+            print "--------------------------------------------"
+            print safeZstring(tempObjSpawner->spawn_objectName)
+            print safeZstring(tempObjSpawner->ID)
+            print tempObjSpawner->spawn_parameters_N
+            for q = 0 to tempObjSpawner->spawn_parameters_N - 1
+                print "",safeZstring(tempObjSpawner->spawn_parameterNames[q]), safeZstring(tempObjSpawner->spawn_parameterValues[q])                
+            next q
+            print tempObjSpawner->spawn_signals_N
+            for q = 0 to tempObjSpawner->spawn_signals_N - 1
+                print "",safeZstring(tempObjSpawner->spawn_signalNames[q]), safeZstring(tempObjSpawner->spawn_signalParameterStrings[q])         
+                print "",tempObjSpawner->spawn_targets_N[q]         
+                for j = 0 to tempObjSpawner->spawn_targets_N[q] - 1
+                    print "","",safeZstring(tempObjSpawner->spawn_signalTargetIDs[q][j]), safeZstring(tempObjSpawner->spawn_signalTargetSlots[q][j])                     
+                next j
+            next q               
+            sleep
+            '/
         end select
     end with
 next i

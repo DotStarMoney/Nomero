@@ -1057,6 +1057,7 @@ sub level.load(filename as string)
     dim as uinteger blockNumber, layerInt
     dim as integer row_c, tilePosX, tilePosY, transPxls, checkAllLayers
     dim as string  strdata_n
+    dim as string  tempString
     dim as ZString * 128 strdata
     dim as Level_VisBlock ptr lvb
     redim as ushort setFirstIds(0)
@@ -1067,6 +1068,9 @@ sub level.load(filename as string)
     dim as PortalType_t tempPortal
     dim as single tempSingleField
     dim as destroyedBlocks_t tempDblocks
+    dim as string itemName, itemID, parameterTag, parameterValue
+    dim as ushort numParams, numSignals, numTargets
+    dim as string signalName, signalParameter, slotID, slotName
     
     f = freefile
  
@@ -1095,6 +1099,7 @@ sub level.load(filename as string)
     get #f,,lvlWidth
     get #f,,lvlHeight
     get #f,,snowfall
+    get #f,,windyMist
     get #f,,objField(2)
     get #f,,objField(0)
     get #f,,objectAmbientLevel
@@ -1105,9 +1110,7 @@ sub level.load(filename as string)
     get #f,,lvlCenterY
     get #f,,strdata
     
-    '''''
-    windyMist = 1
-    '''''
+
     
     drawAurora = objField(2)
     
@@ -1415,18 +1418,29 @@ sub level.load(filename as string)
             *(tempPortal.portal_name) = tempObj.object_name
             portals.insert(tempPortal.a, tempPortal.b, @tempPortal)
         case SPAWN
-			get #f,,strdata
-            get #f,,tempObj.object_flavor
-			get #f,,objField(0)
-			get #f,,objField(1)
-			get #f,,tempSingleField
-			link.dynamiccontroller_ptr->addSpawnZone(strdata,_
-                                                     tempObj.object_flavor,_
-													 objField(0),_
-													 tempObj.p,_
-													 tempObj.size,_
-													 objField(1),_
-													 tempSingleField)
+			getStringFromFile(#f, itemName)
+            getStringFromFile(#f, itemID)
+            itemID = link.dynamiccontroller_ptr->addItem(itemStringToType(itemName), tempObj.inRangeSet, tempObj.p, tempObj.size, itemID)     
+            get #f,,numParams
+            for j = 0 to numParams - 1
+                getStringFromFile(#f, parameterTag)
+                getStringFromFile(#f, parameterValue)
+                link.dynamiccontroller_ptr->setParameterFromString(parameterValue, itemID, parameterTag)     
+            next j
+            get #f,,numSignals
+            for j = 0 to numSignals - 1
+                getStringFromFile(#f, signalName)
+                getStringFromFile(#f, signalParameter)
+                getStringFromFile(#f, numTargets)
+                for q = 0 to numTargets - 1
+                    getStringFromFile(#f, slotID)
+                    getStringFromFile(#f, slotName)          
+                    link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)
+                next q
+            next j
+            get #f,,objField(1)
+            get #f,,objField(1)
+            get #f,,tempSingleField
         end select
     next i
     

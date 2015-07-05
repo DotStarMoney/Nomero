@@ -30,7 +30,6 @@ declare sub scale2sync(img as uinteger ptr)
 declare function trimwhite(s as string) as string
 declare function stripwhite(s as string) as string
 declare sub tokenize(text as string, ret() as string, delim as string = " ", max_ret as integer = -1, hirearchy as string = "")
-declare sub getStringFromFile(filenum as integer, stringData as string)
 declare sub bitblt_FalloutMix(dest as uinteger ptr,_
                               xpos as integer, ypos as integer,_
                               src  as uinteger ptr,_

@@ -21,7 +21,5 @@ enum shapeType
     RECTANGLE
 end enum
 
-#define ITEM_HEADER "objects\headers\"
-
 
 #endif

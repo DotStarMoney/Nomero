@@ -5,7 +5,12 @@
 
 type Shape2D extends Object
     public:
+        declare constructor()
         declare abstract sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)    
+        declare sub setOffset(offset_ as Vector2D)
+        declare function getOffset() as Vector2D
+    protected:
+        as Vector2D offset
 end type
 type EmptyShape2D extends Shape2D
     public:
@@ -109,7 +114,6 @@ type Polygon2D extends Shape2D
         as integer ptr sub_points_n
         as Vector2D ptr ptr sub_points
         
-        as Vector2D offset
 end type
 
 declare function intersect2D_pp(a as Point2D ptr, b as Point2D ptr) as integer

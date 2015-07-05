@@ -16,8 +16,7 @@ constructor DynamicController()
     drawobjects_active.init(sizeof(Item ptr))
     drawobjects_activeFront.init(sizeof(Item ptr))
     
-    
-    '#include namestypestable inserts
+    #include "objects\headers\gen_namestypes.bi"
     
 end constructor
 
@@ -69,6 +68,9 @@ declare sub flush()
                 deallocate(curOutgoingDestination->outgoingID)
                 deallocate(curOutgoingDestination->outgoingSignalTag)
                 deallocate(curOutgoingDestination->thisSignal)
+                if curOutgoingDestination->appendParameter then
+                    deallocate(curOutgoingDestination->appendParameter)
+                end if
             END_DHASH()
             curOutgoingConnection->outgoingToSlots.clean()
         END_HASH()
@@ -154,6 +156,9 @@ sub DynamicController.removeItem(ID_ as string)
             deallocate(connectedDestination->outgoingID)
             deallocate(connectedDestination->outgoingSlotTag)
             deallocate(connectedDestination->thisSignal)
+            if connectedDestination->appendParameter then
+                deallocate(connectedDestination->appendParameter)
+            end if
             
             connectedSignal->outgoingToSlots.remove(ID_, thisTag)
             
@@ -172,6 +177,9 @@ sub DynamicController.removeItem(ID_ as string)
             deallocate(curOutgoingDestination->outgoingID)
             deallocate(curOutgoingDestination->outgoingSlotTag)
             deallocate(curOutgoingDestination->thisSignal)
+            if curOutgoingDestination->appendParameter then
+                deallocate(curOutgoingDestination->appendParameter)
+            end if
             
             connectedNode = connections.retrieve(removeID)
             connectedSlot = connectedNode->slots.retrieve(removeTag)
@@ -251,6 +259,8 @@ function DynamicController.itemStringToType(item_tag as string) as Item_Type_e
 end function
 function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
     dim as DynamicController_itemPair_t ptr newItem
+    
+    if itemType_ = ITEM_NONE then return ""
     
     newItem = allocate(sizeof(DynamicController_itemPair_t))
     
@@ -379,7 +389,7 @@ sub DynamicController.queryValues(value_set as ObjectValueSet, value_tag as stri
     dim as DynamicController_publish_t ptr ptr publishedValues
     dim as integer publishedValues_n, i
     dim as string tag
-    dim as Vector2D a, b
+    dim as Vector2D a, b, curOffset
     if queryShape is EmptyShape2D then
         publishedValues_n = allPublishedValues.retrieveKey2(value_tag, publishedValues)
         for i = 0 to publishedValues_n - 1
@@ -388,18 +398,19 @@ sub DynamicController.queryValues(value_set as ObjectValueSet, value_tag as stri
         next i
         if publishedValues_n then deallocate(publishedValues)
     else
-        'offset shape parameter, must add in shape2D!! probably just offset incoming shape by -object position
-        '''''' must reset offset when done
         queryShape.getBoundingBox(a, b)
         publishedValues_n = valueTargets.search(a, b, publishedValuesPtr)
+        curOffset = queryShape.getOffset()
         for i = 0 to pubilshedValues_n - 1
-            tag = *((*(publishedValuesPtr[i])->tag_)
+            tag = *((*(publishedValuesPtr[i]))->tag_)
             if tag = value_tag then
-                if intersect2D((*(publishedValuesPtr[i])->target, queryShape) then
-                    value_set._addValue_((*(publishedValuesPtr[i])->item_->getID(), (*(publishedValuesPtr[i])->item_->getValueContainer(tag), (*(publishedValuesPtr[i])->target)
+                queryShape.setOffset(curOffset - (*(publishedValuesPtr[i]))->item_->getPos())
+                if intersect2D((*(publishedValuesPtr[i]))->target, queryShape) then
+                    value_set._addValue_((*(publishedValuesPtr[i]))->item_->getID(), (*(publishedValuesPtr[i]))->item_->getValueContainer(tag), (*(publishedValuesPtr[i]))->target)
                 end if
             end if
         next i
+        queryShape.setOffset(curOffset)
         if publishedValues_n then deallocate(publishedValuesPtr)
     end if
 end sub
@@ -409,7 +420,7 @@ sub DynamicController.querySlots(slot_set as ObjectSlotSet, slot_tag as string, 
     dim as DynamicController_publish_t ptr ptr publishedSlots
     dim as integer publishedSlots_n, i
     dim as string tag
-    dim as Vector2D a, b
+    dim as Vector2D a, b, curOffset
     slot_set.setLink(link)
     if queryShape is EmptyShape2D then
         publishedSlots_n = allPublishedSlots.retrieveKey2(slot_tag, publishedSlots)
@@ -419,18 +430,19 @@ sub DynamicController.querySlots(slot_set as ObjectSlotSet, slot_tag as string, 
         next i
         if publishedSlots_n then deallocate(publishedSlots)
     else
-        'offset shape parameter, must add in shape2D!! probably just offset incoming shape by -object position
-        '''''' must reset offset when done
         queryShape.getBoundingBox(a, b)
         publishedSlots_n = slotTargets.search(a, b, publishedSlotsPtr)
+        curOffset = queryShape.getOffset()
         for i = 0 to publishedSlots_n - 1
-            tag = *((*(publishedSlotsPtr[i])->tag_)
+            tag = *((*(publishedSlotsPtr[i]))->tag_)
             if tag = slot_tag then
-                if intersect2D((*(publishedSlotsPtr[i])->target, queryShape) then    
-                    slot_set._addSlot_((*(publishedSlotsPtr[i])->item_->getID(), tag, (*(publishedSlotsPtr[i])->target)
+                queryShape.setOffset(curOffset - (*(publishedSlotsPtr[i]))->item_->getPos())
+                if intersect2D((*(publishedSlotsPtr[i]))->target, queryShape) then    
+                    slot_set._addSlot_((*(publishedSlotsPtr[i]))->item_->getID(), tag, (*(publishedSlotsPtr[i]))->target)
                 end if
             end if
         next i
+        queryShape.setOffset(curOffset)
         if publishedSlots_n then deallocate(publishedSlotsPtr)
     end if
 end sub
@@ -466,13 +478,23 @@ sub DynamicController.throw(signal_ID as string, signal_tag as string, parameter
     dim as DynamicController_connectionNode_t ptr itemNode
     dim as DynamicController_connectionOutgoing_t ptr outgoingSignal
     dim as DynamicController_connectionOutgoingDestination_t ptr curSlot
+    dim as string thisParameterString
     
     itemNode = connections.retrieve(signal_ID)
     if itemNode then
         outgoingSignal = itemNode->signals.retrieve(signal_tag)
         if outgoingSignal then
             BEGIN_DHASH(curSlot, outgoingSignal->outgoingToSlots)
-                fireSlot(curSlot->outgoingID, curSlot->outgoingSlotTag, parameter_string)
+                if curSlot->appendParameter then
+                    if parameter_string = "" then
+                        thisParameterString = *(curSlot->appendParameter)
+                    else
+                        thisParameterString = parameter_string + "," + *(curSlot->appendParameter)
+                    end if
+                else
+                    thisParameterString = parameter_string
+                end if
+                fireSlot(*(curSlot->outgoingID), *(curSlot->outgoingSlotTag), thisParameterString)
             END_DHASH()
         end if
     end if
@@ -483,7 +505,14 @@ sub DynamicController.fireSlot(ID_ as string, slot_tag as string, parameter_stri
     if curItem then curItem->item_->fireSlot(slot_tag, parameter_string)
 end sub
 
-sub DynamicController.connect(signal_ID as string, signal_tag as string, slot_ID as string, slot_tag as string)
+function DynamicController.getItem(ID_ as string) as Item ptr
+    if hasItem(ID_) then
+        return cast(DynamicController_itemPair_t ptr, itemIdPairs.retrieve(ID_))->item_
+    end if
+    return 0
+end function
+
+sub DynamicController.connect(signal_ID as string, signal_tag as string, slot_ID as string, slot_tag as string, parameter_string as string = "")
     dim as DynamicController_connectionNode_t ptr itemNode
     dim as DynamicController_connectionNode_t ptr newItemNode
     
@@ -495,6 +524,21 @@ sub DynamicController.connect(signal_ID as string, signal_tag as string, slot_ID
     
     dim as DynamicController_connectionOutgoingDestination_t signalDestination
     dim as DynamicController_connectionIncomingSource_t slotSource
+    
+    dim as Item ptr item_
+    
+    signal_ID = ucase(signal_ID)
+    signal_tag = ucase(signal_tag)
+    slot_ID = ucase(slot_ID)
+    slot_tag = ucase(slot_tag)
+    
+    
+    item_ = getItem(signal_ID)
+    if not item_->isSignal(signal_tag) then exit sub
+    /'
+    item_ = getItem(slot_ID)
+    if not item_->isSignal(slot_tag) then exit sub   
+    '/
     
     itemNode = connections.retrieve(signal_ID)
     if itemNode = 0 then 
@@ -518,7 +562,16 @@ sub DynamicController.connect(signal_ID as string, signal_tag as string, slot_ID
     signalDestination.outgoingID = allocate(len(slot_ID) + 1)
     *(signalDestination.outgoingID) = slot_ID
     signalDestination.outgoingSlotTag = allocate(len(slot_tag) + 1)
-    *(signalDestination.outgoingSlotTag) = slot_tag    
+    *(signalDestination.outgoingSlotTag) = slot_tag  
+    
+    parameter_string = stripwhie(parameter_string)
+    if parameter_string = "" then
+        signalDestination.appendParameter = 0
+    else
+        signalDestination.appendParameter = allocate(len(parameter_string) + 1)
+        *(signalDestination.appendParameter) = parameter_string
+    end if
+    
     signalDestination.thisSignal = allocate(len(signal_tag) + 1)
     *(signalDestination.thisSignal) = signal_tag        
     
@@ -552,6 +605,22 @@ sub DynamicController.connect(signal_ID as string, signal_tag as string, slot_ID
     slotNode->incomingFromSignals.insert(signal_ID, signal_tag, @slotSource)
     
 end sub                 
+
+sub DynamicController.setParameterFromString(param_string as string, ID_ as string, param_tag as string)
+    dim as _Item_valueContainer_t value_           
+    Item.valueFormToContainer(param_string, value_)
+    select case value_.type_
+    case _ITEM_VALUE_VECTOR2D
+        setParameter(value_.data_.Vector2D_, ID_, param_tag)
+    case _ITEM_VALUE_INTEGER
+        setParameter(value_.data_.integer_, ID_, param_tag)
+    case _ITEM_VALUE_DOUBLE
+        setParameter(value_.data_.double_, ID_, param_tag)
+    case _ITEM_VALUE_ZSTRING
+        setParameter(*(value_.data_.zstring_), ID_, param_tag)       
+        deallocate(value_.data_.zstring_)
+    end select
+end sub
 
 function DynamicController.populateLightList(ll as LightPair ptr ptr) as integer 
     dim as DynamicController_itemPair_t ptr curItem

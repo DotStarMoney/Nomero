@@ -1,7 +1,15 @@
 #include "shape2d.bi"
 #include "vector2d.bi"
 
-
+constructor Shape2D()
+    offset = Vector2D(0,0)
+end constructor
+sub Shape2D.setOffset(offset_ as Vector2D)
+    offset = offset_
+end sub
+function Shape2D.getOffset() as Vector2D
+    return offset
+end function
 constructor EmptyShape2D()
 end constructor
 sub EmptyShape2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) 
@@ -17,11 +25,11 @@ sub Point2D.setP(p_ as Vector2D)
     p = p_
 end sub
 function Point2D.getP() as Vector2D
-    return p
+    return p + offset
 end function
 sub Point2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
-    tl_ = p
-    br_ = p
+    tl_ = p + offset
+    br_ = p + offset
 end sub
 constructor Rectangle2D()
 end constructor
@@ -39,14 +47,14 @@ sub Rectangle2D.setBR(br_ as Vector2D)
     br = br_
 end sub
 function Rectangle2D.getTL() as Vector2D
-    return tl
+    return tl + offset
 end function
 function Rectangle2D.getBR() as Vector2D
-    return br
+    return br + offset
 end function
 sub Rectangle2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
-    tl_ = tl
-    br_ = br
+    tl_ = tl + offset
+    br_ = br + offset
 end sub
 constructor Circle2D()
 end constructor
@@ -64,14 +72,14 @@ sub Circle2D.setR(r_ as double)
     r = r_
 end sub
 function Circle2D.getP() as Vector2D
-    return P
+    return P + offset
 end function
 function Circle2D.getR() as double
     return r
 end function
 sub Circle2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
-    tl_ = p - Vector2D(r, r)
-    br_ = p + Vector2D(r, r)
+    tl_ = p - Vector2D(r, r) + offset
+    br_ = p + Vector2D(r, r) + offset
 end sub
 constructor Polygon2D()
     points_n = 0
@@ -146,9 +154,6 @@ sub Polygon2D.setPoint(i as integer, p as Vector2D)
     clearDecomp()
     hasBounds = 0
     hasWinding = 0
-end sub
-sub Polygon2D.setOffset(o as Vector2D)
-    offset = o
 end sub
 function Polygon2D.getPoint_N() as integer
     return points_n 
@@ -398,9 +403,6 @@ sub Polygon2D.calculateBounds()
         hasBounds = 1
     end if
 end sub
-function Polygon2D.getOffset() as Vector2D
-    return offset
-end function
 sub Polygon2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
     if hasBounds = 0 then calculateBounds()
     tl_ = tl + offset
