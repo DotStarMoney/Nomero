@@ -12,6 +12,8 @@
 #define MIN_ITEM_BAR_POS -22
 #define ITEM_BAR_LIFE 300
 
+#define DControl link.dynamiccontroller_ptr 
+
 constructor Player
 	dim as integer i
     acc   = 3000
@@ -65,17 +67,16 @@ constructor Player
     
     spinnerItem = 0
     anim.play()
-    items.init(sizeof(Item ptr))
     explodeAllHoldFrames_time = 60
     deactivateHoldFrames_time = 60
     explodeAllHoldFrames = 0
     deactivateHoldFrames = 0
     for i = 0 to 9
-		hasBomb(i) = 0
+		bombData(i).hasBomb = 0
 		bombData(i).isSwitching = 0
 		bombData(i).curState = TOO_CLOSE
         bombData(i).tilePosY = MIN_BOMB_TILE_POS
-		deactivateGroupFlag(i) = 0
+		bombData(i).deactivateGroupFlag = 0
 	next i
     for i = 0 to 5
         spinnerCount(i) = 16
@@ -374,13 +375,13 @@ sub Player.processControls(dire as integer, jump as integer,_
     if dire = 0 andAlso jump = 0 andAlso parent->isGrounded(body_i, this.groundDot) then canTrigger = 1
 
     for i = 0 to 9
-        if numbers(i) = 0 then cantPlace(i) = 0
+        if numbers(i) = 0 then bombData(i).cantPlace = 0
     next i
     if canTrigger = 0 then
         for i = 0 to 9
-            if hasBomb(i) then numbers(i) = 0  
+            if bombData(i).hasBomb then numbers(i) = 0  
             if numbers(i) then
-                cantPlace(i) = 1
+                bombData(i).cantPlace = 1
             end if
         next i
         explodeAll = 0
@@ -388,14 +389,14 @@ sub Player.processControls(dire as integer, jump as integer,_
         isTriggering = 0
     else
         for i = 0 to 9
-            if lastHasBomb(i) = 0 andAlso hasBomb(i) <> 0 then cantPlace(i) = 1
-            if cantPlace(i) then 
+            if bombData(i).lastHasBomb = 0 andAlso bombData(i).hasBomb <> 0 then bombData(i).cantPlace = 1
+            if bombData(i).cantPlace then 
                 numbers(i) = 0
                 animateTrigger = 0
             end if
-            if numbers(i) <> 0 andAlso cantPlace(i) = 0 then 
+            if numbers(i) <> 0 andAlso bombData(i).cantPlace = 0 then 
                 isTriggering = 1 
-                if hasBomb(i) then animateTrigger = 1
+                if bombData(i).hasBomb then animateTrigger = 1
             end if
         next i
         if explodeAll orElse deactivateAll then 
@@ -406,14 +407,14 @@ sub Player.processControls(dire as integer, jump as integer,_
     if isTriggering = 1 then
         if anim.getAnimation() <> 6 orElse anim.getFrame <> 3 then
             for i = 0 to 9
-                if hasBomb(i) then numbers(i) = 0  
+                if bombData(i).hasBomb then numbers(i) = 0  
             next i
             explodeAll = 0
             deactivateAll = 0    
         end if
     end if
     for i = 0 to 9
-        lastHasBomb(i) = hasBomb(i)
+        bombData(i).lastHasBomb = bombData(i).hasBomb
     next i
     
     if state <> ON_LADDER andAlso ups <> 0 andAlso (onLadder() = 1) _
@@ -685,19 +686,19 @@ sub Player.processControls(dire as integer, jump as integer,_
 		for i = 0 to 9
 			if numbers(i) then 
 				numbers(i) = 0
-				deactivateGroupFlag(i) = 1
+				bombData(i).deactivateGroupFlag = 1
 			end if
 		next i
 	else
 		if deactivateHoldFrames = deactivateHoldFrames_time then
 			deactivateGroup = 0
 			for i = 0 to 9
-				if deactivateGroupFlag(i) andAlso hasBomb(i) then 
+				if bombData(i).deactivateGroupFlag andAlso bombData(i).hasBomb then 
 					deactivateGroup = 1
-					newItem = *cast(Item ptr ptr, items.retrieve(hasBomb(i)))
-					newItem->setData1(2)
-					items.remove(hasBomb(i))
-					hasBomb(i) = 0
+                    
+					DControl->removeItem(bombData(i).ID)
+                    
+                    bombData(i).hasBomb = 0
 					bombData(i).isSwitching = 1
 					bombData(i).switchFrame = BOMB_TRANS_FRAMES
 					bombData(i).nextState = TOO_CLOSE
@@ -707,10 +708,10 @@ sub Player.processControls(dire as integer, jump as integer,_
 				for i = 0 to 9
 					numbers(i) = 0
 					if hasBomb(i) then 
-						newItem = *cast(Item ptr ptr, items.retrieve(hasBomb(i)))
-						newItem->setData1(2)
-						items.remove(hasBomb(i))
-						hasBomb(i) = 0
+                        
+                        DControl->removeItem(bombData(i).ID)
+                        
+						bombData(i).hasBomb = 0
 						bombData(i).isSwitching = 1
 						bombData(i).switchFrame = BOMB_TRANS_FRAMES
 						bombData(i).nextState = TOO_CLOSE
@@ -736,7 +737,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 		if explodeAllHoldFrames = explodeAllHoldFrames_time then
 			for i = 0 to 9
 				numbers(i) = 0
-				if hasBomb(i) then 
+				if bombData(i).hasBomb then 
 					numbers(i) = -1
 				end if
 			next i
@@ -751,11 +752,10 @@ sub Player.processControls(dire as integer, jump as integer,_
     anim.step_animation()
        
     for i = 0 to 9
-		if numbers(i) andAlso (lastNumbers(i) = 0) andAlso (hasBomb(i) = 0) andAlso spinnerCount(spinnerItem) > 0 then
+		if numbers(i) andAlso (bombData(i).lastNumbers = 0) andAlso (bombData(i).hasBomb = 0) andAlso spinnerCount(spinnerItem) > 0 then
 			if parent->isGrounded(body_i, this.groundDot) andAlso (parent->getArbiterN(body_i) > 0) then 
                 spinnerCount(spinnerItem) -= 1
-				newItem = link.dynamiccontroller_ptr->addOneItem(body.p + Vector2D(0, 10), ITEM_BOMB, spinnerItem,,,,,ACTIVE_FRONT)
-                 
+              
                 select case spinnerItem
                 case 0
                     link.soundeffects_ptr->playSound(SND_PLACE_APMINE)
@@ -764,19 +764,17 @@ sub Player.processControls(dire as integer, jump as integer,_
                 case 4
                     link.soundeffects_ptr->playSound(SND_PLACE_ELECMINE)
                 end select
-                 
-				newItem->setData0(i + 1)
-				newItem->setData2(hasBomb(i))
-				hasBomb(i) = cast(integer, newItem)
-
-				bombPos = newItem->getPos()
+                
+                bombData(i).ID = DControl->addItem(itemStringToType("ANTI PERSONNEL MINE"),,body.p + Vector2D(0, 10))
+  
+				bombData(i).hasBomb = 1
+				bombPos = DControl->getPos(bombData(i).ID)
                 
                 bombData(i).bombType = spinnerItem
-                
 				d = bombPos - (body.p - Vector2D(0, 13))
 				if d.magnitude() > (BOMB_TRANS_DIST + i*2) then
                
-					newItem->getBounds(a_bound, b_bound)
+					DControl->getBounds(bombData(i).ID, a_bound, b_bound)
 					if(boxbox(link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 - Vector2D(1,1) * SCREEN_IND_BOUND, _
 							  link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 + Vector2D(1,1) * SCREEN_IND_BOUND, _
 							  a_bound, b_bound)) then
@@ -791,21 +789,22 @@ sub Player.processControls(dire as integer, jump as integer,_
 				bombData(i).switchFrame = BOMB_TRANS_FRAMES
 				bombData(i).isSwitching = 1
 				bombData(i).animating = 1
-               	
-				items.insert(hasBomb(i), @newItem)
-            
 			end if
-		elseif numbers(i) andAlso hasBomb(i) andAlso (lastNumbers(i) = 0) then
+		elseif numbers(i) andAlso bombData(i).hasBomb andAlso (lastNumbers(i) = 0) then
             link.oneshoteffects_ptr->create(body.p + Vector2D(((facing*2)-1)*12, -9), LITTLE_PULSE,,2)
 			link.soundeffects_ptr->playSound(SND_SIGNAL)
 
-			newItem = *cast(Item ptr ptr, items.retrieve(hasBomb(i)))
-			newItem->setData1(1)
-			items.remove(hasBomb(i))
-			hasBomb(i) = 0
+			DControl->fireSlot(bombData(i).ID, "EXPLODE")
+            
+			bombData(i).hasBomb = 0
 			bombData(i).isSwitching = 1
 			bombData(i).switchFrame = BOMB_TRANS_FRAMES
 			bombData(i).nextState = TOO_CLOSE
+        elseif bombData(i).hasBomb andAlso hasItem(bombData(i).ID) = 0 then
+			bombData(i).hasBomb = 0
+			bombData(i).isSwitching = 1
+			bombData(i).switchFrame = BOMB_TRANS_FRAMES
+			bombData(i).nextState = TOO_CLOSE            
 		end if
 		lastNumbers(i) = numbers(i)  
     next i
@@ -859,19 +858,7 @@ sub Player.processControls(dire as integer, jump as integer,_
     lastVel = body.v
 end sub
 
-sub Player.removeItemReference(data_ as integer)
-	dim as integer i
-	if items.exists(data_) then 
-		for i = 0 to 9
-			if hasBomb(i) = data_ then hasBomb(i) = 0
-		next i
-		items.remove(data_)
-	end if
-end sub
-
 sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
-	dim as Item ptr curItem
-	dim as Item ptr ptr curItem_
 	dim as Vector2D center, curPos
 	dim as Vector2D bombPos
 	dim as Vector2d scnPos, offsetV
@@ -891,13 +878,12 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	
 	for i = 0 to 9 
 		if bombData(i).animating then
-			curItem = cast(Item ptr, hasBomb(i))
-			if hasBomb(i) then
-				bombPos = curItem->getPos()
-				bombData(i).bombP = bombPos
+			if bombData(i).hasBomb then
+                bombPos = link.dynamiccontroller_ptr->getPos(bombData(i).ID)
 			else
 				bombPos = bombData(i).bombP
 			end if
+            
 			d = bombPos - (body.p - Vector2D(0, 13))
 			ang = d.angle()
 			if bombData(i).nextState = PLAYER_ARROW orElse bombData(i).curState = PLAYER_ARROW andAlso (drawArrow = 1) then
@@ -1000,15 +986,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 			end if
 		end if
 	next i
-    
-    	
-	BEGIN_HASH(curItem_, items)
-		curItem = *curItem_
-		'if curItem->getType() <> ITEM_BOMB then
-		'	curItem->drawItem(scnbuff)
-		'end if
-	END_HASH()
-    
+
 	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
 	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
 
@@ -1089,8 +1067,6 @@ end sub
 
 
 sub Player.processItems(t as double)
-	dim as Item ptr curItem
-	dim as Item ptr ptr curItem_
 	dim as integer bombNumber
 	dim as Vector2D bombPos
 	dim as Vector2D d, a_bound, b_bound
@@ -1106,7 +1082,8 @@ sub Player.processItems(t as double)
     
 	
 	for bombNumber = 0 to 9
-        if hasBomb(bombNumber) then
+    
+        if bombData(bombNumber).hasBomb then
             bombData(bombNumber).tilePosY += 6
             if bombData(bombNumber).tilePosY > 0 then bombData(bombNumber).tilePosY = 0 
         else
@@ -1126,12 +1103,14 @@ sub Player.processItems(t as double)
 						bombData(bombNumber).animating = 0
 					end if
 				end if
-			elseif hasBomb(bombNumber) then
-				curItem = cast(Item ptr, hasBomb(bombNumber))
-				bombPos = curItem->getPos()
+			elseif bombData(bombNumber).hasBomb then
+				
+                
+				bombPos = link.dynamiccontroller_ptr->getPos(bombData(bombNumber).ID)
+                
 				d = bombPos - (body.p - Vector2D(0, 13))
 				if d.magnitude() > (BOMB_TRANS_DIST + bombNumber*2) then
-					curItem->getBounds(a_bound, b_bound)
+					link.dynamiccontroller_ptr->getBounds(bombData(bombNumber).ID, a_bound, b_bound)
 					if (boxbox(link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 - Vector2D(1,1) * SCREEN_IND_BOUND, _
 							  link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 + Vector2D(1,1) * SCREEN_IND_BOUND, _
 							  a_bound, b_bound)) then
@@ -1157,10 +1136,5 @@ sub Player.processItems(t as double)
 		end if
 	next bombNumber
 	
-	
-	BEGIN_HASH(curItem_, items)
-		curItem = *curItem_
-		curItem->process(t)
 
-	END_HASH()	
 end sub

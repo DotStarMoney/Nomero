@@ -42,7 +42,12 @@ type Player_bombData
 	as double   angle
 	as double   shrink
 	as Vector2D offset
-	as integer animating
+	as integer  animating
+    as integer lastNumbers
+    as integer lastHasBomb
+    as integer cantPlace
+    as string ID
+    as integer deactivateGroupFlag
 end type
 
 type Player
@@ -78,7 +83,6 @@ type Player
 		explodeAllHoldFrames_time as integer
 		deactivateHoldFrames_time as integer
 		
-		as integer deactivateGroupFlag(0 to 9)
     
 		bombs   as integer
 		health  as integer
@@ -109,19 +113,13 @@ type Player
         declare sub computeCoverage()
         declare sub switch(ls as LevelSwitch_t)
         declare sub drawDetectMeter(scnbuff as integer ptr, level as integer)
-        
-        as HashTable items
-        
+                
         as integer _dire_
         as integer _jump_
         as integer _ups_
         as integer _shift_
         as integer drawArrow
-        
-        as integer lastNumbers(0 to 9)
-        as integer hasBomb(0 to 9)
-        as integer lastHasBomb(0 to 9)
-        as integer cantPlace(0 to 9)
+
         as Player_bombData bombData(0 to 9)
         
         as double  coverValue

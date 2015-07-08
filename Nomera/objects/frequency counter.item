@@ -7,7 +7,8 @@ type ITEM_DATA
     as integer shouldDraw
 end type
 
-const buhnz as integer = 2
+const as integer buhnz = 2
+
 
 
 parameter "flavor", integer
@@ -17,13 +18,17 @@ signal $testSignal2
 '---------------------------------
 
 function _init()
+    dim as Shape2D randomShape
     data.someText2 = 0
     data.shouldDraw = 0
-end function
 
-
+    end function
+#macro aldi(_X_, _Y_)
+    data._X_ = _Y_
+    print "assigned a data variable to" + str(_Y_) + ", " + str(thisIsAnOddPlaceForThis)
+#endmacro
+#define thisIsAnOddPlaceForThis 42
 '---------------------------------
-
 function _flush()
 
     if data.someText2 then deallocate(data.someText2)
@@ -40,7 +45,6 @@ function _draw()
 
         line (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff00ff, &h00ffff), Bf
 
-    
     end if
 end function
 
@@ -63,7 +67,7 @@ function _run()
 '-----------------------------------
 
 slot $testSlot3()
-
+    print thisIsAnOddPlaceForThis
     beep
     beep
     beep

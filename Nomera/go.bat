@@ -1,1 +1,1 @@
-Nomera
+Nomera "testAurora3.map"

@@ -22,6 +22,14 @@ type DynamicController_publish_t
     as Item ptr item_
 end type
 
+type DynamicController_publishSlot_t
+    as Shape2D target
+    as DynamicController_publish_t ptr ptr hash2Dindex 
+    as zstring ptr tag_
+    as zstring ptr slot_tag_
+    as Item ptr item_
+end type
+
 type DynamicController_itemPair_t
     as Item ptr item_
     as integer usedKeyBank
@@ -77,9 +85,12 @@ type DynamicController
         
         '---------------- used by outside to create objects ---------------
         declare function itemStringToType(item_tag as string) as Item_Type_e
-		declare function addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
+		declare function addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0), ID_ as string = "") as string
         declare sub setParameterFromString(param_string as string, ID_ as string, param_tag as string)
         declare sub connect(signal_ID as string, signal_tag as string, slot_ID as string, slot_tag as string, parameter_string as string = "")
+        declare sub addPublishedValue(publishee_ID as string, value_tag as string, target as Shape2D = EmptyShape2D())
+        declare sub addPublishedSlot(publishee_ID as string, slot_tag as string, actual_slot_tag as string, target as Shape2D = EmptyShape2D())
+
         '------------------------------------------------------------------
         
         declare sub setParameter(param_ as Vector2D, ID_ as string, param_tag as string)
@@ -96,10 +107,6 @@ type DynamicController
         declare sub queryValues(value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
         declare sub querySlots(slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
         
-        'hidden calls from item inits, can assign shape since parameter is properly constructed
-        declare sub addPublishedValue(publishee_ID as string, value_tag as string, target as Shape2D = EmptyShape2D())
-        declare sub addPublishedSlot(publishee_ID as string, slot_tag as string, target as Shape2D = EmptyShape2D())
-
         declare sub throw(signal_ID as string, signal_tag as string, parameter_string as string = "")
         declare sub fireSlot(ID_ as string, slot_tag as string, parameter_string as string = "")
                                     

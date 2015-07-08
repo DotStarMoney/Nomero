@@ -11,7 +11,7 @@ constructor DynamicController()
     stringToTypeTable.init(sizeof(Item_Type_e))
     connections.init(sizeof(DynamicController_connectionNode_t))
     allPublishedValues.init(sizeof(DynamicController_publish_t))
-    allPublishedSlots.init(sizeof(DynamicController_publish_t))
+    allPublishedSlots.init(sizeof(DynamicController_publishSlot_t))
     itemIdPairs.init(sizeof(DynamicController_itemPair_t))
     drawobjects_active.init(sizeof(Item ptr))
     drawobjects_activeFront.init(sizeof(Item ptr))
@@ -26,7 +26,7 @@ end destructor
 
 sub DynamicController.setRegionSize(w as integer, h as integer)
     valueTargets.init(w, h, sizeof(DynamicController_publish_t ptr))
-    slotTargets.init(w, h, sizeof(DynamicController_publish_t ptr))
+    slotTargets.init(w, h, sizeof(DynamicController_publishSlot_t ptr))
 end sub
 declare sub flush()
     dim as DynamicController_connectionNode_t ptr curConnectionNode
@@ -35,6 +35,7 @@ declare sub flush()
     dim as DynamicController_connectionOutgoingDestination_t ptr curOutgoingDestination
     dim as DynamicController_connectionIncomingSource_t ptr curIncomingSource
     dim as DynamicController_publish_t ptr curPublish
+    dim as DynamicController_publishSlot_t ptr curPublishSlot    
     dim as DynamicController_itemPair_t ptr curItem
     
     valueTargets.flush()
@@ -47,8 +48,9 @@ declare sub flush()
         deallocate(curPublish->tag_)
     END_DHASH()
     allPublishedValues.flush()
-    BEGIN_DHASH(curPublish, allPublishedSlots)
-        deallocate(curPublish->tag_)
+    BEGIN_DHASH(curPublishSlot, allPublishedSlots)
+        deallocate(curPublishSlot->tag_)
+        deallocate(curPublishSlot->slot_tag_)        
     END_DHASH()
     allPublishedSlots.flush()
     
@@ -90,6 +92,7 @@ end sub
 sub DynamicController.removeItem(ID_ as string)
     dim as DynamicController_itemPair_t ptr itemPair_
     dim as DynamicController_publish_t ptr ptr publishedVals
+    dim as DynamicController_publishSlot_t ptr ptr publishedSlots
     dim as DynamicController_connectionNode_t ptr curConnectionNode
     dim as DynamicController_connectionIncoming_t ptr curIncomingConnection
     dim as DynamicController_connectionOutgoing_t ptr curOutgoingConnection
@@ -119,16 +122,17 @@ sub DynamicController.removeItem(ID_ as string)
         deallocate(publishedVals)
     end if
     
-    publishedVals_N = allPublishedSlots.retrieveKey1(ID_, publishedVals)
+    publishedVals_N = allPublishedSlots.retrieveKey1(ID_, publishedSlots)
     if publishedVals_N then
         for i = 0 to publishedVals_N - 1
-            if not(publishedVals[i]->target is EmptyShape2D) then
-                slotTargets.remove(publishedVals[i]->hash2Dindex)
+            if not(publishedSlots[i]->target is EmptyShape2D) then
+                slotTargets.remove(publishedSlots[i]->hash2Dindex)
             end if
-            deallocate(publishedVals[i]->tag_)
+            deallocate(publishedSlots[i]->tag_)
+            deallocate(publishedSlots[i]->slot_tag_)
         next i
         allPublishedSlots.removeKey1(ID_)
-        deallocate(publishedVals)
+        deallocate(publishedSlots)
     end if
     
     if drawObjects_active.exists(ID_) then
@@ -280,7 +284,6 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
         drawobjects_active.insert(ID_, @newItem->item_)
     end if
 
-    'adds published values and slots itself
     newItem->init(itemType_, p_, size_, ID_)
 
     deallocate(newItem)
@@ -425,7 +428,7 @@ sub DynamicController.querySlots(slot_set as ObjectSlotSet, slot_tag as string, 
     if queryShape is EmptyShape2D then
         publishedSlots_n = allPublishedSlots.retrieveKey2(slot_tag, publishedSlots)
         for i = 0 to publishedSlots_n - 1
-            tag = *(publishedSlots[i]->tag_)
+            tag = *(publishedSlots[i]->slot_tag_)
             slot_set._addSlot_(publishedSlots[i]->item_->getID(), tag, EmptyShape2D())
         next i
         if publishedSlots_n then deallocate(publishedSlots)
@@ -434,8 +437,8 @@ sub DynamicController.querySlots(slot_set as ObjectSlotSet, slot_tag as string, 
         publishedSlots_n = slotTargets.search(a, b, publishedSlotsPtr)
         curOffset = queryShape.getOffset()
         for i = 0 to publishedSlots_n - 1
-            tag = *((*(publishedSlotsPtr[i]))->tag_)
-            if tag = slot_tag then
+            tag = *((*(publishedSlotsPtr[i]))->slot_tag_)
+            if *((*(publishedSlotsPtr[i]))->tag_) = slot_tag then
                 queryShape.setOffset(curOffset - (*(publishedSlotsPtr[i]))->item_->getPos())
                 if intersect2D((*(publishedSlotsPtr[i]))->target, queryShape) then    
                     slot_set._addSlot_((*(publishedSlotsPtr[i]))->item_->getID(), tag, (*(publishedSlotsPtr[i]))->target)
@@ -460,12 +463,14 @@ sub DynamicController.addPublishedValue(publishee_ID as string, value_tag as str
         pvaluePtr->hash2Dindex = valueTargets.insert(a, b, @pvaluePtr)
     end if
 end sub
-sub DynamicController.addPublishedSlot(publishee_ID as string, slot_tag as string, target as Shape2D = EmptyShape2D())
-    dim as DynamicController_publish_t pslot
-    dim as DynamicController_publish_t ptr pslotPtr
+sub DynamicController.addPublishedSlot(publishee_ID as string, slot_tag as string, actual_slot_tag as string, target as Shape2D = EmptyShape2D())
+    dim as DynamicController_publishSlot_t pslot
+    dim as DynamicController_publishSlot_t ptr pslotPtr
     dim as Vector2D a, b
     pslot.tag_ = allocate(len(slot_tag) + 1)
     *(pslot.tag_) = slot_tag
+    pslot.slot_tag_ = allocate(len(actual_slot_tag) + 1)
+    *(pslot.slot_tag_) = actual_slot_tag    
     pslot.target = target
     pslot.item_ = cast(DynamicController_itemPair_t ptr, itemIdPairs.retrieve(publishee_ID))->item_
     pslotPtr = allPublishedSlots.insert(publishee_ID, slot_tag, @pslot)

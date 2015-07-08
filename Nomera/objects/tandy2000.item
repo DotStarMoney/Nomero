@@ -9,12 +9,12 @@ type ITEM_DATA
     as integer testInt
     as double  testDbl
     as single  testSng
-    Vector2D   alright
+    as Vector2D   alright
     as integer checkIt
     as notItemData_t cheese
 end type
 
-const buhnz as integer = 4
+const as integer buhnz = 4
 
 parameter "test vector2d", Vector2D
 
@@ -23,7 +23,7 @@ signal   $justTrees
 signal $notImportant
 
 
-publish slot "my only slot", $myOnlySlot, Circle2D(Vector2D(0,0), 10.0)
+publish slot "my only slot", $myOnlySlot, Polygon2D({Vector2D(3,10), Vector2D(43, 40), Vector2D(-10, 30)}) 
 publish value "TESTVALUe", string
 
 '---------------------------------
@@ -58,9 +58,15 @@ end function
 
 
 '---------------------------------
+function idontdonothin()
+    dim as integer t
+    dim as Shape2D randomShape
+    t = 3
+    randomShape = Polygon2D({Vector2D(0,10), Vector2D(40, 40), Vector2D(-10, 50)})
 
+end function
 
-function _draw()
+function _draw(scnbuff as integer ptr)
     
     line (p.x, p.y)-(p.x+size.x, p.y+size.y), &hffff00, BF
 
@@ -68,11 +74,11 @@ end function
 
 '----------------------------------
 
-function _drawOverlay()
+function _drawOverlay(scnbuff as integer ptr)
     
     LOCK_SCREEN()
-        circle (10, 10), 10, &h00ff00
-        draw string (10, 10), str(data.alright)
+        circle scnbuff, (10, 10), 10, &h00ff00
+        draw string scnbuff, (10, 10), str(data.alright)
         if data.checkIt = 4 then draw string (10, 18), "EUREKA"
     UNLOCK_SCREEN()
 
@@ -80,7 +86,7 @@ end function
 
 '----------------------------------
 
-function _run()
+function _run(t as double)
    
     
     getParameter(data.alright, "test vector2D")
@@ -92,7 +98,7 @@ end function
 '-----------------------------------
 
 /'
-    sub ITEM_TANDY2000_SLOT_MYONLYSLOT_SUB(pvPair() as _Item_slotValuePair_t)
+    sub Item.ITEM_TANDY2000_SLOT_MYONLYSLOT_SUB(pvPair() as _Item_slotValuePair_t)
         dim aValue as integer
         matchParameter(aValue, "AVALUE", pvPair)
         

@@ -1,0 +1,8 @@
+select case itemType
+case ITEM_BIGOSCILLOSCOPE
+    return BIGOSCILLOSCOPE_PROC_RUN(t)
+case ITEM_FREQUENCYCOUNTER
+    return FREQUENCYCOUNTER_PROC_RUN(t)
+case ITEM_TANDY2000
+    return TANDY2000_PROC_RUN(t)
+end select

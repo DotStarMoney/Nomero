@@ -5,6 +5,8 @@
 #include "tinyspace.bi"
 #include "tinybody.bi"
 #include "utility.bi"
+#include "objectvalueset.bi"
+#include "objectslotset.bi"
 
 
 #define ifVector2D(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_VECTOR2D, 1, 0)
@@ -17,9 +19,7 @@
 #define getDouble(_VTC_) _VTC_.data_.double_
 #define getString(_VTC_) *(_VTC_.data_.zstring)
 
-'#include blocks of functions used by methods including local functions and item
-'custom types and item custom defines/constants
-
+#include "objects\headers\gen_methoddefinitions.bi"
 
 constructor Item()
     parameterTable.init(sizeof(_Item_valueContainer_t))
@@ -44,18 +44,14 @@ sub Item.init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ a
     fastLight = 1
     anims_n = 0
     
-    '#include itemInittable 
+    #include "objects\headers\gen_initcaseblock.bi"
+
 end sub
 
-'items must be totally cool with being flushed twice!
 sub Item.flush()
     dim as _Item_valueContainer_t ptr valueC_ptr
     
-    
-    
-    '#include itemflushtable
-    
-    
+    #include "objects\headers\gen_flushcaseblock.bi"
     
     BEGIN_HASH(valueC_ptr, parameterTable)
         if valueC_ptr->type_ = _ITEM_VALUE_ZSTRING then
@@ -78,15 +74,22 @@ function Item.getID() as string
 end function
 
 function Item.process(t as double) as integer
-    '#include itemProcesstable (will return value)
+    
+    #include "objects\headers\gen_runcaseblock.bi"
+
+    return 0
 end function
 
 sub Item.drawItem(scnbuff as integer ptr)
-    '#include itemdrawtable
+
+    #include "objects\headers\gen_drawcaseblock.bi"
+
 end sub
 
 sub Item.drawItemOverlay(scnbuff as integer ptr)
-    '#include itemdrawOverlaytable
+    
+    #include "objects\headers\gen_drawoverlaycaseblock.bi"
+
 end sub
 
 sub Item._initAddParameter_(param_tag as string, param_type as _Item_valueTypes_e)
@@ -308,7 +311,7 @@ sub Item.fireSlot(slot_tag as string, parameter_string as string)
     slot_tag = ucase(slot_tag)
     slotE_ptr = slotTable.retrieve(slot_tag)
     if slotE_ptr then
-        slotNumer = slotE_ptr->slotE
+        slotNumber = slotE_ptr->slotE
         if parameter_string <> "" then
             parameter_string = trimwhite(parameter_string)
             tokenize(parameter_string, paramSplit, ",",, "()")
@@ -331,7 +334,7 @@ sub Item.fireSlot(slot_tag as string, parameter_string as string)
         end if
         
         
-        '#include slotlookup table, will matchParameters to pvPair (we pass it in to the slot functions)
+        #include "objects\headers\gen_slotcaseblock.bi"
     
     
         for i = 0 to ubound(pvPair)
