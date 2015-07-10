@@ -1,4 +1,5 @@
 #include "pVector2D.bi"
+#include "vector2d.bi"
 #include "vbcompat.bi"
 
 function pVector2D.magnitude() as double
@@ -12,7 +13,7 @@ sub pVector2D.normalize()
     this.ys = this.ys/ m
 end sub
 
-operator pVector2D.let(byref rhs as Vector2D)
+operator pVector2D.let(byref rhs as Vector2D_)
     this.xs = rhs.xs
     this.ys = rhs.ys
 end operator
@@ -30,11 +31,11 @@ function pVector2D.angle() as double
 end function
 
 function pVector2D.perp() as pVector2D
-    return pVector2D(-this.y(), this.x())
+    return Type(-this.y(), this.x())
 end function
 
 function pVector2D.iperp() as pVector2D
-    return pVector2D(this.y(), -this.x())
+    return Type(this.y(), -this.x())
 end function
         
 function pVector2D.x() as double

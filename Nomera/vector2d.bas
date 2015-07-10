@@ -1,4 +1,5 @@
 #include "vector2d.bi"
+#include "pvector2d.bi"
 #include "vbcompat.bi"
 
 constructor Vector2D
@@ -34,7 +35,7 @@ sub Vector2D.normalize()
     this.ys = this.ys/ m
 end sub
 
-operator Vector2D.let ( byref rhs as pVector2D)
+operator Vector2D.let ( byref rhs as pVector2D_)
     this.xs = rhs.xs
     this.ys = rhs.ys
 end operator

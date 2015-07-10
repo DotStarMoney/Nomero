@@ -1,4 +1,5 @@
 #include "objectslotset.bi"
+#include "dynamiccontroller.bi"
 
 #define COARSE_SIZE_INC 5
 
@@ -36,7 +37,7 @@ end sub
 sub ObjectSlotSet.throw(parameter_string as string = "")
     dim as integer i
     for i = 0 to members_N - 1
-        link.dynamiccontroller_ptr->fireSlot(members[i].itemID, members[i].slot_tag, parameter_string)
+        link.dynamiccontroller_ptr->fireSlot(*(members[i].itemID), *(members[i].slot_tag), parameter_string)
     next i
 end sub
 function ObjectSlotSet.getMember_N() as integer
@@ -44,7 +45,7 @@ function ObjectSlotSet.getMember_N() as integer
 end function
 function ObjectSlotSet.getMember(i as integer) as ObjectSlotSet
     dim as ObjectSlotSet ret
-    ret._addSlot(*(members[i].itemID), *(members[i].slot_tag), members[i].geometry)
+    ret._addSlot_(*(members[i].itemID), *(members[i].slot_tag), members[i].geometry)
     return ret
 end function
 

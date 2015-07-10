@@ -46,6 +46,7 @@ type Player_bombData
     as integer lastNumbers
     as integer lastHasBomb
     as integer cantPlace
+    as integer hasBomb
     as string ID
     as integer deactivateGroupFlag
 end type

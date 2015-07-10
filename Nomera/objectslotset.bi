@@ -1,7 +1,6 @@
 #ifndef OBJECTSLOTSET_BI
 #define OBJECTSLOTSET_BI
 
-#include "item.bi"
 #include "shape2d.bi"
 #include "objectlink.bi"
 

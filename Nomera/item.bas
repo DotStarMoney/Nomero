@@ -21,7 +21,23 @@
 
 #include "objects\headers\gen_methoddefinitions.bi"
 
+dim as uinteger ptr Item.BOMB_COLORS = 0
+
 constructor Item()
+	if BOMB_COLORS = 0 then
+		BOMB_COLORS = new uinteger[10]
+		BOMB_COLORS[0] = rgb( 58, 209,  70)
+		BOMB_COLORS[1] = rgb(210,  57,  62)
+		BOMB_COLORS[2] = rgb(  0, 198, 200)
+		BOMB_COLORS[3] = rgb(200,  65, 203)
+		BOMB_COLORS[4] = rgb(221, 200,  47)
+		BOMB_COLORS[5] = rgb( 55,  47, 221)
+		BOMB_COLORS[6] = rgb(255, 128,   0)
+		BOMB_COLORS[7] = rgb( 35, 233, 179)
+		BOMB_COLORS[8] = rgb(255, 255, 255)
+		BOMB_COLORS[9] = rgb(185, 133, 115)
+	end if
+
     parameterTable.init(sizeof(_Item_valueContainer_t))
     slotTable.init(sizeof(_Item_slotTable_t))
     valueTable.init(sizeof(_Item_valueContainer_t))
@@ -34,6 +50,10 @@ end destructor
 sub Item.setLink(link_ as objectLink)
     link = link_
 end sub
+function Item.getIndicatorColor(i as integer) as integer
+    return BOMB_COLORS[i]
+end function
+
 
 sub Item.init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "")
     itemType = itemType_

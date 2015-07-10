@@ -7,6 +7,7 @@
 #include "leveltypes.bi"
 #include "level.bi"
 #include "effects3d.bi"
+#include "locktoscreen.bi"
 
 #define MIN_BOMB_TILE_POS -46
 #define MIN_ITEM_BAR_POS -22
@@ -707,7 +708,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 			if deactivateGroup = 0 then
 				for i = 0 to 9
 					numbers(i) = 0
-					if hasBomb(i) then 
+					if bombData(i).hasBomb then 
                         
                         DControl->removeItem(bombData(i).ID)
                         
@@ -725,7 +726,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 			
 		end if
 		for i = 0 to 9
-			deactivateGroupFlag(i) = 0
+			bombData(i).deactivateGroupFlag = 0
 		next i
 	end if
 	
@@ -765,7 +766,7 @@ sub Player.processControls(dire as integer, jump as integer,_
                     link.soundeffects_ptr->playSound(SND_PLACE_ELECMINE)
                 end select
                 
-                bombData(i).ID = DControl->addItem(itemStringToType("ANTI PERSONNEL MINE"),,body.p + Vector2D(0, 10))
+                bombData(i).ID = DControl->addItem(DControl->itemStringToType("ANTI PERSONNEL MINE"),,body.p + Vector2D(0, 10))
   
 				bombData(i).hasBomb = 1
 				bombPos = DControl->getPos(bombData(i).ID)
@@ -790,7 +791,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 				bombData(i).isSwitching = 1
 				bombData(i).animating = 1
 			end if
-		elseif numbers(i) andAlso bombData(i).hasBomb andAlso (lastNumbers(i) = 0) then
+		elseif numbers(i) andAlso bombData(i).hasBomb andAlso (bombData(i).lastNumbers = 0) then
             link.oneshoteffects_ptr->create(body.p + Vector2D(((facing*2)-1)*12, -9), LITTLE_PULSE,,2)
 			link.soundeffects_ptr->playSound(SND_SIGNAL)
 
@@ -800,13 +801,13 @@ sub Player.processControls(dire as integer, jump as integer,_
 			bombData(i).isSwitching = 1
 			bombData(i).switchFrame = BOMB_TRANS_FRAMES
 			bombData(i).nextState = TOO_CLOSE
-        elseif bombData(i).hasBomb andAlso hasItem(bombData(i).ID) = 0 then
+        elseif bombData(i).hasBomb andAlso DControl->hasItem(bombData(i).ID) = 0 then
 			bombData(i).hasBomb = 0
 			bombData(i).isSwitching = 1
 			bombData(i).switchFrame = BOMB_TRANS_FRAMES
 			bombData(i).nextState = TOO_CLOSE            
 		end if
-		lastNumbers(i) = numbers(i)  
+		bombData(i).lastNumbers = numbers(i)  
     next i
     
     if turnstyle = -1 then
@@ -1099,7 +1100,7 @@ sub Player.processItems(t as double)
 				else
 					bombData(bombNumber).isSwitching = 0
 					bombData(bombNumber).curState = bombData(bombNumber).nextState
-					if hasBomb(bombNumber) = 0 then
+					if bombData(bombNumber).hasBomb = 0 then
 						bombData(bombNumber).animating = 0
 					end if
 				end if

@@ -1,6 +1,8 @@
 #ifndef ITEMVALUECONTAINER_BI
 #define ITEMVALUECONTAINER_BI
 
+#include "pvector2d.bi"
+
 enum _Item_valueTypes_e
     _ITEM_VALUE_VECTOR2D
     _ITEM_VALUE_INTEGER

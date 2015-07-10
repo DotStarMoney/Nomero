@@ -17,7 +17,7 @@ sub ObjectValueSet.clean()
             deallocate(members[i].value_.data_.zstring_)
         end if
         deallocate(members[i].itemID)
-    next is
+    next i
     deallocate(members)
 end sub
 sub ObjectValueSet._addValue_(ID_ as string, value_ as _Item_valueContainer_t ptr, geom as Shape2D)

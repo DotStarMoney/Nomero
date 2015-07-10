@@ -1,10 +1,8 @@
 #ifndef OBJECTVALUESET_BI
 #define OBJECTVALUESET_BI
 
-#include "item.bi"
 #include "shape2d.bi"
 #include "vector2d.bi"
-
 #include "itemvaluecontainer.bi"
 
 type ObjectValueSet_member_t

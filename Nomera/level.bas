@@ -1394,8 +1394,12 @@ sub level.load(filename as string)
             get #f,,objField(5) 'fast
             
             if objField(0) >= LIGHT_EFFECT_VALUE then 
-                link.dynamiccontroller_ptr->addOneItem(tempObj.p + tempObj.size*0.5, ITEM_LIGHT, objField(0) - LIGHT_EFFECT_VALUE,_
-                                                       objField(2), objField(3), objField(4), objField(5))
+                itemID = link.dynamiccontroller_ptr->addItem(link.dynamiccontroller_ptr->itemStringToType("LIGHT"), ACTIVE, tempObj.p + tempObj.size*0.5, tempObj.size)     
+                link.dynamiccontroller_ptr->setParameter(objField(2), itemID, "minValue")
+                link.dynamiccontroller_ptr->setParameter(objField(3), itemID, "maxValue")
+                link.dynamiccontroller_ptr->setParameter(objField(4), itemID, "mode")
+                link.dynamiccontroller_ptr->setParameter(objField(5), itemID, "fast")
+                
             else
                 graphicFX_->create(tempObj.object_name, objField(0),_
                                    tempObj.object_shape, tempObj.p,_
@@ -1418,23 +1422,23 @@ sub level.load(filename as string)
             *(tempPortal.portal_name) = tempObj.object_name
             portals.insert(tempPortal.a, tempPortal.b, @tempPortal)
         case SPAWN
-			getStringFromFile(#f, itemName)
-            getStringFromFile(#f, itemID)
-            itemID = link.dynamiccontroller_ptr->addItem(itemStringToType(itemName), tempObj.inRangeSet, tempObj.p, tempObj.size, itemID)     
+			getStringFromFile(f, itemName)
+            getStringFromFile(f, itemID)
+            itemID = link.dynamiccontroller_ptr->addItem(link.dynamiccontroller_ptr->itemStringToType(itemName), tempObj.inRangeSet, tempObj.p, tempObj.size, itemID)     
             get #f,,numParams
             for j = 0 to numParams - 1
-                getStringFromFile(#f, parameterTag)
-                getStringFromFile(#f, parameterValue)
+                getStringFromFile(f, parameterTag)
+                getStringFromFile(f, parameterValue)
                 link.dynamiccontroller_ptr->setParameterFromString(parameterValue, itemID, parameterTag)     
             next j
             get #f,,numSignals
             for j = 0 to numSignals - 1
-                getStringFromFile(#f, signalName)
-                getStringFromFile(#f, signalParameter)
-                getStringFromFile(#f, numTargets)
+                getStringFromFile(f, signalName)
+                getStringFromFile(f, signalParameter)
+                get #f,,numTargets
                 for q = 0 to numTargets - 1
-                    getStringFromFile(#f, slotID)
-                    getStringFromFile(#f, slotName)          
+                    getStringFromFile(f, slotID)
+                    getStringFromFile(f, slotName)          
                     link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)
                 next q
             next j

@@ -10,7 +10,6 @@
 #include "objectslotset.bi"
 #include "objectvalueset.bi"
 
-
 #include "objects\headers\gen_itemdefines.bi"
 
 #include "itemvaluecontainer.bi"
@@ -71,6 +70,8 @@ type Item
         declare function isSlot(slot_tag as string) as integer
         
         declare static sub valueFormToContainer(value_form as string, byref valueC as _Item_valueContainer_t)
+        
+        declare static function getIndicatorColor(i as integer) as integer
 	private:
         #include "objects\headers\gen_methodprototypes.bi"
     
@@ -106,7 +107,7 @@ type Item
         
         declare sub queryValues(byref value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
         declare sub querySlots(byref slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
-        
+
         as Hashtable parameterTable 
         as Hashtable slotTable 
         as Hashtable valueTable 
@@ -124,6 +125,8 @@ type Item
         as Vector2D      p
         as string        ID
         as Item_objectData_u data_ 
+        
+        static as uinteger ptr BOMB_COLORS
 end type
 
 
