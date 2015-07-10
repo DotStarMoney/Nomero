@@ -386,7 +386,7 @@ for curFileName in itemFiles:
             elif curParamParts[1] == 'DOUBLE':
                 paramType = '_ITEM_VALUE_DOUBLE'
             elif curParamParts[1] == 'STRING':   
-                paramType = '_ITEM_VALUE_STRING'
+                paramType = '_ITEM_VALUE_ZSTRING'
             else:
                 paramType = '_ITEM_VALUE_INTEGER'
             initHeader += SPACE_TAB+'_initAddParameter_(' + paramTag + ', ' + paramType + ')\n'
@@ -415,7 +415,7 @@ for curFileName in itemFiles:
                 elif publishValueType == 'DOUBLE':
                     publishValueType = '_ITEM_VALUE_DOUBLE'
                 elif publishValueType == 'STRING':   
-                    publishValueType = '_ITEM_VALUE_STRING'
+                    publishValueType = '_ITEM_VALUE_ZSTRING'
                 else:
                     publishValueType = '_ITEM_VALUE_INTEGER'                
                 if len(curPublishItems) > 2:
@@ -515,6 +515,7 @@ for curFileName in itemFiles:
      
 text_itemdefines = '#ifndef GEN_ITEMDEFINES_BI\n#define GEN_ITEMDEFINES_BI\n' + text_itemdefines
 text_itemdefines += 'enum Item_Type_e\n'
+text_itemdefines += SPACE_TAB + 'ITEM_NONE\n'
 for prefix in itemPrefixes:
     text_itemdefines += SPACE_TAB + prefix + '\n'
 text_itemdefines += 'end enum\n'

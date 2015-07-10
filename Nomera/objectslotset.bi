@@ -11,7 +11,6 @@ type ObjectSlotSet_member_t
     as Shape2D geometry
 end type
 
-
 type ObjectSlotSet
     public:
         declare constructor()
@@ -30,7 +29,5 @@ type ObjectSlotSet
         as integer members_cap
         as objectlink link
 end type
-
-
 
 #endif

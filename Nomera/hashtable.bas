@@ -90,7 +90,7 @@ function HashTable.hashInteger(r_key as integer) as uinteger
     return key
 end function
 
-sub HashTable.insert(r_key as integer, data_ as any ptr)
+function HashTable.insert(r_key as integer, data_ as any ptr) as any ptr
     dim as uinteger key
     dim as HashNode_t ptr newNode
     
@@ -112,9 +112,10 @@ sub HashTable.insert(r_key as integer, data_ as any ptr)
     numObjects += 1
 
     rehash()
-end sub
+    return newNode->data_
+end function
 
-sub HashTable.insert(r_key as string , data_ as any ptr)
+function HashTable.insert(r_key as string , data_ as any ptr) as any ptr
     dim as uinteger key
     dim as HashNode_t ptr newNode
     
@@ -137,8 +138,8 @@ sub HashTable.insert(r_key as string , data_ as any ptr)
     numObjects += 1
     
     rehash()
-    
-end sub
+    return newNode->data_
+end function
 
 sub HashTable.remove(r_key as integer)
     dim as uinteger key

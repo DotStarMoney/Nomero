@@ -5,12 +5,13 @@
 #include "shape2d.bi"
 #include "vector2d.bi"
 
+#include "itemvaluecontainer.bi"
+
 type ObjectValueSet_member_t
     as zstring ptr itemID
     as Shape2D geometry
     as _Item_valueContainer_t value_
 end type
-
 
 type ObjectValueSet
     public:

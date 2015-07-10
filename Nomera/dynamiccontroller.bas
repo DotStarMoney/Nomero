@@ -28,7 +28,7 @@ sub DynamicController.setRegionSize(w as integer, h as integer)
     valueTargets.init(w, h, sizeof(DynamicController_publish_t ptr))
     slotTargets.init(w, h, sizeof(DynamicController_publishSlot_t ptr))
 end sub
-declare sub flush()
+sub DynamicController.flush()
     dim as DynamicController_connectionNode_t ptr curConnectionNode
     dim as DynamicController_connectionIncoming_t ptr curIncomingConnection
     dim as DynamicController_connectionOutgoing_t ptr curOutgoingConnection
@@ -68,7 +68,7 @@ declare sub flush()
         BEGIN_HASH(curOutgoingConnection, curConnectionNode->signals)
             BEGIN_DHASH(curOutgoingDestination, curOutgoingConnection->outgoingToSlots)
                 deallocate(curOutgoingDestination->outgoingID)
-                deallocate(curOutgoingDestination->outgoingSignalTag)
+                deallocate(curOutgoingDestination->outgoingSlotTag)
                 deallocate(curOutgoingDestination->thisSignal)
                 if curOutgoingDestination->appendParameter then
                     deallocate(curOutgoingDestination->appendParameter)
@@ -90,6 +90,7 @@ declare sub flush()
     
 end sub
 sub DynamicController.removeItem(ID_ as string)
+    dim as any ptr ptr parameterPtrPtr
     dim as DynamicController_itemPair_t ptr itemPair_
     dim as DynamicController_publish_t ptr ptr publishedVals
     dim as DynamicController_publishSlot_t ptr ptr publishedSlots
@@ -100,9 +101,9 @@ sub DynamicController.removeItem(ID_ as string)
     dim as DynamicController_connectionIncomingSource_t ptr curIncomingSource
     dim as DynamicController_connectionNode_t ptr connectedNode
     dim as DynamicController_connectionOutgoing_t ptr connectedSignal
-    dim as DynamicController_connectionOutgoingDestination_t connectedDestination
+    dim as DynamicController_connectionOutgoingDestination_t ptr connectedDestination
     dim as DynamicController_connectionIncoming_t ptr connectedSlot
-    dim as DynamicController_connectionIncomingSource_t connectedSource    
+    dim as DynamicController_connectionIncomingSource_t ptr connectedSource    
     dim as integer outConnections_n, removeConnections_n
     dim as string removeID, removeTag, thisTag
     dim as integer publishedVals_N, i
@@ -110,7 +111,8 @@ sub DynamicController.removeItem(ID_ as string)
     itemPair_ = itemIdPairs.retrieve(ID_)
     if itemPair_->usedKeyBank then itemIdGenerator.relinquish(ID_)
      
-    publishedVals_N = allPublishedValues.retrieveKey1(ID_, publishedVals)
+    publishedVals_N = allPublishedValues.retrieveKey1(ID_, parameterPtrPtr)
+    publishedVals = parameterPtrPtr
     if publishedVals_N then
         for i = 0 to publishedVals_N - 1
             if not(publishedVals[i]->target is EmptyShape2D) then
@@ -122,7 +124,8 @@ sub DynamicController.removeItem(ID_ as string)
         deallocate(publishedVals)
     end if
     
-    publishedVals_N = allPublishedSlots.retrieveKey1(ID_, publishedSlots)
+    publishedVals_N = allPublishedSlots.retrieveKey1(ID_, parameterPtrPtr)
+    publishedSlots = parameterPtrPtr
     if publishedVals_N then
         for i = 0 to publishedVals_N - 1
             if not(publishedSlots[i]->target is EmptyShape2D) then
@@ -196,7 +199,7 @@ sub DynamicController.removeItem(ID_ as string)
             connectedSlot->incomingFromSignals.remove(ID_, thisTag)
             
         END_DHASH()
-        curOutgoingConnection->outgoingToSlots.clean()s
+        curOutgoingConnection->outgoingToSlots.clean()
     END_HASH()
     curConnectionNode->signals.clean()    
     connections.remove(ID_)
@@ -211,7 +214,7 @@ sub DynamicController.setLink(link_ as ObjectLink)
 end sub
 
 sub DynamicController.process(t as double)
-    dim as DynamicController_itemPair ptr curItem
+    dim as DynamicController_itemPair_t ptr curItem
     redim as string removalList(0)
     dim as integer removalList_n, i
     
@@ -234,18 +237,18 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = AC
     select case order
     case ACTIVE
         BEGIN_HASH(curItem, drawobjects_active)
-            (*curItem)->drawItem(scnbuff)
+            curItem->drawItem(scnbuff)
         END_HASH()
     case ACTIVE_FRONT
         BEGIN_HASH(curItem, drawobjects_activefront)
-            (*curItem)->drawItem(scnbuff)
+            curItem->drawItem(scnbuff)
         END_HASH()    
     case OVERLAY
         BEGIN_HASH(curItem, drawobjects_active)
-            (*curItem)->drawItemOverlay(scnbuff)
+            curItem->drawItemOverlay(scnbuff)
         END_HASH()  
         BEGIN_HASH(curItem, drawobjects_activefront)
-            (*curItem)->drawItemOverlay(scnbuff)
+            curItem->drawItemOverlay(scnbuff)
         END_HASH()  
     end select 
 end sub
@@ -254,9 +257,9 @@ sub DynamicController._addStringToType_(tag as string, item_t as Item_Type_e)
 end sub
 function DynamicController.itemStringToType(item_tag as string) as Item_Type_e
     dim as Item_Type_e ptr itemE_
-    itemE = stringToTypeTable.retrieve(item_tag)
-    if itemE then
-        return *itemE
+    itemE_ = stringToTypeTable.retrieve(item_tag)
+    if itemE_ then
+        return *itemE_
     else
         return ITEM_NONE
     end if
@@ -284,7 +287,7 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
         drawobjects_active.insert(ID_, @newItem->item_)
     end if
 
-    newItem->init(itemType_, p_, size_, ID_)
+    newItem->item_->init(itemType_, p_, size_, ID_)
 
     deallocate(newItem)
     
@@ -332,29 +335,29 @@ end sub
 sub DynamicController.setParameter(param_ as Vector2D, ID_ as string, param_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
     curItem = itemIdPairs.retrieve(ID_)   
-    if curItem then curItem->setParameter(param_, param_tag)
+    if curItem then curItem->item_->setParameter(param_, param_tag)
 end sub
 sub DynamicController.setParameter(param_ as integer, ID_ as string, param_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
     curItem = itemIdPairs.retrieve(ID_)   
-    if curItem then curItem->setParameter(param_, param_tag)
+    if curItem then curItem->item_->setParameter(param_, param_tag)
 end sub
 sub DynamicController.setParameter(param_ as double, ID_ as string, param_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
     curItem = itemIdPairs.retrieve(ID_)   
-    if curItem then curItem->setParameter(param_, param_tag)
+    if curItem then curItem->item_->setParameter(param_, param_tag)
 end sub
 sub DynamicController.setParameter(param_ as string, ID_ as string, param_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
     curItem = itemIdPairs.retrieve(ID_)   
-    if curItem then curItem->setParameter(param_, param_tag)
+    if curItem then curItem->item_->setParameter(param_, param_tag)
 end sub
 
 sub DynamicController.getValue(byref value_ as Vector2D, ID_ as string, value_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
     curItem = itemIdPairs.retrieve(ID_)   
     if curItem then 
-        curItem->getValue(value_, value_tag)
+        curItem->item_->getValue(value_, value_tag)
     else
         value_ = Vector2D(0, 0)
     end if
@@ -363,7 +366,7 @@ sub DynamicController.getValue(byref value_ as integer, ID_ as string, value_tag
     dim as DynamicController_itemPair_t ptr curItem
     curItem = itemIdPairs.retrieve(ID_)   
     if curItem then 
-        curItem->getValue(value_, value_tag)
+        curItem->item_->getValue(value_, value_tag)
     else
         value_ = 0
     end if
@@ -372,7 +375,7 @@ sub DynamicController.getValue(byref value_ as double, ID_ as string, value_tag 
     dim as DynamicController_itemPair_t ptr curItem
     curItem = itemIdPairs.retrieve(ID_)   
     if curItem then 
-        curItem->getValue(value_, value_tag)
+        curItem->item_->getValue(value_, value_tag)
     else
         value_ = 0.0
     end if
@@ -381,7 +384,7 @@ sub DynamicController.getValue(byref value_ as string, ID_ as string, value_tag 
     dim as DynamicController_itemPair_t ptr curItem
     curItem = itemIdPairs.retrieve(ID_)   
     if curItem then 
-        curItem->getValue(value_, value_tag)
+        curItem->item_->getValue(value_, value_tag)
     else
         value_ = ""
     end if
@@ -390,11 +393,13 @@ end sub
 sub DynamicController.queryValues(value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
     dim as DynamicController_publish_t ptr ptr ptr publishedValuesPtr
     dim as DynamicController_publish_t ptr ptr publishedValues
+    dim as any ptr ptr parameterPtrPtr
     dim as integer publishedValues_n, i
     dim as string tag
     dim as Vector2D a, b, curOffset
     if queryShape is EmptyShape2D then
-        publishedValues_n = allPublishedValues.retrieveKey2(value_tag, publishedValues)
+        publishedValues_n = allPublishedValues.retrieveKey2(value_tag, parameterPtrPtr)
+        publishedValues = parameterPtrPtr
         for i = 0 to publishedValues_n - 1
             tag = *(publishedValues[i]->tag_)
             value_set._addValue_(publishedValues[i]->item_->getID(), publishedValues[i]->item_->getValueContainer(tag), EmptyShape2D())
@@ -404,7 +409,7 @@ sub DynamicController.queryValues(value_set as ObjectValueSet, value_tag as stri
         queryShape.getBoundingBox(a, b)
         publishedValues_n = valueTargets.search(a, b, publishedValuesPtr)
         curOffset = queryShape.getOffset()
-        for i = 0 to pubilshedValues_n - 1
+        for i = 0 to publishedValues_n - 1
             tag = *((*(publishedValuesPtr[i]))->tag_)
             if tag = value_tag then
                 queryShape.setOffset(curOffset - (*(publishedValuesPtr[i]))->item_->getPos())
@@ -419,14 +424,16 @@ sub DynamicController.queryValues(value_set as ObjectValueSet, value_tag as stri
 end sub
 
 sub DynamicController.querySlots(slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
-    dim as DynamicController_publish_t ptr ptr ptr publishedSlotsPtr
-    dim as DynamicController_publish_t ptr ptr publishedSlots
+    dim as DynamicController_publishSlot_t ptr ptr ptr publishedSlotsPtr
+    dim as DynamicController_publishSlot_t ptr ptr publishedSlots
+    dim as any ptr ptr parameterPtrPtr 
     dim as integer publishedSlots_n, i
     dim as string tag
     dim as Vector2D a, b, curOffset
-    slot_set.setLink(link)
+    slot_set._setLink_(link)
     if queryShape is EmptyShape2D then
-        publishedSlots_n = allPublishedSlots.retrieveKey2(slot_tag, publishedSlots)
+        publishedSlots_n = allPublishedSlots.retrieveKey2(slot_tag, parameterPtrPtr)
+        publishedSlots = parameterPtrPtr
         for i = 0 to publishedSlots_n - 1
             tag = *(publishedSlots[i]->slot_tag_)
             slot_set._addSlot_(publishedSlots[i]->item_->getID(), tag, EmptyShape2D())
@@ -569,7 +576,7 @@ sub DynamicController.connect(signal_ID as string, signal_tag as string, slot_ID
     signalDestination.outgoingSlotTag = allocate(len(slot_tag) + 1)
     *(signalDestination.outgoingSlotTag) = slot_tag  
     
-    parameter_string = stripwhie(parameter_string)
+    parameter_string = stripwhite(parameter_string)
     if parameter_string = "" then
         signalDestination.appendParameter = 0
     else
@@ -580,7 +587,7 @@ sub DynamicController.connect(signal_ID as string, signal_tag as string, slot_ID
     signalDestination.thisSignal = allocate(len(signal_tag) + 1)
     *(signalDestination.thisSignal) = signal_tag        
     
-    signalNode->outgoingToSlots.insert(slotID, slot_tag, @signalDestination)
+    signalNode->outgoingToSlots.insert(slot_ID, slot_tag, @signalDestination)
     
     
     itemNode = connections.retrieve(slot_ID)

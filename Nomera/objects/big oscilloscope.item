@@ -68,7 +68,7 @@ end function
 
 function _run()
     dim as ValueSet vset1, vset2 'append the word "object" to the start of "ValueSet"
-    dim as SlotSet sset1
+    dim as SlotSet sset
     dim as string tempVal
     if int(rnd * 1200) = 0 then 
 throw($goDeep, "thisParameterDoesntExist = 'hi ho'")
@@ -76,7 +76,7 @@ throw($goDeep, "thisParameterDoesntExist = 'hi ho'")
     queryValues(vset1, "testValue", Polygon2D({Vector2D(10, 10), Vector2D(20, 30), Vector2D(0, 30)}))
     
     querySlots(sset, "my only slot")
-    if sset.getValue_N() > 0 then 
+    if sset.getMember_N() > 0 then 
         sset.throw("param string")
     end if
     
@@ -91,6 +91,7 @@ end function
 '-----------------------------------
 
 slot $playsoundTest(playtimes as integer)
+    dim as integer i
     for i = 0 to playtimes - 1
         if i = 0 then
             link.soundeffects_ptr->playSound(SND_ALARM)
@@ -104,9 +105,8 @@ slot $draw2Params(param1 as string, param2 as Vector2D)
     dim as string someText
     
     data.shouldDraw = 1
-    someText = allocate(len(param1) + 1)
-    *someText = param1
-    data.someText2 = someText
+    someText = param1
+    *(data.someText2) = someText
     data.vec = param2
    
 end slot

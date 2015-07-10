@@ -1,6 +1,8 @@
 #ifndef VECTOR2D_BI
 #define VECTOR2D_BI
 
+type pVector2D_ as pVector2D
+
 type Vector2D
     public:
         declare constructor
@@ -21,6 +23,7 @@ type Vector2D
         
         declare operator cast() as string
         declare operator let ( byref rhs as Vector2D)
+        declare operator let ( byref rhs as pVector2D_)
         
         declare function NAN() as integer
         

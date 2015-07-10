@@ -39,13 +39,13 @@ sub DoubleHash.init(datasize as uinteger)
 end sub
 
 
-sub DoubleHash.insert(key1 as integer, key2 as integer, data_ as any ptr)
+function DoubleHash.insert(key1 as integer, key2 as integer, data_ as any ptr) as any ptr
     dim as uinteger keyLoc1, keyLoc2
     dim as DoubleHashNode_t ptr newNode1, newNode2
     dim as DoubleHashFrame_t ptr frame_
     
-    keyLoc1 = hashInteger(key1)
-    keyLoc2 = hashInteger(key2)
+    keyLoc1 = hashInteger1(key1)
+    keyLoc2 = hashInteger2(key2)
 
     frame_ = allocate(sizeof(DoubleHashFrame_t))
     frame_->key_type1 = KEY_INTEGER
@@ -77,8 +77,8 @@ sub DoubleHash.insert(key1 as integer, key2 as integer, data_ as any ptr)
     end if
     newNode1->last_ = 0
     newNode2->last_ = 0
-    newNode1->sibling = newNode2
-    newNode2->sibling = newNode1
+    newNode1->sibling_ = newNode2
+    newNode2->sibling_ = newNode1
     newNode1->index = keyLoc1
     newNode2->index = keyLoc2
     this.data1_[keyLoc1] = newNode1
@@ -88,14 +88,15 @@ sub DoubleHash.insert(key1 as integer, key2 as integer, data_ as any ptr)
     
     rehash1()
     rehash2()
-end sub
-sub DoubleHash.insert(key1 as string , key2 as integer, data_ as any ptr)
+    return frame_->data_
+end function
+function DoubleHash.insert(key1 as string , key2 as integer, data_ as any ptr) as any ptr
     dim as uinteger keyLoc1, keyLoc2
     dim as DoubleHashNode_t ptr newNode1, newNode2
     dim as DoubleHashFrame_t ptr frame_
     
-    keyLoc1 = hashString(key1)
-    keyLoc2 = hashInteger(key2)
+    keyLoc1 = hashString1(key1)
+    keyLoc2 = hashInteger2(key2)
 
     frame_ = allocate(sizeof(DoubleHashFrame_t))
     frame_->key_type1 = KEY_STRING
@@ -128,8 +129,8 @@ sub DoubleHash.insert(key1 as string , key2 as integer, data_ as any ptr)
     end if
     newNode1->last_ = 0
     newNode2->last_ = 0
-    newNode1->sibling = newNode2
-    newNode2->sibling = newNode1
+    newNode1->sibling_ = newNode2
+    newNode2->sibling_ = newNode1
     newNode1->index = keyLoc1
     newNode2->index = keyLoc2
     this.data1_[keyLoc1] = newNode1
@@ -139,14 +140,16 @@ sub DoubleHash.insert(key1 as string , key2 as integer, data_ as any ptr)
     
     rehash1()
     rehash2()
-end sub
-sub DoubleHash.insert(key1 as integer, key2 as string , data_ as any ptr)
+    return frame_->data_
+
+end function
+function DoubleHash.insert(key1 as integer, key2 as string , data_ as any ptr) as any ptr
     dim as uinteger keyLoc1, keyLoc2
     dim as DoubleHashNode_t ptr newNode1, newNode2
     dim as DoubleHashFrame_t ptr frame_
     
-    keyLoc1 = hashInteger(key1)
-    keyLoc2 = hashString(key2)
+    keyLoc1 = hashInteger1(key1)
+    keyLoc2 = hashString2(key2)
 
     frame_ = allocate(sizeof(DoubleHashFrame_t))
     frame_->key_type1 = KEY_INTEGER
@@ -179,8 +182,8 @@ sub DoubleHash.insert(key1 as integer, key2 as string , data_ as any ptr)
     end if
     newNode1->last_ = 0
     newNode2->last_ = 0
-    newNode1->sibling = newNode2
-    newNode2->sibling = newNode1
+    newNode1->sibling_ = newNode2
+    newNode2->sibling_ = newNode1
     newNode1->index = keyLoc1
     newNode2->index = keyLoc2
     this.data1_[keyLoc1] = newNode1
@@ -190,14 +193,16 @@ sub DoubleHash.insert(key1 as integer, key2 as string , data_ as any ptr)
     
     rehash1()
     rehash2()
-end sub
-sub DoubleHash.insert(key1 as string , key2 as string , data_ as any ptr)  
+    return frame_->data_
+
+end function
+function DoubleHash.insert(key1 as string , key2 as string , data_ as any ptr) as any ptr
     dim as uinteger keyLoc1, keyLoc2
     dim as DoubleHashNode_t ptr newNode1, newNode2
     dim as DoubleHashFrame_t ptr frame_
     
-    keyLoc1 = hashString(key1)
-    keyLoc2 = hashString(key2)
+    keyLoc1 = hashString1(key1)
+    keyLoc2 = hashString2(key2)
 
     frame_ = allocate(sizeof(DoubleHashFrame_t))
     frame_->key_type1 = KEY_STRING
@@ -231,8 +236,8 @@ sub DoubleHash.insert(key1 as string , key2 as string , data_ as any ptr)
     end if
     newNode1->last_ = 0
     newNode2->last_ = 0
-    newNode1->sibling = newNode2
-    newNode2->sibling = newNode1
+    newNode1->sibling_ = newNode2
+    newNode2->sibling_ = newNode1
     newNode1->index = keyLoc1
     newNode2->index = keyLoc2
     this.data1_[keyLoc1] = newNode1
@@ -242,7 +247,9 @@ sub DoubleHash.insert(key1 as string , key2 as string , data_ as any ptr)
     
     rehash1()
     rehash2()
-end sub      
+    return frame_->data_
+
+end function      
 
 sub DoubleHash.removeKey1(key1 as integer)
     dim as uinteger keyLoc1
@@ -250,10 +257,9 @@ sub DoubleHash.removeKey1(key1 as integer)
     dim as DoubleHashNode_t ptr sibling
     dim as DoubleHashNode_t ptr nextNode
         
-    keyLoc1 = hashInteger(key1) 
+    keyLoc1 = hashInteger1(key1) 
     
     curNode = data1_[keyLoc1]
-    lastNode = 0
     while curNode <> 0
         if curNode->data_->key_type1 = KEY_INTEGER then
             if curNode->data_->data1.key_integer = key1 then
@@ -267,7 +273,7 @@ sub DoubleHash.removeKey1(key1 as integer)
                 end if
                 
           
-                sibling = curNode->sibling
+                sibling = curNode->sibling_
                 if sibling->next_ then sibling->next_->last_ = sibling->last_
                 if sibling->last_ then 
                     sibling->last_->next_ = sibling->next_
@@ -302,10 +308,9 @@ sub DoubleHash.removeKey1(key1 as string)
     dim as DoubleHashNode_t ptr sibling
     dim as DoubleHashNode_t ptr nextNode
         
-    keyLoc1 = hashString(key1) 
+    keyLoc1 = hashString1(key1) 
     
     curNode = data1_[keyLoc1]
-    lastNode = 0
     while curNode <> 0
         if curNode->data_->key_type1 = KEY_STRING then
             if *(curNode->data_->data1.key_string) = key1 then
@@ -318,7 +323,7 @@ sub DoubleHash.removeKey1(key1 as string)
                     this.data1_[keyLoc1] = curNode->next_                
                 end if
             
-                sibling = curNode->sibling
+                sibling = curNode->sibling_
                 if sibling->next_ then sibling->next_->last_ = sibling->last_
                 if sibling->last_ then 
                     sibling->last_->next_ = sibling->next_
@@ -352,10 +357,9 @@ sub DoubleHash.removeKey2(key2 as integer)
     dim as DoubleHashNode_t ptr sibling
     dim as DoubleHashNode_t ptr nextNode
         
-    keyLoc2 = hashInteger(key2) 
+    keyLoc2 = hashInteger2(key2) 
     
     curNode = data2_[keyLoc2]
-    lastNode = 0
     while curNode <> 0
         if curNode->data_->key_type2 = KEY_INTEGER then
             if curNode->data_->data2.key_integer = key2 then
@@ -368,7 +372,7 @@ sub DoubleHash.removeKey2(key2 as integer)
                     this.data2_[keyLoc2] = curNode->next_                
                 end if
             
-                sibling = curNode->sibling
+                sibling = curNode->sibling_
                 if sibling->next_ then sibling->next_->last_ = sibling->last_
                 if sibling->last_ then 
                     sibling->last_->next_ = sibling->next_
@@ -401,10 +405,9 @@ sub DoubleHash.removeKey2(key2 as string)
     dim as DoubleHashNode_t ptr sibling
     dim as DoubleHashNode_t ptr nextNode
         
-    keyLoc2 = hashString(key2) 
+    keyLoc2 = hashString2(key2) 
     
     curNode = data2_[keyLoc2]
-    lastNode = 0
     while curNode <> 0
         if curNode->data_->key_type2 = KEY_STRING then
             if *(curNode->data_->data2.key_string) = key2 then
@@ -417,7 +420,7 @@ sub DoubleHash.removeKey2(key2 as string)
                     this.data2_[keyLoc2] = curNode->next_                
                 end if
             
-                sibling = curNode->sibling
+                sibling = curNode->sibling_
                 if sibling->next_ then sibling->next_->last_ = sibling->last_
                 if sibling->last_ then 
                     sibling->last_->next_ = sibling->next_
@@ -452,9 +455,8 @@ sub DoubleHash.remove(key1 as integer, key2 as integer)
     dim as DoubleHashNode_t ptr sibling
 
     if numCells1 > numCells2 then
-        keyLoc = hashInteger(key1)       
+        keyLoc = hashInteger1(key1)       
         curNode = data1_[keyLoc]
-        lastNode = 0
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_INTEGER then
                 if curNode->data_->data1.key_integer = key1 then
@@ -466,7 +468,7 @@ sub DoubleHash.remove(key1 as integer, key2 as integer)
                             else
                                 this.data1_[keyLoc] = curNode->next_                
                             end if
-                            sibling = curNode->sibling
+                            sibling = curNode->sibling_
                             if sibling->next_ then sibling->next_->last_ = sibling->last_
                             if sibling->last_ then 
                                 sibling->last_->next_ = sibling->next_
@@ -486,9 +488,8 @@ sub DoubleHash.remove(key1 as integer, key2 as integer)
             curNode = curNode->next_            
         wend       
     else
-        keyLoc = hashInteger(key2)       
+        keyLoc = hashInteger2(key2)       
         curNode = data2_[keyLoc]
-        lastNode = 0
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_INTEGER then
                 if curNode->data_->data2.key_integer = key2 then
@@ -500,7 +501,7 @@ sub DoubleHash.remove(key1 as integer, key2 as integer)
                             else
                                 this.data2_[keyLoc] = curNode->next_                
                             end if
-                            sibling = curNode->sibling
+                            sibling = curNode->sibling_
                             if sibling->next_ then sibling->next_->last_ = sibling->last_
                             if sibling->last_ then 
                                 sibling->last_->next_ = sibling->next_
@@ -527,9 +528,8 @@ sub DoubleHash.remove(key1 as string , key2 as integer)
     dim as DoubleHashNode_t ptr sibling
 
     if numCells1 > numCells2 then
-        keyLoc = hashString(key1)       
+        keyLoc = hashString1(key1)       
         curNode = data1_[keyLoc]
-        lastNode = 0
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_STRING then
                 if *(curNode->data_->data1.key_string) = key1 then
@@ -541,7 +541,7 @@ sub DoubleHash.remove(key1 as string , key2 as integer)
                             else
                                 this.data1_[keyLoc] = curNode->next_                
                             end if
-                            sibling = curNode->sibling
+                            sibling = curNode->sibling_
                             if sibling->next_ then sibling->next_->last_ = sibling->last_
                             if sibling->last_ then 
                                 sibling->last_->next_ = sibling->next_
@@ -562,9 +562,8 @@ sub DoubleHash.remove(key1 as string , key2 as integer)
             curNode = curNode->next_            
         wend       
     else
-        keyLoc = hashInteger(key2)       
+        keyLoc = hashInteger2(key2)       
         curNode = data2_[keyLoc]
-        lastNode = 0
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_INTEGER then
                 if curNode->data_->data2.key_integer = key2 then
@@ -576,7 +575,7 @@ sub DoubleHash.remove(key1 as string , key2 as integer)
                             else
                                 this.data2_[keyLoc] = curNode->next_                
                             end if
-                            sibling = curNode->sibling
+                            sibling = curNode->sibling_
                             if sibling->next_ then sibling->next_->last_ = sibling->last_
                             if sibling->last_ then 
                                 sibling->last_->next_ = sibling->next_
@@ -604,9 +603,8 @@ sub DoubleHash.remove(key1 as integer, key2 as string )
     dim as DoubleHashNode_t ptr sibling
 
     if numCells1 > numCells2 then
-        keyLoc = hashInteger(key1)       
+        keyLoc = hashInteger1(key1)       
         curNode = data1_[keyLoc]
-        lastNode = 0
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_INTEGER then
                 if curNode->data_->data1.key_integer = key1 then
@@ -618,7 +616,7 @@ sub DoubleHash.remove(key1 as integer, key2 as string )
                             else
                                 this.data1_[keyLoc] = curNode->next_                
                             end if
-                            sibling = curNode->sibling
+                            sibling = curNode->sibling_
                             if sibling->next_ then sibling->next_->last_ = sibling->last_
                             if sibling->last_ then 
                                 sibling->last_->next_ = sibling->next_
@@ -639,9 +637,8 @@ sub DoubleHash.remove(key1 as integer, key2 as string )
             curNode = curNode->next_            
         wend       
     else
-        keyLoc = hashString(key2)       
+        keyLoc = hashString2(key2)       
         curNode = data2_[keyLoc]
-        lastNode = 0
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_STRING then
                 if *(curNode->data_->data2.key_string) = key2 then
@@ -653,7 +650,7 @@ sub DoubleHash.remove(key1 as integer, key2 as string )
                             else
                                 this.data2_[keyLoc] = curNode->next_                
                             end if
-                            sibling = curNode->sibling
+                            sibling = curNode->sibling_
                             if sibling->next_ then sibling->next_->last_ = sibling->last_
                             if sibling->last_ then 
                                 sibling->last_->next_ = sibling->next_
@@ -681,9 +678,8 @@ sub DoubleHash.remove(key1 as string , key2 as string )
     dim as DoubleHashNode_t ptr sibling
 
     if numCells1 > numCells2 then
-        keyLoc = hashString(key1)       
+        keyLoc = hashString1(key1)       
         curNode = data1_[keyLoc]
-        lastNode = 0
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_STRING then
                 if *(curNode->data_->data1.key_string) = key1 then
@@ -695,7 +691,7 @@ sub DoubleHash.remove(key1 as string , key2 as string )
                             else
                                 this.data1_[keyLoc] = curNode->next_                
                             end if
-                            sibling = curNode->sibling
+                            sibling = curNode->sibling_
                             if sibling->next_ then sibling->next_->last_ = sibling->last_
                             if sibling->last_ then 
                                 sibling->last_->next_ = sibling->next_
@@ -717,9 +713,8 @@ sub DoubleHash.remove(key1 as string , key2 as string )
             curNode = curNode->next_            
         wend       
     else
-        keyLoc = hashString(key2)       
+        keyLoc = hashString2(key2)       
         curNode = data2_[keyLoc]
-        lastNode = 0
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_STRING then
                 if *(curNode->data_->data2.key_string) = key2 then
@@ -731,7 +726,7 @@ sub DoubleHash.remove(key1 as string , key2 as string )
                             else
                                 this.data2_[keyLoc] = curNode->next_                
                             end if
-                            sibling = curNode->sibling
+                            sibling = curNode->sibling_
                             if sibling->next_ then sibling->next_->last_ = sibling->last_
                             if sibling->last_ then 
                                 sibling->last_->next_ = sibling->next_
@@ -764,7 +759,7 @@ function DoubleHash.retrieveKey1(key1 as integer, byref ret_ as any ptr ptr) as 
     ret_cap = 5
     ret_ = allocate(sizeof(any ptr) * ret_cap)
     
-    keyLoc = hashInteger(key1)
+    keyLoc = hashInteger1(key1)
     curNode = data1_[keyLoc]
     while curNode <> 0
         if curNode->data_->key_type1 = KEY_INTEGER then
@@ -791,7 +786,7 @@ function DoubleHash.retrieveKey1(key1 as string , byref ret_ as any ptr ptr) as 
     ret_cap = 5
     ret_ = allocate(sizeof(any ptr) * ret_cap)
     
-    keyLoc = hashString(key1)
+    keyLoc = hashString1(key1)
     curNode = data1_[keyLoc]
     while curNode <> 0
         if curNode->data_->key_type1 = KEY_STRING then
@@ -818,7 +813,7 @@ function DoubleHash.retrieveKey2(key2 as integer, byref ret_ as any ptr ptr) as 
     ret_cap = 5
     ret_ = allocate(sizeof(any ptr) * ret_cap)
     
-    keyLoc = hashInteger(key2)
+    keyLoc = hashInteger2(key2)
     curNode = data2_[keyLoc]
     while curNode <> 0
         if curNode->data_->key_type2 = KEY_INTEGER then
@@ -845,7 +840,7 @@ function DoubleHash.retrieveKey2(key2 as string , byref ret_ as any ptr ptr) as 
     ret_cap = 5
     ret_ = allocate(sizeof(any ptr) * ret_cap)
     
-    keyLoc = hashString(key2)
+    keyLoc = hashString2(key2)
     curNode = data2_[keyLoc]
     while curNode <> 0
         if curNode->data_->key_type2 = KEY_STRING then
@@ -869,7 +864,7 @@ function DoubleHash.retrieve(key1 as integer, key2 as integer) as any ptr
     dim as DoubleHashNode_t ptr curNode
 
     if numCells1 > numCells2 then
-        keyLoc = hashInteger(key1)
+        keyLoc = hashInteger1(key1)
         curNode = data1_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_INTEGER then
@@ -884,7 +879,7 @@ function DoubleHash.retrieve(key1 as integer, key2 as integer) as any ptr
             curNode = curNode->next_
         wend    
     else
-        keyLoc = hashInteger(key2)
+        keyLoc = hashInteger2(key2)
         curNode = data2_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_INTEGER then
@@ -906,7 +901,7 @@ function DoubleHash.retrieve(key1 as string , key2 as integer) as any ptr
     dim as DoubleHashNode_t ptr curNode
 
     if numCells1 > numCells2 then
-        keyLoc = hashString(key1)
+        keyLoc = hashString1(key1)
         curNode = data1_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_STRING then
@@ -921,7 +916,7 @@ function DoubleHash.retrieve(key1 as string , key2 as integer) as any ptr
             curNode = curNode->next_
         wend    
     else
-        keyLoc = hashInteger(key2)
+        keyLoc = hashInteger2(key2)
         curNode = data2_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_INTEGER then
@@ -943,7 +938,7 @@ function DoubleHash.retrieve(key1 as integer, key2 as string ) as any ptr
     dim as DoubleHashNode_t ptr curNode
 
     if numCells1 > numCells2 then
-        keyLoc = hashInteger(key1)
+        keyLoc = hashInteger1(key1)
         curNode = data1_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_INTEGER then
@@ -958,7 +953,7 @@ function DoubleHash.retrieve(key1 as integer, key2 as string ) as any ptr
             curNode = curNode->next_
         wend    
     else
-        keyLoc = hashString(key2)
+        keyLoc = hashString2(key2)
         curNode = data2_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_STRING then
@@ -980,7 +975,7 @@ function DoubleHash.retrieve(key1 as string , key2 as string ) as any ptr
     dim as DoubleHashNode_t ptr curNode
 
     if numCells1 > numCells2 then
-        keyLoc = hashString(key1)
+        keyLoc = hashString1(key1)
         curNode = data1_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_STRING then
@@ -995,13 +990,13 @@ function DoubleHash.retrieve(key1 as string , key2 as string ) as any ptr
             curNode = curNode->next_
         wend    
     else
-        keyLoc = hashString(key2)
+        keyLoc = hashString2(key2)
         curNode = data2_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_STRING then
                 if *(curNode->data_->data2.key_string) = key2 then
                     if curNode->data_->key_type1 = KEY_STRING then
-                        if *(curNode->data_->data1.key_integer) = key1 then                    
+                        if *(curNode->data_->data1.key_string) = key1 then                    
                             return curNode->data_->data_
                         end if
                     end if
@@ -1017,7 +1012,7 @@ function DoubleHash.existsKey1(key1 as integer) as integer
     dim as uinteger keyLoc
     dim as DoubleHashNode_t ptr curNode
 
-    keyLoc = hashInteger(key1)
+    keyLoc = hashInteger1(key1)
     curNode = data1_[keyLoc]
     while curNode <> 0
         if curNode->data_->key_type1 = KEY_INTEGER then
@@ -1033,7 +1028,7 @@ function DoubleHash.existsKey1(key1 as string ) as integer
     dim as uinteger keyLoc
     dim as DoubleHashNode_t ptr curNode
 
-    keyLoc = hashString(key1)
+    keyLoc = hashString1(key1)
     curNode = data1_[keyLoc]
     while curNode <> 0
         if curNode->data_->key_type1 = KEY_STRING then
@@ -1049,7 +1044,7 @@ function DoubleHash.existsKey2(key2 as integer) as integer
     dim as uinteger keyLoc
     dim as DoubleHashNode_t ptr curNode
 
-    keyLoc = hashInteger(key2)
+    keyLoc = hashInteger2(key2)
     curNode = data2_[keyLoc]
     while curNode <> 0
         if curNode->data_->key_type2 = KEY_INTEGER then
@@ -1065,7 +1060,7 @@ function DoubleHash.existsKey2(key2 as string ) as integer
     dim as uinteger keyLoc
     dim as DoubleHashNode_t ptr curNode
 
-    keyLoc = hashString(key2)
+    keyLoc = hashString2(key2)
     curNode = data2_[keyLoc]
     while curNode <> 0
         if curNode->data_->key_type2 = KEY_STRING then
@@ -1082,7 +1077,7 @@ function DoubleHash.exists(key1 as integer, key2 as integer) as integer
     dim as DoubleHashNode_t ptr curNode
 
     if numCells1 > numCells2 then
-        keyLoc = hashInteger(key1)
+        keyLoc = hashInteger1(key1)
         curNode = data1_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_INTEGER then
@@ -1097,7 +1092,7 @@ function DoubleHash.exists(key1 as integer, key2 as integer) as integer
             curNode = curNode->next_
         wend
     else
-        keyLoc = hashInteger(key2)
+        keyLoc = hashInteger2(key2)
         curNode = data2_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_INTEGER then
@@ -1119,7 +1114,7 @@ function DoubleHash.exists(key1 as string , key2 as integer) as integer
     dim as DoubleHashNode_t ptr curNode
 
     if numCells1 > numCells2 then
-        keyLoc = hashString(key1)
+        keyLoc = hashString1(key1)
         curNode = data1_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_STRING then
@@ -1134,7 +1129,7 @@ function DoubleHash.exists(key1 as string , key2 as integer) as integer
             curNode = curNode->next_
         wend
     else
-        keyLoc = hashInteger(key2)
+        keyLoc = hashInteger2(key2)
         curNode = data2_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_INTEGER then
@@ -1156,7 +1151,7 @@ function DoubleHash.exists(key1 as integer, key2 as string ) as integer
     dim as DoubleHashNode_t ptr curNode
 
     if numCells1 > numCells2 then
-        keyLoc = hashInteger(key1)
+        keyLoc = hashInteger1(key1)
         curNode = data1_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_INTEGER then
@@ -1171,7 +1166,7 @@ function DoubleHash.exists(key1 as integer, key2 as string ) as integer
             curNode = curNode->next_
         wend
     else
-        keyLoc = hashString(key2)
+        keyLoc = hashString2(key2)
         curNode = data2_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_STRING then
@@ -1193,7 +1188,7 @@ function DoubleHash.exists(key1 as string , key2 as string ) as integer
     dim as DoubleHashNode_t ptr curNode
 
     if numCells1 > numCells2 then
-        keyLoc = hashString(key1)
+        keyLoc = hashString1(key1)
         curNode = data1_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type1 = KEY_STRING then
@@ -1208,7 +1203,7 @@ function DoubleHash.exists(key1 as string , key2 as string ) as integer
             curNode = curNode->next_
         wend
     else
-        keyLoc = hashString(key2)
+        keyLoc = hashString2(key2)
         curNode = data2_[keyLoc]
         while curNode <> 0
             if curNode->data_->key_type2 = KEY_STRING then
@@ -1352,23 +1347,42 @@ sub DoubleHash.clean()
         
     end if
 end sub
-function DoubleHash.hashString(key as string) as uinteger
+function DoubleHash.hashString1(key as string) as uinteger
     dim as integer  i
     dim as uinteger hash = 31
     for i = 1 to len(key)
         hash = (hash * 54059) xor (asc(mid(key, i, 1)) * 76963)
     next i
-    hash = hash mod numCells
+    hash = hash mod numCells1
     return hash
 end function
-function DoubleHash.hashInteger(s_key as integer) as uinteger
+function DoubleHash.hashInteger1(s_key as integer) as uinteger
     dim as uinteger key
     key = s_key
     key = key xor ((key shr 20) xor (key shr 12))
     key = key xor ((key shr 7) xor (key shr 4))
-    key = key mod numCells
+    key = key mod numCells1
     return key
 end function
+function DoubleHash.hashString2(key as string) as uinteger
+    dim as integer  i
+    dim as uinteger hash = 31
+    for i = 1 to len(key)
+        hash = (hash * 54059) xor (asc(mid(key, i, 1)) * 76963)
+    next i
+    hash = hash mod numCells2
+    return hash
+end function
+function DoubleHash.hashInteger2(s_key as integer) as uinteger
+    dim as uinteger key
+    key = s_key
+    key = key xor ((key shr 20) xor (key shr 12))
+    key = key xor ((key shr 7) xor (key shr 4))
+    key = key mod numCells2
+    return key
+end function
+
+
 sub DoubleHash.rehash1()
     dim as double ratio
     dim as DoubleHashNode_t ptr ptr newData
@@ -1390,9 +1404,9 @@ sub DoubleHash.rehash1()
             curNode = data1_[i]
             while curNode <> 0 
                 if curNode->data_->key_type1 = KEY_INTEGER then
-                    key = hashInteger(curNode->data_->data1.key_integer)
+                    key = hashInteger1(curNode->data_->data1.key_integer)
                 elseif curNode->data_->key_type1 = KEY_STRING then
-                    key = hashString(*(curNode->data_->data1.key_string))
+                    key = hashString1(*(curNode->data_->data1.key_string))
                 end if
                 nextNode = curNode->next_
                 
@@ -1430,9 +1444,9 @@ sub DoubleHash.rehash2()
             curNode = data2_[i]
             while curNode <> 0 
                 if curNode->data_->key_type2 = KEY_INTEGER then
-                    key = hashInteger(curNode->data_->data2.key_integer)
+                    key = hashInteger2(curNode->data_->data2.key_integer)
                 elseif curNode->data_->key_type2 = KEY_STRING then
-                    key = hashString(*(curNode->data_->data2.key_string))
+                    key = hashString2(*(curNode->data_->data2.key_string))
                 end if
                 nextNode = curNode->next_
                 

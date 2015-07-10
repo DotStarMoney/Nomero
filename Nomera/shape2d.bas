@@ -10,12 +10,12 @@ end sub
 function Shape2D.getOffset() as Vector2D
     return offset
 end function
-constructor EmptyShape2D()
-end constructor
-sub EmptyShape2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) 
+sub Shape2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) 
     tl_ = Vector2D(0,0)
     br_ = Vector2D(0,0)
 end sub
+constructor EmptyShape2D()
+end constructor
 constructor Point2D()
 end constructor
 constructor Point2D(p_ as Vector2D)

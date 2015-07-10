@@ -39,8 +39,8 @@ type HashTable
         declare constructor(datasize as uinteger)
         declare destructor()
         declare sub init(datasize as uinteger)
-        declare sub insert(r_key as integer, data_ as any ptr)
-        declare sub insert(r_key as string , data_ as any ptr)
+        declare function insert(r_key as integer, data_ as any ptr) as any ptr
+        declare function insert(r_key as string , data_ as any ptr) as any ptr
         declare sub remove(r_key as integer)
         declare sub remove(r_key as string)
         declare function retrieve(r_key as integer) as any ptr

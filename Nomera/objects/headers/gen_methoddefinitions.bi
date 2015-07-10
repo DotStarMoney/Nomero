@@ -5,6 +5,7 @@ end function
 sub Item.BIGOSCILLOSCOPE_SLOT_PLAYSOUNDTEST(pvPair() as _Item_slotValuePair_t)
     dim as integer playtimes
     matchParameter(playtimes, "PLAYTIMES", pvPair())
+    dim as integer i
     for i = 0 to playtimes - 1
         if i = 0 then
             link.soundeffects_ptr->playSound(SND_ALARM)
@@ -21,9 +22,8 @@ sub Item.BIGOSCILLOSCOPE_SLOT_DRAW2PARAMS(pvPair() as _Item_slotValuePair_t)
     dim as string someText
     
     data_.BIGOSCILLOSCOPE_DATA->shouldDraw = 1
-    someText = allocate(len(param1) + 1)
-    *someText = param1
-    data_.BIGOSCILLOSCOPE_DATA->someText2 = someText
+    someText = param1
+    *(data_.BIGOSCILLOSCOPE_DATA->someText2) = someText
     data_.BIGOSCILLOSCOPE_DATA->vec = param2
    
 end sub
@@ -54,7 +54,7 @@ end sub
 function Item.BIGOSCILLOSCOPE_PROC_RUN(t as double) as integer
     static as Vector2D POLYGON2D_REP_0(0 to 2) = {Vector2D(10, 10), Vector2D(20, 30), Vector2D(0, 30)}
     dim as ObjectValueSet vset1, vset2 
-    dim as ObjectSlotSet sset1
+    dim as ObjectSlotSet sset
     dim as string tempVal
     if int(rnd * 1200) = 0 then 
 throw("GODEEP", "thisParameterDoesntExist = 'hi ho'")
@@ -62,7 +62,7 @@ throw("GODEEP", "thisParameterDoesntExist = 'hi ho'")
     queryValues(vset1, "testValue", Polygon2D(@(POLYGON2D_REP_0(0)), 3))
     
     querySlots(sset, "my only slot")
-    if sset.getValue_N() > 0 then 
+    if sset.getMember_N() > 0 then 
         sset.throw("param string")
     end if
     
@@ -168,7 +168,7 @@ sub Item.TANDY2000_PROC_INIT()
     _initAddSlot_("MYONLYSLOT", ITEM_TANDY2000_SLOT_MYONLYSLOT_E)
     _initAddParameter_("TEST VECTOR2D", _ITEM_VALUE_VECTOR2D)
     link.dynamiccontroller_ptr->addPublishedSlot(ID, "MY ONLY SLOT", "MYONLYSLOT", Polygon2D(@(POLYGON2D_REP_0(0)), 3))
-    _initAddValue_("TESTVALUE", _ITEM_VALUE_STRING)
+    _initAddValue_("TESTVALUE", _ITEM_VALUE_ZSTRING)
     link.dynamiccontroller_ptr->addPublishedValue(ID, "TESTVALUE")
 
     dim as integer rightoh
@@ -212,10 +212,10 @@ sub Item.TANDY2000_PROC_DRAW(scnbuff as integer ptr)
 end sub
 sub Item.TANDY2000_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     
-    LOCK_SCREEN()
+    LOCK_TO_SCREEN()
         circle scnbuff, (10, 10), 10, &h00ff00
         draw string scnbuff, (10, 10), str(data_.TANDY2000_DATA->alright)
         if data_.TANDY2000_DATA->checkIt = 4 then draw string (10, 18), "EUREKA"
-    UNLOCK_SCREEN()
+    UNLOCK_TO_SCREEN()
 
 end sub

@@ -9,7 +9,7 @@ end destructor
 function KeyBank.acquire() as string
     dim as KeyBank_node_t curNode
     curNode.memAddr = allocate(sizeof(integer))
-    curNode.key = "[" + str(cast(ULongInt, curNode.memAddr)) + "]"
+    curNode.key = "[" + str(curNode.memAddr) + "]"
     keys.insert(curNode.key, @curNode)
     return curNode.key
 end function
@@ -19,7 +19,7 @@ sub KeyBank.relinquish(key as string)
     if curNode_ then
         deallocate(curNode_->memAddr)
         curNode_->key = ""
-        keys.delete(key)
+        keys.remove(key)
     end if
 end sub
 sub KeyBank.flush()

@@ -6,28 +6,17 @@
 #include "pointlight.bi"
 #include "shape2d.bi"
 #include "hashtable.bi"
+#include "pvector2d.bi"
+#include "objectslotset.bi"
+#include "objectvalueset.bi"
+
 
 #include "objects\headers\gen_itemdefines.bi"
 
-enum _Item_valueTypes_e
-    _ITEM_VALUE_VECTOR2D
-    _ITEM_VALUE_INTEGER
-    _ITEM_VALUE_DOUBLE
-    _ITEM_VALUE_ZSTRING
-end enum
-
-type _Item_valueContainer_t
-    as _Item_valueTypes_e type_
-    Union data_
-        as Vector2D Vector2D_
-        as integer integer_
-        as double double_
-        as zstring ptr zstring_
-    end union
-end type
+#include "itemvaluecontainer.bi"
 
 type _Item_slotTable_t
-    as _Item_slotEnum_e slotE
+    as Item_slotEnum_e slotE
 end type
 
 type _Item_slotValuePair_t
@@ -86,10 +75,10 @@ type Item
         #include "objects\headers\gen_methodprototypes.bi"
     
     
-        declare static sub matchParameter(byref param_ as Vector2D, paramater_tag as string, pvPair() as _Item_slotValuePair_t)
-        declare static sub matchParameter(byref param_ as integer,  paramater_tag as string, pvPair() as _Item_slotValuePair_t)
-        declare static sub matchParameter(byref param_ as double,   paramater_tag as string, pvPair() as _Item_slotValuePair_t)
-        declare static sub matchParameter(byref param_ as string,   paramater_tag as string, pvPair() as _Item_slotValuePair_t)
+        declare static sub matchParameter(byref param_ as Vector2D, parameter_tag as string, pvPair() as _Item_slotValuePair_t)
+        declare static sub matchParameter(byref param_ as integer,  parameter_tag as string, pvPair() as _Item_slotValuePair_t)
+        declare static sub matchParameter(byref param_ as double,   parameter_tag as string, pvPair() as _Item_slotValuePair_t)
+        declare static sub matchParameter(byref param_ as string,   parameter_tag as string, pvPair() as _Item_slotValuePair_t)
         
         
         
@@ -108,15 +97,15 @@ type Item
         declare sub setValue(value_ as double, value_tag as string)
         declare sub setValue(value_ as string, value_tag as string)
         
-        declare sub throw(signal_tag as string, parameter_string as string)
+        declare sub throw(signal_tag as string, parameter_string as string = "")
         
         declare sub _initAddParameter_(param_tag as string, param_type as _Item_valueTypes_e)
         declare sub _initAddSlot_(slot_tag as string, slot_num as Item_slotEnum_e)
         declare sub _initAddValue_(value_tag as string, value_type as _Item_valueTypes_e)
         declare sub _initAddSignal_(signal_tag as string)
         
-        declare sub queryValues(byref value_set as ValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
-        declare sub querySlots(byref slot_set as SlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
+        declare sub queryValues(byref value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
+        declare sub querySlots(byref slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
         
         as Hashtable parameterTable 
         as Hashtable slotTable 

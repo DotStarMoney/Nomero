@@ -1,6 +1,5 @@
 #include "vector2d.bi"
 #include "vbcompat.bi"
-#include "debug.bi"
 
 constructor Vector2D
     this.isNAN = 0
@@ -34,6 +33,11 @@ sub Vector2D.normalize()
     this.xs = this.xs / m
     this.ys = this.ys/ m
 end sub
+
+operator Vector2D.let ( byref rhs as pVector2D)
+    this.xs = rhs.xs
+    this.ys = rhs.ys
+end operator
 
 operator Vector2D.let ( byref rhs as Vector2D )
     if rhs.isNAN = 1 then

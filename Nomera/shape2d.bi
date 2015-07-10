@@ -6,7 +6,7 @@
 type Shape2D extends Object
     public:
         declare constructor()
-        declare abstract sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)    
+        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)    
         declare sub setOffset(offset_ as Vector2D)
         declare function getOffset() as Vector2D
     protected:
@@ -15,7 +15,6 @@ end type
 type EmptyShape2D extends Shape2D
     public:
         declare constructor()
-        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) 
 end type
 
 type Point2d extends Shape2D

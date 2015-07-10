@@ -24,25 +24,24 @@ enum DoubleHashNodeKeyType_e
     KEY_INTEGER
 end enum
 
-type DoublerHashFrame_t
+union DoubleHashNode_data_u
+    key_string  as zstring ptr
+    key_integer as integer
+end union
+
+type DoubleHashFrame_t
     as any ptr data_
     as DoubleHashNodeKeyType_e key_type1
-    union data1
-        key_string  as zstring ptr
-        key_integer as integer
-    end union
+    as DoubleHashNode_data_u   data1
     as DoubleHashNodeKeyType_e key_type2
-    union data2
-        key_string  as zstring ptr
-        key_integer as integer
-    end union
+    as DoubleHashNode_data_u   data2
 end type
 
 type DoubleHashNode_t
     as DoubleHashNode_t ptr next_
     as DoubleHashNode_t ptr last_
     as DoubleHashNode_t ptr sibling_
-    as DoublerHashFrame_t ptr data_
+    as DoubleHashFrame_t ptr data_
     as uinteger index
 end type
 
@@ -53,10 +52,10 @@ type DoubleHash
         declare destructor()
         declare sub init(datasize as uinteger)
         
-        declare sub insert(key1 as integer, key2 as integer, data_ as any ptr)
-        declare sub insert(key1 as string , key2 as integer, data_ as any ptr)
-        declare sub insert(key1 as integer, key2 as string , data_ as any ptr)
-        declare sub insert(key1 as string , key2 as string , data_ as any ptr)        
+        declare function insert(key1 as integer, key2 as integer, data_ as any ptr) as any ptr
+        declare function insert(key1 as string , key2 as integer, data_ as any ptr) as any ptr
+        declare function insert(key1 as integer, key2 as string , data_ as any ptr) as any ptr
+        declare function insert(key1 as string , key2 as string , data_ as any ptr) as any ptr
         
         declare sub removeKey1(key1 as integer)
         declare sub removeKey1(key1 as string)
@@ -92,8 +91,11 @@ type DoubleHash
         declare sub flush()
         declare sub clean()
     private:
-        declare function hashString(key as string)   as uinteger
-        declare function hashInteger(s_key as integer) as uinteger
+        declare function hashString1(key as string)   as uinteger
+        declare function hashInteger1(s_key as integer) as uinteger
+        declare function hashString2(key as string)   as uinteger
+        declare function hashInteger2(s_key as integer) as uinteger        
+        
         declare sub rehash1()
         declare sub rehash2()
         

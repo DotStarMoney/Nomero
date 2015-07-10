@@ -76,11 +76,11 @@ end function
 
 function _drawOverlay(scnbuff as integer ptr)
     
-    LOCK_SCREEN()
+    LOCK_TO_SCREEN()
         circle scnbuff, (10, 10), 10, &h00ff00
         draw string scnbuff, (10, 10), str(data.alright)
         if data.checkIt = 4 then draw string (10, 18), "EUREKA"
-    UNLOCK_SCREEN()
+    UNLOCK_TO_SCREEN()
 
 end function
 

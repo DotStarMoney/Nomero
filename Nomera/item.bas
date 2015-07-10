@@ -7,7 +7,7 @@
 #include "utility.bi"
 #include "objectvalueset.bi"
 #include "objectslotset.bi"
-
+#include "locktoscreen.bi"
 
 #define ifVector2D(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_VECTOR2D, 1, 0)
 #define ifInteger(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_INTEGER, 1, 0)
@@ -108,7 +108,7 @@ sub Item._initAddParameter_(param_tag as string, param_type as _Item_valueTypes_
     param_tag = ucase(param_tag)
     parameterTable.insert(param_tag, @valueC)
 end sub
-sub Item._initAddSlot_(slot_tag as string, slot_num as _Item_slotEnum_e)
+sub Item._initAddSlot_(slot_tag as string, slot_num as Item_slotEnum_e)
     dim as _Item_slotTable_t slotEntry
     slotEntry.slotE = slot_num
     slotTable.insert(ucase(slot_tag), @slotEntry)
@@ -130,7 +130,7 @@ sub Item._initAddValue_(value_tag as string, value_type as _Item_valueTypes_e)
     valueTable.insert(value_tag, @valueC)
 end sub
 sub Item._initAddSignal_(signal_tag as string)
-    dim as fillerData
+    dim as integer fillerData
     fillerData = not 0
     signalTable.insert(ucase(signal_tag), @fillerData)
 end sub
@@ -153,7 +153,7 @@ function Item.getPos() as Vector2D
 end function
 
 function Item.getSize() as Vector2D
-    return s
+    return size
 end function
 
 sub Item.getBounds(byref a as Vector2D, byref b as Vector2D) 
@@ -211,7 +211,7 @@ end sub
 
 
 
-sub Item.matchParameter(byref value_ as Vector2D, paramater_tag as string, pvPair() as _Item_slotValuePair_t) 
+sub Item.matchParameter(byref value_ as Vector2D, parameter_tag as string, pvPair() as _Item_slotValuePair_t) 
     dim as integer i
     parameter_tag = ucase(parameter_tag)
     for i = 0 to ubound(pvPair)
@@ -225,7 +225,7 @@ sub Item.matchParameter(byref value_ as Vector2D, paramater_tag as string, pvPai
     value_ = Vector2D(0, 0)
 end sub
 
-sub Item.matchParameter(byref value_ as integer, paramater_tag as string, pvPair() as _Item_slotValuePair_t)
+sub Item.matchParameter(byref value_ as integer, parameter_tag as string, pvPair() as _Item_slotValuePair_t)
     dim as integer i
     parameter_tag = ucase(parameter_tag)
     for i = 0 to ubound(pvPair)
@@ -239,7 +239,7 @@ sub Item.matchParameter(byref value_ as integer, paramater_tag as string, pvPair
     value_ = 0
 end sub
 
-sub Item.matchParameter(byref value_ as double, paramater_tag as string, pvPair() as _Item_slotValuePair_t)
+sub Item.matchParameter(byref value_ as double, parameter_tag as string, pvPair() as _Item_slotValuePair_t)
     dim as integer i
     parameter_tag = ucase(parameter_tag)
     for i = 0 to ubound(pvPair)
@@ -253,7 +253,7 @@ sub Item.matchParameter(byref value_ as double, paramater_tag as string, pvPair(
     value_ = 0.0
 end sub
 
-sub Item.matchParameter(byref value_ as string, paramater_tag as string, pvPair() as _Item_slotValuePair_t)
+sub Item.matchParameter(byref value_ as string, parameter_tag as string, pvPair() as _Item_slotValuePair_t)
     dim as integer i
     parameter_tag = ucase(parameter_tag)
     for i = 0 to ubound(pvPair)
@@ -277,8 +277,8 @@ sub Item.valueFormToContainer(value_form as string, byref valueC as _Item_valueC
         cpos = instr(value_form, ",")
         lstr = left(value_form, cpos - 1)
         rstr = right(value_form, len(value_form) - cpos)
-        if ucase(right(lstr, 1) = "F") then lstr = left(lstr, len(lstr) - 1)
-        if ucase(right(rstr, 1) = "F") then rstr = left(rstr, len(rstr) - 1)
+        if ucase(right(lstr, 1)) = "F" then lstr = left(lstr, len(lstr) - 1)
+        if ucase(right(rstr, 1)) = "F" then rstr = left(rstr, len(rstr) - 1)
         valueC.type_ = _ITEM_VALUE_VECTOR2D
         valueC.data_.Vector2D_ = Vector2D(val(lstr), val(rstr))
     elseif left(value_form, 1) = "'" then
@@ -302,8 +302,8 @@ sub Item.valueFormToContainer(value_form as string, byref valueC as _Item_valueC
 end sub
 
 sub Item.fireSlot(slot_tag as string, parameter_string as string)
-    dim as _Item_slotTable_t slotE_ptr
-    dim as _Item_slotEnum_e slotNumber
+    dim as _Item_slotTable_t ptr slotE_ptr
+    dim as Item_slotEnum_e slotNumber
     dim as integer i, divPos, pvPair_l
     dim as string paramName, valueString
     redim as string paramSplit(0)
@@ -314,7 +314,7 @@ sub Item.fireSlot(slot_tag as string, parameter_string as string)
         slotNumber = slotE_ptr->slotE
         if parameter_string <> "" then
             parameter_string = trimwhite(parameter_string)
-            tokenize(parameter_string, paramSplit, ",",, "()")
+            tokenize(parameter_string, paramSplit(), ",",, "()")
             pvPair_l = 0
             for i = 0 to ubound(paramSplit)
                 paramSplit(i) = trimwhite(paramSplit(i))
@@ -350,52 +350,52 @@ function Item.getValueContainer(value_tag as string) as _Item_valueContainer_t p
     return valueTable.retrieve(value_tag)
 end function
 sub Item.getValue(byref value_ as Vector2D, value_tag as string) 
-    dim as _Item_valueContainer_t value_ptr
+    dim as _Item_valueContainer_t ptr value_ptr
     value_tag = ucase(value_tag)
     value_ptr = valueTable.retrieve(value_tag)
     if value_ptr then
         if value_ptr->type_ = _ITEM_VALUE_VECTOR2D then
-            value = value_ptr->data_.Vector2D_
+            value_ = value_ptr->data_.Vector2D_
             exit sub
         end if
     end if
-    value = Vector2D(0, 0)
+    value_ = Vector2D(0, 0)
 end sub
 sub Item.getValue(byref value_ as integer, value_tag as string) 
-    dim as _Item_valueContainer_t value_ptr
+    dim as _Item_valueContainer_t ptr value_ptr
     value_tag = ucase(value_tag)
     value_ptr = valueTable.retrieve(value_tag)
     if value_ptr then
         if value_ptr->type_ = _ITEM_VALUE_INTEGER then
-            value = value_ptr->data_.integer_
+            value_ = value_ptr->data_.integer_
             exit sub
         end if
     end if
-    value = 0
+    value_ = 0
 end sub
 sub Item.getValue(byref value_ as double, value_tag as string) 
-    dim as _Item_valueContainer_t value_ptr
+    dim as _Item_valueContainer_t ptr value_ptr
     value_tag = ucase(value_tag)
     value_ptr = valueTable.retrieve(value_tag)
     if value_ptr then
         if value_ptr->type_ = _ITEM_VALUE_DOUBLE then
-            value = value_ptr->data_.double_
+            value_ = value_ptr->data_.double_
             exit sub
         end if
     end if
-    value = 0.0
+    value_ = 0.0
 end sub
 sub Item.getValue(byref value_ as string, value_tag as string) 
-    dim as _Item_valueContainer_t value_ptr
+    dim as _Item_valueContainer_t ptr value_ptr
     value_tag = ucase(value_tag)
     value_ptr = valueTable.retrieve(value_tag)
     if value_ptr then
         if value_ptr->type_ = _ITEM_VALUE_ZSTRING then
-            value = *(value_ptr->data_.zstring_)
+            value_ = *(value_ptr->data_.zstring_)
             exit sub
         end if
     end if
-    value = ""
+    value_ = ""
 end sub
 
 sub Item.getOtherValue(byref value_ as Vector2D, ID_ as string, value_tag as string)
@@ -510,10 +510,10 @@ sub Item.throw(signal_tag as string, parameter_string as string)
     link.dynamiccontroller_ptr->throw(ID, signal_tag, parameter_string)
 end sub
 
-sub Item.queryValues(byref value_set as ValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
+sub Item.queryValues(byref value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
     link.dynamiccontroller_ptr->queryValues(value_set, value_tag, queryShape)
 end sub
 
-sub Item.querySlots(slot_set as SlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
+sub Item.querySlots(slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
     link.dynamiccontroller_ptr->querySlots(slot_set, slot_tag, queryShape)
 end sub
