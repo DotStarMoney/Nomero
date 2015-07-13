@@ -43,7 +43,7 @@ function _draw()
     if data.shouldDraw then
         getParameter(flavor, "flavor")
 
-        line (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff00ff, &h00ffff), Bf
+        line scnbuff, (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff00ff, &h00ffff), Bf
 
     end if
 end function

@@ -53,19 +53,26 @@ end sub
 function Item.getIndicatorColor(i as integer) as integer
     return BOMB_COLORS[i]
 end function
-
-
-sub Item.init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "")
+sub Item.construct(itemType_ as Item_Type_e, ID_ as string = "")
     itemType = itemType_
+    ID = ID_
+
+    #include "objects\headers\gen_constructcaseblock.bi"
+    
+end sub
+sub Item.initPost(p_ as Vector2D, size_ as Vector2D)
     p = p_
     size = size_
-    ID = ID_
     lightState = 0
     fastLight = 1
     anims_n = 0
     
     #include "objects\headers\gen_initcaseblock.bi"
-
+    
+end sub
+sub Item.init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "")
+    construct(itemType_, ID_)
+    initPost(p_, size_)
 end sub
 
 sub Item.flush()

@@ -152,6 +152,8 @@ file_drawoverlaycaseblock = headerDir + 'gen_drawoverlaycaseblock.bi'
 text_drawoverlaycaseblock = ''
 file_slotcaseblock = headerDir + 'gen_slotcaseblock.bi'
 text_slotcaseblock = ''
+file_constructcaseblock = headerDir + 'gen_constructcaseblock.bi'
+text_constructcaseblock = ''
 
 itemFiles = getAllItemFiles()
 
@@ -173,6 +175,7 @@ freshFile(file_runcaseblock)
 freshFile(file_drawcaseblock)
 freshFile(file_drawoverlaycaseblock)
 freshFile(file_slotcaseblock)
+freshFile(file_constructcaseblock)
 
 for curFileName in itemFiles:
     curFile = open(curFileName, "r")
@@ -433,7 +436,6 @@ for curFileName in itemFiles:
         if fInitGroup:
             fInit = fInitGroup.group(0)
             fInitLines = fInit.splitlines()
-            fInitLines.insert(1, initHeader)
             fInitProto = objectShortPrefix + '_PROC_INIT()'
             fInitLines[0] = 'sub Item.' + fInitProto
             if hasItemData == 1: fInitLines.insert(1, SPACE_TAB + 'data_.' + itemDataPtr + ' = new ' + dataTypePrefixName)
@@ -507,11 +509,16 @@ for curFileName in itemFiles:
             text_methodprototypes += 'declare sub ' + fDrawOProto + '\n'
             text_drawoverlaycaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + objectShortPrefix + '_PROC_DRAWOVERLAY(scnbuff)' + '\n'           
         
-                        
+        constructProto = objectShortPrefix + '_PROC_CONSTRUCT()'
+        initHeader = 'sub Item.' + constructProto + '\n' + initHeader + 'end sub\n'
+        initHeader = fixPolygon2DInit(initHeader)
+        text_methoddefinitions += initHeader
+        text_methodprototypes += 'declare sub ' + constructProto + '\n'
+        text_constructcaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + objectShortPrefix + '_PROC_CONSTRUCT()\n'
+
         
         
-    
-     
+   
      
 text_itemdefines = '#ifndef GEN_ITEMDEFINES_BI\n#define GEN_ITEMDEFINES_BI\n' + text_itemdefines
 text_itemdefines += 'enum Item_Type_e\n'
@@ -535,7 +542,7 @@ text_runcaseblock = 'select case itemType\n' + text_runcaseblock + 'end select\n
 text_drawcaseblock = 'select case itemType\n' + text_drawcaseblock + 'end select\n'
 text_drawoverlaycaseblock = 'select case itemType\n' + text_drawoverlaycaseblock + 'end select\n'
 text_slotcaseblock = 'select case slotNumber\n' + text_slotcaseblock + 'end select\n'
-
+text_constructcaseblock = 'select case itemType\n' + text_constructcaseblock + 'end select\n'
 
 writeOutFile(file_itemdefines, text_itemdefines)
 writeOutFile(file_namestypes, text_namestypes)
@@ -547,5 +554,6 @@ writeOutFile(file_runcaseblock, text_runcaseblock)
 writeOutFile(file_drawcaseblock, text_drawcaseblock)
 writeOutFile(file_drawoverlaycaseblock, text_drawoverlaycaseblock)
 writeOutFile(file_slotcaseblock, text_slotcaseblock)
+writeOutFile(file_constructcaseblock, text_constructcaseblock)
 
        

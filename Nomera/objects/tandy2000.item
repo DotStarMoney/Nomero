@@ -12,6 +12,8 @@ type ITEM_DATA
     as Vector2D   alright
     as integer checkIt
     as notItemData_t cheese
+    as integer col
+    as integer randOffset
 end type
 
 const as integer buhnz = 4
@@ -36,11 +38,12 @@ function _init()
     data.cheese.test2 = 0
     data.cheese.temp = 2
     data.checkIt = 0
-    
+    data.col = &hff0000
     rightOh = buhnz
+    data.randOffset = int(rnd * 100)
 
     setValue("its me", "TESTVALUE")
-    print rightOh
+    print "RIGhTOH!!!"; rightOh
     sleep
     
 end function
@@ -68,18 +71,19 @@ end function
 
 function _draw(scnbuff as integer ptr)
     
-    line (p.x, p.y)-(p.x+size.x, p.y+size.y), &hffff00, BF
+    line scnbuff, (p.x, p.y)-(p.x+size.x, p.y+size.y), data.col, BF
 
 end function
 
 '----------------------------------
 
 function _drawOverlay(scnbuff as integer ptr)
+   
     
     LOCK_TO_SCREEN()
         circle scnbuff, (10, 10), 10, &h00ff00
-        draw string scnbuff, (10, 10), str(data.alright)
-        if data.checkIt = 4 then draw string (10, 18), "EUREKA"
+        draw string scnbuff, (10, 30+data.randOffset), str(data.alright)
+        if data.checkIt = 4 then draw string scnbuff, (10, 18), "EUREKA"
     UNLOCK_TO_SCREEN()
 
 end function
@@ -87,10 +91,9 @@ end function
 '----------------------------------
 
 function _run(t as double)
-   
+    
     
     getParameter(data.alright, "test vector2D")
-    
     setValue(str(timer), "testvalue")
     
 end function
@@ -113,7 +116,7 @@ end function
 slot $myOnlySlot(aValue as integer)
     dim as integer localVariable
 
-    data.checkIt = 1
+    data.checkIt += 1
     
 
 end slot

@@ -29,11 +29,6 @@ sub Item.BIGOSCILLOSCOPE_SLOT_DRAW2PARAMS(pvPair() as _Item_slotValuePair_t)
 end sub
 sub Item.BIGOSCILLOSCOPE_PROC_INIT()
     data_.BIGOSCILLOSCOPE_DATA = new ITEM_BIGOSCILLOSCOPE_TYPE_DATA
-    _initAddSignal_("GODEEP")
-    _initAddSlot_("PLAYSOUNDTEST", ITEM_BIGOSCILLOSCOPE_SLOT_PLAYSOUNDTEST_E)
-    _initAddSlot_("DRAW2PARAMS", ITEM_BIGOSCILLOSCOPE_SLOT_DRAW2PARAMS_E)
-    _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
-
     data_.BIGOSCILLOSCOPE_DATA->someText2 = 0
     data_.BIGOSCILLOSCOPE_DATA->shouldDraw = 0
 end sub
@@ -57,7 +52,8 @@ function Item.BIGOSCILLOSCOPE_PROC_RUN(t as double) as integer
     dim as ObjectSlotSet sset
     dim as string tempVal
     if int(rnd * 1200) = 0 then 
-throw("GODEEP", "thisParameterDoesntExist = 'hi ho'")
+        throw("GODEEP", "thisParameterDoesntExist = 'hi ho'")
+        beep
     end if
     queryValues(vset1, "testValue", Polygon2D(@(POLYGON2D_REP_0(0)), 3))
     
@@ -79,13 +75,19 @@ sub Item.BIGOSCILLOSCOPE_PROC_DRAW(scnbuff as integer ptr)
     if data_.BIGOSCILLOSCOPE_DATA->shouldDraw then
         getParameter(flavor, "flavor")
 
-        line (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff0000, &h0000ff), B
-        draw string (p.x, p.y), str(data_.BIGOSCILLOSCOPE_DATA->thetime) + ", " + str(BIGOSCILLOSCOPE_FUNCTION_bogus(2)), &hff7f00
+        line scnbuff, (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff0000, &h0000ff), B
+        draw string scnbuff, (p.x, p.y), str(data_.BIGOSCILLOSCOPE_DATA->thetime) + ", " + str(BIGOSCILLOSCOPE_FUNCTION_bogus(2)), &hff7f00
     
     end if
 end sub
 sub Item.BIGOSCILLOSCOPE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
+end sub
+sub Item.BIGOSCILLOSCOPE_PROC_CONSTRUCT()
+    _initAddSignal_("GODEEP")
+    _initAddSlot_("PLAYSOUNDTEST", ITEM_BIGOSCILLOSCOPE_SLOT_PLAYSOUNDTEST_E)
+    _initAddSlot_("DRAW2PARAMS", ITEM_BIGOSCILLOSCOPE_SLOT_DRAW2PARAMS_E)
+    _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
 #define ITEM_FREQUENCYCOUNTER_DEFINE_thisIsAnOddPlaceForThis 42
 #macro ITEM_FREQUENCYCOUNTER_MACRO_aldi(_X_, _Y_)
@@ -106,12 +108,6 @@ sub Item.FREQUENCYCOUNTER_SLOT_EXPLODE(pvPair() as _Item_slotValuePair_t)
 end sub
 sub Item.FREQUENCYCOUNTER_PROC_INIT()
     data_.FREQUENCYCOUNTER_DATA = new ITEM_FREQUENCYCOUNTER_TYPE_DATA
-    _initAddSignal_("TESTSIGNAL1")
-    _initAddSignal_("TESTSIGNAL2")
-    _initAddSlot_("TESTSLOT3", ITEM_FREQUENCYCOUNTER_SLOT_TESTSLOT3_E)
-    _initAddSlot_("EXPLODE", ITEM_FREQUENCYCOUNTER_SLOT_EXPLODE_E)
-    _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
-
     dim as Shape2D randomShape
     data_.FREQUENCYCOUNTER_DATA->someText2 = 0
     data_.FREQUENCYCOUNTER_DATA->shouldDraw = 0
@@ -136,12 +132,19 @@ sub Item.FREQUENCYCOUNTER_PROC_DRAW(scnbuff as integer ptr)
     if data_.FREQUENCYCOUNTER_DATA->shouldDraw then
         getParameter(flavor, "flavor")
 
-        line (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff00ff, &h00ffff), Bf
+        line scnbuff, (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff00ff, &h00ffff), Bf
 
     end if
 end sub
 sub Item.FREQUENCYCOUNTER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
+end sub
+sub Item.FREQUENCYCOUNTER_PROC_CONSTRUCT()
+    _initAddSignal_("TESTSIGNAL1")
+    _initAddSignal_("TESTSIGNAL2")
+    _initAddSlot_("TESTSLOT3", ITEM_FREQUENCYCOUNTER_SLOT_TESTSLOT3_E)
+    _initAddSlot_("EXPLODE", ITEM_FREQUENCYCOUNTER_SLOT_EXPLODE_E)
+    _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
 sub Item.TANDY2000_SUB_idontdonothin()
     static as Vector2D POLYGON2D_REP_0(0 to 2) = {Vector2D(0,10), Vector2D(40, 40), Vector2D(-10, 50)}
@@ -156,21 +159,12 @@ sub Item.TANDY2000_SLOT_MYONLYSLOT(pvPair() as _Item_slotValuePair_t)
     matchParameter(aValue, "AVALUE", pvPair())
     dim as integer localVariable
 
-    data_.TANDY2000_DATA->checkIt = 1
+    data_.TANDY2000_DATA->checkIt += 1
     
 
 end sub
 sub Item.TANDY2000_PROC_INIT()
-    static as Vector2D POLYGON2D_REP_0(0 to 2) = {Vector2D(3,10), Vector2D(43, 40), Vector2D(-10, 30)}
     data_.TANDY2000_DATA = new ITEM_TANDY2000_TYPE_DATA
-    _initAddSignal_("JUSTTREES")
-    _initAddSignal_("NOTIMPORTANT")
-    _initAddSlot_("MYONLYSLOT", ITEM_TANDY2000_SLOT_MYONLYSLOT_E)
-    _initAddParameter_("TEST VECTOR2D", _ITEM_VALUE_VECTOR2D)
-    link.dynamiccontroller_ptr->addPublishedSlot(ID, "MY ONLY SLOT", "MYONLYSLOT", Polygon2D(@(POLYGON2D_REP_0(0)), 3))
-    _initAddValue_("TESTVALUE", _ITEM_VALUE_ZSTRING)
-    link.dynamiccontroller_ptr->addPublishedValue(ID, "TESTVALUE")
-
     dim as integer rightoh
     
     data_.TANDY2000_DATA->testSng = 4.2
@@ -178,11 +172,12 @@ sub Item.TANDY2000_PROC_INIT()
     data_.TANDY2000_DATA->cheese.test2 = 0
     data_.TANDY2000_DATA->cheese.temp = 2
     data_.TANDY2000_DATA->checkIt = 0
-    
+    data_.TANDY2000_DATA->col = &hff0000
     rightOh = TANDY2000_CONST_buhnz
+    data_.TANDY2000_DATA->randOffset = int(rnd * 100)
 
     setValue("its me", "TESTVALUE")
-    print rightOh
+    print "RIGhTOH!!!"; rightOh
     sleep
     
 end sub
@@ -197,25 +192,35 @@ sub Item.TANDY2000_PROC_FLUSH()
     data_.TANDY2000_DATA = 0
 end sub
 function Item.TANDY2000_PROC_RUN(t as double) as integer
-   
+    
     
     getParameter(data_.TANDY2000_DATA->alright, "test vector2D")
-    
     setValue(str(timer), "testvalue")
     
     return 0
 end function
 sub Item.TANDY2000_PROC_DRAW(scnbuff as integer ptr)
     
-    line (p.x, p.y)-(p.x+size.x, p.y+size.y), &hffff00, BF
+    line scnbuff, (p.x, p.y)-(p.x+size.x, p.y+size.y), data_.TANDY2000_DATA->col, BF
 
 end sub
 sub Item.TANDY2000_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+   
     
     LOCK_TO_SCREEN()
         circle scnbuff, (10, 10), 10, &h00ff00
-        draw string scnbuff, (10, 10), str(data_.TANDY2000_DATA->alright)
-        if data_.TANDY2000_DATA->checkIt = 4 then draw string (10, 18), "EUREKA"
+        draw string scnbuff, (10, 30+data_.TANDY2000_DATA->randOffset), str(data_.TANDY2000_DATA->alright)
+        if data_.TANDY2000_DATA->checkIt = 4 then draw string scnbuff, (10, 18), "EUREKA"
     UNLOCK_TO_SCREEN()
 
+end sub
+sub Item.TANDY2000_PROC_CONSTRUCT()
+    static as Vector2D POLYGON2D_REP_0(0 to 2) = {Vector2D(3,10), Vector2D(43, 40), Vector2D(-10, 30)}
+    _initAddSignal_("JUSTTREES")
+    _initAddSignal_("NOTIMPORTANT")
+    _initAddSlot_("MYONLYSLOT", ITEM_TANDY2000_SLOT_MYONLYSLOT_E)
+    _initAddParameter_("TEST VECTOR2D", _ITEM_VALUE_VECTOR2D)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "MY ONLY SLOT", "MYONLYSLOT", Polygon2D(@(POLYGON2D_REP_0(0)), 3))
+    _initAddValue_("TESTVALUE", _ITEM_VALUE_ZSTRING)
+    link.dynamiccontroller_ptr->addPublishedValue(ID, "TESTVALUE")
 end sub

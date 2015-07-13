@@ -22,6 +22,8 @@ type ITEM_TANDY2000_TYPE_DATA
     as Vector2D   alright
     as integer checkIt
     as ITEM_TANDY2000_TYPE_notItemData_t cheese
+    as integer col
+    as integer randOffset
 end type
 enum Item_Type_e
     ITEM_NONE

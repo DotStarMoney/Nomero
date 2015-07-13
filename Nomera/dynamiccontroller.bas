@@ -233,22 +233,22 @@ sub DynamicController.process(t as double)
     
 end sub
 sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = ACTIVE)
-    dim as Item ptr curItem
+    dim as Item ptr ptr curItem
     select case order
     case ACTIVE
         BEGIN_HASH(curItem, drawobjects_active)
-            curItem->drawItem(scnbuff)
+            (*curItem)->drawItem(scnbuff)
         END_HASH()
     case ACTIVE_FRONT
         BEGIN_HASH(curItem, drawobjects_activefront)
-            curItem->drawItem(scnbuff)
+            (*curItem)->drawItem(scnbuff)
         END_HASH()    
     case OVERLAY
         BEGIN_HASH(curItem, drawobjects_active)
-            curItem->drawItemOverlay(scnbuff)
+            (*curItem)->drawItemOverlay(scnbuff)
         END_HASH()  
         BEGIN_HASH(curItem, drawobjects_activefront)
-            curItem->drawItemOverlay(scnbuff)
+            (*curItem)->drawItemOverlay(scnbuff)
         END_HASH()  
     end select 
 end sub
@@ -264,8 +264,43 @@ function DynamicController.itemStringToType(item_tag as string) as Item_Type_e
         return ITEM_NONE
     end if
 end function
+
+function DynamicController.constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "") as Item ptr
+    dim as DynamicController_itemPair_t ptr newItem
+    dim as DynamicController_itemPair_t ptr refItem
+    
+    if itemType_ = ITEM_NONE then return 0
+    
+    newItem = allocate(sizeof(DynamicController_itemPair_t))
+    
+    if ID_ = "" then
+        newItem->usedKeyBank = 1
+        ID_ = itemIdGenerator.acquire()
+    else
+        newItem->usedKeyBank = 0
+    end if
+    
+    newItem->item_ = new Item()
+    newItem->item_->setLink(link)
+    refItem = itemIdPairs.insert(ID_, newItem)
+    if order = ACTIVE_FRONT then
+        drawobjects_activeFront.insert(ID_, @refItem->item_)
+    else
+        drawobjects_active.insert(ID_, @refItem->item_)
+    end if
+  
+    refItem->item_->construct(itemType_, ID_)
+
+    deallocate(newItem)
+   
+    return refItem->item_
+end function
+sub DynamicController.initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0))
+    itemToInit->initPost(p_, size_)
+end sub
 function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
     dim as DynamicController_itemPair_t ptr newItem
+    dim as DynamicController_itemPair_t ptr refItem
     
     if itemType_ = ITEM_NONE then return ""
     
@@ -279,18 +314,21 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
     end if
     
     newItem->item_ = new Item()
-    
-    itemIdPairs.insert(ID_, newItem)
+    newItem->item_->setLink(link)
+    refItem = itemIdPairs.insert(ID_, newItem)
     if order = ACTIVE_FRONT then
-        drawobjects_activeFront.insert(ID_, @newItem->item_)
+        drawobjects_activeFront.insert(ID_, @refItem->item_)
     else
-        drawobjects_active.insert(ID_, @newItem->item_)
+        drawobjects_active.insert(ID_, @refItem->item_)
     end if
+  
+    
+    refItem->item_->init(itemType_, p_, size_, ID_)
 
-    newItem->item_->init(itemType_, p_, size_, ID_)
-
+    
     deallocate(newItem)
     
+ 
     return ID_
 end function
 function DynamicController.hasItem(ID_ as string) as integer
@@ -464,6 +502,7 @@ sub DynamicController.addPublishedValue(publishee_ID as string, value_tag as str
     *(pvalue.tag_) = value_tag
     pvalue.target = target
     pvalue.item_ = cast(DynamicController_itemPair_t ptr, itemIdPairs.retrieve(publishee_ID))->item_
+   
     pvaluePtr = allPublishedValues.insert(publishee_ID, value_tag, @pvalue)
     if not (target is EmptyShape2D) then
         target.getBoundingBox(a, b)
@@ -619,11 +658,11 @@ sub DynamicController.connect(signal_ID as string, signal_tag as string, slot_ID
 end sub                 
 
 sub DynamicController.setParameterFromString(param_string as string, ID_ as string, param_tag as string)
-    dim as _Item_valueContainer_t value_           
+    dim as _Item_valueContainer_t value_   
     Item.valueFormToContainer(param_string, value_)
     select case value_.type_
     case _ITEM_VALUE_VECTOR2D
-        setParameter(value_.data_.Vector2D_, ID_, param_tag)
+        setParameter(Vector2D(value_.data_.Vector2D_.xs, value_.data_.Vector2D_.ys), ID_, param_tag)
     case _ITEM_VALUE_INTEGER
         setParameter(value_.data_.integer_, ID_, param_tag)
     case _ITEM_VALUE_DOUBLE

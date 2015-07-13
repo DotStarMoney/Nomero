@@ -80,8 +80,8 @@ constructor GameSpace()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
     FSOUND_Stream_Play currentMusic, music(currentMusic)
-    FSOUND_SetVolumeAbsolute(currentMusic, 255)
-        
+    FSOUND_SetVolumeAbsolute(currentMusic, 16)
+   
     switchTracks = 0
     
     spy.centerToMap(lvlData.getDefaultPos())
@@ -117,7 +117,7 @@ constructor GameSpace()
     end if
     
     tracker.pause()
-    
+     
     for i = 0 to 255
         last_keypress(i) = 0
     next i
@@ -171,9 +171,9 @@ function GameSpace.go() as integer
         load = (processTime / (1000 / FPS_TARGET)) * 100
         if load > oneSecondMaxLoad then oneSecondMaxLoad = load
         oneSecondAvg += load
-        print using "Frame Load %: ##.##"; load
-        print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
-        print using "One Second Average Load %: ##.##"; oneSecondAvgLast
+        'print using "Frame Load %: ##.##"; load
+        'print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
+        'print using "One Second Average Load %: ##.##"; oneSecondAvgLast
         
         'print spy.body.p
 

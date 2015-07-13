@@ -1071,6 +1071,7 @@ sub level.load(filename as string)
     dim as string itemName, itemID, parameterTag, parameterValue
     dim as ushort numParams, numSignals, numTargets
     dim as string signalName, signalParameter, slotID, slotName
+    dim as Item ptr itemPtr
     
     f = freefile
  
@@ -1110,7 +1111,8 @@ sub level.load(filename as string)
     get #f,,lvlCenterY
     get #f,,strdata
     
-
+    
+    link.dynamiccontroller_ptr->setRegionSize(lvlWidth*16, lvlHeight*16)
     
     drawAurora = objField(2)
     
@@ -1392,21 +1394,21 @@ sub level.load(filename as string)
             get #f,,objField(3) 'maxValue
             get #f,,objField(4) 'mode
             get #f,,objField(5) 'fast
-            
+
             if objField(0) >= LIGHT_EFFECT_VALUE then 
                 itemID = link.dynamiccontroller_ptr->addItem(link.dynamiccontroller_ptr->itemStringToType("LIGHT"), ACTIVE, tempObj.p + tempObj.size*0.5, tempObj.size)     
                 link.dynamiccontroller_ptr->setParameter(objField(2), itemID, "minValue")
                 link.dynamiccontroller_ptr->setParameter(objField(3), itemID, "maxValue")
                 link.dynamiccontroller_ptr->setParameter(objField(4), itemID, "mode")
                 link.dynamiccontroller_ptr->setParameter(objField(5), itemID, "fast")
-                
+              
             else
                 graphicFX_->create(tempObj.object_name, objField(0),_
                                    tempObj.object_shape, tempObj.p,_
                                    tempObj.size, objField(1),_
                                    tempObj.inRangeSet)
             end if
-            
+
         case PORTAL
             get #f,,strdata
             tempPortal.to_map = allocate(len(strdata) + 1)
@@ -1424,7 +1426,9 @@ sub level.load(filename as string)
         case SPAWN
 			getStringFromFile(f, itemName)
             getStringFromFile(f, itemID)
-            itemID = link.dynamiccontroller_ptr->addItem(link.dynamiccontroller_ptr->itemStringToType(itemName), tempObj.inRangeSet, tempObj.p, tempObj.size, itemID)     
+            
+            itemPtr = link.dynamiccontroller_ptr->constructItem(link.dynamiccontroller_ptr->itemStringToType(itemName), tempObj.inRangeSet, itemID)     
+            itemID = itemPtr->getID()
             get #f,,numParams
             for j = 0 to numParams - 1
                 getStringFromFile(f, parameterTag)
@@ -1442,11 +1446,14 @@ sub level.load(filename as string)
                     link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)
                 next q
             next j
+            link.dynamiccontroller_ptr->initItem(itemPtr, tempObj.p, tempObj.size)     
+
             get #f,,objField(1)
             get #f,,objField(1)
             get #f,,tempSingleField
         end select
     next i
+   
     
     #ifdef DEBUG
         printlog str(blocks_N) & ", " & tilesets_N

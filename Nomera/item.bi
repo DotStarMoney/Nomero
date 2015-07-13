@@ -29,6 +29,9 @@ type Item
 		declare constructor()
 		declare destructor()
         declare sub setLink(link_ as objectLink)
+        
+        declare sub construct(itemType_ as Item_Type_e, ID_ as string = "")
+        declare sub initPost(p_ as Vector2D, size_ as Vector2D)
 
 		declare sub init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "")
         
