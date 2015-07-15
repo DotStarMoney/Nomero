@@ -177,8 +177,8 @@ sub Player.computeCoverage()
     tl = Vector2D(pposx, pposy) - link.gamespace_ptr->camera + Vector2D(SCRX, SCRY)*0.5
     br = tl + Vector2D(anim.getWidth() - 1, anim.getHeight() - 1)
     if br.x >= 0 andAlso br.y >= 0 andALso tl.x <= (SCRX - 1) andALso tl.y <= (SCRY - 1) then
-        tl = Vector2D(max(0.0, tl.x), max(0.0, tl.y))
-        br = Vector2D(min(SCRX - 1.0, br.x), min(SCRY - 1.0, br.y))
+        tl = Vector2D(_max_(0.0, tl.x), _max_(0.0, tl.y))
+        br = Vector2D(_min_(SCRX - 1.0, br.x), _min_(SCRY - 1.0, br.y))
         bitblt_invertPset(comptex, 0, 0, link.level_ptr->getSmokeTexture(), tl.x, tl.y, br.x, br.y)
     end if
 													   
@@ -534,7 +534,7 @@ sub Player.processControls(dire as integer, jump as integer,_
             this.body.friction = this.stopFriction
            
         end if
-        lastTopSpeed = max(abs(curSpeed), this.top_speed)
+        lastTopSpeed = _max_(abs(curSpeed), this.top_speed)
         groundedFrames += 1
         if groundedFrames = GROUND_FRAMES+1 then groundedFrames = GROUND_FRAMES
         if groundedFrames = GROUND_FRAMES then freeJump = freeJumpFrames
@@ -968,14 +968,14 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 				offsetV = bombData(i).offset
 				col = Item.getIndicatorColor(i)
 				col2 = col
-				colSin = 24*(sin(timer*8 + i * PI/10)+1)
+				colSin = 24*(sin(timer*8 + i * _PI_/10)+1)
 				subColor(col2, RGB(colSin, colSin, colSin))
 				subColor(col, &h484848)		
 				circle scnbuff, (scnPos.x + offsetV.x, scnPos.y + offsetV.y), (BOMB_SCREEN_IND_RAD-12) * shrink, col2,,,,F
 				circle scnbuff, (scnPos.x + offsetV.x, scnPos.y + offsetV.y), (BOMB_SCREEN_IND_RAD-12) * shrink, col
 				p(0) = scnPos + Vector2D(cos(ang), sin(ang)) * (BOMB_SCREEN_IND_RAD) * shrink
-				p(1) = scnPos + Vector2D(cos(ang + PI/2), sin(ang + PI/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink + offsetV
-				p(2) = scnPos + Vector2D(cos(ang - PI/2), sin(ang - PI/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink + offsetV
+				p(1) = scnPos + Vector2D(cos(ang + _PI_/2), sin(ang + _PI_/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink + offsetV
+				p(2) = scnPos + Vector2D(cos(ang - _PI_/2), sin(ang - _PI_/2)) * (BOMB_SCREEN_IND_RAD - 12) * shrink + offsetV
 				center = center - offset
 				if shrink <> 0 then vTriangle scnbuff, p(0) + center, p(1) + center, p(2) + center, col2
 				center = center + offset

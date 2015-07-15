@@ -19,6 +19,7 @@ declare sub FREQUENCYCOUNTER_PROC_CONSTRUCT()
 const as integer TANDY2000_CONST_buhnz = 4
 declare sub TANDY2000_SUB_idontdonothin()
 declare sub TANDY2000_SLOT_MYONLYSLOT(pvPair() as _Item_slotValuePair_t)
+declare sub TANDY2000_SLOT_TESTSLOT3(pvPair() as _Item_slotValuePair_t)
 declare sub TANDY2000_PROC_INIT()
 declare sub TANDY2000_PROC_FLUSH()
 declare function TANDY2000_PROC_RUN(t as double) as integer

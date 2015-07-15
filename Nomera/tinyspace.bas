@@ -500,7 +500,7 @@ sub TinySpace.vectorListImpulse(vecs_p() as Vector2D, v as Vector2D,_
         if not (vecs(0).x() = 0 andAlso vecs(0).y() = 0) then
             ang = vecs(i).angle()
             w_ang = wrap(ang - curMin)
-            if w_ang >= PI then 
+            if w_ang >= _PI_ then 
                 curMin = ang
                 minIndex = i
             elseif w_ang > wrap(curMax - curMin) then
@@ -1174,10 +1174,10 @@ function Tinyspace.raycast(p as Vector2D, v as Vector2D,_
     br = br + Vector2D(1, 1)
     tl = tl - Vector2D(1, 1)
     
-	start_x = max(cint(tl.x()), 0)
-	start_y = max(cint(tl.y()), 0)
-	end_x   = min(cint(br.x()), block_n_cols - 1)
-	end_y   = min(cint(br.y()), block_n_rows - 1)
+	start_x = _max_(cint(tl.x()), 0)
+	start_y = _max_(cint(tl.y()), 0)
+	end_x   = _min_(cint(br.x()), block_n_cols - 1)
+	end_y   = _min_(cint(br.y()), block_n_rows - 1)
 	
 	skipSearch = 0
 	if start_x > end_x orElse end_x < start_x orElse _
@@ -1335,19 +1335,19 @@ sub TinySpace.step_time(byval t as double)
         test_p = c->p
         tl = Vector2D(c->p.x() - c->r * c->r_rat, c->p.y() - c->r)
         br = Vector2D(c->p.x() - c->r * c->r_rat, c->p.y() - c->r)
-        tl.setX(min(tl.x(), test_p.x() - c->r * c->r_rat - abs(c->v.x()) * t))
-        tl.setY(min(tl.y(), test_p.y() - c->r - abs(c->v.y()) * t))
-        br.setX(max(br.x(), test_p.x() + c->r * c->r_rat + abs(c->v.x()) * t))
-        br.setY(max(br.y(), test_p.y() + c->r + abs(c->v.y()) * t))
+        tl.setX(_min_(tl.x(), test_p.x() - c->r * c->r_rat - abs(c->v.x()) * t))
+        tl.setY(_min_(tl.y(), test_p.y() - c->r - abs(c->v.y()) * t))
+        br.setX(_max_(br.x(), test_p.x() + c->r * c->r_rat + abs(c->v.x()) * t))
+        br.setY(_max_(br.y(), test_p.y() + c->r + abs(c->v.y()) * t))
 
         dividePosition(tl, Vector2D(block_l, block_l))
         dividePosition(br, Vector2D(block_l, block_l))
         br = br + Vector2D(1, 1)
         tl = tl - Vector2D(1, 1)
-        start_x = max(cint(tl.x()), 0)
-        start_y = max(cint(tl.y()), 0)
-        end_x   = min(cint(br.x()), block_n_cols - 1)
-        end_y   = min(cint(br.y()), block_n_rows - 1)
+        start_x = _max_(cint(tl.x()), 0)
+        start_y = _max_(cint(tl.y()), 0)
+        end_x   = _min_(cint(br.x()), block_n_cols - 1)
+        end_y   = _min_(cint(br.y()), block_n_rows - 1)
         
         tl = tl * block_l
         br = br * block_l
@@ -1728,7 +1728,7 @@ sub TinySpace.step_time(byval t as double)
 							iif(wrk.dynaID <> -1, wrk.surfaceV * cur_t, Vector2D(0,0))
 												
 					#ifdef DEBUG
-						circle (wrk.p.x(), wrk.p.y()), wrk.r, rgba(0,255.0*(max(iterate,1))/10.0,0,32),,,wrk.r_rat,F
+						circle (wrk.p.x(), wrk.p.y()), wrk.r, rgba(0,255.0*(_max_(iterate,1))/10.0,0,32),,,wrk.r_rat,F
 					#endif
 					
 					if retryStep = 0 then

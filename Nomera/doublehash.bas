@@ -8,14 +8,17 @@
 
 
 constructor DoubleHash()
-    data1_ = 0
-    data2_ = 0
+    construct_()
 end constructor
 constructor DoubleHash(datasize as uinteger)
-    data1_ = 0
-    data2_ = 0
+    construct_()
     init(datasize)
 end constructor
+sub DoubleHash.construct_()
+    data1_ = 0
+    data2_ = 0    
+    numObjects = 0
+end sub
 destructor DoubleHash()
     clean()
 end destructor
@@ -25,7 +28,6 @@ sub DoubleHash.init(datasize as uinteger)
     clean()
     resetRoll()
     dataSizeBytes = datasize
-    numObjects = 0
     numCells1 = MIN_CELLS
     numCells2 = MIN_CELLS
     data1_ = allocate(sizeof(DoubleHashNode_t ptr) * numCells1)
@@ -1318,7 +1320,7 @@ sub DoubleHash.clean()
     dim as integer i
     
     if numObjects > 0 then
-    
+        
         for i = 0 to numCells1 - 1
             curNode = data1_[i]
             while curNode <> 0 

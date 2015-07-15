@@ -331,7 +331,7 @@ sub FBGDTriggerDispatch.process(t as double)
 			setOnceOxy = 1
 			oxygen = 1000
 		end if
-		vol = (max(1300 - (link.player_ptr->body.p.x() + 200), 64.0) / 1300.0) * 255
+		vol = (_max_(1300 - (link.player_ptr->body.p.x() + 200), 64.0) / 1300.0) * 255
 		link.gamespace_ptr->setMusicVolume(vol)
 		oxygen -= 1
 		if oxygen < 0 then oxygen = 0

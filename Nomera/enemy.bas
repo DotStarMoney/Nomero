@@ -190,7 +190,7 @@ sub Enemy.processControls(dire as integer, jump as integer,_
                 jumpHoldFrames = 0
             end if
         end if
-        lastTopSpeed = max(abs(curSpeed), this.top_speed)
+        lastTopSpeed = _max_(abs(curSpeed), this.top_speed)
         groundedFrames += 1
         if groundedFrames = E_GROUND_FRAMES+1 then groundedFrames = E_GROUND_FRAMES
         if groundedFrames = E_GROUND_FRAMES then freeJump = freeJumpFrames

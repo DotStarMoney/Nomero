@@ -10,12 +10,7 @@ end sub
 function Shape2D.getOffset() as Vector2D
     return offset
 end function
-sub Shape2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) 
-    tl_ = Vector2D(0,0)
-    br_ = Vector2D(0,0)
-end sub
-constructor EmptyShape2D()
-end constructor
+
 constructor Point2D()
 end constructor
 constructor Point2D(p_ as Vector2D)
@@ -88,7 +83,7 @@ constructor Polygon2D()
     sub_points = 0
     sub_polys_n = 0
     hasWinding = 0
-    hasBounds = 0
+    polyHasBounds = 0
     offset = Vector2D(0, 0)
 end constructor
 constructor Polygon2D(points_ as Vector2D ptr, points_n_ as integer)
@@ -98,7 +93,7 @@ constructor Polygon2D(points_ as Vector2D ptr, points_n_ as integer)
     sub_points = 0
     sub_polys_n = 0
     hasWinding = 0
-    hasBounds = 0
+    polyHasBounds = 0
     offset = Vector2D(0, 0)
     set(points_, points_n_)
 end constructor
@@ -152,7 +147,7 @@ end sub
 sub Polygon2D.setPoint(i as integer, p as Vector2D)
     points[i] = p
     clearDecomp()
-    hasBounds = 0
+    polyHasBounds = 0
     hasWinding = 0
 end sub
 function Polygon2D.getPoint_N() as integer
@@ -358,7 +353,7 @@ sub Polygon2D.calculateDecomp()
     for i = 0 to points_n - 1
         sub_points[0][i] = points[i]
     next i
-    recDecomp(sub_points[0], sub_points_n[0], 0, sub_points, sub_points_n, sub_polys_n)    
+    recDecomp(sub_points[0], sub_points_n[0], 0, sub_points, sub_points_n, sub_polys_n)  
     sub_points = reallocate(sub_points, sizeof(Vector2D ptr) * sub_polys_n)
     sub_points_n = reallocate(sub_points_n, sizeof(integer) * sub_polys_n)
 end sub
@@ -377,11 +372,13 @@ end function
 function Polygon2D.getSubPolyPoint(i as integer, j as integer) as Vector2D   
     return sub_points[i][j] + offset
 end function
+
 sub Polygon2D.calculateBounds()
     dim as double min_x, max_x
     dim as double min_y, max_y
     dim as integer i
     if points then
+        
         min_x = points[0].x
         max_x = min_x
         min_y = points[0].y
@@ -400,55 +397,56 @@ sub Polygon2D.calculateBounds()
         next i
         tl = Vector2D(min_x, min_y)
         br = Vector2D(max_x, max_y)
-        hasBounds = 1
-    end if
+        polyHasBounds = 1
+        
+    end if 
 end sub
-sub Polygon2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
-    if hasBounds = 0 then calculateBounds()
-    tl_ = tl + offset
-    br_ = br + offset
+
+sub Polygon2D.getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) 
+    if polyHasBounds = 0 then calculateBounds()
+    tl_ = tl + offset 
+    br_ = br + offset 
 end sub
-function intersect2D(a as Shape2D, b as Shape2D) as integer
-    if (a is EmptyShape2D) orElse (b is EmptyShape2D) then return 0
-    if a is Point2D then
-        if b is Point2D then
-            return intersect2D_pp(cast(Point2D ptr, @a), cast(Point2D ptr, @b))
-        elseif b is Rectangle2D then
-            return intersect2D_ps(cast(Point2D ptr, @a), cast(Rectangle2D ptr, @b))        
-        elseif b is Circle2D then
-            return intersect2D_pc(cast(Point2D ptr, @a), cast(Circle2D ptr, @b))                
-        elseif b is Polygon2D then
-            return intersect2D_py(cast(Point2D ptr, @a), cast(Polygon2D ptr, @b))                        
+function intersect2D(a as Shape2D ptr, b as Shape2D ptr) as integer
+    if *a is Point2D then
+        if *b is Point2D then
+            return intersect2D_pp(cast(Point2D ptr, a), cast(Point2D ptr, b))
+        elseif *b is Rectangle2D then
+            return intersect2D_ps(cast(Point2D ptr, a), cast(Rectangle2D ptr, b))        
+        elseif *b is Circle2D then
+            return intersect2D_pc(cast(Point2D ptr, a), cast(Circle2D ptr, b))                
+        elseif *b is Polygon2D then
+            return intersect2D_py(cast(Point2D ptr, a), cast(Polygon2D ptr, b))                        
         end if    
-    elseif a is Rectangle2D then
-        if b is Point2D then
-            return intersect2D_ps(cast(Point2D ptr, @b), cast(Rectangle2D ptr, @a))
-        elseif b is Rectangle2D then
-            return intersect2D_ss(cast(Rectangle2D ptr, @a), cast(Rectangle2D ptr, @b))        
-        elseif b is Circle2D then
-            return intersect2D_sc(cast(Rectangle2D ptr, @a), cast(Circle2D ptr, @b))                
-        elseif b is Polygon2D then
-            return intersect2D_sy(cast(Rectangle2D ptr, @a), cast(Polygon2D ptr, @b))                        
+    elseif *a is Rectangle2D then
+        if *b is Point2D then
+            return intersect2D_ps(cast(Point2D ptr, b), cast(Rectangle2D ptr, a))
+        elseif *b is Rectangle2D then
+            return intersect2D_ss(cast(Rectangle2D ptr, a), cast(Rectangle2D ptr, b))        
+        elseif *b is Circle2D then
+            return intersect2D_sc(cast(Rectangle2D ptr, a), cast(Circle2D ptr, b))                
+        elseif *b is Polygon2D then
+            return intersect2D_sy(cast(Rectangle2D ptr, a), cast(Polygon2D ptr, b))                        
         end if        
-    elseif a is Circle2D then
-        if b is Point2D then
-            return intersect2D_pc(cast(Point2D ptr, @b), cast(Circle2D ptr, @a))
-        elseif b is Rectangle2D then
-            return intersect2D_sc(cast(Rectangle2D ptr, @b), cast(Circle2D ptr, @a))        
-        elseif b is Circle2D then
-            return intersect2D_cc(cast(Circle2D ptr, @a), cast(Circle2D ptr, @b))                
-        elseif b is Polygon2D then
-            return intersect2D_cy(cast(Circle2D ptr, @a), cast(Polygon2D ptr, @b))                        
+    elseif *a is Circle2D then
+        if *b is Point2D then
+            return intersect2D_pc(cast(Point2D ptr, b), cast(Circle2D ptr, a))
+        elseif *b is Rectangle2D then
+            return intersect2D_sc(cast(Rectangle2D ptr, b), cast(Circle2D ptr, a))        
+        elseif *b is Circle2D then
+            return intersect2D_cc(cast(Circle2D ptr, a), cast(Circle2D ptr, b))                
+        elseif *b is Polygon2D then
+            return intersect2D_cy(cast(Circle2D ptr, a), cast(Polygon2D ptr, b))                        
         end if       
-    elseif a is Polygon2D then
-        if b is Point2D then
-            return intersect2D_py(cast(Point2D ptr, @b), cast(Polygon2D ptr, @a))
-        elseif b is Rectangle2D then
-            return intersect2D_sy(cast(Rectangle2D ptr, @b), cast(Polygon2D ptr, @a))        
-        elseif b is Circle2D then
-            return intersect2D_cy(cast(Circle2D ptr, @b), cast(Polygon2D ptr, @a))                
-        elseif b is Polygon2D then
-            return intersect2D_yy(cast(Polygon2D ptr, @a), cast(Polygon2D ptr, @b))                        
+    elseif *a is Polygon2D then
+        if *b is Point2D then
+            return intersect2D_py(cast(Point2D ptr, b), cast(Polygon2D ptr, a))
+        elseif *b is Rectangle2D then
+            return intersect2D_sy(cast(Rectangle2D ptr, b), cast(Polygon2D ptr, a))        
+        elseif *b is Circle2D then
+            return intersect2D_cy(cast(Circle2D ptr, b), cast(Polygon2D ptr, a))                
+        elseif *b is Polygon2D then
+            return intersect2D_yy(cast(Polygon2D ptr, a), cast(Polygon2D ptr, b))                        
         end if           
     end if
     return 0
@@ -632,9 +630,10 @@ function intersect2D_cy(a as Circle2D ptr, b as Polygon2D ptr) as integer
     dim as double mag, projD, dist, rs
     b->forceCCW()
     rs = a->getR() * a->getR()
+    
     for i = 0 to b->getSubPoly_N() - 1
         winding = 0
-        for q = 0 to b->getSubPolyPoint_N(i) - 2
+        for q = 0 to b->getSubPolyPoint_N(i) - 2            
             bse = b->getSubPolyPoint(i, q)
             vec = b->getSubPolyPoint(i, q + 1) - bse
             mag = vec.magnitude()

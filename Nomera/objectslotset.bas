@@ -22,7 +22,7 @@ end destructor
 sub ObjectSlotSet._setlink_(link_ as objectlink)
     link = link_
 end sub
-sub ObjectSlotSet._addSlot_(itemID as string, slot_tag as string, geom as Shape2D)
+sub ObjectSlotSet._addSlot_(itemID as string, slot_tag as string, geom as Shape2D ptr)
     if members_N >= members_cap then 
         members_cap += COARSE_SIZE_INC
         members = reallocate(members, members_cap * sizeof(ObjectSlotSet_member_t))
@@ -49,7 +49,7 @@ function ObjectSlotSet.getMember(i as integer) as ObjectSlotSet
     return ret
 end function
 
-sub ObjectSlotSet.getGeometry(byref geom as Shape2D, i as integer) 
+sub ObjectSlotSet.getGeometry(byref geom as Shape2D ptr, i as integer) 
     geom = members[i].geometry
 end sub
 sub ObjectSlotSet.getID(byref ID_ as string, i as integer)

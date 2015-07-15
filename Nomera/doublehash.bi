@@ -50,6 +50,8 @@ type DoubleHash
         declare constructor()
         declare constructor(datasize as uinteger)
         declare destructor()
+  
+        declare sub construct_()
         declare sub init(datasize as uinteger)
         
         declare function insert(key1 as integer, key2 as integer, data_ as any ptr) as any ptr

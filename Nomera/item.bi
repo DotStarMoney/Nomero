@@ -28,6 +28,9 @@ type Item
 	public:
 		declare constructor()
 		declare destructor()
+        
+        declare sub construct_()
+        
         declare sub setLink(link_ as objectLink)
         
         declare sub construct(itemType_ as Item_Type_e, ID_ as string = "")
@@ -108,8 +111,11 @@ type Item
         declare sub _initAddValue_(value_tag as string, value_type as _Item_valueTypes_e)
         declare sub _initAddSignal_(signal_tag as string)
         
-        declare sub queryValues(byref value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
-        declare sub querySlots(byref slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
+        declare sub setTargetValueOffset(value_tag as string, offset as Vector2D)        
+        declare sub setTargetSlotOffset(slot_tag as string, offset as Vector2D)
+
+        declare sub queryValues(byref value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D ptr = 0)
+        declare sub querySlots(byref slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D ptr = 0)
 
         as Hashtable parameterTable 
         as Hashtable slotTable 

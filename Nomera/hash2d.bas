@@ -48,8 +48,8 @@ end sub
 function Hash2D.getBounds(byref a as Vector2D, byref b as Vector2D,_
                           byref tl_x as integer, byref tl_y as integer,_
                           byref br_x as integer, byref br_y as integer) as integer
-    a = Vector2D(min(a.x(), b.x()), min(a.y(), b.y()))
-    b = Vector2D(max(a.x(), b.x()), max(a.y(), b.y()))
+    a = Vector2D(_min_(a.x(), b.x()), _min_(a.y(), b.y()))
+    b = Vector2D(_max_(a.x(), b.x()), _max_(a.y(), b.y()))
     if a.x() > this.spaceWidth then 
         return 0
     elseif a.x() < 0 then

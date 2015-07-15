@@ -5,11 +5,15 @@ type ITEM_BIGOSCILLOSCOPE_TYPE_DATA
     as Vector2D vec
     as integer shouldDraw
     AS DOUBLE thetime
+    as integer countDown
+    as string safeText
+    as Vector2D tPos
 end type
 type ITEM_FREQUENCYCOUNTER_TYPE_DATA 
     as zstring ptr someText2
     as Vector2D vec
     as integer shouldDraw
+    as double circleAngle
 end type
 type ITEM_TANDY2000_TYPE_notItemData_t
     as integer      temp
@@ -37,6 +41,7 @@ enum Item_slotEnum_e
     ITEM_FREQUENCYCOUNTER_SLOT_TESTSLOT3_E
     ITEM_FREQUENCYCOUNTER_SLOT_EXPLODE_E
     ITEM_TANDY2000_SLOT_MYONLYSLOT_E
+    ITEM_TANDY2000_SLOT_TESTSLOT3_E
 end enum
 union Item_objectData_u
     as ITEM_BIGOSCILLOSCOPE_TYPE_DATA ptr BIGOSCILLOSCOPE_DATA

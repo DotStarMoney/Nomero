@@ -6,15 +6,11 @@
 type Shape2D extends Object
     public:
         declare constructor()
-        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)    
+        declare abstract sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)    
         declare sub setOffset(offset_ as Vector2D)
         declare function getOffset() as Vector2D
     protected:
         as Vector2D offset
-end type
-type EmptyShape2D extends Shape2D
-    public:
-        declare constructor()
 end type
 
 type Point2d extends Shape2D
@@ -25,7 +21,7 @@ type Point2d extends Shape2D
         declare sub setP(p_ as Vector2D)
         declare function getP() as Vector2D
         
-        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
+        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) override
     private:
         as Vector2D p
 end type
@@ -41,7 +37,7 @@ type Rectangle2D extends Shape2D
         declare function getTL() as Vector2D
         declare function getBR() as Vector2D
         
-        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
+        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) override
     private:
         as Vector2D tl
         as Vector2D br
@@ -58,7 +54,7 @@ type Circle2D extends Shape2D
         declare function getP() as Vector2D
         declare function getR() as double
         
-        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
+        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) override
     private:
         as Vector2D p
         as double r
@@ -78,7 +74,7 @@ type Polygon2D extends Shape2D
         declare function getPoint_N() as integer
         declare function getPoint(i as integer) as Vector2D
         
-        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D)
+        declare sub getBoundingBox(byref tl_ as Vector2D, byref br_ as Vector2D) override
         
     'private:
         ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -102,7 +98,7 @@ type Polygon2D extends Shape2D
         
         as Vector2D tl
         as Vector2D br
-        as integer hasBounds
+        as integer polyHasBounds
         
         as integer hasWinding
     
@@ -125,6 +121,6 @@ declare function intersect2D_sy(a as Rectangle2D ptr, b as Polygon2D ptr) as int
 declare function intersect2D_cc(a as Circle2D ptr, b as Circle2D ptr) as integer
 declare function intersect2D_cy(a as Circle2D ptr, b as Polygon2D ptr) as integer
 declare function intersect2D_yy(a as Polygon2D ptr, b as Polygon2D ptr) as integer
-declare function intersect2D(a as Shape2D, b as Shape2D) as integer
+declare function intersect2D(a as Shape2D ptr, b as Shape2D ptr) as integer
     
 #endif

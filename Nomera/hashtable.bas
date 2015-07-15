@@ -12,19 +12,22 @@
 
 
 constructor HashTable(datasize as uinteger)
-    ready_flag = 0
-    data_ = 0
+    construct_()
     init(datasize)
 end constructor
 
 constructor HashTable()
-    ready_flag = 0
-    data_ = 0
+    construct_()
 end constructor
 
 destructor HashTable()
     clean()
 end destructor
+
+sub HashTable.construct_()
+    ready_flag = 0
+    data_ = 0
+end sub
 
 sub HashTable.init(datasize as uinteger)
     dim as integer i

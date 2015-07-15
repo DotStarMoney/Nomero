@@ -577,10 +577,10 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
     tl_y = fallout.a.y() / 16
     br_x = fallout.b.x() / 16
     br_y = fallout.b.y() / 16
-    tl_x = max(0, min(tl_x, lvlWidth - 1))
-    tl_y = max(0, min(tl_y, lvlHeight - 1))
-    br_x = max(0, min(br_x, lvlWidth - 1))
-    br_y = max(0, min(br_y, lvlHeight - 1))      
+    tl_x = _max_(0, _min_(tl_x, lvlWidth - 1))
+    tl_y = _max_(0, _min_(tl_y, lvlHeight - 1))
+    br_x = _max_(0, _min_(br_x, lvlWidth - 1))
+    br_y = _max_(0, _min_(br_y, lvlHeight - 1))      
 
 	link.player_ptr->explosionAlert(Vector2D(x,y))
 	
@@ -616,10 +616,10 @@ sub Level.addFallout(x as integer, y as integer, flavor as integer = -1)
         old_a = fallout.a
         old_b = fallout.b
         for i = 0 to num - 1
-            fallout.a.setX(min(list[i]->a.x(), fallout.a.x()))
-            fallout.a.setY(min(list[i]->a.y(), fallout.a.y()))
-            fallout.b.setX(max(list[i]->b.x(), fallout.b.x()))
-            fallout.b.setY(max(list[i]->b.y(), fallout.b.y()))
+            fallout.a.setX(_min_(list[i]->a.x(), fallout.a.x()))
+            fallout.a.setY(_min_(list[i]->a.y(), fallout.a.y()))
+            fallout.b.setX(_max_(list[i]->b.x(), fallout.b.x()))
+            fallout.b.setY(_max_(list[i]->b.y(), fallout.b.y()))
         next i
         
     
@@ -1597,10 +1597,10 @@ function Level.processPortalCoverage(p as Vector2D,_
 	
 	if numFound > 0 then
 		tempPortal = p_list[0]
-		a.setX(max(tempPortal->a.x(), p.x()))
-		a.setY(max(tempPortal->a.y(), p.y()))
-		b.setX(min(tempPortal->b.x(), p.x() + w))
-		b.setY(min(tempPortal->b.y(), p.y() + h))
+		a.setX(_max_(tempPortal->a.x(), p.x()))
+		a.setY(_max_(tempPortal->a.y(), p.y()))
+		b.setX(_min_(tempPortal->b.x(), p.x() + w))
+		b.setY(_min_(tempPortal->b.y(), p.y() + h))
 		area1 = (b.x() - a.x()) * (b.y() - a.y())
 		area2 = w * h
 		if area1 / area2 >= coverage then

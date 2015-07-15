@@ -196,6 +196,7 @@ for curFileName in itemFiles:
         fileText = stripComments(fileText)
           
         initHeader = ''
+        initFooter = ''
         
         
         #prefix any consts, remove them and add them to itemprototypes, finally prefix any references to them in the code
@@ -405,7 +406,8 @@ for curFileName in itemFiles:
                 publishSlotName = curPublishItems[1].strip().upper()[1:]
                 if len(curPublishItems) > 2:
                     publishSlotShape = curPublishItems[2].strip()
-                    initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\", ' + publishSlotShape + ')\n'
+                    initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\", new ' + publishSlotShape + ')\n'
+                    initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->setTargetSlotOffset(ID, ' + publishSlotTag + ', p)\n'
                 else:
                     initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\")\n'                
             else:
@@ -424,7 +426,8 @@ for curFileName in itemFiles:
                 if len(curPublishItems) > 2:
                     publishValueShape = curPublishItems[2].strip()
                     initHeader += SPACE_TAB+'_initAddValue_(' + publishValueTag + ', ' + publishValueType + ')\n'
-                    initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ', ' + publishSlotShape + ')\n'
+                    initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ', new ' + publishValueShape + ')\n'
+                    initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->setTargetValueOffset(ID, ' + publishValueTag + ', p)\n'
                 else:
                     initHeader += SPACE_TAB+'_initAddValue_(' + publishValueTag + ', ' + publishValueType + ')\n'
                     initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ')\n'
@@ -439,8 +442,8 @@ for curFileName in itemFiles:
             fInitProto = objectShortPrefix + '_PROC_INIT()'
             fInitLines[0] = 'sub Item.' + fInitProto
             if hasItemData == 1: fInitLines.insert(1, SPACE_TAB + 'data_.' + itemDataPtr + ' = new ' + dataTypePrefixName)
-            fInitLines[-1] = 'end sub'
-            fInit = fixPolygon2DInit('\n'.join(fInitLines) + '\n')
+            fInitLines.pop(-1)
+            fInit = fixPolygon2DInit('\n'.join(fInitLines) + '\n') + initFooter + 'end sub\n'
             text_methoddefinitions += fInit
             text_methodprototypes += 'declare sub ' + fInitProto + '\n'
             text_initcaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + fInitProto + '\n'

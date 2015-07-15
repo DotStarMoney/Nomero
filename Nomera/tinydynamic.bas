@@ -72,7 +72,7 @@ sub TinyDynamic.init(proto as TinyDynamic_Prototype_e)
 		clearShapeData()
 		isComplete = 0
 		SFX_SPINNER.angle = 0
-		SFX_SPINNER.angle_v = (PI / 180)*64
+		SFX_SPINNER.angle_v = (_PI_ / 180)*64
 		SFX_SPINNER.length = 480
 		pointsN = 2
 		cur_pts_p = allocate(sizeof(Vector2D) * pointsN)
@@ -96,7 +96,7 @@ sub TinyDynamic.init(proto as TinyDynamic_Prototype_e)
 		pointsN = 0
 	case DYNA_PIVOTER
 		PIVOTER.angle = 0
-		PIVOTER.angle_v = (PI / 180)*4
+		PIVOTER.angle_v = (_PI_ / 180)*4
 	end select
 	if pointsN <> 0 then
 		setup = 1
@@ -233,14 +233,14 @@ sub TinyDynamic.offset_time(t as double)
 	select case type_
 	case DYNA_SFX_SPINNER
 		SFX_SPINNER.angle = wrap(cur_t * SFX_SPINNER.angle_v)
-		cur_pts_p[0].setX(-abs(cos(SFX_SPINNER.angle + PI) * SFX_SPINNER.length * 0.5))
+		cur_pts_p[0].setX(-abs(cos(SFX_SPINNER.angle + _PI_) * SFX_SPINNER.length * 0.5))
 		cur_pts_p[0].setY(0)
 		cur_pts_p[1].setX(abs(cos(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5))
 		cur_pts_p[1].setY(0)
 		cur_pts_p[0] = cur_pts_p[0] + centroid
 		cur_pts_p[1] = cur_pts_p[1] + centroid
 				
-		if wrap(SFX_SPINNER.angle+PI/2) >= PI then
+		if wrap(SFX_SPINNER.angle+_PI_/2) >= _PI_ then
 			cur_pts_v[0] = Vector2D(-sin(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5 * SFX_SPINNER.angle_v, 0)
 			cur_pts_v[1] = Vector2D(sin(SFX_SPINNER.angle) * SFX_SPINNER.length * 0.5 * SFX_SPINNER.angle_v, 0)
 		else

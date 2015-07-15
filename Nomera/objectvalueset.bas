@@ -20,7 +20,7 @@ sub ObjectValueSet.clean()
     next i
     deallocate(members)
 end sub
-sub ObjectValueSet._addValue_(ID_ as string, value_ as _Item_valueContainer_t ptr, geom as Shape2D)
+sub ObjectValueSet._addValue_(ID_ as string, value_ as _Item_valueContainer_t ptr, geom as Shape2D ptr)
     if members_N >= members_cap then 
         members_cap += COARSE_SIZE_INC
         members = reallocate(members, members_cap * sizeof(ObjectValueSet_member_t))
@@ -37,7 +37,7 @@ sub ObjectValueSet._addValue_(ID_ as string, value_ as _Item_valueContainer_t pt
     end if
     members_N += 1
 end sub
-sub ObjectValueSet.getGeometry(byref geom_ as Shape2D, i as integer)
+sub ObjectValueSet.getGeometry(byref geom_ as Shape2D ptr, i as integer)
     geom_ = members[i].geometry
 end sub
 sub ObjectValueSet.getID(byref ID_ as string, i as integer)

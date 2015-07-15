@@ -858,9 +858,9 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 					runDir = -sgn(c->headingEdge->startVelocity.x)
 					direX = c->headingEdge->start_loc.x - e_->body.p.x
 					if runDir = 1 then
-						farEdge = min(c->headingEdge->start_loc.x + speedStandoff, curNode->bb_b.x - PATH_RUN_PINCH)
+						farEdge = _min_(c->headingEdge->start_loc.x + speedStandoff, curNode->bb_b.x - PATH_RUN_PINCH)
 					elseif runDir = -1 then
-						farEdge = max(c->headingEdge->start_loc.x - speedStandoff, curNode->bb_a.x + PATH_RUN_PINCH)
+						farEdge = _max_(c->headingEdge->start_loc.x - speedStandoff, curNode->bb_a.x + PATH_RUN_PINCH)
 					end if
 					if c->headingEdge->speed_type <> PT_STOPPING then
 						if sgn(direX) = -runDir then

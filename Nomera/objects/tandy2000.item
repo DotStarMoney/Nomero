@@ -21,11 +21,11 @@ const as integer buhnz = 4
 parameter "test vector2d", Vector2D
 
 
-signal   $justTrees
+signal $justTrees
 signal $notImportant
 
 
-publish slot "my only slot", $myOnlySlot, Polygon2D({Vector2D(3,10), Vector2D(43, 40), Vector2D(-10, 30)}) 
+publish slot "my only slot", $myOnlySlot, Polygon2D({Vector2D(-10,-10), Vector2D(140, 40), Vector2D(-13, 100)}) 
 publish value "TESTVALUe", string
 
 '---------------------------------
@@ -63,7 +63,7 @@ end function
 '---------------------------------
 function idontdonothin()
     dim as integer t
-    dim as Shape2D randomShape
+    dim as Polygon2D randomShape
     t = 3
     randomShape = Polygon2D({Vector2D(0,10), Vector2D(40, 40), Vector2D(-10, 50)})
 
@@ -83,7 +83,7 @@ function _drawOverlay(scnbuff as integer ptr)
     LOCK_TO_SCREEN()
         circle scnbuff, (10, 10), 10, &h00ff00
         draw string scnbuff, (10, 30+data.randOffset), str(data.alright)
-        if data.checkIt = 4 then draw string scnbuff, (10, 18), "EUREKA"
+        if data.checkIt > 0 then draw string scnbuff, (10, 18), "EUREKA"
     UNLOCK_TO_SCREEN()
 
 end function
@@ -91,11 +91,25 @@ end function
 '----------------------------------
 
 function _run(t as double)
-    
+    dim as valueset vs
+    dim as integer i
+    dim as Vector2D para
+    dim as Vector2D playerP
+    dim as Vector2D playerS
     
     getParameter(data.alright, "test vector2D")
     setValue(str(timer), "testvalue")
     
+    link.player_ptr->getBounds(playerP, playerS)
+    
+    
+    queryValues(vs, "MYVALUE7", @Rectangle2D(playerP, playerP + playerS))
+    
+    for i = 0 to vs.getValue_N() - 1
+        
+        vs.getValue(para, i)
+        print para
+    next i
 end function
 
 '-----------------------------------
@@ -117,7 +131,15 @@ slot $myOnlySlot(aValue as integer)
     dim as integer localVariable
 
     data.checkIt += 1
-    
+    print "myOnlySlot..."
 
 end slot
 
+
+slot $testSlot3(paramA as integer, paramB as string, paramC as Vector2D)
+
+    data.checkIt += 1
+    print "incrementing checkIt"
+    print paramA, paramB, paramC
+    
+end slot

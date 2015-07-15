@@ -12,7 +12,7 @@ type mmx_t field = 1
 	i(0 to 1) as integer
 end type
 '________________
-const pi_180 = pi / 180
+const pi_180 = _PI_ / 180
 sub rotozoom_alpha2( byref dst as FB.IMAGE ptr = 0, byref src as const FB.IMAGE ptr, byval positx as integer, byval posity as integer, byref angle as integer,_
                      byref zoomx as single = 0, byref zoomy as single = 0, byval transcol as uinteger = &hffff00ff, byval alphalvl as integer = 255, byref offsetx as integer = 0, byref offsety as integer = 0 )
     
@@ -294,7 +294,9 @@ sub rotozoom_alpha2( byref dst as FB.IMAGE ptr = 0, byref src as const FB.IMAGE 
     
 end sub
 
-function min overload(x as double, y as double) as double
+
+
+function _min_ overload(x as double, y as double) as double
     if x < y then 
         return x
     else
@@ -302,7 +304,7 @@ function min overload(x as double, y as double) as double
     end if
 end function
 
-function min overload(x as integer, y as integer) as integer
+function _min_ overload(x as integer, y as integer) as integer
     if x < y then 
         return x
     else
@@ -311,7 +313,7 @@ function min overload(x as integer, y as integer) as integer
 end function
 
 
-function max overload(x as double, y as double) as double
+function _max_ overload(x as double, y as double) as double
     if x >= y then 
         return x
     else
@@ -319,13 +321,14 @@ function max overload(x as double, y as double) as double
     end if
 end function
 
-function max overload(x as integer, y as integer) as integer
+function _max_ overload(x as integer, y as integer) as integer
     if x >= y then 
         return x
     else
         return y
     end if
 end function
+
 
 function wrap(v as double, v_w as double = 6.28318530718) as double
 	if v >= v_w then 
@@ -2245,10 +2248,10 @@ function angDist(a as double, b as double) as double
     dim as double ret
 
     ret = b - a
-    if ret > PI then 
-        ret -= 2*PI
-    elseif ret < -PI then
-        ret += 2*PI
+    if ret > _PI_ then 
+        ret -= 2*_PI_
+    elseif ret < -_PI_ then
+        ret += 2*_PI_
     end if
     
     return ret
@@ -2275,10 +2278,10 @@ function windowCircleIntersect(tl as Vector2d, br as Vector2d,_
     
     if circleBox(p.x, p.y, r, tl.x, tl.y, br.x, br.y) then
         if (p.x >= tl.x) andAlso (p.y >= tl.y) andAlso (p.x <= br.x) andALso (p.y <= br.y) then
-            ret.tl_x = max(tl.x, p.x - r)
-            ret.tl_y = max(tl.y, p.y - r)
-            ret.br_x = min(br.x, p.x + r)
-            ret.br_y = min(br.y, p.y + r)           
+            ret.tl_x = _max_(tl.x, p.x - r)
+            ret.tl_y = _max_(tl.y, p.y - r)
+            ret.br_x = _min_(br.x, p.x + r)
+            ret.br_y = _min_(br.y, p.y + r)           
             ret.dx0 = 0: ret.dy0 = 0
             ret.dx1 = 0: ret.dy1 = 0
         else
@@ -2317,24 +2320,24 @@ function windowCircleIntersect(tl as Vector2d, br as Vector2d,_
             minP = p_list(lowI)
             maxP = p_list(highI)
    
-            nTl = Vector2D(min(min(minP.x, maxP.x), p.x), min(min(minP.y, maxP.y), p.y))
-            nBr = Vector2D(max(max(minP.x, maxP.x), p.x), max(max(minP.y, maxP.y), p.y))
+            nTl = Vector2D(_min_(_min_(minP.x, maxP.x), p.x), _min_(_min_(minP.y, maxP.y), p.y))
+            nBr = Vector2D(_max_(_max_(minP.x, maxP.x), p.x), _max_(_max_(minP.y, maxP.y), p.y))
             
             if p.y < tl.y then
                 if (p.x >= tl.x) andAlso (p.x <= br.x) then
-                    nBr = Vector2D(nBr.x, min(p.y + r, br.y))
+                    nBr = Vector2D(nBr.x, _min_(p.y + r, br.y))
                 end if
             elseif p.y > br.y then
                 if (p.x >= tl.x) andAlso (p.x <= br.x) then
-                    nTl = Vector2D(nTl.x, max(p.y - r, tl.y))
+                    nTl = Vector2D(nTl.x, _max_(p.y - r, tl.y))
                 end if    
             elseif p.x < tl.x then
                 if (p.y >= tl.y) andAlso (p.y <= br.y) then
-                    nBr = Vector2D(min(p.x + r, br.x), nBr.y)
+                    nBr = Vector2D(_min_(p.x + r, br.x), nBr.y)
                 end if                
             elseif p.x > br.x then
                 if (p.y >= tl.y) andAlso (p.y <= br.y) then
-                    nTl = Vector2D(max(p.x - r, tl.x), nTl.y)
+                    nTl = Vector2D(_max_(p.x - r, tl.x), nTl.y)
                 end if                  
             end if
            

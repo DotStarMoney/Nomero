@@ -71,7 +71,7 @@ type Player
         declare function getState() as PlayerState
         declare sub explosionAlert(p as Vector2D)
         declare sub harm(p as Vector2D, amount as integer)
-        declare sub getBounds(byref p as Vector2D, size as Vector2D)
+        declare sub getBounds(byref p as Vector2D, byref size as Vector2D)
         declare sub centerToMap(byref p as Vector2D)
         declare sub exportMovementParameters(byref dire_p as integer, byref jump_p as integer,_
 											 byref ups_p as integer, byref shift_p as integer)

@@ -24,6 +24,10 @@
 dim as uinteger ptr Item.BOMB_COLORS = 0
 
 constructor Item()
+    construct_()
+end constructor
+
+sub Item.construct_()
 	if BOMB_COLORS = 0 then
 		BOMB_COLORS = new uinteger[10]
 		BOMB_COLORS[0] = rgb( 58, 209,  70)
@@ -42,8 +46,7 @@ constructor Item()
     slotTable.init(sizeof(_Item_slotTable_t))
     valueTable.init(sizeof(_Item_valueContainer_t))
     signalTable.init(sizeof(integer))
-end constructor
-
+end sub
 destructor Item()
     flush()
 end destructor
@@ -160,6 +163,12 @@ sub Item._initAddSignal_(signal_tag as string)
     dim as integer fillerData
     fillerData = not 0
     signalTable.insert(ucase(signal_tag), @fillerData)
+end sub
+sub Item.setTargetValueOffset(value_tag as string, offset as Vector2D)        
+    link.dynamiccontroller_ptr->setTargetValueOffset(ID, ucase(value_tag), offset)
+end sub
+sub Item.setTargetSlotOffset(slot_tag as string, offset as Vector2D)
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, ucase(slot_tag), offset)
 end sub
 function Item.isSignal(signal_tag as string) as integer
     return signalTable.exists(ucase(signal_tag))
@@ -534,13 +543,13 @@ sub Item.setValue(value_ as string, value_tag as string)
 end sub
 
 sub Item.throw(signal_tag as string, parameter_string as string)
-    link.dynamiccontroller_ptr->throw(ID, signal_tag, parameter_string)
+    link.dynamiccontroller_ptr->throw(ucase(ID), ucase(signal_tag), parameter_string)
 end sub
 
-sub Item.queryValues(byref value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
-    link.dynamiccontroller_ptr->queryValues(value_set, value_tag, queryShape)
+sub Item.queryValues(byref value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D ptr)
+    link.dynamiccontroller_ptr->queryValues(value_set, ucase(value_tag), queryShape)
 end sub
 
-sub Item.querySlots(slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
-    link.dynamiccontroller_ptr->querySlots(slot_set, slot_tag, queryShape)
+sub Item.querySlots(slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D ptr)
+    link.dynamiccontroller_ptr->querySlots(slot_set, ucase(slot_tag), queryShape)
 end sub

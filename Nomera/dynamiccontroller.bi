@@ -16,14 +16,14 @@
 
 'item adds its own position to query shape
 type DynamicController_publish_t
-    as Shape2D target
+    as Shape2D ptr target
     as DynamicController_publish_t ptr ptr hash2Dindex 'for when target <> EmptyShape2D for quick removal
     as zstring ptr tag_
     as Item ptr item_
 end type
 
 type DynamicController_publishSlot_t
-    as Shape2D target
+    as Shape2D ptr target
     as DynamicController_publish_t ptr ptr hash2Dindex 
     as zstring ptr tag_
     as zstring ptr slot_tag_
@@ -57,9 +57,6 @@ type DynamicController_connectionOutgoingDestination_t
     as zstring ptr thisSignal
 end type
 
-
-
-
 type DynamicController
 	public:
 		declare constructor
@@ -90,9 +87,8 @@ type DynamicController
         declare sub initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0))
         declare sub setParameterFromString(param_string as string, ID_ as string, param_tag as string)
         declare sub connect(signal_ID as string, signal_tag as string, slot_ID as string, slot_tag as string, parameter_string as string = "")
-        declare sub addPublishedValue(publishee_ID as string, value_tag as string, target as Shape2D = EmptyShape2D())
-        declare sub addPublishedSlot(publishee_ID as string, slot_tag as string, actual_slot_tag as string, target as Shape2D = EmptyShape2D())
-
+        declare sub addPublishedValue(publishee_ID as string, value_tag as string, target as Shape2D ptr = 0)
+        declare sub addPublishedSlot(publishee_ID as string, slot_tag as string, actual_slot_tag as string, target as Shape2D ptr = 0)
         '------------------------------------------------------------------
         
         declare sub setParameter(param_ as Vector2D, ID_ as string, param_tag as string)
@@ -106,8 +102,11 @@ type DynamicController
         declare sub getValue(byref value_ as double, ID_ as string, value_tag as string)
         declare sub getValue(byref value_ as string, ID_ as string, value_tag as string)
         
-        declare sub queryValues(value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D = EmptyShape2D())
-        declare sub querySlots(slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D = EmptyShape2D())
+        declare sub setTargetValueOffset(ID_ as string, value_tag as string, offset as Vector2D)
+        declare sub setTargetSlotOffset(ID_ as string, slot_tag as string, offset as Vector2D)        
+        
+        declare sub queryValues(value_set as ObjectValueSet, value_tag as string, queryShape as Shape2D ptr = 0)
+        declare sub querySlots(slot_set as ObjectSlotSet, slot_tag as string, queryShape as Shape2D ptr = 0)
         
         declare sub throw(signal_ID as string, signal_tag as string, parameter_string as string = "")
         declare sub fireSlot(ID_ as string, slot_tag as string, parameter_string as string = "")

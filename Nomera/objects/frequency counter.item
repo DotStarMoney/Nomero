@@ -5,11 +5,12 @@ type ITEM_DATA
     as zstring ptr someText2
     as Vector2D vec
     as integer shouldDraw
+    as double circleAngle
 end type
 
 const as integer buhnz = 2
 
-
+publish value "circleAngle", double
 
 parameter "flavor", integer
 signal $testSignal1
@@ -18,11 +19,12 @@ signal $testSignal2
 '---------------------------------
 
 function _init()
-    dim as Shape2D randomShape
     data.someText2 = 0
-    data.shouldDraw = 0
-
-    end function
+    data.shouldDraw = 1
+    
+    data.circleAngle = rnd * _PI_ * 2
+    
+end function
 #macro aldi(_X_, _Y_)
     data._X_ = _Y_
     print "assigned a data variable to" + str(_Y_) + ", " + str(thisIsAnOddPlaceForThis)
@@ -44,6 +46,7 @@ function _draw()
         getParameter(flavor, "flavor")
 
         line scnbuff, (p.x, p.y)-(p.x+size.x, p.y+size.y), iif(flavor, &hff00ff, &h00ffff), Bf
+        circle scnbuff, (data.vec.x, data.vec.y), 30, &h00FFFF
 
     end if
 end function
@@ -57,11 +60,19 @@ end function
 '----------------------------------
 
 function _run()
-
+    dim as SlotSet slotz
+    
     if int(rnd * 1000) = 0 then throw($testSignal1)
     if int(rnd * 1000) = 0 then throw($testSignal2)
-
-    end function
+    data.circleAngle += 0.01
+    data.vec = p + Vector2D(cos(data.circleAngle), sin(data.circleAngle))*200
+    
+    querySlots(slotz, "my only slot", @Circle2D(data.vec, 30))
+    setValue(data.circleAngle, "circleAngle")
+    
+    slotz.throw()
+    
+end function
 
 
 '-----------------------------------
