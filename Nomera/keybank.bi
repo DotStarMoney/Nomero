@@ -4,7 +4,7 @@
 #include "hashtable.bi"
 
 type KeyBank_node_t
-    as string key
+    as zstring ptr key
     as any ptr memAddr
 end type
 

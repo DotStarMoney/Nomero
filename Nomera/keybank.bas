@@ -8,17 +8,20 @@ destructor KeyBank()
 end destructor
 function KeyBank.acquire() as string
     dim as KeyBank_node_t curNode
+    dim as string keyString
     curNode.memAddr = allocate(sizeof(integer))
-    curNode.key = "[" + str(curNode.memAddr) + "]"
-    keys.insert(curNode.key, @curNode)
-    return curNode.key
+    keyString = "[" + str(curNode.memAddr) + "]"
+    curNode.key = allocate(len(keyString) + 1)
+    *(curNode.key) = keyString
+    keys.insert(keyString, @curNode)
+    return keyString
 end function
 sub KeyBank.relinquish(key as string)
     dim as KeyBank_node_t ptr curNode_
     curNode_ = keys.retrieve(key)
     if curNode_ then
         deallocate(curNode_->memAddr)
-        curNode_->key = ""
+        deallocate(curNode_->key)
         keys.remove(key)
     end if
 end sub
@@ -26,7 +29,7 @@ sub KeyBank.flush()
     dim as KeyBank_node_t ptr curNode_
     BEGIN_HASH(curNode_, keys)
         deallocate(curNode_->memAddr)
-        curNode_->key = ""
+        deallocate(curNode_->key)
     END_HASH()
 end sub
 

@@ -760,13 +760,15 @@ sub Player.processControls(dire as integer, jump as integer,_
                 select case spinnerItem
                 case 0
                     link.soundeffects_ptr->playSound(SND_PLACE_APMINE)
+                    bombData(i).ID = DControl->addItem(DControl->itemStringToType("ANTIPERSONNEL MINE"),,body.p + Vector2D(0, 10))
                 case 3
                     link.soundeffects_ptr->playSound(SND_PLACE_GASMINE)                
                 case 4
                     link.soundeffects_ptr->playSound(SND_PLACE_ELECMINE)
                 end select
                 
-                bombData(i).ID = DControl->addItem(DControl->itemStringToType("ANTI PERSONNEL MINE"),,body.p + Vector2D(0, 10))
+                DControl->setParameter(i, bombData(i).ID, "colorIndex")
+                
   
 				bombData(i).hasBomb = 1
 				bombPos = DControl->getPos(bombData(i).ID)
@@ -987,6 +989,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 			end if
 		end if
 	next i
+    
 
 	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
 	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	

@@ -19,6 +19,8 @@
 #define getDouble(_VTC_) _VTC_.data_.double_
 #define getString(_VTC_) *(_VTC_.data_.zstring)
 
+#define MEDIA_PATH "objects\media\"
+
 #include "objects\headers\gen_methoddefinitions.bi"
 
 dim as uinteger ptr Item.BOMB_COLORS = 0
@@ -69,9 +71,14 @@ sub Item.initPost(p_ as Vector2D, size_ as Vector2D)
     lightState = 0
     fastLight = 1
     anims_n = 0
+    light.shaded.diffuse_fbimg = 0
+    light.shaded.specular_fbimg = 0
+    light.occlusion_fbimg = 0
     
     #include "objects\headers\gen_initcaseblock.bi"
     
+    bounds_tl = p
+    bounds_br = p + size
 end sub
 sub Item.init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "")
     construct(itemType_, ID_)
@@ -80,7 +87,7 @@ end sub
 
 sub Item.flush()
     dim as _Item_valueContainer_t ptr valueC_ptr
-    
+      
     #include "objects\headers\gen_flushcaseblock.bi"
     
     BEGIN_HASH(valueC_ptr, parameterTable)
@@ -97,6 +104,15 @@ sub Item.flush()
             end if
         end if
     END_HASH()
+    if lightState then
+        if light.shaded.diffuse_fbimg then imagedestroy(light.shaded.diffuse_fbimg)
+        if light.shaded.specular_fbimg then imagedestroy(light.shaded.specular_fbimg)
+        if light.occlusion_fbimg then imagedestroy(light.occlusion_fbimg)
+        light.shaded.diffuse_fbimg = 0
+        light.shaded.specular_fbimg = 0
+        light.occlusion_fbimg = 0
+    end if
+
     ID = ""
 end sub
 function Item.getID() as string
@@ -193,8 +209,8 @@ function Item.getSize() as Vector2D
 end function
 
 sub Item.getBounds(byref a as Vector2D, byref b as Vector2D) 
-    a = p
-    b = p + size
+    a = bounds_tl
+    b = bounds_br
 end sub
 
 function Item.getType() as Item_Type_e

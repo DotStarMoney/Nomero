@@ -1,1 +1,1 @@
-Nomera "testAurora3.map"
+Nomera "pd1_2.map"

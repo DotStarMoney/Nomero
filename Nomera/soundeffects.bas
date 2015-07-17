@@ -9,7 +9,7 @@ end constructor
 sub SoundEffects.init()
 	sounds(SND_EXPLODE_1)	   = FSOUND_SAMPLE_Load(FSOUND_FREE,"explode1.wav",0,0,0)            :volume(SND_EXPLODE_1)      = 255
 	sounds(SND_EXPLODE_2)	   = FSOUND_SAMPLE_Load(FSOUND_FREE,"explode2.wav",0,0,0)            :volume(SND_EXPLODE_2)      = 255
-	sounds(SND_JUMP) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"jump.wav",0,0,0)                :volume(SND_JUMP) 	         = 255
+	sounds(SND_JUMP) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"jump.wav",0,0,0)                :volume(SND_JUMP) 	         = 128
 	sounds(SND_FULLCHARGE) 	   = FSOUND_SAMPLE_Load(FSOUND_FREE,"fullcharge.wav",0,0,0)          :volume(SND_FULLCHARGE)     = 255
 	sounds(SND_LAND) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"land.wav",0,0,0)                :volume(SND_LAND)           = 255
 	sounds(SND_THROW)		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"throw.wav",0,0,0)               :volume(SND_THROW)          = 255

@@ -26,7 +26,7 @@
  <tileset firstgid="4738" name="tree" tilewidth="16" tileheight="16">
   <image source="tree.bmp" trans="ff00ff" width="128" height="192"/>
  </tileset>
- <layer name="Parallax 0" width="100" height="80" visible="0">
+ <layer name="Parallax 0" width="100" height="80">
   <properties>
    <property name="background" value=""/>
    <property name="depth" value="0.1"/>

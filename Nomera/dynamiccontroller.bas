@@ -110,18 +110,19 @@ sub DynamicController.removeItem(ID_ as string)
     dim as integer outConnections_n, removeConnections_n
     dim as string removeID, removeTag, thisTag
     dim as integer publishedVals_N, i
-    
+
     itemPair_ = itemIdPairs.retrieve(ID_)
     if itemPair_->usedKeyBank then itemIdGenerator.relinquish(ID_)
      
     publishedVals_N = allPublishedValues.retrieveKey1(ID_, parameterPtrPtr)
     publishedVals = parameterPtrPtr
     if publishedVals_N then
+
         for i = 0 to publishedVals_N - 1
             if publishedVals[i]->target then
                 valueTargets.remove(publishedVals[i]->hash2Dindex)
+                delete(publishedVals[i]->target)
             end if
-            delete(publishedVals[i]->target)
             deallocate(publishedVals[i]->tag_)
         next i
         allPublishedValues.removeKey1(ID_)
@@ -131,11 +132,12 @@ sub DynamicController.removeItem(ID_ as string)
     publishedVals_N = allPublishedSlots.retrieveKey1(ID_, parameterPtrPtr)
     publishedSlots = parameterPtrPtr
     if publishedVals_N then
+
         for i = 0 to publishedVals_N - 1
             if publishedSlots[i]->target then
                 slotTargets.remove(publishedSlots[i]->hash2Dindex)
+                delete(publishedSlots[i]->target)            
             end if
-            delete(publishedSlots[i]->target)            
             deallocate(publishedSlots[i]->tag_)
             deallocate(publishedSlots[i]->slot_tag_)
         next i
@@ -143,72 +145,81 @@ sub DynamicController.removeItem(ID_ as string)
         deallocate(publishedSlots)
     end if
     
+
+    
     if drawObjects_active.exists(ID_) then
         drawObjects_active.remove(ID_)
     elseif drawObjects_activeFront.exists(ID_) then
         drawObjects_activeFront.remove(ID_)
     end if
     
+
     curConnectionNode = connections.retrieve(ID_)
     'sever connections coming in to this item
-    BEGIN_HASH(curIncomingConnection, curConnectionNode->slots)
-        BEGIN_DHASH(curIncomingSource, curIncomingConnection->incomingFromSignals)
-            removeID = *(curIncomingSource->incomingID)        
-            removeTag = *(curIncomingSource->incomingSignalTag)
-            thisTag = *(curIncomingSource->thisSlot)          
-            
-            deallocate(curIncomingSource->incomingID)
-            deallocate(curIncomingSource->incomingSignalTag)
-            deallocate(curIncomingSource->thisSlot)
-            
-            connectedNode = connections.retrieve(removeID)
-            connectedSignal = connectedNode->signals.retrieve(removeTag)
-            connectedDestination = connectedSignal->outgoingToSlots.retrieve(ID_, thisTag)
-            
-            deallocate(connectedDestination->outgoingID)
-            deallocate(connectedDestination->outgoingSlotTag)
-            deallocate(connectedDestination->thisSignal)
-            if connectedDestination->appendParameter then
-                deallocate(connectedDestination->appendParameter)
-            end if
-            
-            connectedSignal->outgoingToSlots.remove(ID_, thisTag)
-            
-        END_DHASH()
-        curIncomingConnection->incomingFromSignals.clean()
-    END_HASH()
-    curConnectionNode->slots.clean()
-    
-    'sever connections leaving this item
-    BEGIN_HASH(curOutgoingConnection, curConnectionNode->signals)
-        BEGIN_DHASH(curOutgoingDestination, curOutgoingConnection->outgoingToSlots)
-            removeID = *(curOutgoingDestination->outgoingID)        
-            removeTag = *(curOutgoingDestination->outgoingSlotTag)
-            thisTag = *(curOutgoingDestination->thisSignal)          
-            
-            deallocate(curOutgoingDestination->outgoingID)
-            deallocate(curOutgoingDestination->outgoingSlotTag)
-            deallocate(curOutgoingDestination->thisSignal)
-            if curOutgoingDestination->appendParameter then
-                deallocate(curOutgoingDestination->appendParameter)
-            end if
-            
-            connectedNode = connections.retrieve(removeID)
-            connectedSlot = connectedNode->slots.retrieve(removeTag)
-            connectedSource = connectedSlot->incomingFromSignals.retrieve(ID_, thisTag)
-            
-            deallocate(connectedSource->incomingId)
-            deallocate(connectedSource->incomingSignalTag)
-            deallocate(connectedSource->thisSlot)
-            
-            connectedSlot->incomingFromSignals.remove(ID_, thisTag)
-            
-        END_DHASH()
-        curOutgoingConnection->outgoingToSlots.clean()
-    END_HASH()
-    curConnectionNode->signals.clean()    
-    connections.remove(ID_)
-    
+    if curConnectionNode then
+        BEGIN_HASH(curIncomingConnection, curConnectionNode->slots)
+
+            BEGIN_DHASH(curIncomingSource, curIncomingConnection->incomingFromSignals)
+                removeID = *(curIncomingSource->incomingID)        
+                removeTag = *(curIncomingSource->incomingSignalTag)
+                thisTag = *(curIncomingSource->thisSlot)          
+                
+                deallocate(curIncomingSource->incomingID)
+                deallocate(curIncomingSource->incomingSignalTag)
+                deallocate(curIncomingSource->thisSlot)
+                
+                connectedNode = connections.retrieve(removeID)
+                connectedSignal = connectedNode->signals.retrieve(removeTag)
+                connectedDestination = connectedSignal->outgoingToSlots.retrieve(ID_, thisTag)
+                
+                deallocate(connectedDestination->outgoingID)
+                deallocate(connectedDestination->outgoingSlotTag)
+                deallocate(connectedDestination->thisSignal)
+                if connectedDestination->appendParameter then
+                    deallocate(connectedDestination->appendParameter)
+                end if
+                
+                connectedSignal->outgoingToSlots.remove(ID_, thisTag)
+                
+            END_DHASH()
+            curIncomingConnection->incomingFromSignals.clean()
+        END_HASH()
+        curConnectionNode->slots.clean()
+
+     
+
+        'sever connections leaving this item
+        BEGIN_HASH(curOutgoingConnection, curConnectionNode->signals)
+            BEGIN_DHASH(curOutgoingDestination, curOutgoingConnection->outgoingToSlots)
+                removeID = *(curOutgoingDestination->outgoingID)        
+                removeTag = *(curOutgoingDestination->outgoingSlotTag)
+                thisTag = *(curOutgoingDestination->thisSignal)          
+                
+                deallocate(curOutgoingDestination->outgoingID)
+                deallocate(curOutgoingDestination->outgoingSlotTag)
+                deallocate(curOutgoingDestination->thisSignal)
+                if curOutgoingDestination->appendParameter then
+                    deallocate(curOutgoingDestination->appendParameter)
+                end if
+                
+                connectedNode = connections.retrieve(removeID)
+                connectedSlot = connectedNode->slots.retrieve(removeTag)
+                connectedSource = connectedSlot->incomingFromSignals.retrieve(ID_, thisTag)
+                
+                deallocate(connectedSource->incomingId)
+                deallocate(connectedSource->incomingSignalTag)
+                deallocate(connectedSource->thisSlot)
+                
+                connectedSlot->incomingFromSignals.remove(ID_, thisTag)
+                
+            END_DHASH()
+            curOutgoingConnection->outgoingToSlots.clean()
+        END_HASH()
+        curConnectionNode->signals.clean()    
+        connections.remove(ID_)
+    end if
+
+        
     delete(itemPair_->item_)
     itemIdPairs.remove(ID_)
     
@@ -231,7 +242,8 @@ sub DynamicController.process(t as double)
             removalList_n += 1
         end if
     END_HASH()
-    
+
+ 
     for i = 0 to removalList_n - 1
         removeItem(removalList(i))
     next i

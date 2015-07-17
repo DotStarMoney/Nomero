@@ -7,6 +7,8 @@
 #include "shape2d.bi"
 #include "hashtable.bi"
 #include "pvector2d.bi"
+#include "tinybody.bi"
+#include "tinyspace.bi"
 #include "objectslotset.bi"
 #include "objectvalueset.bi"
 
@@ -132,6 +134,8 @@ type Item
 		as Animation ptr anims 
         as Vector2D      size
         as Vector2D      p
+        as Vector2D      bounds_tl
+        as Vector2D      bounds_br
         as string        ID
         as Item_objectData_u data_ 
         

@@ -68,7 +68,7 @@ sub OneShotEffects.create(p_ as Vector2D, fx as EffectType_ = EXPLODE, _
         this.head_->data_.anim.play()
 		this.head_->data_.anim.setSpeed(s_)
     case LITTLE_PULSE
-        this.head_->data_.anim.load("ledflash.txt")
+        this.head_->data_.anim.load("objects\media\ledflash.txt")
         this.head_->data_.anim.hardSwitch(1)
         this.head_->data_.anim.play()
 		this.head_->data_.anim.setSpeed(s_)    
