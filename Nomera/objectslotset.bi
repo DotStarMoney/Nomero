@@ -18,7 +18,7 @@ type ObjectSlotSet
         declare sub _addSlot_(itemID as string, slot_tag as string, geom as Shape2D ptr)
         declare sub throw(parameter_string as string = "")
         declare function getMember_N() as integer
-        declare function getMember(i as integer) as ObjectSlotSet
+        declare sub throwMember(i as integer, parameter_string as string = "")
         declare sub getGeometry(byref geom as Shape2D ptr, i as integer) 
         declare sub getID(byref ID_ as string, i as integer)
         declare sub clean()

@@ -2054,8 +2054,8 @@ sub pmapFix(byref x as integer, byref y as integer)
         x = x_r
         y = y_r
     #endif
-    if x > SCRX*0.5 then x -= 1
-    if y > SCRY*0.5 then y -= 1
+    'if x > SCRX*0.5 then x -= 1
+    'if y > SCRY*0.5 then y -= 1
 end sub
 
 function pmapFixV(v as Vector2D) as Vector2D

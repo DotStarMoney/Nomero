@@ -1,0 +1,180 @@
+'#electric mine
+
+type ElectricMine_ArcData_t
+    as integer arcID
+    as Vector2D bPos
+    as Vector2D endPos
+end type
+type ITEM_DATA 
+    as integer body_i
+    as TinyBody body
+    as integer death
+    as integer freeFallingFrames
+    as ElectricMine_ArcData_t ptr arcs
+    as integer arcs_n
+    as integer deathFrames
+end type
+
+#define MAX_RAYCAST_ATTEMPTS 10
+#define RAYCAST_DIST 80
+#define RUN_TIME 50
+#define BOMB_STICKYNESS 0
+#define MINE_FREEFALL_MAX 30
+
+parameter "orientation", integer
+parameter "colorIndex", integer
+
+'---------------------------------
+
+function _init()
+    dim as integer orientation
+    data.body = TinyBody(p, 8, 10)
+    data.death = 0
+    data.freeFallingFrames = 0
+    data.death = 0
+    data.deathFrames = 0
+    
+    data.arcs_n = 0
+    data.arcs = new ElectricMine_ArcData_t[4]
+    
+    anims_n = 3
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "mines.txt")
+    anims[1].load(MEDIA_PATH + "silhouette.txt")
+    anims[2].load(MEDIA_PATH + "ledflash.txt")
+    
+    anims[0].hardSwitch(1)
+    anims[1].hardSwitch(1)    
+    anims[2].hardSwitch(0)
+    
+    anims[0].play()
+    anims[1].play()
+    anims[2].play()
+
+    data.body.friction = 20
+    getParameter(orientation, "orientation")
+    
+    select case orientation
+    case 0
+        data.body.f = data.body.f + Vector2D(0, BOMB_STICKYNESS)
+    case 1
+        data.body.f = data.body.f + Vector2D(-BOMB_STICKYNESS, 0)
+    case 2
+        data.body.f = data.body.f + Vector2D(0, -BOMB_STICKYNESS)
+    case 3
+        data.body.f = data.body.f + Vector2D(BOMB_STICKYNESS, 0)
+    end select    
+    data.body_i = link.tinyspace_ptr->addBody(@(data.body))
+end function
+
+'---------------------------------
+
+function _flush()
+    if data.arcs then delete(data.arcs)
+    link.tinyspace_ptr->removeBody(data.body_i)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+	anims[0].drawAnimation(scnbuff, p.x, p.y)
+    
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    dim as integer colorIndex
+    dim as integer col
+    
+    if data.death = 0 then
+        getParameter(colorIndex, "colorIndex")
+        col = getIndicatorColor(colorIndex)
+        
+        anims[1].setGlow(col)
+        anims[1].drawAnimation(scnbuff, p.x, p.y)
+        anims[2].drawAnimation(scnbuff, p.x - 1, p.y - 14)
+        colorIndex += 1
+        
+        addColor col, &h101010
+        drawStringShadow scnbuff, p.x - 20, p.y - 20, iif(colorIndex < 10, str(colorIndex), "0"), col
+    end if
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer i
+    
+    p = data.body.p
+    bounds_tl = anims[0].getOffset() + p
+    bounds_br = bounds_tl + Vector2D(anims[0].getWidth(), anims[0].getHeight())
+    
+    anims[0].step_animation()
+	anims[1].step_animation()
+    anims[2].step_animation()
+   
+    if link.tinyspace_ptr->getArbiterN(data.body_i) = 0 then
+        data.freeFallingFrames += 1
+    else
+        data.freeFallingFrames = 0
+    end if
+    
+    if (data.death = 0) andAlso (data.freeFallingFrames >= MINE_FREEFALL_MAX) then fireSlot($explode)
+           
+           
+    if data.death then
+        data.deathFrames -= 1
+        if data.arcs_n > 0 then
+            for i = 0 to data.arcs_n - 1
+                link.electricarc_ptr->setPoints(data.arcs[i].arcID, p + data.arcs[i].bPos, data.arcs[i].endPos)
+            next i
+        end if
+    
+        if data.deathFrames <= 0 then
+            if data.arcs_n > 0 then
+                for i = 0 to data.arcs_n - 1
+                    link.electricarc_ptr->destroy(data.arcs[i].arcID)
+                next i
+            end if  
+                
+            link.oneshoteffects_ptr->create(p, BLUE_FLASH,,1)
+            return 1       
+        end if
+    end if
+
+end function
+
+'-----------------------------------
+
+slot $explode()
+    dim as integer i
+    dim as double randAngle, dist
+    dim as Vector2D v, pt
+    
+    if data.death = 0 then
+        data.death = 1
+        link.oneshoteffects_ptr->create(p, ELECTRIC_FLASH,,1)
+        link.soundeffects_ptr->playSound(SND_EXPLODE_3)
+        link.soundeffects_ptr->playSound(SND_ARC)
+        anims[0].hardSwitch(2)
+
+        for i = 0 to MAX_RAYCAST_ATTEMPTS - 1
+            randAngle = rnd*(_PI_*2)
+            v = Vector2D(cos(randAngle), sin(randAngle))*RAYCAST_DIST
+            dist = link.tinyspace_ptr->raycast(p, v, pt)
+            if dist >= 0 then
+           
+                data.arcs[data.arcs_n].arcID = link.electricarc_ptr->create()
+                data.arcs[data.arcs_n].bPos = (Vector2D(0,rnd)-Vector2D(0,0.5))*10 - Vector2D(1,4)
+                data.arcs[data.arcs_n].endPos = pt
+                link.electricarc_ptr->setPoints(data.arcs[data.arcs_n].arcID, p + data.arcs[data.arcs_n].bPos, pt)
+
+                data.arcs_n += 1
+                if data.arcs_n = 4 then exit for
+            end if
+        next i
+        
+        data.deathFrames = RUN_TIME
+    end if
+end slot

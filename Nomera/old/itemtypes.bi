@@ -16,10 +16,4 @@ end type
 
 #define SMOKEMINE_TIME 150
 
-#define COVERSMOKE_LIFETIME 300 
-#define COVERSMOKE_FRAMES 12
-#define COVERSMOKE_DAMPING_MAX 0.95
-
-
-
 #endif

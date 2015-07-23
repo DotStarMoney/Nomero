@@ -4,6 +4,12 @@
 #include "crt.bi"
 #include "printlog.bi"
 
+'''''
+#include "gamespace.bi"
+#include "locktoscreen.bi"
+'''''
+
+
 #define OWP_INDEX_START 56
 #define OWP_INDEX_END 70
 
@@ -33,12 +39,17 @@ destructor TinySpace
     end if
 end destructor
 
+sub TinySpace.setLink(link_ as objectLink)
+    link = link_
+end sub
+
 sub TinySpace.dividePosition(p as Vector2D, size as Vector2D)
     p.setX(int(p.x() / size.x()))
     p.setY(int(p.y() / size.y()))
 end sub
 
 function TinySpace.addBody(body_ as TinyBody ptr) as integer
+  
     bodies(bodies_n) = body_
     bodies(bodies_n)->ind = bcount
     bodies_n += 1
@@ -62,6 +73,7 @@ end function
 
 sub TinySpace.removeBody(index as integer) 
     dim as integer i, q, j
+
     i = 0
     index = bodyN(index)
     while i < bodies_n
@@ -80,6 +92,7 @@ sub TinySpace.removeBody(index as integer)
             i += 1
         end if
     wend
+   
 end sub
 
 function TinySpace.addDynamic(dyna_ as TinyDynamic ptr) as integer
@@ -88,11 +101,12 @@ function TinySpace.addDynamic(dyna_ as TinyDynamic ptr) as integer
 	if dyna_->getBB(a, b) = 0 then
 		return -1
 	end if
-	
+
     dynamics(dynamics_n) = dyna_
     dynamics(dynamics_n)->ind = dcount
+ 
     spacialHash.insert(a, b, @dyna_)
-    
+
     dynamics_n += 1
     dcount += 1
     return dcount - 1
@@ -148,6 +162,8 @@ sub TinySpace.setBlockData(byval d as TinyBlock ptr, _
                  
     dim as integer d_cnt
     
+    if (this.block_n_rows <> h) orELse (this.block_n_cols <> w) then spacialHash.init(w * 16, h * 16, sizeof(TinyDynamic ptr))
+
     this.block_n_rows = h
     this.block_n_cols = w
     this.block_l      = l
@@ -161,7 +177,7 @@ sub TinySpace.setBlockData(byval d as TinyBlock ptr, _
             this.block_data[d_cnt].friction      = d[d_cnt].friction
             
     next d_cnt 
-    spacialHash.init(w * 16, h * 16, sizeof(TinyDynamic ptr))
+    
     deallocate(d)
 end sub
 
@@ -1309,6 +1325,7 @@ sub TinySpace.step_time(byval t as double)
     dim as integer     retryStep, retry_i
     dim as integer 	   hadStaticArbs
     dim as integer     surfVSwitchMode
+    dim as integer     nonStick
     
     
     dim as BlockEndpointData_t segment(0 to MAX_SEGS-1)
@@ -1324,9 +1341,10 @@ sub TinySpace.step_time(byval t as double)
         PRINTLOG "------------------------------------------------------"
     #endif
     
+    
     while i < bodies_n
 		if lockID <> -1 then i = lockID
-    
+        
         c = bodies(i)
         res_t = t
 
@@ -1395,8 +1413,8 @@ sub TinySpace.step_time(byval t as double)
 			next scan_y
 			
 			foundDynamics = spacialHash.search(tl, br, curDynamicsList)
-		end if
-			
+        end if
+
 							
 		#ifdef DEBUG
 			printlog "Found: " & str(segment_n) & ", segments."
@@ -1430,17 +1448,19 @@ sub TinySpace.step_time(byval t as double)
 				for q = 0 to segment_n - 1
 					segment(q).tag = -1
 				next q
+                
+                
 				for q = 0 to foundDynamics - 1
-					for j = 0 to TS_GETDYN(curDynamicsList, i)->getNumSegs() - 1
-						TS_GETDYN(curDynamicsList, i)->setTag(j, -1)
+					for j = 0 to TS_GETDYN(curDynamicsList, q)->getNumSegs() - 1
+						TS_GETDYN(curDynamicsList, q)->setTag(j, -1)
 					next j
 				next q
+
 
 				refactorArbiters(i, segment(), segment_n, curDynamicsList, foundDynamics)
 				
 				'so for all arbiters from last time, if any of the collision segs for this frame match up
 				' 	with them, give THOSE collision segs a tag pointing to the arbiter from last time
-				
 				do
 					interpen = 0
 					contacting = 0
@@ -1518,16 +1538,15 @@ sub TinySpace.step_time(byval t as double)
 						next q 
 						
 						'check all of the dynamic shapes for collision
-						for q = 0 to foundDynamics - 1							
+						for q = 0 to foundDynamics - 1
 							numDynaArbs = TS_GETDYN(curDynamicsList, q)->circleCollide(wrk.p, wrk.r,_
 																					   tempArbs(), numArbs,_
 																					   max_depth, MIN_DEPTH)
-							if numDynaArbs = -1 then
+                            if numDynaArbs = -1 then
 								interpen = 1
 								exit for
 							else
 								for j = (numArbs - numDynaArbs) to numArbs - 1
-									
 									'if a returned arbiter holds a non-negative tag, this is not a new collision,
 									'	and its information is stored in the arbiter number referenced by the tag.
 									'	Otherwise, we have not been in resting contact with this segment.
@@ -1536,8 +1555,10 @@ sub TinySpace.step_time(byval t as double)
 									#endif	
 
 									if tempArbs(j).tag <> -1 then
+                                        
 										tempArbs(j).new_ = 0
 										tempArbs(j).ignore = arbiters(i, tempArbs(j).tag).ignore
+
 										#ifdef DEBUG
 											if tempArbs(numArbs).ignore = 1 then
 												printlog "DYNA. Setting tempArb to ignore... " & str(tempArbs(j).dynamic_norm)
@@ -1546,6 +1567,7 @@ sub TinySpace.step_time(byval t as double)
 											end if
 										#endif		
 									else
+
 										tempArbs(j).new_ = 1
 										tempArbs(j).ignore = 0
 										#ifdef DEBUG
@@ -1617,7 +1639,6 @@ sub TinySpace.step_time(byval t as double)
 									end if	
 									
 								next j
-								
 							end if
 							
 						next q
@@ -1737,7 +1758,6 @@ sub TinySpace.step_time(byval t as double)
 					end if
 				loop until iterate > MAX_ITERATIONS
 				
-				
 				#ifdef DEBUG
 					if iterate = MAX_ITERATIONS + 1 then
 						PRINTLOG "<!> ERROR, BAILING OUT <!>"
@@ -1754,7 +1774,7 @@ sub TinySpace.step_time(byval t as double)
 						if arbiters(i, q).new_ = 1 then hadPulse = 1
 						dynaV = vector2D(0,0)
 						if arbiters(i, q).dynamic_ = 1 then
-						
+                            
 							contactI = (arbiters(i, q).velocity * (-arbiters(i, q).impulse))
 							bodyI = (tempV * (-arbiters(i, q).impulse))
 							
@@ -1766,9 +1786,20 @@ sub TinySpace.step_time(byval t as double)
 											printlog "Dynamic contact velocity: body is moving towards point, point moves away, body is faster than point."
 										#endif
 									else
-										if hadStaticArbs = 0 then 
+                                        nonStick = 0
+                                        for j = 0 to numArbs-1
+                                            if arbiters(i, j).dynamic_ = 0 then
+                                                if arbiters(i, q).impulse * arbiters(i, j).impulse > 0 then
+                                                    nonStick = 1
+                                                    exit for
+                                                end if
+                                            end if
+                                        next j
+										if nonStick = 0 then 
 											dynaV = -contactI * arbiters(i, q).impulse
-											
+                                            #ifdef DEBUG 
+                                                printlog "Dynamic contact velocity: sticking force: " + str(dynaV)
+                                            #endif
 										end if
 										
 										#ifdef DEBUG 
@@ -1803,7 +1834,7 @@ sub TinySpace.step_time(byval t as double)
 							#ifdef DEBUG 
 								line (wrk.p.x(), wrk.p.y())-(wrk.p.x()+dynaV.x*30, wrk.p.y()+dynaV.y*30)
 							#endif
-													
+                            
 						end if
 						arbiters(i, q).dynaV = dynaV
 					else
@@ -1811,7 +1842,6 @@ sub TinySpace.step_time(byval t as double)
 					end if
 				next q
 				normals_N = 0
-				
 
 				'by now, we have a list of all collisions, and we know if any are new
 				if arbiters_n(i) > numIgnore then
@@ -1867,19 +1897,19 @@ sub TinySpace.step_time(byval t as double)
 					
 					if k <> -1 then 
 						if arbiters(i, k).dynamic_ = 1 then
-							wrk.surfaceV = (arbiters(i, k).velocity * arbiters(i, k).impulse.perp) * arbiters(i, k).impulse.perp
+							wrk.surfaceV = (arbiters(i, k).velocity * arbiters(i, k).impulse.perp) * arbiters(i, k).impulse.perp                            
 						end if
 					end if
 					select case surfVSwitchMode
 					case 1
 						wrk.dynaID = -1
-						wrk.v = wrk.v + wrk.surfaceV
+						wrk.v = wrk.v - wrk.surfaceV
 						#ifdef DEBUG
 							printlog "DETATCH!"
-						#endif
+                        #endif
 					case 2
 						wrk.dynaID = arbiters(i, k).dynamic_tag
-						wrk.v = wrk.v - wrk.surfaceV
+						wrk.v = wrk.v + wrk.surfaceV
 						#ifdef DEBUG
 							printlog "ATTACH!"
 						#endif
@@ -1962,7 +1992,7 @@ sub TinySpace.step_time(byval t as double)
 						#endif
 					end if
 				end if
-				
+				                
 				if (normals_N = 0) then
 					c->v = c->v + ((f_total + f_adj) / c->m) * cur_t + v_adj
 					if c->v.magnitude() > TERM_VEL then
@@ -2055,9 +2085,11 @@ sub TinySpace.step_time(byval t as double)
         i += 1
     wend
     
+
+    
 	for i = 0 to dynamics_n - 1
 		dynamics(i)->step_time(t)
 	next i
-    
+
 	framesGone += 1
 end sub

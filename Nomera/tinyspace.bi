@@ -7,6 +7,7 @@
 #include "vector2d.bi"
 #include "tinydynamic.bi"
 #include "hash2d.bi"
+#include "objectlink.bi"
 #include "debug.bi"
 #include "arbiter.bi"
 
@@ -39,6 +40,7 @@ type TinySpace
     public:
         declare constructor
         declare destructor
+        declare sub setLink(link_ as objectLink)
         declare sub setBlockData(byval d as TinyBlock ptr, _
                                  byval w as integer, _
                                  byval h as integer, _
@@ -110,6 +112,8 @@ type TinySpace
         as ArbiterData_t arbiters(0 to MAX_BODIES-1, 0 to MAX_ARBS-1)
         as integer       arbiters_n(0 to MAX_BODIES-1)
                               
+                              
+        as objectLink    link
         as integer       roi_x0
         as integer       roi_y0
         as integer       roi_x1

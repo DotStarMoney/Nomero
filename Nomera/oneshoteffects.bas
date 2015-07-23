@@ -46,7 +46,7 @@ sub OneShotEffects.create(p_ as Vector2D, fx as EffectType_ = EXPLODE, _
         this.head_->data_.isFlash = 1
         this.head_->data_.endIt = 4
     case ELECTRIC_FLASH
-        this.head_->data_.anim.load("electricflash.txt")
+        this.head_->data_.anim.load("objects\media\electricflash.txt")
         this.head_->data_.anim.play()
 		this.head_->data_.anim.setSpeed(s_)
         this.head_->data_.isFlash = 1

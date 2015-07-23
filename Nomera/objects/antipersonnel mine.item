@@ -28,13 +28,12 @@ function _init()
     
     anims[0].hardSwitch(0)
     anims[1].hardSwitch(0)    
+    anims[2].hardSwitch(0)
     
-    if anims_n <> 0 then
-        anims[2].hardSwitch(0)
-        anims[0].play()
-        anims[1].play()
-        anims[2].play()
-    end if
+    anims[0].play()
+    anims[1].play()
+    anims[2].play()
+
     data.body.friction = 20
     getParameter(orientation, "orientation")
     
@@ -75,22 +74,21 @@ function _drawOverlay(scnbuff as integer ptr)
     col = getIndicatorColor(colorIndex)
     
     anims[1].setGlow(col)
-    anims[1].drawAnimation(scnbuff, data.body.p.x, data.body.p.y)
-    anims[2].drawAnimation(scnbuff, data.body.p.x, data.body.p.y - 16)
+    anims[1].drawAnimation(scnbuff, p.x, p.y)
+    anims[2].drawAnimation(scnbuff, p.x, p.y - 16)
     colorIndex += 1
     
     addColor col, &h101010
-    drawStringShadow scnbuff, data.body.p.x - 20, data.body.p.y - 20, iif(colorIndex < 10, str(colorIndex), "0"), col
+    drawStringShadow scnbuff, p.x - 20, p.y - 20, iif(colorIndex < 10, str(colorIndex), "0"), col
 
 end function
 
 '----------------------------------
 
 function _run(t as double)
-    dim as integer i
     
     p = data.body.p
-    bounds_tl = anims[0].getOffset() + data.body.p
+    bounds_tl = anims[0].getOffset() + p
     bounds_br = bounds_tl + Vector2D(anims[0].getWidth(), anims[0].getHeight())
     
     anims[0].step_animation()
@@ -103,8 +101,19 @@ function _run(t as double)
         data.freeFallingFrames = 0
     end if
     
-    if data.death orElse (data.freeFallingFrames >= MINE_FREEFALL_MAX) then
-        data.death = 1 
+    if (data.death = 0) andAlso (data.freeFallingFrames >= MINE_FREEFALL_MAX) then fireSlot($explode)
+           
+    return data.death
+
+end function
+
+'-----------------------------------
+
+slot $explode()
+    dim as integer i
+
+    if data.death = 0 then
+        data.death = 1
         
         link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
         link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
@@ -117,17 +126,5 @@ function _run(t as double)
         next i
         link.gamespace_ptr->vibrateScreen()
         link.level_ptr->addFallout(p.x, p.y)
-        
     end if
-           
-    return data.death
-
-end function
-
-'-----------------------------------
-
-slot $explode()
-
-   data.death = 1
-
 end slot

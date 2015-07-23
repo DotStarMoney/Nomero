@@ -1,0 +1,74 @@
+'#frequency counter
+
+type ITEM_DATA
+    as integer cycleState
+    as integer cycleTime
+end type
+
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 32))
+parameter "flavor", integer
+
+'---------------------------------
+
+function _init()
+    dim as integer flavor
+    
+    getParameter(flavor, "flavor")
+
+    anims_n = 2
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "freqcounter.txt")
+    anims[0].play()
+    
+    anims[1].load(MEDIA_PATH + "freqcounter.txt")
+    anims[1].play()      
+    if flavor = 1 then
+        anims[1].hardSwitch(2)
+    else
+        anims[1].hardSwitch(1)    
+    end if
+
+    data.cycleState = 0
+    data.cycleTime = int(rnd * 60) + 30
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+
+    DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0)            
+    if data.cycleState = 0 then anims[0].drawAnimation(scnbuff, p.x, p.y,,,ANIM_GLOW)
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    ''
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    data.cycleTime -= 1
+    if data.cycleTime <= 0 then
+        data.cycleState = 1 - data.cycleState
+        if data.cycleState = 0 then
+            data.cycleTime = int(rnd * 120) + 30
+        else
+            data.cycleTime = 2
+        end if
+    end if
+end function
+
+'-----------------------------------
+slot $interact()
+
+end slot
+

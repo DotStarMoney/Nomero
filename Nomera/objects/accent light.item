@@ -1,0 +1,95 @@
+'#accent light
+
+type ITEM_DATA 
+    as integer mode
+    as double minVal
+    as double maxVal
+end type
+
+
+parameter "flavor", integer
+parameter "minValue", double
+parameter "maxValue", double
+parameter "mode", integer
+parameter "fast", integer
+
+'---------------------------------
+
+function _init()
+    dim as integer flavor
+    dim as integer fast
+    dim as string  lightfn
+    
+    getParameter(flavor, "flavor")
+    getParameter(fast, "fast")
+    getParameter(data.mode, "mode")
+    getParameter(data.minVal, "minValue")
+    getParameter(data.maxVal, "maxValue")
+    
+    anims_n = 2
+    anims = new Animation[anims_n]
+    select case flavor
+    case 0
+        lightfn = "LightOrange"
+    case 1
+        lightfn = "PaleBlue"
+    case 2
+        lightfn = "RedOrange"
+    case else
+        lightfn = "LightOrange"
+    end select
+
+    anims[0].load(MEDIA_PATH + "Lights\" + lightfn + "_Diffuse.txt")
+    anims[1].load(MEDIA_PATH + "Lights\" + lightfn + "_Specular.txt")
+  
+    light.texture.diffuse_fbimg = anims[0].getRawImage()
+    light.texture.specular_fbimg = anims[1].getRawImage()
+    light.texture.x = p.x
+    light.texture.y = p.y
+    light.texture.w = anims[0].getWidth()
+    light.texture.h = anims[0].getHeight()
+    light.shaded = light.texture
+    if fast <> 65535 then
+        light.shaded.diffuse_fbimg = 0
+        light.shaded.specular_fbimg = 0   
+        light.occlusion_fbimg = 0       
+    else
+        light.shaded.diffuse_fbimg = imagecreate(light.texture.w, light.texture.h)
+        light.shaded.specular_fbimg = imagecreate(light.texture.w, light.texture.h)   
+        light.occlusion_fbimg = imagecreate(light.texture.w, light.texture.h)
+    end if
+    light.last_tl_x = 0
+    light.last_tl_y = 0
+    light.last_br_x = light.texture.w - 1
+    light.last_br_y = light.texture.h - 1    
+    lightState = 1
+    
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    ''
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    
+end function
+
+'-----------------------------------
+
+

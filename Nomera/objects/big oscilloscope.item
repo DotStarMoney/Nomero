@@ -1,0 +1,69 @@
+'#big oscilloscope
+type ITEM_DATA
+    as integer dontDraw
+end type
+
+parameter "flavor", integer
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(64, 32))
+
+
+'---------------------------------
+
+function _init()
+    dim as integer flavor
+    dim as integer i
+    dim as integer steps
+
+    getParameter(flavor, "flavor")
+
+    anims_n = 2
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "bigoscilloscope.txt")
+    anims[0].play()
+    
+    anims[1].load(MEDIA_PATH + "bigoscilloscope.txt")
+    anims[1].play()      
+    
+    if flavor = 1 then
+        anims[1].hardSwitch(2)
+    else
+        anims[1].hardSwitch(1)
+    end if
+    steps = int(rnd * 30)
+    for i = 0 to steps: anims[0].step_animation(): next i
+    data.dontDraw = 0
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+
+    DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0)            
+    if data.dontDraw = 0 then anims[0].drawAnimation(scnbuff, p.x, p.y,,,ANIM_GLOW)
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    ''
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    anims[0].step_animation()    
+end function
+
+'-----------------------------------
+
+slot $interact()
+    data.dontDraw = 1 - data.dontDraw
+end slot

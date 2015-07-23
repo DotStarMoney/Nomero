@@ -843,6 +843,7 @@ sub level.processLights()
         lightR = lightList[i]->texture.w*0.5 
         if windowCircleIntersect(screen_tl, screen_br, lightP, lightR, wdata) then
             if lightList[i]->occlusion_fbimg <> 0 then
+            
                 imageSet(lightList[i]->occlusion_fbimg, &hffff00ff, _
                          lightList[i]->last_tl_x, lightList[i]->last_tl_y, _
                          lightList[i]->last_br_x, lightList[i]->last_br_y)
@@ -1100,8 +1101,8 @@ sub level.load(filename as string)
     get #f,,lvlWidth
     get #f,,lvlHeight
     get #f,,snowfall
-    get #f,,windyMist
     get #f,,objField(2)
+    get #f,,windyMist
     get #f,,objField(0)
     get #f,,objectAmbientLevel
     get #f,,hiddenObjectAmbientLevel
@@ -1110,7 +1111,6 @@ sub level.load(filename as string)
     get #f,,lvlCenterX
     get #f,,lvlCenterY
     get #f,,strdata
-    
     
     link.dynamiccontroller_ptr->setRegionSize(lvlWidth*16, lvlHeight*16)
     
@@ -1377,6 +1377,10 @@ sub level.load(filename as string)
         printlog "Loading objects..."
     #endif
     
+    link.tinyspace_ptr->setBlockData(getCollisionLayerData(),_
+                                     getWidth(), getHeight(),_
+                                     16.0)
+    
     get #f,,numObjs
     
     for i = 0 to numObjs - 1 
@@ -1396,12 +1400,17 @@ sub level.load(filename as string)
             get #f,,objField(5) 'fast
 
             if objField(0) >= LIGHT_EFFECT_VALUE then 
-                itemID = link.dynamiccontroller_ptr->addItem(link.dynamiccontroller_ptr->itemStringToType("LIGHT"), ACTIVE, tempObj.p + tempObj.size*0.5, tempObj.size)     
-                link.dynamiccontroller_ptr->setParameter(objField(2), itemID, "minValue")
-                link.dynamiccontroller_ptr->setParameter(objField(3), itemID, "maxValue")
-                link.dynamiccontroller_ptr->setParameter(objField(4), itemID, "mode")
-                link.dynamiccontroller_ptr->setParameter(objField(5), itemID, "fast")
-              
+                itemPtr = link.dynamiccontroller_ptr->constructItem(link.dynamiccontroller_ptr->itemStringToType("accent light"), tempObj.inRangeSet)     
+                
+                if itemPtr then
+                    itemPtr->setParameter(cint(objField(0) - LIGHT_EFFECT_VALUE), "flavor")                 
+                    itemPtr->setParameter(cdbl(objField(2) / 65535.0), "minValue")
+                    itemPtr->setParameter(cdbl(objField(3) / 65535.0), "maxValue")
+                    itemPtr->setParameter(cint(objField(4)), "mode")
+                    itemPtr->setParameter(cint(objField(5)), "fast")
+                    link.dynamiccontroller_ptr->initItem(itemPtr, tempObj.p + tempObj.size*0.5)     
+                end if
+                
             else
                 graphicFX_->create(tempObj.object_name, objField(0),_
                                    tempObj.object_shape, tempObj.p,_
@@ -1428,12 +1437,12 @@ sub level.load(filename as string)
             getStringFromFile(f, itemID)
             
             itemPtr = link.dynamiccontroller_ptr->constructItem(link.dynamiccontroller_ptr->itemStringToType(itemName), tempObj.inRangeSet, itemID)     
-            itemID = itemPtr->getID()
+            if itemPtr then itemID = itemPtr->getID()
             get #f,,numParams
             for j = 0 to numParams - 1
                 getStringFromFile(f, parameterTag)
                 getStringFromFile(f, parameterValue)
-                link.dynamiccontroller_ptr->setParameterFromString(parameterValue, itemID, parameterTag)     
+                if itemPtr then link.dynamiccontroller_ptr->setParameterFromString(parameterValue, itemID, parameterTag)     
             next j
             get #f,,numSignals
             for j = 0 to numSignals - 1
@@ -1443,10 +1452,10 @@ sub level.load(filename as string)
                 for q = 0 to numTargets - 1
                     getStringFromFile(f, slotID)
                     getStringFromFile(f, slotName)          
-                    link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)
+                    if itemPtr then link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)
                 next q
             next j
-            link.dynamiccontroller_ptr->initItem(itemPtr, tempObj.p, tempObj.size)     
+            if itemPtr then link.dynamiccontroller_ptr->initItem(itemPtr, tempObj.p, tempObj.size)     
 
             get #f,,objField(1)
             get #f,,objField(1)

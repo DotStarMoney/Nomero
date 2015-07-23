@@ -128,6 +128,7 @@ sub TinyDynamic.importShape(pts as Vector2D ptr, ptsN as integer)
 	segmentTags = allocate(sizeof(integer) * (ptsN - 1))
 	referenceTags = allocate(sizeof(integer) * (ptsN - 1))
 	for i = 0 to ptsN - 2
+        segmentTags[i] = 0
 		referenceTags[i] = instCount
 		instCount += 1
 	next i
@@ -199,9 +200,13 @@ end function
 sub TinyDynamic.togglePath()
 	if type_ = DYNA_BASICPATH then
 		if BASICPATH.toggleState = 0 then
-			BASICPATH.toggleState = 2 
+			BASICPATH.toggleState = 2
+        elseif BASICPATH.toggleState = 2 then
+            BASICPATH.toggleState = 1
 		elseif BASICPATH.toggleState = 1 then
-			BASICPATH.toggleState =  3
+			BASICPATH.toggleState = 3
+        elseif BASICPATH.toggleState = 3 then
+            BASICPATH.toggleState = 0
 		end if
 		BASICPATH.toggleTime = base_t
 	end if
@@ -261,38 +266,45 @@ sub TinyDynamic.offset_time(t as double)
 			select case BASICPATH.type_
 			case BOUNCE
 				temp_dist = wrap(temp_dist, BASICPATH.path_length*2)
+                dire = 1
+                if temp_dist > BASICPATH.path_length then
+                    dire = -1
+                    temp_dist = BASICPATH.path_length*2 - temp_dist
+                end if
 			case SINUSOID
 				old_temp_dist = temp_dist
 				temp_dist = (sin(temp_dist) + 1) * BASICPATH.path_length
+                dire = 1
+                if temp_dist > BASICPATH.path_length then
+                    dire = -1
+                    temp_dist = BASICPATH.path_length*2 - temp_dist
+                end if
 			case TOGGLE
 				if BASICPATH.toggleState = 0 then
 					temp_dist = 0
 				elseif BASICPATH.toggleState = 1 then
-					temp_dist= BASICPATH.path_length - 0.001
+					temp_dist = BASICPATH.path_length - 0.0001
 				else
-					temp_dist = (cur_t - BASICPATH.toggleTime) * BASICPATH.speed * BASICPATH.path_length
-					if temp_dist < 0 then BASICPATH.toggleTime = 0
-					
-					if t = 0 then
-						if temp_dist > BASICPATH.path_length then 
-							if BASICPATH.toggleState = 2 then
-								BASICPATH.toggleState = 1
-								temp_dist = BASICPATH.path_length - 0.001
-							else
-								BASICPATH.toggleState = 0
-								temp_dist = 0
-							end if
-						end if
-					end if
-					
-				end if			
+					temp_dist = (cur_t - BASICPATH.toggleTime) * abs(BASICPATH.speed)
+                    if BASICPATH.toggleState = 3 then
+                        temp_dist = BASICPATH.path_length + temp_dist
+                        if temp_dist > BASICPATH.path_length*2 then 
+                            BASICPATH.toggleState = 0
+                            temp_dist = 0
+                        else
+                            temp_dist = BASICPATH.path_length*2 - temp_dist
+                        end if
+                    elseif BASICPATH.toggleState = 2 then
+                        if temp_dist > BASICPATH.path_length then 
+                            BASICPATH.toggleState = 1        
+                            temp_dist = BASICPATH.path_length - 0.0001
+                        end if
+                    end if
+				end if	
+                
 			end select
 					
-			dire = 1
-			if temp_dist > BASICPATH.path_length then
-				dire = -1
-				temp_dist = BASICPATH.path_length*2 - temp_dist
-			end if
+
 			seg_dist = 0
 			for i = 0 to BASICPATH.pathPointsN - 2
 				seg_d = BASICPATH.pathPoints[i + 1] - BASICPATH.pathPoints[i]
@@ -510,8 +522,8 @@ function TinyDynamic.circleCollide(p as Vector2D, r as double,_
 		if seg_i < 0 then
 			seg_i = 0
 			atEndpoint = 1
-		elseif seg_i > (seg_m - 0.00001) then
-			seg_i = seg_m - 0.00001
+		elseif seg_i > seg_m then
+			seg_i = seg_m
 			atEndpoint = 1
 		end if		
 		seg_pos = cur_pts_p[i] + seg_i * seg_vn
@@ -549,7 +561,7 @@ function TinyDynamic.circleCollide(p as Vector2D, r as double,_
 			.new_ = 0
 		end with
 	next i
-	
+                            	
 	maxD = maxDepth
 	if foundArbs > 0 then return foundArbs
 	

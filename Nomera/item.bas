@@ -21,6 +21,52 @@
 
 #define MEDIA_PATH "objects\media\"
 
+#define DControl link.dynamiccontroller_ptr
+
+#macro PREP_LIT_ANIMATION()
+    dim as integer numLights
+    dim as LightPair ptr ptr lights
+    if link.level_ptr->shouldLight() then
+        numLights = link.level_ptr->getLightList(lights)
+    else
+        numLights = 0
+    end if
+#endmacro
+#macro DRAW_LIT_ANIMATION(_ANIM_, _X_, _Y_, _FLAGS_, _FORCE_)
+    if link.level_ptr->shouldLight() then
+        anims[_ANIM_].drawAnimationLit(scnbuff, _X_, _Y_,_
+                                       lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
+                                       link.gamespace_ptr->camera,_FLAGS_,_FORCE_,ANIM_TRANS)            
+    else
+        anims[_ANIM_].drawAnimation(scnbuff, _X_, _Y_, link.gamespace_ptr->camera,_FLAGS_,ANIM_TRANS)
+    end if  
+#endmacro
+
+#macro PREP_LIGHTS(_DIFFFILE_, _SPECFILE_, _ANIM0_, _ANIM1_, _FAST_)
+    anims[_ANIM0_].load(_DIFFFILE_)
+    anims[_ANIM1_].load(_SPECFILE_)
+    light.texture.diffuse_fbimg = anims[_ANIM0_].getRawImage()
+    light.texture.specular_fbimg = anims[_ANIM1_].getRawImage()
+    light.texture.x = 0
+    light.texture.y = 0
+    light.texture.w = anims[_ANIM0_].getWidth()
+    light.texture.h = anims[_ANIM0_].getHeight()
+    light.shaded = light.texture
+    if _FAST_ then
+        light.shaded.diffuse_fbimg = 0
+        light.shaded.specular_fbimg = 0
+        light.occlusion_fbimg = 0    
+    else
+        light.shaded.diffuse_fbimg = imagecreate(light.texture.w, light.texture.h)
+        light.shaded.specular_fbimg = imagecreate(light.texture.w, light.texture.h)   
+        light.occlusion_fbimg = imagecreate(light.texture.w, light.texture.h)
+    end if
+    light.last_tl_x = 0
+    light.last_tl_y = 0
+    light.last_br_x = light.texture.w - 1
+    light.last_br_y = light.texture.h - 1
+#endmacro
+
 #include "objects\headers\gen_methoddefinitions.bi"
 
 dim as uinteger ptr Item.BOMB_COLORS = 0
@@ -468,7 +514,7 @@ sub Item.getParameter(byref param_ as Vector2D, param_tag as string)
     param_tag = ucase(param_tag)
     param_ptr = parameterTable.retrieve(param_tag)
     if param_ptr then
-        if param_ptr->type_ = _ITEM_VALUE_VECTOR2D then
+        if param_ptr->type_ = _ITEM_VALUE_VECTOR2D then            
             param_ = param_ptr->data_.Vector2D_
             exit sub
         end if

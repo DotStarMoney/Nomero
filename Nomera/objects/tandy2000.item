@@ -1,0 +1,65 @@
+'#tandy2000
+
+parameter "flavor", integer
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 32))
+
+
+'---------------------------------
+
+function _init()
+    dim as integer flavor
+    dim as integer i
+    dim as integer steps
+    
+    getParameter(flavor, "flavor")
+
+    anims_n = 2
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "tandy2000.txt")
+    anims[0].play()
+    anims[0].hardSwitch(2)
+    anims[1].load(MEDIA_PATH + "tandy2000.txt")
+    anims[1].play()     
+    
+    if flavor = 1 then
+        anims[1].hardSwitch(1)
+    else
+        anims[1].hardSwitch(0)
+    end if
+    
+    steps = int(rnd * 30)
+    for i = 0 to steps: anims[0].step_animation(): next i
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+
+    DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0)            
+    anims[0].drawAnimation(scnbuff, p.x, p.y) 
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    ''
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    anims[0].step_animation()
+end function
+
+'-----------------------------------
+
+slot $interact()
+
+end slot

@@ -226,7 +226,7 @@ for curFileName in itemFiles:
                 itemUData.append('as ' + typePrefixName + ' ptr ' + itemDataPtr)
                 hasItemData = 1
                 dataTypePrefixName = typePrefixName
-            fileText = subNotInQuotes(fileText, r'([ \t])'+typeName+r'([\.\( \t]|$)', r'\1'+typePrefixName+r'\2') 
+            fileText = subNotInQuotes(fileText, r'([ \t])'+typeName+r'([\.\(\[ \t]|$)', r'\1'+typePrefixName+r'\2') 
 
         #prefix any defines, remove them and add them to itemdefinitions, prefix any references to them in the code
         for lines in re.finditer(r'^[ \t]*#define[ \t]+.*?$', fileText, flags = re.M | re.I):
@@ -273,7 +273,7 @@ for curFileName in itemFiles:
             fileText = subNotInQuotes(fileText, r'(^|[\=\+\-/\*\t \(\[,\.\(\[])'+macroName+r'($|[\=\+\-/\*\t \)\],\.\(\[])', r'\1'+macroPrefixName+r'\2')             
 
         if hasItemData == 1:
-            fileText = subNotInQuotes(fileText, r'(^|[ \t\,\-\*\+/\=\[\(])data\.([a-z0-9A-Z_]+(?:$|[ \t\,\-\*\+/\=\]\)\.]))', r'\1data_.' + itemDataPtr + r'->\2')          
+            fileText = subNotInQuotes(fileText, r'(^|[ \t\,\-\*\+/\=\[\(])data\.', r'\1data_.' + itemDataPtr + r'->')          
            
         for throwBlockGroup in re.finditer(r'(?:\"[^\"\n]*throw[ \t]*\(.*\)[^\"\n]*\")|((?:[^a-z0-9A-Z_]|^)throw[ \t]*\(.*?\))', fileText, flags = re.I | re.M):
             if throwBlockGroup.group(0):
@@ -288,6 +288,9 @@ for curFileName in itemFiles:
         
         fileText = subNotInQuotes(fileText, r'([ \t])valueset([ \t\[\(])', r'\1ObjectValueSet\2')
         fileText = subNotInQuotes(fileText, r'([ \t])slotset([ \t\[\(])', r'\1ObjectSlotSet\2')
+        
+        fileText = subNotInQuotes(fileText, r'fireSlot[ \t]*\([ \t]*\$([a-z0-9A-Z_]+)', r'fireSlot("\1"')
+
                 
         for lines in re.finditer(r'^[ \t]*const[ \t]+.*?$', fileText, flags = re.M | re.I):
             constLine = lines.group(0)
@@ -406,10 +409,10 @@ for curFileName in itemFiles:
                 publishSlotName = curPublishItems[1].strip().upper()[1:]
                 if len(curPublishItems) > 2:
                     publishSlotShape = curPublishItems[2].strip()
-                    initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\", new ' + publishSlotShape + ')\n'
+                    initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\", new ' + publishSlotShape + ')\n'
                     initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->setTargetSlotOffset(ID, ' + publishSlotTag + ', p)\n'
                 else:
-                    initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\")\n'                
+                    initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\")\n'                
             else:
                 curPublish = re.sub(r'^value[ \t]+', '', curPublish, flags = re.I)
                 curPublishItems = hSplit(curPublish)
@@ -425,14 +428,15 @@ for curFileName in itemFiles:
                     publishValueType = '_ITEM_VALUE_INTEGER'                
                 if len(curPublishItems) > 2:
                     publishValueShape = curPublishItems[2].strip()
-                    initHeader += SPACE_TAB+'_initAddValue_(' + publishValueTag + ', ' + publishValueType + ')\n'
-                    initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ', new ' + publishValueShape + ')\n'
+                    initFooter += SPACE_TAB+'_initAddValue_(' + publishValueTag + ', ' + publishValueType + ')\n'
+                    initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ', new ' + publishValueShape + ')\n'
                     initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->setTargetValueOffset(ID, ' + publishValueTag + ', p)\n'
                 else:
-                    initHeader += SPACE_TAB+'_initAddValue_(' + publishValueTag + ', ' + publishValueType + ')\n'
-                    initHeader += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ')\n'
+                    initFooter += SPACE_TAB+'_initAddValue_(' + publishValueTag + ', ' + publishValueType + ')\n'
+                    initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ')\n'
             fileText = re.sub(r'^[ \t]*publish[ \t]+(?:(?:value)|(?:slot))[ \t]*.*$', '', fileText, flags = re.M | re.I)
 
+        
         
         #init
         fInitGroup = re.search(r'^[ \t]*function[ \t]+_init[ \t]*\(.*?\).*?^[ \t]*end[ \t]+function[ \t]*(\'.*?$|$)', fileText, flags = re.M | re.I | re.S)

@@ -205,6 +205,8 @@ sub Item.init(itemType_ as Item_Type_e, itemFlavor_ as integer, fast_p as intege
             lw = 256
             lh = 256
         end select
+        print "here"
+        sleep
         anims[0].load("Lights\" + lightFilename + "_Diffuse.txt")
         anims[1].load("Lights\" + lightFilename + "_Specular.txt")
         light.texture.diffuse_fbimg = anims[0].getRawImage()
@@ -769,7 +771,6 @@ function Item.process(t as double) as integer
                         link.player_ptr->removeItemReference(cast(integer, @this))
                     end if
                     
-                   
                 elseif (data1 = 2) then
                     'puff o' smoke and deactivate effect
                     return 1

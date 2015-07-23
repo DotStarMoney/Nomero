@@ -27,13 +27,14 @@ end type
 type TinyDynamic_BASICPATH
 	as Vector2D ptr pathPoints
 	as integer pathPointsN
+    as TinyDynamic_BASICPATH_PathType_e type_
+	as double speed
+    
 	as integer segment
 	as double  segment_pos
 	as double  path_length
 	as integer toggleState
 	as double toggleTime
-	as TinyDynamic_BASICPATH_PathType_e type_
-	as double speed
 end type
 
 type TinyDynamic_PIVOTER

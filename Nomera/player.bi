@@ -120,6 +120,7 @@ type Player
         as integer _ups_
         as integer _shift_
         as integer drawArrow
+        as integer doInteract
 
         as Player_bombData bombData(0 to 9)
         
@@ -163,6 +164,14 @@ type Player
         as double spinnerAngleAcc
         as double spinnerAngleV
         as integer spinnerCount(0 to 5)
+        
+        as integer  isCrouching
+        as Vector2D interactHilightTL
+        as Vector2D interactHilightBR
+        as integer interactCycle
+        as integer  interactIntroDelay
+        as integer  interactShowHilight
+        
         
         as integer itemBarLife
         as integer itemBarPos

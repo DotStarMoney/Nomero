@@ -120,27 +120,25 @@ type DynamicController
 
         as Hashtable stringToTypeTable
         
-    
-        'each item gets an entry of type DynamicController_connectionNode_t
         as Hashtable connections
         
-        'contain pointers to publish data
         as Hash2D valueTargets
         as Hash2D slotTargets
         
-        
-        'make double hash, where items can be searched using a key pair, one, or the other
         as DoubleHash allPublishedValues
         as DoubleHash allPublishedSlots
                
-        'contain itemPair from ID lookup
-		as Hashtable itemIdPairs        'itemptrs
+		as Hashtable itemIdPairs        
 
-		as Hashtable drawobjects_active      'itemptrs
-        as Hashtable drawobjects_activeFront 'itemptrs
+		as Hashtable drawobjects_active      
+        as Hashtable drawobjects_activeFront 
         
         as KeyBank itemIdGenerator
 		as ObjectLink link
+        
+        as integer isProcessing
+        as List addItemPost
+        
 end type
 	
 	

@@ -16,6 +16,8 @@ constructor DynamicController()
     itemIdPairs.init(sizeof(DynamicController_itemPair_t))
     drawobjects_active.init(sizeof(Item ptr))
     drawobjects_activeFront.init(sizeof(Item ptr))
+    addItemPost.init(sizeof(DynamicController_itemPair_t))
+    isProcessing = 0
     
     #include "objects\headers\gen_namestypes.bi"
     
@@ -233,7 +235,9 @@ sub DynamicController.process(t as double)
     dim as DynamicController_itemPair_t ptr curItem
     redim as string removalList(0)
     dim as integer removalList_n, i
-    
+
+
+    isProcessing = 1
     removalList_n = 0
     BEGIN_HASH(curItem, itemIdPairs)
         if curItem->item_->process(t) then
@@ -242,11 +246,16 @@ sub DynamicController.process(t as double)
             removalList_n += 1
         end if
     END_HASH()
-
+    isProcessing = 0
  
     for i = 0 to removalList_n - 1
         removeItem(removalList(i))
     next i
+    
+    BEGIN_LIST(curItem, addItemPost)
+        itemIdPairs.insert(curItem->item_->getID(), curItem)
+    END_LIST()
+    addItemPost.flush()
     
 end sub
 sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = ACTIVE)
@@ -274,7 +283,7 @@ sub DynamicController._addStringToType_(tag as string, item_t as Item_Type_e)
 end sub
 function DynamicController.itemStringToType(item_tag as string) as Item_Type_e
     dim as Item_Type_e ptr itemE_
-    itemE_ = stringToTypeTable.retrieve(item_tag)
+    itemE_ = stringToTypeTable.retrieve(ucase(item_tag))
     if itemE_ then
         return *itemE_
     else
@@ -299,7 +308,13 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
     
     newItem->item_ = new Item()
     newItem->item_->setLink(link)
-    refItem = itemIdPairs.insert(ID_, newItem)
+    
+    if isProcessing = 0 then
+        refItem = itemIdPairs.insert(ID_, newItem)    
+    else
+        refItem = addItemPost.push_back(newItem)
+    end if
+
     if order = ACTIVE_FRONT then
         drawobjects_activeFront.insert(ID_, @refItem->item_)
     else
@@ -309,7 +324,7 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
     refItem->item_->construct(itemType_, ID_)
 
     deallocate(newItem)
-   
+      
     return refItem->item_
 end function
 sub DynamicController.initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0))
@@ -318,6 +333,7 @@ end sub
 function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
     dim as DynamicController_itemPair_t ptr newItem
     dim as DynamicController_itemPair_t ptr refItem
+    
     
     if itemType_ = ITEM_NONE then return ""
     
@@ -332,7 +348,13 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
     
     newItem->item_ = new Item()
     newItem->item_->setLink(link)
-    refItem = itemIdPairs.insert(ID_, newItem)
+    
+    if isProcessing = 0 then
+        refItem = itemIdPairs.insert(ID_, newItem)    
+    else
+        refItem = addItemPost.push_back(newItem)
+    end if
+
     if order = ACTIVE_FRONT then
         drawobjects_activeFront.insert(ID_, @refItem->item_)
     else
@@ -449,7 +471,7 @@ sub DynamicController.queryValues(value_set as ObjectValueSet, value_tag as stri
     dim as integer publishedValues_n, i
     dim as string tag
     dim as Vector2D a, b, curOffset
-    
+    value_tag = ucase(value_tag)
     if queryShape = 0 then
         publishedValues_n = allPublishedValues.retrieveKey2(value_tag, parameterPtrPtr)
         publishedValues = parameterPtrPtr
@@ -483,6 +505,7 @@ sub DynamicController.querySlots(slot_set as ObjectSlotSet, slot_tag as string, 
     dim as string tag
     dim as Vector2D a, b, curOffset
     slot_set._setLink_(link)
+    slot_tag = ucase(slot_tag)
     if queryShape = 0 then
         
         publishedSlots_n = allPublishedSlots.retrieveKey2(slot_tag, parameterPtrPtr)
@@ -535,6 +558,7 @@ end sub
 sub DynamicController.setTargetValueOffset(ID_ as string, value_tag as string, offset as Vector2D) 
     dim as DynamicController_publish_t ptr publishValue
     dim as Vector2D a, b
+    value_tag = ucase(value_tag)
     publishValue = allPublishedValues.retrieve(ID_, value_tag)
     if publishValue then
         if publishValue->target then
@@ -549,6 +573,7 @@ end sub
 sub DynamicController.setTargetSlotOffset(ID_ as string, slot_tag as string, offset as Vector2D)
     dim as DynamicController_publishSlot_t ptr publishSlot
     dim as Vector2D a, b
+    slot_tag = ucase(slot_tag)
     publishSlot = allPublishedSlots.retrieve(ID_, slot_tag)
     if publishSlot then
         if publishSlot->target then 

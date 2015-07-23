@@ -50,9 +50,7 @@ constructor GameSpace()
     lvlData.init(@graphicFX)
     
     lvlData.load(command(1))
-    world.setBlockData(lvlData.getCollisionLayerData(),_
-                       lvlData.getWidth(), lvlData.getHeight(),_
-                       16.0)
+
     fadeoutTex = 0
     bailFrame = 0         
     graphicFX.setParent(@effects, @projectiles)
@@ -80,7 +78,7 @@ constructor GameSpace()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
     FSOUND_Stream_Play currentMusic, music(currentMusic)
-    FSOUND_SetVolumeAbsolute(currentMusic, 16)
+    FSOUND_SetVolumeAbsolute(currentMusic, 128)
    
     switchTracks = 0
     
@@ -91,7 +89,8 @@ constructor GameSpace()
     
     backgroundSnow.setSize(lvlData.getWidth() * 16, lvlData.getHeight() * 16)
     backgroundSnow.setFreq(3, 3)
-    backgroundSnow.setDepth(15, 18)
+    backgroundSnow.setDepth(6, 10)
+    'backgroundSnow.setDepth(15, 18)
     backgroundSnow.setDrift(-333)
     backgroundSnow.setSpeed(900)
     
@@ -182,7 +181,8 @@ function GameSpace.go() as integer
         step_process()
         processTime = 1000*(timer - startTime)
                 
-                                
+        while multikey(SC_P): wend
+        
         sleep(SLEEP_RESOLUTION * stallTime_mili)
         frameTime = timer - startTime
         if keypress(SC_ESCAPE) then exit do

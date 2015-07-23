@@ -1,0 +1,143 @@
+'#smoke mine
+
+type ITEM_DATA 
+    as integer body_i
+    as TinyBody body
+    as integer death
+    as integer freeFallingFrames
+    as integer dyingFrames
+end type
+
+#define BOMB_STICKYNESS 0
+#define MINE_FREEFALL_MAX 30
+#define RELEASE_TIME 150
+
+parameter "orientation", integer
+parameter "colorIndex", integer
+
+'---------------------------------
+
+function _init()
+    dim as integer orientation
+    data.body = TinyBody(p, 8, 10)
+    data.death = 0
+    data.freeFallingFrames = 0
+    
+    anims_n = 4
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "mines.txt")
+    anims[1].load(MEDIA_PATH + "silhouette.txt")
+    anims[2].load(MEDIA_PATH + "ledflash.txt")
+    anims[3].load(MEDIA_PATH + "smokerel.txt")
+
+    anims[0].hardSwitch(3)
+    anims[1].hardSwitch(2)    
+    anims[2].hardSwitch(0)
+    
+    anims[0].play()
+    anims[1].play()
+    anims[2].play()
+    anims[3].play()
+
+    data.body.friction = 20
+    data.dyingFrames = 0
+    getParameter(orientation, "orientation")
+    
+    select case orientation
+    case 0
+        data.body.f = data.body.f + Vector2D(0, BOMB_STICKYNESS)
+    case 1
+        data.body.f = data.body.f + Vector2D(-BOMB_STICKYNESS, 0)
+    case 2
+        data.body.f = data.body.f + Vector2D(0, -BOMB_STICKYNESS)
+    case 3
+        data.body.f = data.body.f + Vector2D(BOMB_STICKYNESS, 0)
+    end select    
+    data.body_i = link.tinyspace_ptr->addBody(@(data.body))
+end function
+
+'---------------------------------
+
+function _flush()
+    link.tinyspace_ptr->removeBody(data.body_i)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+	anims[0].drawAnimation(scnbuff, p.x, p.y)
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    dim as integer colorIndex
+    dim as integer col
+    dim as integer value
+    
+    if data.death = 0 then
+        getParameter(colorIndex, "colorIndex")
+        col = getIndicatorColor(colorIndex)  
+        anims[1].setGlow(col)
+        anims[1].drawAnimation(scnbuff, p.x, p.y)
+        anims[2].drawAnimation(scnbuff, p.x - 1, p.y - 16)
+        colorIndex += 1       
+        addColor col, &h101010
+        drawStringShadow scnbuff, p.x - 20, p.y - 20, iif(colorIndex < 10, str(colorIndex), "0"), col
+    else 
+        value = 50 + (RELEASE_TIME - data.dyingFrames)*2
+        if value > 255 then value = 255
+        value = ((value/255.0)^0.5)*255
+        anims[3].setGlow(&h00ffffff or (value shl 24))
+        anims[3].drawAnimation(scnbuff, p.x-2, p.y-7)     
+    end if
+        
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer i
+    dim as item ptr curItem
+    
+    p = data.body.p
+    bounds_tl = anims[0].getOffset() + p
+    bounds_br = bounds_tl + Vector2D(anims[0].getWidth(), anims[0].getHeight())
+    
+    anims[0].step_animation()
+	anims[1].step_animation()
+    anims[2].step_animation()
+   
+    if link.tinyspace_ptr->getArbiterN(data.body_i) = 0 then
+        data.freeFallingFrames += 1
+    else
+        data.freeFallingFrames = 0
+    end if
+    
+    if data.death = 0 then
+        if data.freeFallingFrames >= MINE_FREEFALL_MAX then fireSlot($explode)
+    else
+        data.dyingFrames += 1
+        anims[3].step_animation()
+        if (data.dyingFrames mod 2) = 0 then 
+            curItem = DControl->constructItem(DControl->itemStringToType("coversmoke"))
+            
+            curItem->setParameter(data.dyingFrames mod 4, "isSolid")
+            curItem->setParameter(Vector2D(((2.0*rnd) - 1.0)*80.0, -100 - rnd*25), "initVelocity")
+        
+            DControl->initItem(curItem, p + Vector2D(0, -100 + data.dyingFrames*0.25))
+        end if
+        if data.dyingFrames = RELEASE_TIME - 4 then link.oneshoteffects_ptr->create(p, SMOKE,,1)
+        if data.dyingFrames >= RELEASE_TIME then return 1
+    end if
+
+end function
+
+'-----------------------------------
+
+slot $explode()
+    if data.death = 0 then
+        data.death = 1
+        link.soundeffects_ptr->playSound(SND_EXPLODE_4)
+    end if
+end slot

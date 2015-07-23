@@ -66,7 +66,7 @@ type Item
         declare sub setParameter(param_ as double, param_tag as string)
         declare sub setParameter(param_ as string, param_tag as string)
         
-        declare sub fireSlot(slot_tag as string, parameter_string as string)
+        declare sub fireSlot(slot_tag as string, parameter_string as string = "")
         
         declare sub getValue(byref value_ as Vector2D, value_tag as string)
         declare sub getValue(byref value_ as integer, value_tag as string) 

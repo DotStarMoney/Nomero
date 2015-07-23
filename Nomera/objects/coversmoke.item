@@ -1,0 +1,115 @@
+'#coversmoke
+
+type ITEM_DATA 
+    as integer body_i
+    as TinyBody body
+    as integer lifeFrames
+    as integer animSpeed
+    as double driftForce
+    as double driftVelocity
+end type
+
+#define LIFETIME 300 
+#define DAMPING_MAX 0.95
+
+parameter "isSolid", integer
+parameter "initVelocity", Vector2D
+
+'---------------------------------
+
+function _init()
+    dim as integer isSolid
+    dim as Vector2D initVelocity
+    
+    data.body = TinyBody(p, 16, 10)
+    data.body_i = -1
+    data.lifeFrames = LIFETIME
+    data.driftVelocity = 0
+    data.driftForce = 0
+    data.animSpeed = 1
+    
+    anims_n = 1
+    anims = new Animation[anims_n]   
+    anims[0].load(MEDIA_PATH + "coversmoke.txt")
+    anims[0].play()
+                
+    getParameter(isSolid, "isSolid")
+    if isSolid then
+        data.body_i = link.tinyspace_ptr->addBody(@(data.body))
+    else
+        data.body.noCollide = 1
+        data.driftForce = 1700
+    end if
+    
+    getParameter(initVelocity, "initVelocity")
+    data.body.v = initVelocity
+
+    
+    data.body.friction = 0
+    data.body.elasticity = 0.4+rnd*0.3
+    
+end function
+
+'---------------------------------
+
+function _flush()
+    if data.body_i <> -1 then link.tinyspace_ptr->removeBody(data.body_i)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    ''
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    ''
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer isSolid
+    
+    anims[0].setSpeed(data.animSpeed)
+    anims[0].step_animation()
+    
+    
+    data.body.f = Vector2D(0, -data.body.m * DEFAULT_GRAV) * (0.7 + ((data.driftForce / 10000.0)^(2))*0.3)
+    data.body.v = data.body.v * ((DAMPING_MAX - 1) * (data.driftVelocity / 10000.0) + 1)
+    
+    if data.body.v.magnitude() < 2.0 then data.body.noCollide = 1 
+    
+    getParameter(isSolid, "isSolid")
+    if isSolid = 0 then
+        data.body.v = data.body.v + ((Vector2D(0, data.body.m * DEFAULT_GRAV) + data.body.f) / data.body.m) * t
+        data.body.p = data.body.p + data.body.v*t
+    end if
+    
+    
+    if data.body.didCollide then 
+        data.body.v *= 0.75
+        data.body.didCollide = 0
+    end if
+    
+    p = data.body.p
+     
+    LOCK_TO_SCREEN()
+        anims[0].drawAnimation(link.level_ptr->getSmokeTexture(), p.x, p.y,,,,-link.gamespace_ptr->camera + Vector2D(SCRX*0.5, SCRY*0.5))
+    UNLOCK_TO_SCREEN()
+    
+    data.driftForce += 100
+    data.driftVelocity += 10
+    data.lifeFrames -= 1
+    if data.driftForce > 10000    then data.driftForce = 10000
+    if data.driftVelocity > 10000 then data.driftVelocity = 10000
+    if anims[0].done then 
+        return 1
+    end if
+end function
+
+'-----------------------------------
+
+

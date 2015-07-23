@@ -8,10 +8,13 @@
 #include "level.bi"
 #include "effects3d.bi"
 #include "locktoscreen.bi"
+#include "objectslotset.bi"
 
 #define MIN_BOMB_TILE_POS -46
 #define MIN_ITEM_BAR_POS -22
 #define ITEM_BAR_LIFE 300
+#define INTERACT_INTRO_TIME 60
+#define INTERACT_FLASH_CYCLE_TIME 90
 
 #define DControl link.dynamiccontroller_ptr 
 
@@ -51,6 +54,14 @@ constructor Player
     coverValue = 0.65
     itemBarLife = ITEM_BAR_LIFE
     itemBarPos = MIN_ITEM_BAR_POS
+    
+    
+    isCrouching = 0
+    interactHilightTL = Vector2D(0,0)
+    interactHilightBR = Vector2D(0,0)
+    interactCycle = 0
+    interactIntroDelay = 0
+    
     
     spinnerAngle = 0
     spinnerAngleTarget = 0
@@ -371,6 +382,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 	_ups_ = ups
 	_shift_ = shift
     
+    isCrouching = 0
     canTrigger = 0
     animateTrigger = 0
     if dire = 0 andAlso jump = 0 andAlso parent->isGrounded(body_i, this.groundDot) then canTrigger = 1
@@ -527,6 +539,7 @@ sub Player.processControls(dire as integer, jump as integer,_
             
 			if ups = 1 andAlso isTriggering = 0 then
                 anim.switch(5)
+                isCrouching = 1
 			end if
         
             curSpeed = curSpeed * this.cutSpeed
@@ -648,6 +661,12 @@ sub Player.processControls(dire as integer, jump as integer,_
 			charge = 0
 		end if
 	end if
+	if fire = 1 andAlso lastFire = 0 then
+        doInteract = 1
+    else
+        doInteract = 0 
+    end if
+
 	
 	chargeFlicker = (chargeFlicker + 1) mod 8
 	computeCoverage()
@@ -760,11 +779,13 @@ sub Player.processControls(dire as integer, jump as integer,_
                 select case spinnerItem
                 case 0
                     link.soundeffects_ptr->playSound(SND_PLACE_APMINE)
-                    bombData(i).ID = DControl->addItem(DControl->itemStringToType("ANTIPERSONNEL MINE"),,body.p + Vector2D(0, 10))
+                    bombData(i).ID = DControl->addItem(DControl->itemStringToType("ANTIPERSONNEL MINE"),ACTIVE_FRONT,body.p + Vector2D(0, 10))
                 case 3
-                    link.soundeffects_ptr->playSound(SND_PLACE_GASMINE)                
+                    link.soundeffects_ptr->playSound(SND_PLACE_GASMINE)   
+                    bombData(i).ID = DControl->addItem(DControl->itemStringToType("SMOKE MINE"),ACTIVE_FRONT,body.p + Vector2D(0, 10))                    
                 case 4
                     link.soundeffects_ptr->playSound(SND_PLACE_ELECMINE)
+                    bombData(i).ID = DControl->addItem(DControl->itemStringToType("electric mine"),ACTIVE_FRONT,body.p + Vector2D(0, 10))                    
                 end select
                 
                 DControl->setParameter(i, bombData(i).ID, "colorIndex")
@@ -863,7 +884,7 @@ end sub
 
 sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
 	dim as Vector2D center, curPos
-	dim as Vector2D bombPos
+	dim as Vector2D bombPos, ntl, nbr
 	dim as Vector2d scnPos, offsetV
 	dim as Vector2D d, arrow, a_bound, b_bound
 	dim as Vector2D as_bound, bs_bound
@@ -994,6 +1015,18 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
 	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
 
+    if interactShowHilight then
+        if (int(interactCycle * 0.25) = 0) orElse (int(interactCycle * 0.25) = 2) then
+            ntl = Vector2D(interactHilightTL.x - interactCycle*0.5 + 6, interactHilightTL.y - interactCycle*0.5 + 6)
+            nbr = Vector2D(interactHilightBR.x + interactCycle*0.5 - 6, interactHilightBR.y + interactCycle*0.5 - 6)
+            line scnbuff, (ntl.x, ntl.y)-(nbr.x, nbr.y), &hcf003f, B
+            line scnbuff, (ntl.x + 1, ntl.y + 1)-(nbr.x - 1, nbr.y - 1), &h3f001f, B
+            line scnbuff, ((ntl.x + nbr.x)*0.5, ntl.y)-((ntl.x + nbr.x)*0.5, ntl.y + 4), &hcf003f
+            line scnbuff, ((ntl.x + nbr.x)*0.5, nbr.y)-((ntl.x + nbr.x)*0.5, nbr.y - 4), &hcf003f
+            line scnbuff, (ntl.x, (ntl.y + nbr.y)*0.5)-(ntl.x + 4, (ntl.y + nbr.y)*0.5), &hcf003f
+            line scnbuff, (nbr.x, (ntl.y + nbr.y)*0.5)-(nbr.x - 4, (ntl.y + nbr.y)*0.5), &hcf003f
+        end if
+    end if
     
     LOCK_TO_SCREEN()
     
@@ -1046,8 +1079,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
     
     
     UNLOCK_TO_SCREEN()
-    
-end sub
+end sub 
 sub Player.drawDetectMeter(scnbuff as integer ptr, lvl as integer)
     dim as integer nPieces, i, posx, posy
     static as integer pieces(0 to 20, 0 to 1) = _
@@ -1071,9 +1103,12 @@ end sub
 
 
 sub Player.processItems(t as double)
-	dim as integer bombNumber
+	dim as integer bombNumber, dIndex, canInteract
 	dim as Vector2D bombPos
 	dim as Vector2D d, a_bound, b_bound
+    dim as ObjectSlotSet interactables
+    dim as Shape2D ptr geom
+    dim as string thisId
     
     if itemBarLife > 0 then
         itemBarPos += 4
@@ -1084,6 +1119,34 @@ sub Player.processItems(t as double)
         if itembarPos < MIN_ITEM_BAR_POS then itemBarPos = MIN_ITEM_BAR_POS
     end if
     
+    DControl->querySlots(interactables, "interact", @Circle2D(Vector2D(body.p.x, body.p.y - iif(isCrouching, 0, 26)), 8))
+    dIndex = 0
+    while dIndex < interactables.getMember_N()
+        interactables.getID(thisID, dIndex)
+        DControl->getValue(canInteract, thisID, "interact")
+        if canInteract = 0 then
+            if doInteract then interactables.throwMember(dIndex)
+            interactables.getGeometry(geom, dIndex)
+            geom->getBoundingBox(interactHilightTL, interactHilightBR)
+            interactHilightTL -= Vector2D(2, 2)
+            interactHilightBR += Vector2D(2, 2)
+            interactIntroDelay += 1
+            if interactIntroDelay > INTERACT_INTRO_TIME then 
+                interactIntroDelay = INTERACT_INTRO_TIME
+                interactShowHilight = 1
+                interactCycle = (interactCycle + 1) Mod INTERACT_FLASH_CYCLE_TIME
+            end if
+            exit while
+        end if
+        dIndex += 1
+    wend
+    if dIndex = interactables.getMember_N() then
+        interactIntroDelay = 0
+        interactShowHilight = 0
+        interactCycle = 0
+    end if
+    
+   
 	
 	for bombNumber = 0 to 9
     

@@ -212,8 +212,9 @@ function HashTable.retrieve(r_key as integer) as any ptr
     dim as HashNode_t ptr curNode
     
     key = hashInteger(r_key) 
-
+    
     curNode = data_[key]
+
     while curNode <> 0
         if curNode->key_type = KEY_INTEGER then
             if curNode->key_integer = r_key then
@@ -229,7 +230,7 @@ end function
 function HashTable.retrieve(r_key as string) as any ptr
     dim as uinteger key
     dim as HashNode_t ptr curNode
-    
+
     key = hashString(r_key) 
 
     curNode = data_[key]

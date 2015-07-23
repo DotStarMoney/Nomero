@@ -1,0 +1,135 @@
+'#alien spinner
+
+type ITEM_DATA
+    as integer transitType
+    as integer delay
+    as integer lightUFO
+    as integer scrollLights
+    as integer scrollLightsDelay
+    as integer curFrame
+end type
+
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 64))
+
+'---------------------------------
+
+function _init()
+    anims_n = 6
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "alienspinner.txt")
+    anims[0].hardSwitch(3)
+    anims[1].load(MEDIA_PATH + "alienspinner.txt")
+    anims[1].hardSwitch(2)
+    anims[1].play()
+    anims[2].load(MEDIA_PATH + "alienspinner.txt")
+    anims[2].hardSwitch(0)
+    anims[3].load(MEDIA_PATH + "alienspinner.txt")
+    anims[3].hardSwitch(1)   
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\Cyan_Diffuse.txt", MEDIA_PATH + "Lights\Cyan_Specular.txt", 4, 5, 0)  
+
+    data.curFrame = 0
+    data.delay = int(rnd * 60) + 30
+    data.transitType = 1
+    
+    data.lightUFO = 0
+    data.scrollLights = 1
+    data.scrollLightsDelay = 0
+    
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+
+    DRAW_LIT_ANIMATION(0, p.x, p.y + 32, 0, 1)
+    if data.scrollLights then anims[1].drawAnimation(scnbuff, p.x, p.y + 32,,,ANIM_GLOW)
+    anims[2].drawImageLit(scnbuff, p.x, p.y, data.curFrame*32, 0, data.curFrame*32 + 31, 31,_
+                          lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),,,1,ANIM_TRANS)
+    if data.lightUFO then 
+        anims[3].drawImageLit(scnbuff, p.x, p.y, 160 + data.curFrame*32, 0, data.curFrame*32 + 191, 31,_
+                              lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),,,,ANIM_GLOW)
+    end if
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    ''
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer nextDir
+
+    anims[1].step_animation()
+    if anims[1].done() andALso data.scrollLights = 1 then 
+        data.scrollLights = 0
+        data.scrollLightsDelay = 60
+    end if
+    if data.scrollLightsDelay > 0 then data.scrollLightsDelay -= 1
+    if data.scrollLightsDelay <= 0 andALso data.scrollLights = 0 then
+        data.scrollLights = 1
+        anims[1].restart()
+        anims[1].play()
+    end if
+    
+    if data.transitType = 1 then
+        if data.delay <= 0 then
+            nextDir = data.transitType
+            if data.curFrame = 3 then
+                data.delay = int(rnd * 120) + 60
+                data.transitType = -1
+            else
+                data.delay = 3
+            end if
+            data.curFrame += nextDir
+        else
+            data.delay -= 1
+        end if
+    elseif data.transitType = -1 then
+        if data.delay <= 0 then
+            nextDir = data.transitType
+            if data.curFrame = 1 then
+                data.delay = int(rnd * 120) + 60
+                data.transitType = 1
+            else
+                data.delay = 3
+            end if
+            data.curFrame += nextDir
+        else
+            data.delay -= 1
+        end if        
+    end if
+    
+    if (data.curFrame > 0 andAlso data.curFrame < 4) orElse (data.delay > 60) then
+        if (int(rnd * 60) < 5) then 
+            data.lightUFO = 0
+        else
+            data.lightUFO = 1
+        end if
+    else
+        data.lightUFO = 0
+    end if
+    
+    lightState = data.lightUFO
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + 8 + data.curFrame * 3
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+   
+end function
+
+'-----------------------------------
+
+slot $interact()
+
+end slot

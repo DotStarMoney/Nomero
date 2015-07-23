@@ -43,11 +43,9 @@ end sub
 function ObjectSlotSet.getMember_N() as integer
     return members_N
 end function
-function ObjectSlotSet.getMember(i as integer) as ObjectSlotSet
-    dim as ObjectSlotSet ret
-    ret._addSlot_(*(members[i].itemID), *(members[i].slot_tag), members[i].geometry)
-    return ret
-end function
+sub ObjectSlotSet.throwMember(i as integer, parameter_string as string = "")
+    link.dynamiccontroller_ptr->fireSlot(*(members[i].itemID), *(members[i].slot_tag), parameter_string)
+end sub
 
 sub ObjectSlotSet.getGeometry(byref geom as Shape2D ptr, i as integer) 
     geom = members[i].geometry
