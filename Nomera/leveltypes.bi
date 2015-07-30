@@ -3,6 +3,7 @@
 
 #include "hash2d.bi"
 #include "hashtable.bi"
+#include "list.bi"
 #include "constants.bi"
 #include "zimage.bi"
 
@@ -44,6 +45,10 @@ enum EffectType_t
     DESTRUCT
     NONE
 end enum
+
+type Level_layerGroup
+    as List ptr layers
+end type
 
 type Level_CoverageBlockInfo_t
 	as integer ptr img
@@ -104,6 +109,7 @@ Type Level_LayerData
     as ushort occluding
     as single depth
     as ushort isHidden
+    as integer glow
     as zstring ptr groupName
 end type
 

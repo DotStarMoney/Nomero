@@ -74,12 +74,23 @@ type Level
         declare function shouldLight() as integer
         declare function getObjectAmbientLevel() as integer
         declare function getHiddenObjectAmbientLevel() as integer
+        declare sub setObjectAmbientLevel(col as integer)
+        declare sub setHiddenObjectAmbientLevel(col as integer)    
         declare sub drawBackgroundEffects(scnbuff as integer ptr)
         declare function getSmokeTexture() as integer ptr
         declare sub drawSmoke(scnbuff as integer ptr)
         declare sub fadeMistIn()
         declare sub fadeMistOut()
         declare sub resetMistFade()
+        declare function getLevelCenterX() as integer
+        declare function getLevelCenterY() as integer
+
+        declare function getGroup(group_tag as string, byref layer_nums as integer ptr) as integer
+        declare sub setHide(lyr as integer)
+        declare sub setUnhide(lyr as integer)
+        declare sub setGlow(lyr as integer, glow as integer)
+        
+        
        
         dim as integer justLoaded
     private:
@@ -144,6 +155,7 @@ type Level
         dim as List activeCover_layer
         dim as List activeFront_layer
         
+        dim as Hashtable groups
         
         dim as EffectController_ ptr graphicFX_
         

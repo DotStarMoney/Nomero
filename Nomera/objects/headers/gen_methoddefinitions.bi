@@ -443,6 +443,29 @@ sub Item.COVERSMOKE_PROC_CONSTRUCT()
     _initAddParameter_("ISSOLID", _ITEM_VALUE_INTEGER)
     _initAddParameter_("INITVELOCITY", _ITEM_VALUE_VECTOR2D)
 end sub
+sub Item.DEEPSPOTLIGHT_PROC_INIT()
+    
+    
+   
+end sub
+sub Item.DEEPSPOTLIGHT_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+end sub
+function Item.DEEPSPOTLIGHT_PROC_RUN(t as double) as integer
+
+
+    return 0
+end function
+sub Item.DEEPSPOTLIGHT_PROC_DRAW(scnbuff as integer ptr)
+    
+
+end sub
+sub Item.DEEPSPOTLIGHT_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.DEEPSPOTLIGHT_PROC_CONSTRUCT()
+end sub
 #define ITEM_ELECTRICMINE_DEFINE_MAX_RAYCAST_ATTEMPTS 10
 #define ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST 80
 #define ITEM_ELECTRICMINE_DEFINE_RUN_TIME 50
@@ -1504,13 +1527,91 @@ sub Item.TANDY2000_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_TANDY2000_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
+sub Item.TELEPORTERREVEALSEQUENCE_SLOT_START(pvPair() as _Item_slotValuePair_t)
+    link.level_ptr->fadeMistOut()
+    link.gamespace_ptr->lockAction = 1
+    link.gamespace_ptr->fadeMusicOut()
+    data_.TELEPORTERREVEALSEQUENCE_DATA->enable = 1
+    data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 0
+end sub
+sub Item.TELEPORTERREVEALSEQUENCE_PROC_INIT()
+    data_.TELEPORTERREVEALSEQUENCE_DATA = new ITEM_TELEPORTERREVEALSEQUENCE_TYPE_DATA
+    dim as string revealTag
+    dim as string hideTag
+    data_.TELEPORTERREVEALSEQUENCE_DATA->enable = 0
+    data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 0
+  
+    getParameter(hideTag, "hideLayers")
+    getParameter(revealTag, "showLayers")
+
+  
+    link.level_ptr->getGroup(hideTag, data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers)
+    link.level_ptr->getGroup(revealTag, data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers)
+    
+   
+end sub
+sub Item.TELEPORTERREVEALSEQUENCE_PROC_FLUSH()
+    if data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers then delete(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers)
+    if data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers then delete(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers)
+    if anims_n then delete(anims)
+    if data_.TELEPORTERREVEALSEQUENCE_DATA then delete(data_.TELEPORTERREVEALSEQUENCE_DATA)
+    data_.TELEPORTERREVEALSEQUENCE_DATA = 0
+end sub
+function Item.TELEPORTERREVEALSEQUENCE_PROC_RUN(t as double) as integer
+    if data_.TELEPORTERREVEALSEQUENCE_DATA->enable then data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame += 1
+    select case data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame
+    case 125
+        link.soundeffects_ptr->playSound(SND_RUMBLE)
+    case 130
+        link.gamespace_ptr->vibrateScreen(600)
+    case 250
+        
+        link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[3])
+        link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[3])
+        link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[2])
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[2], &h1fffffff)        
+        link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[1])
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[1], &h0fffffff)        
+        link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0])
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0], &h07ffffff)        
+    case 310
+
+        link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[2])
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[2], &hffffffff)        
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[1], &h1fffffff)        
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0], &h0fffffff) 
+
+    case 370
+    
+        link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[1])
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[1], &hffffffff)        
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0], &h1fffffff)    
+    
+    case 430
+    
+        link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[0])
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0], &hffffffff)    
+    end select
+    return 0
+end function
+sub Item.TELEPORTERREVEALSEQUENCE_PROC_DRAW(scnbuff as integer ptr)
+   
+end sub
+sub Item.TELEPORTERREVEALSEQUENCE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.TELEPORTERREVEALSEQUENCE_PROC_CONSTRUCT()
+    _initAddSlot_("START", ITEM_TELEPORTERREVEALSEQUENCE_SLOT_START_E)
+    _initAddParameter_("HIDELAYERS", _ITEM_VALUE_ZSTRING)
+    _initAddParameter_("SHOWLAYERS", _ITEM_VALUE_ZSTRING)
+end sub
 sub Item.TELEPORTERSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     dim as integer enabled
     dim as integer i
     getParameter(enabled, "disable")
     enabled = 1 - enabled
     if data_.TELEPORTERSWITCH_DATA->cycleTime = 0 then
-        if enabled = 0 then
+        if enabled = 1 then
             data_.TELEPORTERSWITCH_DATA->cycleTime = 30 
         else
             data_.TELEPORTERSWITCH_DATA->state = 1  
@@ -1521,13 +1622,8 @@ sub Item.TELEPORTERSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
                 link.projectilecollection_ptr->create(Vector2D(p.x + 16, p.y + 33), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK)
             next i
             lightState = 1
-            
-            
-            link.level_ptr->fadeMistOut()
-            link.gamespace_ptr->lockAction = 1
-            link.gamespace_ptr->fadeMusicOut()
-            
-  
+            throw("ACTIVATE")
+
         end if
         anims[0].play()
         link.soundeffects_ptr->playSound(SND_CLACKDOWN)

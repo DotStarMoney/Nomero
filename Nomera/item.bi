@@ -36,9 +36,9 @@ type Item
         declare sub setLink(link_ as objectLink)
         
         declare sub construct(itemType_ as Item_Type_e, ID_ as string = "")
-        declare sub initPost(p_ as Vector2D, size_ as Vector2D)
+        declare sub initPost(p_ as Vector2D, size_ as Vector2D, depth_ as single = 1.0)
 
-		declare sub init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "")
+		declare sub init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "", depth_ as single = 1.0)
         
         declare sub flush()
         
@@ -82,7 +82,9 @@ type Item
         declare static function getIndicatorColor(i as integer) as integer
 	private:
         #include "objects\headers\gen_methodprototypes.bi"
-    
+        
+        declare function drawX() as double
+        declare function drawY() as double
     
         declare static sub matchParameter(byref param_ as Vector2D, parameter_tag as string, pvPair() as _Item_slotValuePair_t)
         declare static sub matchParameter(byref param_ as integer,  parameter_tag as string, pvPair() as _Item_slotValuePair_t)
@@ -138,6 +140,8 @@ type Item
         as Vector2D      bounds_tl
         as Vector2D      bounds_br
         as string        ID
+        as double        depth
+
         as Item_objectData_u data_ 
         
         static as uinteger ptr BOMB_COLORS

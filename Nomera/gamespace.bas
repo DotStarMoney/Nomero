@@ -86,7 +86,7 @@ constructor GameSpace()
     
     spy.centerToMap(lvlData.getDefaultPos())
     
-    'spy.body.p = Vector2D(3300, 1500)
+    spy.body.p = Vector2D(3300, 1500)
     lastSpawn = spy.body.p
     camera = spy.body.p
     lastMap = lvlData.getName()
@@ -182,9 +182,9 @@ function GameSpace.go() as integer
             print "                                            "
         #endif
         locate 1,1
-        print using "Frame Load %: ##.##"; load
-        print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
-        print using "One Second Average Load %: ##.##"; oneSecondAvgLast
+        'print using "Frame Load %: ##.##"; load
+        'print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
+        'print using "One Second Average Load %: ##.##"; oneSecondAvgLast
         
         'print spy.body.p
 
@@ -302,6 +302,7 @@ sub GameSpace.step_draw()
     
     START_PROFILE(1)
     lvlData.drawLayers(scnbuff, BACKGROUND, camera.x(), camera.y(), Vector2D(0, 0))
+    dynControl.drawDynamics(scnbuff, BACKGROUND)
     RECORD_PROFILE(1)
     
     

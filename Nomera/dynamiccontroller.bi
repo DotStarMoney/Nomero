@@ -82,9 +82,11 @@ type DynamicController
         
         '---------------- used by outside to create objects ---------------
         declare function itemStringToType(item_tag as string) as Item_Type_e
-		declare function addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0), ID_ as string = "") as string
-        declare function constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "") as Item ptr
-        declare sub initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0))
+		declare function addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0), _
+                                 ID_ as string = "", depth_ as single = 1.0, drawLess as integer = 0) as string
+        declare function constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "", drawLess as integer = 0) as Item ptr
+        declare sub initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0), _
+                             depth_ as single = 1.0)
         declare sub setParameterFromString(param_string as string, ID_ as string, param_tag as string)
         declare sub connect(signal_ID as string, signal_tag as string, slot_ID as string, slot_tag as string, parameter_string as string = "")
         declare sub addPublishedValue(publishee_ID as string, value_tag as string, target as Shape2D ptr = 0)
@@ -129,6 +131,7 @@ type DynamicController
                
 		as Hashtable itemIdPairs        
 
+        as Hashtable drawobjects_background
 		as Hashtable drawobjects_active      
         as Hashtable drawobjects_activeFront 
         

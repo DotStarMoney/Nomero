@@ -46,6 +46,7 @@ constructor level
     active_layer.init(sizeof(integer))
     activeCover_layer.init(sizeof(integer))
     activeFront_layer.init(sizeof(integer))
+    groups.init(sizeof(Level_layerGroup))
     smokeTexture = imagecreate(SCRX, SCRY, 0)
     auroraTranslate = 0
     pendingPortalSwitch = 0
@@ -110,6 +111,14 @@ sub level.resetMistFade()
     fadeOut = 0
 end sub
 
+
+function level.getLevelCenterX() as integer
+    return lvlCenterX
+end function
+
+function level.getLevelCenterY() as integer
+    return lvlCenterY
+end function
         
 sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                      cam_x as integer, cam_y as integer,_
@@ -358,19 +367,35 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
         next yscan
       
     else
-        for yscan = tl_y to br_y
-            for xscan = tl_x to br_x
-                modBlock = @(blocks[lyr][yscan * lvlWidth + xscan])
-                if modBlock->tileset < 65535 then
-                    
-                    row_c = tilesets[modBlock->tileset].row_count
-                    tilePosX = ((modBlock->tileNum - 1) mod row_c) * 16
-                    tilePosY = ((modBlock->tileNum - 1) \ row_c  ) * 16
-                  
-                    tilesets[modBlock->tileset].set_image.putTRANS(scnbuff, xscan*16 + x, yscan*16 + y, tilePosX, tilePosY, tilePosX + 15, tilePosY + 15)
-                end if
-            next xscan
-        next yscan
+        if layerData[lyr].glow = &hffffffff then
+            for yscan = tl_y to br_y
+                for xscan = tl_x to br_x
+                    modBlock = @(blocks[lyr][yscan * lvlWidth + xscan])
+                    if modBlock->tileset < 65535 then
+                        
+                        row_c = tilesets[modBlock->tileset].row_count
+                        tilePosX = ((modBlock->tileNum - 1) mod row_c) * 16
+                        tilePosY = ((modBlock->tileNum - 1) \ row_c  ) * 16
+                      
+                        tilesets[modBlock->tileset].set_image.putTRANS(scnbuff, xscan*16 + x, yscan*16 + y, tilePosX, tilePosY, tilePosX + 15, tilePosY + 15)
+                    end if
+                next xscan
+            next yscan
+        else
+            for yscan = tl_y to br_y
+                for xscan = tl_x to br_x
+                    modBlock = @(blocks[lyr][yscan * lvlWidth + xscan])
+                    if modBlock->tileset < 65535 then
+                        
+                        row_c = tilesets[modBlock->tileset].row_count
+                        tilePosX = ((modBlock->tileNum - 1) mod row_c) * 16
+                        tilePosY = ((modBlock->tileNum - 1) \ row_c  ) * 16
+                      
+                        tilesets[modBlock->tileset].set_image.putGLOW(scnbuff, xscan*16 + x, yscan*16 + y, tilePosX, tilePosY, tilePosX + 15, tilePosY + 15, layerData[lyr].glow)
+                    end if
+                next xscan
+            next yscan        
+        end if
     end if
     if layerData[lyr].depth = 0 andAlso (drawAurora <> 65535) then 
         drawMode7Ceiling(scnbuff, auroraTexture.getData(), auroraTranslate, auroraTranslate, -70)   
@@ -726,6 +751,7 @@ sub level.flush()
     dim as integer i
     dim as Level_FalloutType ptr falloutItem
     dim as PortalType_t ptr portalItem
+    dim as Level_layerGroup ptr curGroup
     #ifdef DEBUG
         prinTLOG "phlusch"
         stall(100)
@@ -755,6 +781,9 @@ sub level.flush()
         activeFront_layer.flush()
         activeCover_layer.flush()
         foreground_layer.flush()
+        BEGIN_HASH(curGroup, groups)
+            delete(curGroup->layers)
+        END_HASH()
         falloutZones.rollReset()
         lightList_N = 0
         do
@@ -1067,16 +1096,47 @@ sub level.drawSmoke(scnbuff as integer ptr)
         
 end sub
 
+sub level.setObjectAmbientLevel(col as integer)
+    objectAmbientLevel = col
+end sub
+sub level.setHiddenObjectAmbientLevel(col as integer)    
+    hiddenObjectAmbientLevel = col
+end sub
+
 sub level.drawBackgroundEffects(scnbuff as integer ptr) 
     if drawAurora <> 65535 then
         drawMode7Ceiling(scnbuff, auroraTexture.getData(), auroraTranslate, auroraTranslate, -20)   
     end if
 end sub
 
+function level.getGroup(group_tag as string, byref layer_nums as integer ptr) as integer
+    dim as integer members
+    dim as integer memberList
+    dim as integer i
+    dim as integer ptr curInt
+    dim as Level_layerGroup ptr lgroup
+    group_tag = ucase(group_tag)
+    if groups.exists(group_tag) then
+        lgroup = groups.retrieve(group_tag)
+        members = lgroup->layers->getSize()
+        layer_nums = new integer[members]
+        i = 0
+        BEGIN_LIST(curInt, (*(lgroup->layers)))
+            layer_nums[i] = *curInt
+            i += 1
+        END_LIST()
+        return members
+    else
+        layer_nums = 0
+        return 0
+    end if
+end function
+
 sub level.load(filename as string)
     dim as integer f, i, q, j, s, x, y, xscan, yscan, skipCheck
     dim as TinyBlock block
     dim as ushort lyr
+    dim as integer drawless
     dim as uinteger blockNumber, layerInt
     dim as integer row_c, tilePosX, tilePosY, transPxls, checkAllLayers
     dim as string  strdata_n
@@ -1097,6 +1157,7 @@ sub level.load(filename as string)
     dim as Item ptr itemPtr
     dim as zstring ptr groupStringPtr
     dim as ushort isHidden
+    dim as Level_layerGroup ptr curGroup
     
     f = freefile
  
@@ -1253,6 +1314,7 @@ sub level.load(filename as string)
             
         else
             getStringFromFile(f, groupName)
+            groupName = ucase(groupName)
             if groupName <> "" then
                 groupStringPtr = allocate(len(groupName) + 1)
                 *groupStringPtr = groupName
@@ -1264,6 +1326,19 @@ sub level.load(filename as string)
             layerInt = lyr
             layerData[lyr].groupName = groupStringPtr
             layerData[lyr].isHidden = isHidden
+            
+            if layerData[lyr].groupName <> 0 then
+                if groups.exists(*(layerData[lyr].groupName)) then
+                    curGroup = groups.retrieve(*(layerData[lyr].groupName))
+                else
+                    curGroup = new Level_layerGroup
+                    curGroup->layers = new List
+                    curGroup->layers->init(sizeof(integer))
+                    groups.insert(*(layerData[lyr].groupName), curGroup)
+                end if
+                s = lyr
+                curGroup->layers->push_back(@s)
+            end if
             get #f,,layerData[lyr].depth
             get #f,,layerData[lyr].parallax
             get #f,,layerData[lyr].inRangeSet
@@ -1274,6 +1349,7 @@ sub level.load(filename as string)
             get #f,,layerData[lyr].coverage
             get #f,,layerData[lyr].receiver
             get #f,,layerData[lyr].occluding
+            layerData[lyr].glow = &hffffffff
             
             layerData[lyr].windyMistLayer = -1
             if windyMist <> 65535 then
@@ -1354,21 +1430,10 @@ sub level.load(filename as string)
                 get #f,,blockNumber
                 blockNumber = blockNumber and FLIPPED_MASK
 
-                strdata_n = ucase(strdata_n)                
-                if (strdata_n = "PARALLAX 1S") orElse (strdata_n = "PARALLAX 2S") orElse (strdata_n = "PARALLAX 3S") orElse (strdata_n = "PARALLAX 4S") then
-            
-                    if blockNumber > 0 then
-                        print blockNumber, blocks[lyr][j].tilenum
-                        sleep
-                    end if
-                    
-                end if
-       
                 blocks[lyr][j].tileset = 65535
                 blocks[lyr][j].tilenum = 65535
                 blocks[lyr][j].numLights = 0
                 'blocks[lyr][j].rotatedType = blockNumber shr 29                
-                
                 
                 for q = 0 to tilesets_N - 1
                     
@@ -1435,7 +1500,7 @@ sub level.load(filename as string)
         get #f,,tempObj.p
         get #f,,tempObj.size
         get #f,,tempObj.depth
-        get #f,,tempObj.drawless        
+        get #f,,tempObj.drawless    
         select case tempObj.object_type
         case EFFECT
             get #f,,objField(0)
@@ -1482,7 +1547,13 @@ sub level.load(filename as string)
 			getStringFromFile(f, itemName)
             getStringFromFile(f, itemID)
             
-            itemPtr = link.dynamiccontroller_ptr->constructItem(link.dynamiccontroller_ptr->itemStringToType(itemName), tempObj.inRangeSet, itemID)     
+            if tempObj.drawless = LEVEL_ON then
+                drawless = 1
+            elseif tempObj.drawless = LEVEL_OFF then
+                drawless = 0
+            end if
+            
+            itemPtr = link.dynamiccontroller_ptr->constructItem(link.dynamiccontroller_ptr->itemStringToType(itemName), tempObj.inRangeSet, itemID, drawless)     
             if itemPtr then itemID = itemPtr->getID()
             get #f,,numParams
             for j = 0 to numParams - 1
@@ -1501,7 +1572,7 @@ sub level.load(filename as string)
                     if itemPtr then link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)
                 next q
             next j
-            if itemPtr then link.dynamiccontroller_ptr->initItem(itemPtr, tempObj.p, tempObj.size)     
+            if itemPtr then link.dynamiccontroller_ptr->initItem(itemPtr, tempObj.p, tempObj.size, tempObj.depth)     
 
             get #f,,objField(1)
             get #f,,objField(1)
@@ -1550,6 +1621,16 @@ sub level.load(filename as string)
     #endif
 end sub
 
+
+sub Level.setHide(lyr as integer)
+    layerData[lyr].isHidden = LEVEL_ON
+end sub
+sub Level.setUnhide(lyr as integer)
+    layerData[lyr].isHidden = LEVEL_OFF
+end sub
+sub Level.setGlow(lyr as integer, glow as integer)
+    layerData[lyr].glow = glow
+end sub
 sub Level.prepareWindyMistLayers()
     dim as integer i, q
     dim as Vector2D lvlCenter, screenDim, newPos

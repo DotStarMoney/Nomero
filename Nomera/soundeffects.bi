@@ -4,7 +4,7 @@
 
 #include "objectlink.bi"
 
-#define NUM_SOUNDS 27
+#define NUM_SOUNDS 28
 
 enum SoundEffect_e
 	SND_EXPLODE_1
@@ -36,6 +36,7 @@ enum SoundEffect_e
     SND_CLACKUP
     SND_CLACKDOWN
     SND_SUCCESS
+    SND_RUMBLE
 end enum
 
 type SoundEffects

@@ -1,0 +1,40 @@
+'#deep spotlight
+
+'---------------------------------
+
+function _init()
+    
+    
+   
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    
+
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+
+
+end function
+
+'-----------------------------------
+
+
+

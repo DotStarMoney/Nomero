@@ -123,8 +123,9 @@ sub Item.construct(itemType_ as Item_Type_e, ID_ as string = "")
     #include "objects\headers\gen_constructcaseblock.bi"
     
 end sub
-sub Item.initPost(p_ as Vector2D, size_ as Vector2D)
+sub Item.initPost(p_ as Vector2D, size_ as Vector2D, depth_ as single)
     p = p_
+    depth = depth_
     size = size_
     lightState = 0
     fastLight = 1
@@ -138,9 +139,9 @@ sub Item.initPost(p_ as Vector2D, size_ as Vector2D)
     bounds_tl = p
     bounds_br = p + size
 end sub
-sub Item.init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "")
+sub Item.init(itemType_ as Item_Type_e, p_ as Vector2D, size_ as Vector2D, ID_ as string = "", depth_ as single)
     construct(itemType_, ID_)
-    initPost(p_, size_)
+    initPost(p_, size_, depth_)
 end sub
 
 sub Item.flush()
@@ -195,6 +196,13 @@ sub Item.drawItemOverlay(scnbuff as integer ptr)
     #include "objects\headers\gen_drawoverlaycaseblock.bi"
 
 end sub
+
+function Item.drawX() as double
+    return p.x + (link.gamespace_ptr->camera.x - link.level_ptr->getLevelCenterX()) * (1.0 - depth)
+end function
+function Item.drawY() as double
+    return p.y + (link.gamespace_ptr->camera.y - link.level_ptr->getLevelCenterY()) * (1.0 - depth)
+end function
 
 sub Item._initAddParameter_(param_tag as string, param_type as _Item_valueTypes_e)
     dim as _Item_valueContainer_t valueC

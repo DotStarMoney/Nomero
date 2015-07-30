@@ -1,0 +1,101 @@
+'#teleporter reveal sequence
+
+type ITEM_DATA
+    as integer enable
+    as integer countFrame
+    as integer ptr revealLayers
+    as integer ptr hideLayers
+end type
+
+
+parameter "hideLayers", string
+parameter "showLayers", string
+
+'---------------------------------
+
+function _init()
+    dim as string revealTag
+    dim as string hideTag
+    data.enable = 0
+    data.countFrame = 0
+  
+    getParameter(hideTag, "hideLayers")
+    getParameter(revealTag, "showLayers")
+
+  
+    link.level_ptr->getGroup(hideTag, data.hideLayers)
+    link.level_ptr->getGroup(revealTag, data.revealLayers)
+    
+   
+end function
+
+'---------------------------------
+
+function _flush()
+    if data.hideLayers then delete(data.hideLayers)
+    if data.revealLayers then delete(data.revealLayers)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+   
+end function
+
+'----------------------------------
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    if data.enable then data.countFrame += 1
+    select case data.countFrame
+    case 125
+        link.soundeffects_ptr->playSound(SND_RUMBLE)
+    case 130
+        link.gamespace_ptr->vibrateScreen(600)
+    case 250
+        
+        link.level_ptr->setHide(data.hideLayers[3])
+        link.level_ptr->setUnhide(data.revealLayers[3])
+        link.level_ptr->setUnhide(data.revealLayers[2])
+        link.level_ptr->setGlow(data.revealLayers[2], &h1fffffff)        
+        link.level_ptr->setUnhide(data.revealLayers[1])
+        link.level_ptr->setGlow(data.revealLayers[1], &h0fffffff)        
+        link.level_ptr->setUnhide(data.revealLayers[0])
+        link.level_ptr->setGlow(data.revealLayers[0], &h07ffffff)        
+    case 310
+
+        link.level_ptr->setHide(data.hideLayers[2])
+        link.level_ptr->setGlow(data.revealLayers[2], &hffffffff)        
+        link.level_ptr->setGlow(data.revealLayers[1], &h1fffffff)        
+        link.level_ptr->setGlow(data.revealLayers[0], &h0fffffff) 
+
+    case 370
+    
+        link.level_ptr->setHide(data.hideLayers[1])
+        link.level_ptr->setGlow(data.revealLayers[1], &hffffffff)        
+        link.level_ptr->setGlow(data.revealLayers[0], &h1fffffff)    
+    
+    case 430
+    
+        link.level_ptr->setHide(data.hideLayers[0])
+        link.level_ptr->setGlow(data.revealLayers[0], &hffffffff)    
+    end select
+end function
+
+'-----------------------------------
+slot $start()
+    link.level_ptr->fadeMistOut()
+    link.gamespace_ptr->lockAction = 1
+    link.gamespace_ptr->fadeMusicOut()
+    data.enable = 1
+    data.countFrame = 0
+end slot
+
+

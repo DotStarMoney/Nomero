@@ -16,6 +16,7 @@ constructor DynamicController()
     itemIdPairs.init(sizeof(DynamicController_itemPair_t))
     drawobjects_active.init(sizeof(Item ptr))
     drawobjects_activeFront.init(sizeof(Item ptr))
+    drawobjects_background.init(sizeof(Item ptr))    
     addItemPost.init(sizeof(DynamicController_itemPair_t))
     isProcessing = 0
     
@@ -46,7 +47,8 @@ sub DynamicController.flush()
     stringToTypeTable.clean()
     drawobjects_active.clean()
     drawobjects_activefront.clean()
-    
+    drawobjects_background.clean()
+
     BEGIN_DHASH(curPublish, allPublishedValues)
         if curPublish->target then delete(curPublish->target)
         deallocate(curPublish->tag_)
@@ -153,6 +155,8 @@ sub DynamicController.removeItem(ID_ as string)
         drawObjects_active.remove(ID_)
     elseif drawObjects_activeFront.exists(ID_) then
         drawObjects_activeFront.remove(ID_)
+    elseif drawObjects_background.exists(ID_) then
+        drawObjects_background.remove(ID_)
     end if
     
 
@@ -268,8 +272,15 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = AC
     case ACTIVE_FRONT
         BEGIN_HASH(curItem, drawobjects_activefront)
             (*curItem)->drawItem(scnbuff)
-        END_HASH()    
+        END_HASH() 
+    case BACKGROUND
+        BEGIN_HASH(curItem, drawobjects_background)
+            (*curItem)->drawItem(scnbuff)
+        END_HASH()     
     case OVERLAY
+        BEGIN_HASH(curItem, drawobjects_background)
+            (*curItem)->drawItemOverlay(scnbuff)
+        END_HASH() 
         BEGIN_HASH(curItem, drawobjects_active)
             (*curItem)->drawItemOverlay(scnbuff)
         END_HASH()  
@@ -291,7 +302,7 @@ function DynamicController.itemStringToType(item_tag as string) as Item_Type_e
     end if
 end function
 
-function DynamicController.constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "") as Item ptr
+function DynamicController.constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "", drawless as integer) as Item ptr
     dim as DynamicController_itemPair_t ptr newItem
     dim as DynamicController_itemPair_t ptr refItem
     
@@ -315,10 +326,14 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
         refItem = addItemPost.push_back(newItem)
     end if
 
-    if order = ACTIVE_FRONT then
-        drawobjects_activeFront.insert(ID_, @refItem->item_)
-    else
-        drawobjects_active.insert(ID_, @refItem->item_)
+    if drawLess = 0 then
+        if order = ACTIVE_FRONT then
+            drawobjects_activeFront.insert(ID_, @refItem->item_)
+        elseif order = ACTIVE then
+            drawobjects_active.insert(ID_, @refItem->item_)
+        elseif order = BACKGROUND then
+            drawobjects_background.insert(ID_, @refItem->item_) 
+        end if
     end if
   
     refItem->item_->construct(itemType_, ID_)
@@ -327,10 +342,11 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
       
     return refItem->item_
 end function
-sub DynamicController.initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0))
-    itemToInit->initPost(p_, size_)
+sub DynamicController.initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0), depth_ as single = 1.0)
+    itemToInit->initPost(p_, size_, depth_)
 end sub
-function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, ID_ as string = "") as string
+function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, _
+                                   ID_ as string = "", depth_ as single = 1.0, drawLess as integer = 0) as string
     dim as DynamicController_itemPair_t ptr newItem
     dim as DynamicController_itemPair_t ptr refItem
     
@@ -354,14 +370,18 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
     else
         refItem = addItemPost.push_back(newItem)
     end if
-
-    if order = ACTIVE_FRONT then
-        drawobjects_activeFront.insert(ID_, @refItem->item_)
-    else
-        drawobjects_active.insert(ID_, @refItem->item_)
+    
+    if drawLess = 0 then
+        if order = ACTIVE_FRONT then
+            drawobjects_activeFront.insert(ID_, @refItem->item_)
+        elseif order = ACTIVE then
+            drawobjects_active.insert(ID_, @refItem->item_)
+        elseif order = BACKGROUND then
+            drawobjects_background.insert(ID_, @refItem->item_)        
+        end if
     end if
   
-    refItem->item_->init(itemType_, p_, size_, ID_)
+    refItem->item_->init(itemType_, p_, size_, ID_, depth_)
    
     deallocate(newItem)
  

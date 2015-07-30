@@ -575,8 +575,6 @@ do
                             elseif item_tag = "gid" then
                                 objects(N_objects - 1).drawless = 1
                                 objects(N_objects - 1).size = Vector2D(16, 16)
-                            elseif item_tag = "depth" then
-                                objects(N_objects - 1).depth = val(trim(item_content))
                             elseif item_tag = "properties" then
                                 if item_content <> "{}" then 
                                     propertyline = 1
@@ -807,6 +805,14 @@ do
                         elseif left(lcase(item_tag), 2) = "id" then
                             item_content = ucase(trimwhite(item_content))
                             newZstring(tempObjSpawner->id, item_content)
+                        elseif left(lcase(item_tag), 5) = "depth" then
+                            objects(N_objects - 1).depth = val(trim(item_content))
+                        elseif left(lcase(item_tag), 10) = "background" then
+                            objects(N_objects - 1).inRangeSet = BACKGROUND
+                        elseif left(lcase(item_tag), 12) = "active front" then
+                            objects(N_objects - 1).inRangeSet = ACTIVE_FRONT                  
+                        elseif left(lcase(item_tag), 6) = "active" then
+                            objects(N_objects - 1).inRangeSet = ACTIVE
                         elseif left(lcase(trimwhite(item_tag)), 2) = "p(" then                            
                             item_tag = trimwhite(item_tag)
                             item_tag = right(item_tag, len(item_tag) - 2)
@@ -1386,6 +1392,7 @@ Loop While Len( curfile ) > 0
 
 print "Computing optimal layers and merges..."
 
+
 curListHash.init(sizeof(List ptr))
 
 N_merges = 0
@@ -1402,6 +1409,7 @@ cmpImg(1) = imagecreate(16,16,0)
 
 dim as integer ptr mergedTiles = imagecreate(320, 8192)
 dim as integer ptr mergedTiles_norm = imagecreate(320, 8192)
+
 
 for activeLayer = 0 to 4
     select case activeLayer
@@ -1489,13 +1497,13 @@ for activeLayer = 0 to 4
                         line dMask, (0,0)-(15,15), 0, BF
                         line sMask, (0,0)-(15,15), 0, BF
                         
-                        if (not (curFlags and MERGELESS_MASK)) andAlso (isAnim = 0) then
+                        if ((curFlags and MERGELESS_MASK) = 0) andAlso (isAnim = 0) then
                             for j = N_runs - 1 to 0 step -1                            
                                 if (mergeStack(j).depth <> layers(i).depth) then
                                     findFullCoverage = 1
                                 else    
                                     
-                                    if (not (mergeStack(j).flags and MERGELESS_MASK)) andAlso (mergeStack(j).newTile = 1) then
+                                    if ((mergeStack(j).flags and MERGELESS_MASK) = 0) andAlso (mergeStack(j).newTile = 1) then
                                         if (mergeStack(j).ambientLevel = layers(i).ambientLevel) andALso _
                                            (mergeStack(j).flags = curFlags) andAlso _
                                            (findFullCoverage = 0) then    
@@ -1508,7 +1516,8 @@ for activeLayer = 0 to 4
                                                     next remInd
                                                     mergeStack(N_runs - 1) = tempStackItem
                                                 end if
-                                                
+                                            
+
                                                 layers(mergeStack(N_runs - 1).layer).layer_data[q] = 0
                                                 
                                                 mergeStack(N_runs - 1).layer = i
@@ -1568,7 +1577,7 @@ for activeLayer = 0 to 4
                                     end if
                                 end if
                                 if deleteTile = 1 then
-                                    
+                                    ''''''''''''''''''''''''''''''
                                     layers(i).layer_data[q] = 0
 
                                     pushRun = 0
@@ -1619,12 +1628,14 @@ for activeLayer = 0 to 4
                                iif(layers(i).occluding < 65535, OCCLUDING_MASK, NONE_MASK) 
 
                     line coverageMask, (0,0)-(15,15), 0, BF
+                    '''''''''''''''''''''''''''''''
+
                     layers(i).layer_data[q] = 0
                     for j = N_runs - 1 to 0 step -1
                         if (mergeStack(j).depth <> layers(i).depth) then
                             exit for
                         else    
-                            if (not (mergeStack(j).flags and MERGELESS_MASK)) andAlso (mergeStack(j).newTile = 1) then
+                            if ((mergeStack(j).flags and MERGELESS_MASK) = 0) andAlso (mergeStack(j).newTile = 1) then
                                 if (mergeStack(j).ambientLevel = layers(i).ambientLevel) andALso _
                                    (mergeStack(j).flags = curFlags) then
                                     if maskCompare(coverageMask, mergeStack(j).mask) = DISJOINT then
@@ -1752,6 +1763,8 @@ for activeLayer = 0 to 4
     next q
 next activeLayer
 
+
+
 tempRotatedImg = imagecreate(320, (int(N_merges / 20) + 1) * 16)
 put tempRotatedImg, (0,0), mergedTiles, (0,0)-(319, (int(N_merges / 20) + 1) * 16 - 1), PSET
 swap tempRotatedImg, mergedTiles
@@ -1823,6 +1836,8 @@ end if
 
 imagedestroy(mergedTiles)
 imagedestroy(mergedTiles_norm)
+
+
 
 print "Refactoring tile instances..."
 dim as integer ptr tempTilesetCopy
@@ -1950,6 +1965,8 @@ for i = 0 to N_layers - 1
             put #f,,layers(i).isReceiver
             put #f,,layers(i).occluding
             put #f,,layers(i).layer_data[0],map_width*map_height
+            
+           
         else
             put #f,,layers(i).layer_name
             put #f,,layers(i).layer_data[0],map_width*map_height

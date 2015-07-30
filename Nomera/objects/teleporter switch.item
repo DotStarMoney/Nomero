@@ -86,7 +86,7 @@ slot $interact()
     getParameter(enabled, "disable")
     enabled = 1 - enabled
     if data.cycleTime = 0 then
-        if enabled = 0 then
+        if enabled = 1 then
             data.cycleTime = 30 
         else
             data.state = 1  
@@ -97,13 +97,8 @@ slot $interact()
                 link.projectilecollection_ptr->create(Vector2D(p.x + 16, p.y + 33), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK)
             next i
             lightState = 1
-            
-            ''''''''''''''''''''''''''''''''''''''''''''
-            link.level_ptr->fadeMistOut()
-            link.gamespace_ptr->lockAction = 1
-            link.gamespace_ptr->fadeMusicOut()
-            ''''''''''''''''''''''''''''''''''''''''''''
-  
+            throw($activate)
+
         end if
         anims[0].play()
         link.soundeffects_ptr->playSound(SND_CLACKDOWN)
