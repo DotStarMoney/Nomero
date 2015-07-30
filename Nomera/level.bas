@@ -98,7 +98,19 @@ end sub
 sub Level.init(e_p as EffectController ptr)
     graphicFX_ = e_p
 end sub
+sub level.fadeMistIn()
+    fadeDir = -1
+end sub
 
+sub level.fadeMistOut()
+    fadeDir = 1
+end sub
+sub level.resetMistFade()
+    fadeDir = 0
+    fadeOut = 0
+end sub
+
+        
 sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                      cam_x as integer, cam_y as integer,_
                      adjust as Vector2D)
@@ -140,93 +152,97 @@ sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
             i = *curLayer
             x = 0
             y = 0
-
-            if layerData[i].parallax < 255 then
-                parallaxAdjust(x, y,_
-                               cam_x, cam_y,_
-                               lvlCenterX, lvlCenterY,_ 'lvlWidth * 16 * 0.5, lvlHeight * 16 * 0.5,_
-                               layerData[i].depth)
-                ocx = cam_x
-                ocy = cam_y
-            else
-                x = 0 
-                y = 0
-                ocx = cam_x + adjust.x()
-                ocy = cam_y + adjust.y()
-            end if
-            tl_x = ((ocx - x - SCRX * 0.5) ) / 16 - 1
-            tl_y = ((ocy - y - SCRY * 0.5) ) / 16 - 1
-            br_x = ((ocx - x + SCRX * 0.5) ) / 16
-            br_y = ((ocy - y + SCRY * 0.5) ) / 16
+            
+            if layerData[i].isHidden = LEVEL_OFF then
+                
+                if layerData[i].parallax < 255 then
+                    parallaxAdjust(x, y,_
+                                   cam_x, cam_y,_
+                                   lvlCenterX, lvlCenterY,_ 'lvlWidth * 16 * 0.5, lvlHeight * 16 * 0.5,_
+                                   layerData[i].depth)
+                    ocx = cam_x
+                    ocy = cam_y
+                else
+                    x = 0 
+                    y = 0
+                    ocx = cam_x + adjust.x()
+                    ocy = cam_y + adjust.y()
+                end if
+                tl_x = ((ocx - x - SCRX * 0.5) ) / 16 - 1
+                tl_y = ((ocy - y - SCRY * 0.5) ) / 16 - 1
+                br_x = ((ocx - x + SCRX * 0.5) ) / 16
+                br_y = ((ocy - y + SCRY * 0.5) ) / 16
+            
+                
+                window screen (ocx - SCRX * 0.5, ocy - SCRY * 0.5)-_
+                              (ocx + SCRX * 0.5, ocy + SCRY * 0.5)
+                                          
+                if layerData[i].isFallout <> 65535 then
+                    if falloutBlend = 0 then
+                        falloutBlend = imagecreate(640,480)
+                    end if
+                    drawLayer(falloutBlend, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
+                    
+                    a = Vector2D(cam_x, cam_y) - Vector2D(SCRX, SCRY) * 0.5
+                    b = Vector2D(cam_x, cam_y) + Vector2D(SCRX, SCRY) * 0.5
         
-            
-            window screen (ocx - SCRX * 0.5, ocy - SCRY * 0.5)-_
-                          (ocx + SCRX * 0.5, ocy + SCRY * 0.5)
-                                      
-            if layerData[i].isFallout <> 65535 then
-                if falloutBlend = 0 then
-                    falloutBlend = imagecreate(640,480)
-                end if
-                drawLayer(falloutBlend, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
-                
-                a = Vector2D(cam_x, cam_y) - Vector2D(SCRX, SCRY) * 0.5
-                b = Vector2D(cam_x, cam_y) + Vector2D(SCRX, SCRY) * 0.5
-    
-                
-                num = falloutZones.search(a,_
-                                          b,_
-                                          flist)
-                
-                if num > 0 then
-                    for j = 0 to num - 1 
-                        cur = flist[j]
-                        
-                        px = cur->a.x() - (cam_x - SCRX * 0.5) - adjust.x()
-                        py = cur->a.y() - (cam_y - SCRY * 0.5) - adjust.y()
-                        
-                        if screenClip(px, py,_
-                                      cur->b.x() - cur->a.x() - 1,_
-                                      cur->b.y() - cur->a.y() - 1,_
-                                      npx, npy,_
-                                      sx0, sy0, sx1, sy1) = 1 then
-                        
-                        
-                            if cur->cachedImage = 0 then
-                                bitblt_FalloutMix(falloutBlend,_
-                                                  npx, npy, _
-                                                  falloutTex(cur->flavor),_
-                                                  sx0, sy0, sx1, sy1)
-                            else
-                                
-                                bitblt_FalloutMix(falloutBlend,_
-                                                  npx, npy, _
-                                                  cur->cachedImage,_
-                                                  sx0, sy0, sx1, sy1)
-                                
+                    
+                    num = falloutZones.search(a,_
+                                              b,_
+                                              flist)
+                    
+                    if num > 0 then
+                        for j = 0 to num - 1 
+                            cur = flist[j]
+                            
+                            px = cur->a.x() - (cam_x - SCRX * 0.5) - adjust.x()
+                            py = cur->a.y() - (cam_y - SCRY * 0.5) - adjust.y()
+                            
+                            if screenClip(px, py,_
+                                          cur->b.x() - cur->a.x() - 1,_
+                                          cur->b.y() - cur->a.y() - 1,_
+                                          npx, npy,_
+                                          sx0, sy0, sx1, sy1) = 1 then
+                            
+                            
+                                if cur->cachedImage = 0 then
+                                    bitblt_FalloutMix(falloutBlend,_
+                                                      npx, npy, _
+                                                      falloutTex(cur->flavor),_
+                                                      sx0, sy0, sx1, sy1)
+                                else
+                                    
+                                    bitblt_FalloutMix(falloutBlend,_
+                                                      npx, npy, _
+                                                      cur->cachedImage,_
+                                                      sx0, sy0, sx1, sy1)
+                                    
+                                end if
+                                                  
                             end if
-                                              
-                        end if
-                        
-                    next j
-              
-                    deallocate(flist)
+                            
+                        next j
+                  
+                        deallocate(flist)
+                    end if
+                    
+                    put scnbuff, (ocx - SCRX*0.5,ocy - SCRY*0.5), falloutBlend, TRANS
+                    
+                else
+                    drawLayer(scnbuff, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
                 end if
                 
-                put scnbuff, (ocx - SCRX*0.5,ocy - SCRY*0.5), falloutBlend, TRANS
-                
-            else
-                drawLayer(scnbuff, tl_x, tl_y, br_x, br_y, 0, 0, ocx, ocy, i)
-            end if
-            
-            if layerData[i].windyMistLayer <> -1 then
-                wlayer = layerData[i].windyMistLayer
-                shift = (link.gamespace_ptr->camera - Vector2D(lvlWidth, lvlHeight)*8)*(1 - layerData[i].depth)
-                fade = 255 * layerData[i].depth^(0.02)
-                if fade > 250 then fade = 250
-                for j = 0 to windyMistLayers[wlayer].objects_n - 1
-                    drawP = windyMistLayers[wlayer].objects[j].p + shift
-                    mistTexture.putGLOW(scnbuff, drawP.x, drawP.y, 0, 0, mistTexture.getWidth() - 1, mistTexture.getHeight() - 1, &h007f7fff or (fade shl 24))
-                next j
+                if layerData[i].windyMistLayer <> -1 andAlso fadeOut < 255 then
+                    wlayer = layerData[i].windyMistLayer
+                    shift = (link.gamespace_ptr->camera - Vector2D(lvlWidth, lvlHeight)*8)*(1 - layerData[i].depth)
+                    fade = 255 * layerData[i].depth^(0.02) - fadeOut
+                    if fade < 0 then fade = 0
+                    if fade > 250 then fade = 250
+                    for j = 0 to windyMistLayers[wlayer].objects_n - 1
+                        drawP = windyMistLayers[wlayer].objects[j].p + shift
+                        mistTexture.putGLOW(scnbuff, drawP.x, drawP.y, 0, 0, mistTexture.getWidth() - 1, mistTexture.getHeight() - 1, &h007f7fff or (fade shl 24))
+                    next j
+                end if
             end if
         else
             exit do
@@ -283,6 +299,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
     dim as integer tilePosX, tilePosY
     dim as double ax, ay
     dim as Level_EffectData tempEffect
+   
     
     if tl_x > br_x then swap tl_x, br_x
     if tl_y > br_y then swap tl_y, br_y
@@ -298,8 +315,7 @@ sub level.drawLayer(scnbuff as uinteger ptr,_
         x = ax
         y = ay
     end if
-   
-	
+    
     if layerData[lyr].illuminated <> 65535 then
     
         for yscan = tl_y to br_y
@@ -1037,6 +1053,12 @@ sub level.process(t as double)
     processLights()
     if windyMist <> 65535 then processMist()
     if drawAurora then auroraTranslate += 0.007
+    fadeOut += fadeDir*0.2
+    if fadeOut > 255 then 
+        fadeOut = 255
+    elseif fadeOut < 0 then 
+        fadeOut = 0
+    end if
 end sub
 
 sub level.drawSmoke(scnbuff as integer ptr)
@@ -1058,7 +1080,7 @@ sub level.load(filename as string)
     dim as uinteger blockNumber, layerInt
     dim as integer row_c, tilePosX, tilePosY, transPxls, checkAllLayers
     dim as string  strdata_n
-    dim as string  tempString
+    dim as string  tempString, groupName
     dim as ZString * 128 strdata
     dim as Level_VisBlock ptr lvb
     redim as ushort setFirstIds(0)
@@ -1073,6 +1095,8 @@ sub level.load(filename as string)
     dim as ushort numParams, numSignals, numTargets
     dim as string signalName, signalParameter, slotID, slotName
     dim as Item ptr itemPtr
+    dim as zstring ptr groupStringPtr
+    dim as ushort isHidden
     
     f = freefile
  
@@ -1228,8 +1252,18 @@ sub level.load(filename as string)
             next j
             
         else
+            getStringFromFile(f, groupName)
+            if groupName <> "" then
+                groupStringPtr = allocate(len(groupName) + 1)
+                *groupStringPtr = groupName
+            else
+                 groupStringPtr = 0
+            end if
+            get #f,,isHidden
             get #f,,lyr 
             layerInt = lyr
+            layerData[lyr].groupName = groupStringPtr
+            layerData[lyr].isHidden = isHidden
             get #f,,layerData[lyr].depth
             get #f,,layerData[lyr].parallax
             get #f,,layerData[lyr].inRangeSet
@@ -1243,7 +1277,7 @@ sub level.load(filename as string)
             
             layerData[lyr].windyMistLayer = -1
             if windyMist <> 65535 then
-                if layerData[lyr].depth < 1.0 then 
+                if layerData[lyr].depth < 1.0 andAlso layerData[lyr].isHidden = LEVEL_OFF then 
                     windyMistLayers_n += 1
                     windyMistLayers = reallocate(windyMistLayers, sizeof(MistLayer_t) * windyMistLayers_n)
                     windyMistLayers[windyMistLayers_n - 1].layerNum = layerInt
@@ -1318,13 +1352,23 @@ sub level.load(filename as string)
             
             for j = 0 to lvlWidth * lvlHeight - 1
                 get #f,,blockNumber
+                blockNumber = blockNumber and FLIPPED_MASK
+
+                strdata_n = ucase(strdata_n)                
+                if (strdata_n = "PARALLAX 1S") orElse (strdata_n = "PARALLAX 2S") orElse (strdata_n = "PARALLAX 3S") orElse (strdata_n = "PARALLAX 4S") then
+            
+                    if blockNumber > 0 then
+                        print blockNumber, blocks[lyr][j].tilenum
+                        sleep
+                    end if
+                    
+                end if
        
                 blocks[lyr][j].tileset = 65535
                 blocks[lyr][j].tilenum = 65535
                 blocks[lyr][j].numLights = 0
                 'blocks[lyr][j].rotatedType = blockNumber shr 29                
                 
-                blockNumber = blockNumber and FLIPPED_MASK
                 
                 for q = 0 to tilesets_N - 1
                     
@@ -1390,6 +1434,8 @@ sub level.load(filename as string)
         get #f,,tempObj.inRangeSet
         get #f,,tempObj.p
         get #f,,tempObj.size
+        get #f,,tempObj.depth
+        get #f,,tempObj.drawless        
         select case tempObj.object_type
         case EFFECT
             get #f,,objField(0)

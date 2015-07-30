@@ -1,0 +1,69 @@
+'#tube puzzle map
+type ITEM_DATA
+    as integer cycle
+    as integer state 
+end type
+
+'---------------------------------
+
+function _init()
+    
+    data.cycle = 0
+    data.state = 0
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "roommapled.txt")
+    
+    
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    if data.state = 0 then
+        anims[0].drawAnimation(scnbuff, p.x, p.y)
+    elseif data.state = 1 then 
+        if int(rnd * 3) = 0 then anims[0].drawAnimation(scnbuff, p.x, p.y)
+    elseif data.state = 2 then
+        ''
+    elseif data.state = 3 then
+        if int(rnd * 3) = 0 then anims[0].drawAnimation(scnbuff, p.x, p.y)
+    elseif data.state = 4 then
+        anims[0].drawAnimation(scnbuff, p.x, p.y)
+    end if
+end function
+
+'----------------------------------
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    anims[0].step_animation()
+    if data.cycle > 0 then 
+        data.cycle -= 1
+    else
+        if data.state > 0 andAlso data.state < 4 then
+            if data.state = 2 then anims[0].play()
+            data.state += 1
+            data.cycle = 20
+        end if
+    end if
+end function
+
+'-----------------------------------
+slot $update()
+    data.cycle = 20
+    data.state = 1
+end slot

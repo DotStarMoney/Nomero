@@ -774,7 +774,7 @@ sub Player.processControls(dire as integer, jump as integer,_
     for i = 0 to 9
 		if numbers(i) andAlso (bombData(i).lastNumbers = 0) andAlso (bombData(i).hasBomb = 0) andAlso spinnerCount(spinnerItem) > 0 then
 			if parent->isGrounded(body_i, this.groundDot) andAlso (parent->getArbiterN(body_i) > 0) then 
-                spinnerCount(spinnerItem) -= 1
+                'spinnerCount(spinnerItem) -= 1
               
                 select case spinnerItem
                 case 0
@@ -1125,7 +1125,11 @@ sub Player.processItems(t as double)
         interactables.getID(thisID, dIndex)
         DControl->getValue(canInteract, thisID, "interact")
         if canInteract = 0 then
-            if doInteract then interactables.throwMember(dIndex)
+            if doInteract then 
+                interactables.throwMember(dIndex)
+                interactIntroDelay = 0
+                interactShowHilight = 0
+            end if
             interactables.getGeometry(geom, dIndex)
             geom->getBoundingBox(interactHilightTL, interactHilightBR)
             interactHilightTL -= Vector2D(2, 2)

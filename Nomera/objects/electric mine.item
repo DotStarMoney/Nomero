@@ -148,9 +148,12 @@ end function
 '-----------------------------------
 
 slot $explode()
-    dim as integer i
-    dim as double randAngle, dist
-    dim as Vector2D v, pt
+    dim as integer i, targetMember
+    dim as double randAngle, dist, minDist
+    dim as Vector2D v, pt, btl, bbr, centroid, destP
+    dim as Vector2D minCentroid, minTL, minBR
+    dim as Shape2D ptr shape
+    dim as SlotSet targets
     
     if data.death = 0 then
         data.death = 1
@@ -158,22 +161,60 @@ slot $explode()
         link.soundeffects_ptr->playSound(SND_EXPLODE_3)
         link.soundeffects_ptr->playSound(SND_ARC)
         anims[0].hardSwitch(2)
-
-        for i = 0 to MAX_RAYCAST_ATTEMPTS - 1
-            randAngle = rnd*(_PI_*2)
-            v = Vector2D(cos(randAngle), sin(randAngle))*RAYCAST_DIST
-            dist = link.tinyspace_ptr->raycast(p, v, pt)
-            if dist >= 0 then
-           
-                data.arcs[data.arcs_n].arcID = link.electricarc_ptr->create()
-                data.arcs[data.arcs_n].bPos = (Vector2D(0,rnd)-Vector2D(0,0.5))*10 - Vector2D(1,4)
-                data.arcs[data.arcs_n].endPos = pt
-                link.electricarc_ptr->setPoints(data.arcs[data.arcs_n].arcID, p + data.arcs[data.arcs_n].bPos, pt)
-
-                data.arcs_n += 1
-                if data.arcs_n = 4 then exit for
+        
+        querySlots(targets, "shock target", @Circle2D(Vector2D(p.x, p.y), RAYCAST_DIST))
+        
+        minDist = RAYCAST_DIST + 1
+        targetMember = -1
+        for i = 0 to targets.getMember_N() - 1
+            targets.getGeometry(shape, i)
+            shape->getBoundingBox(btl, bbr)
+            centroid = (btl + bbr) * 0.5
+            dist = (centroid - p).magnitude()
+            if dist < minDist then
+                minTL = btl
+                minBR = bbr
+                minDist = dist
+                targetMember = i
+                minCentroid = centroid
             end if
         next i
+        if targetMember <> -1 then
+            targets.throwMember(targetMember)
+            data.arcs_n = int(rnd * 2) + 1
+            
+            for i = 0 to data.arcs_n - 1
+                centroid = Vector2D((minBR.x - minTL.x), (minBR.y - minTL.y)) / Sqr(2)
+                destP = Vector2D(centroid.x * rnd, centroid.y * rnd) - centroid*0.5 + minCentroid
+          
+                data.arcs[i].arcID = link.electricarc_ptr->create()
+                data.arcs[i].bPos = (Vector2D(0,rnd)-Vector2D(0,0.5))*10 - Vector2D(1,4)
+                data.arcs[i].endPos = destP
+                link.electricarc_ptr->setPoints(data.arcs[i].arcID, p + data.arcs[i].bPos, data.arcs[i].endPos)                
+            next i
+        end if
+            
+        if data.arcs_n < 4 then
+            for i = 0 to MAX_RAYCAST_ATTEMPTS - 1
+                randAngle = rnd*(_PI_*2)
+                if targetMember = -1 then
+                    v = Vector2D(cos(randAngle), sin(randAngle))*RAYCAST_DIST
+                else
+                    v = Vector2D(cos(randAngle), sin(randAngle))*RAYCAST_DIST*0.25
+                end if
+                dist = link.tinyspace_ptr->raycast(p, v, pt)
+                if dist >= 0 then
+               
+                    data.arcs[data.arcs_n].arcID = link.electricarc_ptr->create()
+                    data.arcs[data.arcs_n].bPos = (Vector2D(0,rnd)-Vector2D(0,0.5))*10 - Vector2D(1,4)
+                    data.arcs[data.arcs_n].endPos = pt
+                    link.electricarc_ptr->setPoints(data.arcs[data.arcs_n].arcID, p + data.arcs[data.arcs_n].bPos, pt)
+
+                    data.arcs_n += 1
+                    if data.arcs_n = 4 then exit for
+                end if
+            next i
+        end if
         
         data.deathFrames = RUN_TIME
     end if

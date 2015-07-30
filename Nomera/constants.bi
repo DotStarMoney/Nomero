@@ -4,6 +4,7 @@
 #include "debug.bi"
 
 '#define SCALE_2X
+'#define SCALE_ELLIOTT
 #define SCRX 640
 #define SCRY 480
 

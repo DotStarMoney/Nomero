@@ -16,6 +16,7 @@ enum Projectiles
     HEART
     WATER_DROP
     BULLET
+    SPARK
 end enum
 
 
@@ -25,6 +26,7 @@ type Projectile_t
     as Animation anim
     as Projectiles flavor
     as integer lifeFrames
+    as integer data0
 end type
 
 

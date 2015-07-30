@@ -204,6 +204,7 @@ sub Item.ANTIPERSONNELMINE_SLOT_EXPLODE(pvPair() as _Item_slotValuePair_t)
         for i = 1 to 5
             link.projectilecollection_ptr->create(p, Vector2D(rnd*2 - 1.0, rnd*2 - 1.0) * (300 + rnd*700), DETRITIS)
         next i
+        link.gamespace_ptr->setShakeStyle(0)
         link.gamespace_ptr->vibrateScreen()
         link.level_ptr->addFallout(p.x, p.y)
     end if
@@ -448,9 +449,12 @@ end sub
 #define ITEM_ELECTRICMINE_DEFINE_BOMB_STICKYNESS 0
 #define ITEM_ELECTRICMINE_DEFINE_MINE_FREEFALL_MAX 30
 sub Item.ELECTRICMINE_SLOT_EXPLODE(pvPair() as _Item_slotValuePair_t)
-    dim as integer i
-    dim as double randAngle, dist
-    dim as Vector2D v, pt
+    dim as integer i, targetMember
+    dim as double randAngle, dist, minDist
+    dim as Vector2D v, pt, btl, bbr, centroid, destP
+    dim as Vector2D minCentroid, minTL, minBR
+    dim as Shape2D ptr shape
+    dim as ObjectSlotSet targets
     
     if data_.ELECTRICMINE_DATA->death = 0 then
         data_.ELECTRICMINE_DATA->death = 1
@@ -458,22 +462,60 @@ sub Item.ELECTRICMINE_SLOT_EXPLODE(pvPair() as _Item_slotValuePair_t)
         link.soundeffects_ptr->playSound(SND_EXPLODE_3)
         link.soundeffects_ptr->playSound(SND_ARC)
         anims[0].hardSwitch(2)
-
-        for i = 0 to ITEM_ELECTRICMINE_DEFINE_MAX_RAYCAST_ATTEMPTS - 1
-            randAngle = rnd*(_PI_*2)
-            v = Vector2D(cos(randAngle), sin(randAngle))*ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST
-            dist = link.tinyspace_ptr->raycast(p, v, pt)
-            if dist >= 0 then
-           
-                data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].arcID = link.electricarc_ptr->create()
-                data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].bPos = (Vector2D(0,rnd)-Vector2D(0,0.5))*10 - Vector2D(1,4)
-                data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].endPos = pt
-                link.electricarc_ptr->setPoints(data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].arcID, p + data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].bPos, pt)
-
-                data_.ELECTRICMINE_DATA->arcs_n += 1
-                if data_.ELECTRICMINE_DATA->arcs_n = 4 then exit for
+        
+        querySlots(targets, "shock target", @Circle2D(Vector2D(p.x, p.y), ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST))
+        
+        minDist = ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST + 1
+        targetMember = -1
+        for i = 0 to targets.getMember_N() - 1
+            targets.getGeometry(shape, i)
+            shape->getBoundingBox(btl, bbr)
+            centroid = (btl + bbr) * 0.5
+            dist = (centroid - p).magnitude()
+            if dist < minDist then
+                minTL = btl
+                minBR = bbr
+                minDist = dist
+                targetMember = i
+                minCentroid = centroid
             end if
         next i
+        if targetMember <> -1 then
+            targets.throwMember(targetMember)
+            data_.ELECTRICMINE_DATA->arcs_n = int(rnd * 2) + 1
+            
+            for i = 0 to data_.ELECTRICMINE_DATA->arcs_n - 1
+                centroid = Vector2D((minBR.x - minTL.x), (minBR.y - minTL.y)) / Sqr(2)
+                destP = Vector2D(centroid.x * rnd, centroid.y * rnd) - centroid*0.5 + minCentroid
+          
+                data_.ELECTRICMINE_DATA->arcs[i].arcID = link.electricarc_ptr->create()
+                data_.ELECTRICMINE_DATA->arcs[i].bPos = (Vector2D(0,rnd)-Vector2D(0,0.5))*10 - Vector2D(1,4)
+                data_.ELECTRICMINE_DATA->arcs[i].endPos = destP
+                link.electricarc_ptr->setPoints(data_.ELECTRICMINE_DATA->arcs[i].arcID, p + data_.ELECTRICMINE_DATA->arcs[i].bPos, data_.ELECTRICMINE_DATA->arcs[i].endPos)                
+            next i
+        end if
+            
+        if data_.ELECTRICMINE_DATA->arcs_n < 4 then
+            for i = 0 to ITEM_ELECTRICMINE_DEFINE_MAX_RAYCAST_ATTEMPTS - 1
+                randAngle = rnd*(_PI_*2)
+                if targetMember = -1 then
+                    v = Vector2D(cos(randAngle), sin(randAngle))*ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST
+                else
+                    v = Vector2D(cos(randAngle), sin(randAngle))*ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST*0.25
+                end if
+                dist = link.tinyspace_ptr->raycast(p, v, pt)
+                if dist >= 0 then
+               
+                    data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].arcID = link.electricarc_ptr->create()
+                    data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].bPos = (Vector2D(0,rnd)-Vector2D(0,0.5))*10 - Vector2D(1,4)
+                    data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].endPos = pt
+                    link.electricarc_ptr->setPoints(data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].arcID, p + data_.ELECTRICMINE_DATA->arcs[data_.ELECTRICMINE_DATA->arcs_n].bPos, pt)
+
+                    data_.ELECTRICMINE_DATA->arcs_n += 1
+                    if data_.ELECTRICMINE_DATA->arcs_n = 4 then exit for
+                end if
+            next i
+        end if
         
         data_.ELECTRICMINE_DATA->deathFrames = ITEM_ELECTRICMINE_DEFINE_RUN_TIME
     end if
@@ -702,7 +744,7 @@ sub Item.FREIGHTELEVATOR_PROC_DRAW(scnbuff as integer ptr)
     dim as Vector2D startPos
     PREP_LIT_ANIMATION()
     
-    DRAW_LIT_ANIMATION(0, data_.FREIGHTELEVATOR_DATA->elevatorPos.x, data_.FREIGHTELEVATOR_DATA->elevatorPos.y, 0, 0)
+    DRAW_LIT_ANIMATION_BRIGHT(0, data_.FREIGHTELEVATOR_DATA->elevatorPos.x, data_.FREIGHTELEVATOR_DATA->elevatorPos.y, 0, 0)
     
     getValue(interact, "interact")
     if interact = 0 then anims[1].drawAnimation(scnbuff, data_.FREIGHTELEVATOR_DATA->elevatorPos.x + 55, data_.FREIGHTELEVATOR_DATA->elevatorPos.y + 36)
@@ -715,7 +757,7 @@ sub Item.FREIGHTELEVATOR_PROC_DRAW(scnbuff as integer ptr)
             startPos.ys -= 16
         else
             anims[2].setClippingBoundaries(0,p.y - startPos.y,0,0)
-            DRAW_LIT_ANIMATION(2, startPos.x, startPos.y, 0, 0)            
+            DRAW_LIT_ANIMATION(2, startPos.x, p.y, 0, 0)            
             exit while
         end if
     wend 
@@ -841,6 +883,409 @@ sub Item.INTERFACE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.INTERFACE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_INTERFACE_SLOT_INTERACT_E)
+end sub
+sub Item.MOMENTARYTOGGLESWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    if data_.MOMENTARYTOGGLESWITCH_DATA->toggleCycle = 0 then
+        data_.MOMENTARYTOGGLESWITCH_DATA->toggleCycle = 30
+        link.soundeffects_ptr->playSound(SND_CLACKUP)
+        anims[1].play()
+        anims[2].play()    
+        throw("ACTIVATE")
+    end if
+end sub
+sub Item.MOMENTARYTOGGLESWITCH_PROC_INIT()
+    data_.MOMENTARYTOGGLESWITCH_DATA = new ITEM_MOMENTARYTOGGLESWITCH_TYPE_DATA
+    data_.MOMENTARYTOGGLESWITCH_DATA->toggleCycle = 0
+    
+    anims_n = 3
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "switch.txt")
+    anims[1].load(MEDIA_PATH + "switch.txt")
+    anims[1].hardSwitch(1)
+    anims[2].load(MEDIA_PATH + "switch.txt")
+    anims[2].hardSwitch(2)
+    
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 48)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.MOMENTARYTOGGLESWITCH_PROC_FLUSH()
+ 
+    if anims_n then delete(anims)
+    if data_.MOMENTARYTOGGLESWITCH_DATA then delete(data_.MOMENTARYTOGGLESWITCH_DATA)
+    data_.MOMENTARYTOGGLESWITCH_DATA = 0
+end sub
+function Item.MOMENTARYTOGGLESWITCH_PROC_RUN(t as double) as integer
+    anims[1].step_animation()
+    anims[2].step_animation()
+    
+    if data_.MOMENTARYTOGGLESWITCH_DATA->toggleCycle > 0 then
+        data_.MOMENTARYTOGGLESWITCH_DATA->toggleCycle -= 1
+        if data_.MOMENTARYTOGGLESWITCH_DATA->toggleCycle = 1 then link.soundeffects_ptr->playSound(SND_CLACKDOWN)
+    else
+        anims[1].restart()
+        anims[2].restart()    
+    end if
+    return 0
+end function
+sub Item.MOMENTARYTOGGLESWITCH_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer facing, flags
+    PREP_LIT_ANIMATION()
+    
+    flags = 0
+    getParameter(facing, "facing")
+    if facing = -1 then 
+        flags = 0
+    elseif facing = 1 then
+        flags = 4
+    end if
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y + 16, flags, 0)
+    DRAW_LIT_ANIMATION(1, p.x, p.y, flags, 0)
+    anims[2].drawAnimation(scnbuff, p.x, p.y,,flags)
+end sub
+sub Item.MOMENTARYTOGGLESWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.MOMENTARYTOGGLESWITCH_PROC_CONSTRUCT()
+    _initAddSignal_("ACTIVATE")
+    _initAddSlot_("INTERACT", ITEM_MOMENTARYTOGGLESWITCH_SLOT_INTERACT_E)
+    _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
+end sub
+#define ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES 20
+sub Item.doBubbles(t as double)
+    dim as integer i
+    if int(rnd * 10) = 0 then
+        for i = 0 to ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES - 1
+            if data_.PUZZLETUBE1_DATA->bubbles[i].exists = 0 then
+                data_.PUZZLETUBE1_DATA->bubbles[i].exists = 1
+                data_.PUZZLETUBE1_DATA->bubbles[i].p = p + Vector2D(10 + int(rnd * (size.x - 20)), size.y - int(rnd * 8) - 8)
+                data_.PUZZLETUBE1_DATA->bubbles[i].v = Vector2D(0, -3)
+                data_.PUZZLETUBE1_DATA->bubbles[i].size = int(rnd * 2) + 1
+                exit for
+            end if
+        next i
+    end if
+    for i = 0 to ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES - 1
+        if data_.PUZZLETUBE1_DATA->bubbles[i].exists = 1 then
+            data_.PUZZLETUBE1_DATA->bubbles[i].p += data_.PUZZLETUBE1_DATA->bubbles[i].v + vector2D(int(rnd * 3) - 1, 0)
+            if data_.PUZZLETUBE1_DATA->bubbles[i].p.x < p.x + 10 then 
+                data_.PUZZLETUBE1_DATA->bubbles[i].p.xs = p.x + 10
+            elseif data_.PUZZLETUBE1_DATA->bubbles[i].p.x > p.x + size.x - 10 then 
+                data_.PUZZLETUBE1_DATA->bubbles[i].p.xs =  p.x + size.x - 10
+            end if
+            if data_.PUZZLETUBE1_DATA->bubbles[i].p.y < (p.y + data_.PUZZLETUBE1_DATA->drawLevel + 15) then data_.PUZZLETUBE1_DATA->bubbles[i].exists = 0
+        end if    
+    next i
+end sub
+sub Item.PUZZLETUBE1_SLOT_ACTIVATE(pvPair() as _Item_slotValuePair_t)
+    dim as integer amount
+    matchParameter(amount, "AMOUNT", pvPair())
+    if data_.PUZZLETUBE1_DATA->isLocked = 0 then data_.PUZZLETUBE1_DATA->targetLevel += amount
+end sub
+sub Item.PUZZLETUBE1_SLOT_RESET(pvPair() as _Item_slotValuePair_t)
+    if data_.PUZZLETUBE1_DATA->isLocked = 0 then data_.PUZZLETUBE1_DATA->targetLevel = 0
+end sub
+sub Item.PUZZLETUBE1_SLOT_LOCKUP(pvPair() as _Item_slotValuePair_t)
+    data_.PUZZLETUBE1_DATA->isLocked = 1
+end sub
+sub Item.PUZZLETUBE1_SLOT_SETUP(pvPair() as _Item_slotValuePair_t)
+    dim as integer startLevel
+    matchParameter(startLevel, "STARTLEVEL", pvPair())
+    data_.PUZZLETUBE1_DATA->targetLevel = startLevel
+end sub
+sub Item.PUZZLETUBE1_PROC_INIT()
+    data_.PUZZLETUBE1_DATA = new ITEM_PUZZLETUBE1_TYPE_DATA
+    dim as integer i
+
+    data_.PUZZLETUBE1_DATA->tubeLevel = 0
+    data_.PUZZLETUBE1_DATA->targetLevel = 0
+    data_.PUZZLETUBE1_DATA->isLocked = 0
+    data_.PUZZLETUBE1_DATA->bubbles = new ITEM_PUZZLETUBE1_TYPE_bubble_t[ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES]
+    for i = 0 to ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES - 1
+        data_.PUZZLETUBE1_DATA->bubbles[i].exists = 0
+    next i
+
+    setValue(0, "level")
+    
+    
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "teleportertubes.txt")
+    anims[1].load(MEDIA_PATH + "teleportertubes.txt")
+    anims[1].hardSwitch(1)
+    anims[2].load(MEDIA_PATH + "teleportertubes.txt")
+    anims[2].hardSwitch(2)    
+    
+
+    _initAddValue_("LEVEL", _ITEM_VALUE_INTEGER)
+    link.dynamiccontroller_ptr->addPublishedValue(ID, "LEVEL")
+end sub
+sub Item.PUZZLETUBE1_PROC_FLUSH()
+    delete(data_.PUZZLETUBE1_DATA->bubbles)
+    if anims_n then delete(anims)
+    if data_.PUZZLETUBE1_DATA then delete(data_.PUZZLETUBE1_DATA)
+    data_.PUZZLETUBE1_DATA = 0
+end sub
+function Item.PUZZLETUBE1_PROC_RUN(t as double) as integer
+        
+    if abs(data_.PUZZLETUBE1_DATA->tubeLevel - data_.PUZZLETUBE1_DATA->targetLevel) > 0.09 then
+        if data_.PUZZLETUBE1_DATA->tubeLevel < data_.PUZZLETUBE1_DATA->targetLevel then
+            data_.PUZZLETUBE1_DATA->tubeLevel += 0.1
+        elseif data_.PUZZLETUBE1_DATA->tubeLevel > data_.PUZZLETUBE1_DATA->targetLevel then
+            data_.PUZZLETUBE1_DATA->tubeLevel -= 0.1    
+        end if
+    else
+        setValue(data_.PUZZLETUBE1_DATA->targetLevel, "level")
+    end if
+    if data_.PUZZLETUBE1_DATA->tubeLevel > 20.0000001 then          
+        data_.PUZZLETUBE1_DATA->tubeLevel = 20
+        data_.PUZZLETUBE1_DATA->targetLevel = 0
+        throw("FAILURE")
+    end if
+    doBubbles(t)
+    return 0
+end function
+sub Item.PUZZLETUBE1_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer i
+    
+    data_.PUZZLETUBE1_DATA->drawLevel = 142 - data_.PUZZLETUBE1_DATA->tubeLevel * (142.0 / 20.0)
+    anims[1].setClippingBoundaries(0, 16 + data_.PUZZLETUBE1_DATA->drawLevel, 0, 0)
+    anims[1].drawAnimation(scnbuff, p.x, 17 + p.y + data_.PUZZLETUBE1_DATA->drawLevel,,,ANIM_TRANS)
+    anims[1].setClippingBoundaries(0, 0, 0, 175)
+    anims[1].drawAnimation(scnbuff, p.x, p.y + data_.PUZZLETUBE1_DATA->drawLevel,,,ANIM_TRANS)
+    
+    for i = 0 to ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES - 1
+        if data_.PUZZLETUBE1_DATA->bubbles[i].exists = 1 then
+            circle scnbuff, (data_.PUZZLETUBE1_DATA->bubbles[i].p.x, data_.PUZZLETUBE1_DATA->bubbles[i].p.y), data_.PUZZLETUBE1_DATA->bubbles[i].size, rgb(110,180,255),,,,F
+        end if
+    next i
+  
+    bitblt_addRGBA_Clip(scnbuff, p.x - link.gamespace_ptr->camera.x + SCRX*0.5, p.y - link.gamespace_ptr->camera.y + SCRY*0.5, anims[2].getRawImage, 96, 0, 143, 191)   
+    anims[0].drawAnimation(scnbuff, p.x, p.y,,,ANIM_TRANS)
+end sub
+sub Item.PUZZLETUBE1_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.PUZZLETUBE1_PROC_CONSTRUCT()
+    _initAddSignal_("FAILURE")
+    _initAddSlot_("ACTIVATE", ITEM_PUZZLETUBE1_SLOT_ACTIVATE_E)
+    _initAddSlot_("RESET", ITEM_PUZZLETUBE1_SLOT_RESET_E)
+    _initAddSlot_("LOCKUP", ITEM_PUZZLETUBE1_SLOT_LOCKUP_E)
+    _initAddSlot_("SETUP", ITEM_PUZZLETUBE1_SLOT_SETUP_E)
+end sub
+sub Item.initializeTubes()
+    dim as integer i
+    if data_.PUZZLE1234_DATA->hasInit = 0 then
+        data_.PUZZLE1234_DATA->hasInit = 1
+        for i = 0 to 3
+            fireExternalSlot(*(data_.PUZZLE1234_DATA->tubeIDs[i]), "setup", "startLevel = " + str(data_.PUZZLE1234_DATA->startValues[i]))                    
+        next i        
+    end if
+end sub
+sub Item.PUZZLE1234_SLOT_RESET(pvPair() as _Item_slotValuePair_t)
+    if data_.PUZZLE1234_DATA->complete = 0 then
+        data_.PUZZLE1234_DATA->curValue = data_.PUZZLE1234_DATA->startValue
+        data_.PUZZLE1234_DATA->hasInit = 0
+    end if
+end sub
+sub Item.PUZZLE1234_SLOT_CYCLE(pvPair() as _Item_slotValuePair_t)
+    dim as integer target
+    matchParameter(target, "TARGET", pvPair())
+    dim as string tubeID
+    if data_.PUZZLE1234_DATA->complete = 0 then
+        if target < 1 orElse target > 4 then target = 1
+        fireExternalSlot(*(data_.PUZZLE1234_DATA->tubeIDs[target - 1]), "activate", "amount = " + str(data_.PUZZLE1234_DATA->curValue + 1))
+        data_.PUZZLE1234_DATA->curValue = (data_.PUZZLE1234_DATA->curValue + 1) mod 4
+    end if
+end sub
+sub Item.PUZZLE1234_PROC_INIT()
+    data_.PUZZLE1234_DATA = new ITEM_PUZZLE1234_TYPE_DATA
+    dim as integer i
+    dim as string tubeName
+    
+    data_.PUZZLE1234_DATA->startValue = 0
+    data_.PUZZLE1234_DATA->complete = 0
+    
+    data_.PUZZLE1234_DATA->startValues = new integer[4]
+    data_.PUZZLE1234_DATA->startValues[0] = 17 
+    data_.PUZZLE1234_DATA->startValues[1] = 17 
+    data_.PUZZLE1234_DATA->startValues[2] = 13 
+    data_.PUZZLE1234_DATA->startValues[3] = 13 
+    
+    data_.PUZZLE1234_DATA->values = new integer[4]
+    data_.PUZZLE1234_DATA->values[0] = 1
+    data_.PUZZLE1234_DATA->values[1] = 2
+    data_.PUZZLE1234_DATA->values[2] = 3
+    data_.PUZZLE1234_DATA->values[3] = 4
+    data_.PUZZLE1234_DATA->hasInit = 0
+    
+    data_.PUZZLE1234_DATA->curValue = data_.PUZZLE1234_DATA->startValue
+    
+    
+    anims_n = 1
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "nixie.txt")
+    
+    data_.PUZZLE1234_DATA->tubeIDs = new zstring ptr[4]
+    
+    for i = 0 to 3
+        getParameter(tubeName, "tubeID" + str(i + 1))
+        data_.PUZZLE1234_DATA->tubeIDs[i] = allocate(len(tubeName) + 1)
+        *(data_.PUZZLE1234_DATA->tubeIDs[i]) = tubeName
+    next i
+    
+    _initAddValue_("CURCYCLE", _ITEM_VALUE_INTEGER)
+    link.dynamiccontroller_ptr->addPublishedValue(ID, "CURCYCLE")
+end sub
+sub Item.PUZZLE1234_PROC_FLUSH()
+    dim as integer i
+    for i = 0 to 3
+        deallocate(data_.PUZZLE1234_DATA->tubeIDs[i])
+    next i
+    delete(data_.PUZZLE1234_DATA->tubeIDs)
+    delete(data_.PUZZLE1234_DATA->values)
+    delete(data_.PUZZLE1234_DATA->tubeIDs)
+    if anims_n then delete(anims)
+    if data_.PUZZLE1234_DATA then delete(data_.PUZZLE1234_DATA)
+    data_.PUZZLE1234_DATA = 0
+end sub
+function Item.PUZZLE1234_PROC_RUN(t as double) as integer
+    dim as integer total, i, curLevel
+    
+    initializeTubes()
+    
+    total = 0
+    for i = 0 to 3
+        getOtherValue(curLevel, *(data_.PUZZLE1234_DATA->tubeIDs[i]), "level")        
+        total += curLevel
+    next i
+    if total = 80 andAlso data_.PUZZLE1234_DATA->complete = 0 then
+        data_.PUZZLE1234_DATA->complete = 1
+        data_.PUZZLE1234_DATA->completeDance = 94
+        data_.PUZZLE1234_DATA->curValue = 0
+        for i = 0 to 3
+            fireExternalSlot(*(data_.PUZZLE1234_DATA->tubeIDs[i]), "lockUp")        
+        next i    
+        throw("SOLVED")
+        link.soundeffects_ptr->playSound(SND_SUCCESS)
+        
+        
+    end if
+    if data_.PUZZLE1234_DATA->completeDance > 0 then 
+        data_.PUZZLE1234_DATA->completeDance -= 1
+        if (data_.PUZZLE1234_DATA->completeDance mod 4) = 0 then data_.PUZZLE1234_DATA->curValue = (data_.PUZZLE1234_DATA->curValue + 1) mod 4
+    end if
+    if data_.PUZZLE1234_DATA->completeDance = 0 andAlso data_.PUZZLE1234_DATA->complete = 1 then data_.PUZZLE1234_DATA->curValue = -1
+    return 0
+end function
+sub Item.PUZZLE1234_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer posX, posY, frame
+    dim as integer i
+    dim as zimage ptr nimage
+    PREP_LIT_ANIMATION()
+    for i = 0 to 3
+       
+        frame = data_.PUZZLE1234_DATA->values[i]
+        if i <> data_.PUZZLE1234_DATA->curValue then frame = 36
+        
+        posX = (frame * 16) mod 320
+        posY = int((frame * 16) / 320) * 32
+        if data_.PUZZLE1234_DATA->curValue = i then
+            nimage = anims[0].getRawZImage()
+            nimage->putTRANS(scnbuff, p.x + i*16, p.y, posX, posY, posX+15, posY+31)  
+        else
+            anims[0].drawImageLit(scnbuff, p.x + i*16, p.y, posX, posY, posX+15, posY+31,_
+                                 lights, numLights, link.level_ptr->getObjectAmbientLevel())   
+        end if
+ 
+    next i
+    for i = 0 to 3
+        if data_.PUZZLE1234_DATA->curValue = i then nimage->putGLOW(scnbuff, p.x + i*16 - 16, p.y - 5, 272, 32, 319, 63, &hFFFFFFFF)
+    next i
+end sub
+sub Item.PUZZLE1234_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.PUZZLE1234_PROC_CONSTRUCT()
+    _initAddSignal_("SOLVED")
+    _initAddSlot_("RESET", ITEM_PUZZLE1234_SLOT_RESET_E)
+    _initAddSlot_("CYCLE", ITEM_PUZZLE1234_SLOT_CYCLE_E)
+    _initAddParameter_("TUBEID1", _ITEM_VALUE_ZSTRING)
+    _initAddParameter_("TUBEID2", _ITEM_VALUE_ZSTRING)
+    _initAddParameter_("TUBEID3", _ITEM_VALUE_ZSTRING)
+    _initAddParameter_("TUBEID4", _ITEM_VALUE_ZSTRING)
+end sub
+sub Item.SHOCKTARGET1_SLOT_SHOCKTARGET(pvPair() as _Item_slotValuePair_t)
+    throw("ACTIVATE")
+    data_.SHOCKTARGET1_DATA->cycleTime = 50
+    anims[1].play()
+end sub
+sub Item.SHOCKTARGET1_PROC_INIT()
+    data_.SHOCKTARGET1_DATA = new ITEM_SHOCKTARGET1_TYPE_DATA
+
+    data_.SHOCKTARGET1_DATA->cycleTime = 0
+    
+    anims_n = 5
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "pawn.txt")
+    anims[1].load(MEDIA_PATH + "pawn.txt")
+    anims[1].hardSwitch(1)
+    anims[2].load(MEDIA_PATH + "pawn.txt")
+    anims[2].hardSwitch(2)    
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 3, 4, 0)  
+
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    fastLight = 0
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "SHOCK TARGET", "SHOCKTARGET", new Circle2D(Vector2D(24,19), 5))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "SHOCK TARGET", p)
+end sub
+sub Item.SHOCKTARGET1_PROC_FLUSH()
+ 
+    if anims_n then delete(anims)
+    if data_.SHOCKTARGET1_DATA then delete(data_.SHOCKTARGET1_DATA)
+    data_.SHOCKTARGET1_DATA = 0
+end sub
+function Item.SHOCKTARGET1_PROC_RUN(t as double) as integer
+    
+    anims[1].step_animation()
+
+    if data_.SHOCKTARGET1_DATA->cycleTime > 0 then 
+        if data_.SHOCKTARGET1_DATA->cycleTime >= 45 then
+            link.projectilecollection_ptr->create(Vector2D(p.x + 24, p.y + 19), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK)
+            link.projectilecollection_ptr->create(Vector2D(p.x + 24, p.y + 19), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK)
+        end if
+        if (data_.SHOCKTARGET1_DATA->cycleTime shr 1) and 1 then
+            lightState = 1
+        else
+            lightState = 0
+        end if
+        data_.SHOCKTARGET1_DATA->cycleTime -= 1
+    else
+        anims[1].restart()
+    end if
+    return 0
+end function
+sub Item.SHOCKTARGET1_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+    
+    if anims[1].getFrame() = 0 then
+        DRAW_LIT_ANIMATION_BRIGHT(1, p.x, p.y, 0, 0)
+    else
+        anims[1].drawAnimation(scnbuff, p.x, p.y,,,ANIM_TRANS)
+        anims[2].drawAnimation(scnbuff, p.x, p.y)
+    end if
+end sub
+sub Item.SHOCKTARGET1_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.SHOCKTARGET1_PROC_CONSTRUCT()
+    _initAddSignal_("ACTIVATE")
+    _initAddSlot_("SHOCKTARGET", ITEM_SHOCKTARGET1_SLOT_SHOCKTARGET_E)
 end sub
 sub Item.SMALLOSCILLOSCOPE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     data_.SMALLOSCILLOSCOPE_DATA->dontDraw = 1 - data_.SMALLOSCILLOSCOPE_DATA->dontDraw
@@ -1058,4 +1503,154 @@ end sub
 sub Item.TANDY2000_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_TANDY2000_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.TELEPORTERSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    dim as integer enabled
+    dim as integer i
+    getParameter(enabled, "disable")
+    enabled = 1 - enabled
+    if data_.TELEPORTERSWITCH_DATA->cycleTime = 0 then
+        if enabled = 0 then
+            data_.TELEPORTERSWITCH_DATA->cycleTime = 30 
+        else
+            data_.TELEPORTERSWITCH_DATA->state = 1  
+            setValue(1, "interact")
+            data_.TELEPORTERSWITCH_DATA->flashCycle = 2
+            for i = 0 to 9
+                link.projectilecollection_ptr->create(Vector2D(p.x + 16, p.y + 33), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK)
+                link.projectilecollection_ptr->create(Vector2D(p.x + 16, p.y + 33), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK)
+            next i
+            lightState = 1
+            
+            
+            link.level_ptr->fadeMistOut()
+            link.gamespace_ptr->lockAction = 1
+            link.gamespace_ptr->fadeMusicOut()
+            
+  
+        end if
+        anims[0].play()
+        link.soundeffects_ptr->playSound(SND_CLACKDOWN)
+    end if
+end sub
+sub Item.TELEPORTERSWITCH_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
+    setParameter(0, "disable")
+end sub
+sub Item.TELEPORTERSWITCH_PROC_INIT()
+    data_.TELEPORTERSWITCH_DATA = new ITEM_TELEPORTERSWITCH_TYPE_DATA
+
+    data_.TELEPORTERSWITCH_DATA->cycleTime = 0
+    data_.TELEPORTERSWITCH_DATA->state = 0
+    
+    CREATE_ANIMS(4)
+    anims[0].load(MEDIA_PATH + "teleporterswitch.txt")
+    anims[1].load(MEDIA_PATH + "teleporterswitch.txt")
+    anims[1].hardSwitch(1)
+    
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 2, 3, 1)  
+
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+   
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 64)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+    _initAddValue_("INTERACT", _ITEM_VALUE_INTEGER)
+    link.dynamiccontroller_ptr->addPublishedValue(ID, "INTERACT")
+end sub
+sub Item.TELEPORTERSWITCH_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.TELEPORTERSWITCH_DATA then delete(data_.TELEPORTERSWITCH_DATA)
+    data_.TELEPORTERSWITCH_DATA = 0
+end sub
+function Item.TELEPORTERSWITCH_PROC_RUN(t as double) as integer
+    anims[0].step_animation()
+    if data_.TELEPORTERSWITCH_DATA->cycleTime = 1 then link.soundeffects_ptr->playSound(SND_CLACKUP)
+    if data_.TELEPORTERSWITCH_DATA->cycleTime > 0 then data_.TELEPORTERSWITCH_DATA->cycleTime -= 1
+    if data_.TELEPORTERSWITCH_DATA->cycleTime = 0 andAlso data_.TELEPORTERSWITCH_DATA->state = 0 then
+        anims[0].restart()
+        anims[0].pause()    
+    end if
+    if data_.TELEPORTERSWITCH_DATA->flashCycle > 0 then 
+        lightState = 1
+        data_.TELEPORTERSWITCH_DATA->flashCycle -= 1
+    else
+        lightState = 0
+    end if
+    
+    return 0
+end function
+sub Item.TELEPORTERSWITCH_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+     
+    if data_.TELEPORTERSWITCH_DATA->flashCycle = 0 then
+        DRAW_LIT_ANIMATION_BRIGHT(0, p.x, p.y, 0, 0)
+    else
+        anims[1].drawAnimation(scnbuff, p.x, p.y)
+    end if
+end sub
+sub Item.TELEPORTERSWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.TELEPORTERSWITCH_PROC_CONSTRUCT()
+    _initAddSignal_("ACTIVATE")
+    _initAddSlot_("INTERACT", ITEM_TELEPORTERSWITCH_SLOT_INTERACT_E)
+    _initAddSlot_("ENABLE", ITEM_TELEPORTERSWITCH_SLOT_ENABLE_E)
+    _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.TUBEPUZZLEMAP_SLOT_UPDATE(pvPair() as _Item_slotValuePair_t)
+    data_.TUBEPUZZLEMAP_DATA->cycle = 20
+    data_.TUBEPUZZLEMAP_DATA->state = 1
+end sub
+sub Item.TUBEPUZZLEMAP_PROC_INIT()
+    data_.TUBEPUZZLEMAP_DATA = new ITEM_TUBEPUZZLEMAP_TYPE_DATA
+    
+    data_.TUBEPUZZLEMAP_DATA->cycle = 0
+    data_.TUBEPUZZLEMAP_DATA->state = 0
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "roommapled.txt")
+    
+    
+end sub
+sub Item.TUBEPUZZLEMAP_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.TUBEPUZZLEMAP_DATA then delete(data_.TUBEPUZZLEMAP_DATA)
+    data_.TUBEPUZZLEMAP_DATA = 0
+end sub
+function Item.TUBEPUZZLEMAP_PROC_RUN(t as double) as integer
+    anims[0].step_animation()
+    if data_.TUBEPUZZLEMAP_DATA->cycle > 0 then 
+        data_.TUBEPUZZLEMAP_DATA->cycle -= 1
+    else
+        if data_.TUBEPUZZLEMAP_DATA->state > 0 andAlso data_.TUBEPUZZLEMAP_DATA->state < 4 then
+            if data_.TUBEPUZZLEMAP_DATA->state = 2 then anims[0].play()
+            data_.TUBEPUZZLEMAP_DATA->state += 1
+            data_.TUBEPUZZLEMAP_DATA->cycle = 20
+        end if
+    end if
+    return 0
+end function
+sub Item.TUBEPUZZLEMAP_PROC_DRAW(scnbuff as integer ptr)
+    if data_.TUBEPUZZLEMAP_DATA->state = 0 then
+        anims[0].drawAnimation(scnbuff, p.x, p.y)
+    elseif data_.TUBEPUZZLEMAP_DATA->state = 1 then 
+        if int(rnd * 3) = 0 then anims[0].drawAnimation(scnbuff, p.x, p.y)
+    elseif data_.TUBEPUZZLEMAP_DATA->state = 2 then
+        
+    elseif data_.TUBEPUZZLEMAP_DATA->state = 3 then
+        if int(rnd * 3) = 0 then anims[0].drawAnimation(scnbuff, p.x, p.y)
+    elseif data_.TUBEPUZZLEMAP_DATA->state = 4 then
+        anims[0].drawAnimation(scnbuff, p.x, p.y)
+    end if
+end sub
+sub Item.TUBEPUZZLEMAP_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.TUBEPUZZLEMAP_PROC_CONSTRUCT()
+    _initAddSlot_("UPDATE", ITEM_TUBEPUZZLEMAP_SLOT_UPDATE_E)
 end sub

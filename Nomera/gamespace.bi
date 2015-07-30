@@ -38,10 +38,13 @@ type GameSpace
         declare function getLastPosition() as Vector2D
         declare sub hardSwitchMusic(filename as string)
         declare sub setMusicVolume(v as integer)
+        declare sub fadeMusicIn()
+        declare sub fadeMusicOut()
+        declare sub resetMusicFade()
         
         '---------- screen functions -------------
-        
-        declare sub vibrateScreen()
+        declare sub setShakeStyle(style as integer)
+        declare sub vibrateScreen(vibAmount as integer = 8)
         as Vector2D lastSpawn
         as string lastMap
         as integer lockAction
@@ -56,13 +59,17 @@ type GameSpace
         declare sub step_process()
         declare sub doGameEnd()
         
-        as integer ptr hud_image
         
+        as integer ptr hud_image
+        as integer musicVol
+        as integer musicVolDir
+        as integer slowdownShake
         as integer vibCount
         as string curMusic
         as integer switchTracks
         as integer lastTurnstyleInput
         as integer ptr fadeoutTex
+        as integer fadeOutMusic
         
         as PathTracker tracker
         as SoundEffects soundfx

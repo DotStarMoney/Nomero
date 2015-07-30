@@ -1,0 +1,116 @@
+'#teleporter switch
+
+type ITEM_DATA
+    as integer cycleTime
+    as integer state
+    as integer flashCycle
+end type
+
+parameter "disable", integer
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 64))
+publish value "interact", integer
+signal $activate
+
+'---------------------------------
+
+function _init()
+
+    data.cycleTime = 0
+    data.state = 0
+    
+    CREATE_ANIMS(4)
+    anims[0].load(MEDIA_PATH + "teleporterswitch.txt")
+    anims[1].load(MEDIA_PATH + "teleporterswitch.txt")
+    anims[1].hardSwitch(1)
+    
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 2, 3, 1)  
+
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+   
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+     
+    if data.flashCycle = 0 then
+        DRAW_LIT_ANIMATION_BRIGHT(0, p.x, p.y, 0, 0)
+    else
+        anims[1].drawAnimation(scnbuff, p.x, p.y)
+    end if
+end function
+
+'----------------------------------
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    anims[0].step_animation()
+    if data.cycleTime = 1 then link.soundeffects_ptr->playSound(SND_CLACKUP)
+    if data.cycleTime > 0 then data.cycleTime -= 1
+    if data.cycleTime = 0 andAlso data.state = 0 then
+        anims[0].restart()
+        anims[0].pause()    
+    end if
+    if data.flashCycle > 0 then 
+        lightState = 1
+        data.flashCycle -= 1
+    else
+        lightState = 0
+    end if
+    
+end function
+
+'-----------------------------------
+
+slot $interact()
+    dim as integer enabled
+    dim as integer i
+    getParameter(enabled, "disable")
+    enabled = 1 - enabled
+    if data.cycleTime = 0 then
+        if enabled = 0 then
+            data.cycleTime = 30 
+        else
+            data.state = 1  
+            setValue(1, "interact")
+            data.flashCycle = 2
+            for i = 0 to 9
+                link.projectilecollection_ptr->create(Vector2D(p.x + 16, p.y + 33), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK)
+                link.projectilecollection_ptr->create(Vector2D(p.x + 16, p.y + 33), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK)
+            next i
+            lightState = 1
+            
+            ''''''''''''''''''''''''''''''''''''''''''''
+            link.level_ptr->fadeMistOut()
+            link.gamespace_ptr->lockAction = 1
+            link.gamespace_ptr->fadeMusicOut()
+            ''''''''''''''''''''''''''''''''''''''''''''
+  
+        end if
+        anims[0].play()
+        link.soundeffects_ptr->playSound(SND_CLACKDOWN)
+    end if
+end slot
+
+slot $enable()
+    setParameter(0, "disable")
+end slot
+

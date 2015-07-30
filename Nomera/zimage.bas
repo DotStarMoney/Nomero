@@ -171,9 +171,9 @@ sub zimage.putTRANS_0xLight(dest_fbimg as integer ptr, posX as integer, posY as 
         sdy0 += y0
         sdx1 += x0
         sdy1 += y0
-            
+        
         bitblt_transMulMix(dest_fbimg, npx, npy, diffuse_fbimg, sdx0, sdy0, sdx1, sdy1, ambientLight)
-                     
+           
     end if  
 
 end sub                            

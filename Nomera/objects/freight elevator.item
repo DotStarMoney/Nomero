@@ -91,7 +91,7 @@ function _draw(scnbuff as integer ptr)
     dim as Vector2D startPos
     PREP_LIT_ANIMATION()
     
-    DRAW_LIT_ANIMATION(0, data.elevatorPos.x, data.elevatorPos.y, 0, 0)
+    DRAW_LIT_ANIMATION_BRIGHT(0, data.elevatorPos.x, data.elevatorPos.y, 0, 0)
     
     getValue(interact, "interact")
     if interact = 0 then anims[1].drawAnimation(scnbuff, data.elevatorPos.x + 55, data.elevatorPos.y + 36)
@@ -104,7 +104,7 @@ function _draw(scnbuff as integer ptr)
             startPos.ys -= 16
         else
             anims[2].setClippingBoundaries(0,p.y - startPos.y,0,0)
-            DRAW_LIT_ANIMATION(2, startPos.x, startPos.y, 0, 0)            
+            DRAW_LIT_ANIMATION(2, startPos.x, p.y, 0, 0)            
             exit while
         end if
     wend 

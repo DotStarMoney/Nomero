@@ -77,6 +77,9 @@ type Level
         declare sub drawBackgroundEffects(scnbuff as integer ptr)
         declare function getSmokeTexture() as integer ptr
         declare sub drawSmoke(scnbuff as integer ptr)
+        declare sub fadeMistIn()
+        declare sub fadeMistOut()
+        declare sub resetMistFade()
        
         dim as integer justLoaded
     private:
@@ -117,6 +120,8 @@ type Level
         dim as zimage auroraTexture
         dim as integer ptr smokeTexture
         dim as integer highestLayerIndex
+        dim as double fadeOut
+        dim as integer fadeDir
         
         dim as ushort windyMist
         dim as MistLayer_t ptr windyMistLayers

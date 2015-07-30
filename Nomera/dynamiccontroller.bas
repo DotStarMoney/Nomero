@@ -429,6 +429,7 @@ end sub
 
 sub DynamicController.getValue(byref value_ as Vector2D, ID_ as string, value_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
+    ID_ = ucase(ID_)
     curItem = itemIdPairs.retrieve(ID_)   
     if curItem then 
         curItem->item_->getValue(value_, value_tag)
@@ -438,6 +439,7 @@ sub DynamicController.getValue(byref value_ as Vector2D, ID_ as string, value_ta
 end sub
 sub DynamicController.getValue(byref value_ as integer, ID_ as string, value_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
+    ID_ = ucase(ID_)
     curItem = itemIdPairs.retrieve(ID_)   
     if curItem then 
         curItem->item_->getValue(value_, value_tag)
@@ -447,6 +449,7 @@ sub DynamicController.getValue(byref value_ as integer, ID_ as string, value_tag
 end sub
 sub DynamicController.getValue(byref value_ as double, ID_ as string, value_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
+    ID_ = ucase(ID_)
     curItem = itemIdPairs.retrieve(ID_)   
     if curItem then 
         curItem->item_->getValue(value_, value_tag)
@@ -456,6 +459,7 @@ sub DynamicController.getValue(byref value_ as double, ID_ as string, value_tag 
 end sub
 sub DynamicController.getValue(byref value_ as string, ID_ as string, value_tag as string)
     dim as DynamicController_itemPair_t ptr curItem
+    ID_ = ucase(ID_)
     curItem = itemIdPairs.retrieve(ID_)   
     if curItem then 
         curItem->item_->getValue(value_, value_tag)
@@ -612,6 +616,7 @@ sub DynamicController.throw(signal_ID as string, signal_tag as string, parameter
 end sub
 sub DynamicController.fireSlot(ID_ as string, slot_tag as string, parameter_string as string = "")
     dim as DynamicController_itemPair_t ptr curItem
+    ID_ = ucase(ID_)
     curItem = itemIdPairs.retrieve(ID_)
     if curItem then curItem->item_->fireSlot(slot_tag, parameter_string)
 end sub

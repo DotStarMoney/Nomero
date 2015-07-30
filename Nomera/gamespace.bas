@@ -41,7 +41,7 @@ constructor GameSpace()
     lvlData.setLink(link)
 	projectiles.setLink(link)
     
-
+    
 
     movingFrmAvg = 0.016
     vibcount = 0
@@ -78,11 +78,15 @@ constructor GameSpace()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
     FSOUND_Stream_Play currentMusic, music(currentMusic)
-    FSOUND_SetVolumeAbsolute(currentMusic, 128)
+    FSOUND_SetVolumeAbsolute(currentMusic, 255)
+    musicVol = 255
+    musicVolDir = 0
    
     switchTracks = 0
     
     spy.centerToMap(lvlData.getDefaultPos())
+    
+    'spy.body.p = Vector2D(3300, 1500)
     lastSpawn = spy.body.p
     camera = spy.body.p
     lastMap = lvlData.getName()
@@ -146,6 +150,7 @@ destructor GameSpace
 end destructor
         
 sub GameSpace.setMusicVolume(v as integer)
+    musicVol = v
 	FSOUND_SetVolumeAbsolute currentMusic, v
 end sub
         
@@ -170,9 +175,16 @@ function GameSpace.go() as integer
         load = (processTime / (1000 / FPS_TARGET)) * 100
         if load > oneSecondMaxLoad then oneSecondMaxLoad = load
         oneSecondAvg += load
-        'print using "Frame Load %: ##.##"; load
-        'print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
-        'print using "One Second Average Load %: ##.##"; oneSecondAvgLast
+        #ifdef SCALE_ELLIOTT
+            locate 1,1
+            print "                                            "
+            print "                                            "
+            print "                                            "
+        #endif
+        locate 1,1
+        print using "Frame Load %: ##.##"; load
+        print using "One Second Max Load %: ##.##"; oneSecondMaxLoad
+        print using "One Second Average Load %: ##.##"; oneSecondAvgLast
         
         'print spy.body.p
 
@@ -246,8 +258,8 @@ sub GameSpace.step_input()
     keypress(SC_SPACE) = multikey(SC_SPACE)
 end sub
 
-sub GameSpace.vibrateScreen()
-    vibcount = 8
+sub GameSpace.vibrateScreen(vibAmount as integer = 8)
+    vibcount = vibAmount
 end sub
 
 sub GameSpace.hardSwitchMusic(filename as string)
@@ -406,13 +418,18 @@ sub GameSpace.step_draw()
     tracker.record_draw(scnbuff)
     RECORD_PROFILE(3)
 
-    
-	#ifndef SCALE_2X
-	    window screen (0,0)-(SCRX-1,SCRY-1)
-		put (0,0), scnbuff, PSET
-	#else
-		scale2sync scnbuff
-    #endif
+    #ifndef SCALE_ELLIOTT
+        #ifndef SCALE_2X
+            window screen (0,0)-(SCRX-1,SCRY-1)
+            put (0,0), scnbuff, PSET
+        #else
+            scale2sync scnbuff
+        #endif
+    #else
+        window screen (0,0)-(799, 599)
+        line (79, 59)-(720, 540), &h1f1f1f, B
+        put (80,60), scnbuff, PSET
+    #endif 
     RECORD_PROFILE(0)
 
     for i = 0 to 9
@@ -429,7 +446,19 @@ sub GameSpace.step_draw()
     '/
 end sub
     
+sub GameSpace.setShakeStyle(style as integer)
+    slowdownShake = style
+end sub
 
+sub GameSpace.fadeMusicIn()
+    musicVolDir = 1
+end sub
+sub GameSpace.fadeMusicOut()
+    musicVolDir = -1
+end sub
+sub GameSpace.resetMusicFade()
+    musicVolDir = 0
+end sub
 
 sub GameSpace.step_process()
 
@@ -481,7 +510,7 @@ sub GameSpace.step_process()
     camera.setY(int(camera.y()))
     
     if vibcount > 0 then
-        shake = (((vibcount/3) mod 2) * 2 - 1) * 4
+        shake = (((vibcount/3) mod 2) * 2 - 1) * iif(slowdownShake, _min_(vibcount*0.25, 4), 4)
     else
         shake = 0
     end if
@@ -551,8 +580,16 @@ sub GameSpace.step_process()
     explodeAll = keypress(SC_W)
     deactivateAll = keypress(SC_Q)
     
-    vibcount -= 1
+    if vibcount > 0 then vibcount -= 1
     
+    musicVol += musicVolDir*2
+    if musicVol < 0 then
+        musicVol = 0
+    elseif musicVol > 255 then
+        musicVol = 255
+    end if
+    
+    FSOUND_SetVolumeAbsolute(currentMusic, musicVol)
     
     if keypress(SC_SPACE) andAlso (last_keypress(SC_SPACE) = 0) then 
         activate = 1

@@ -1876,7 +1876,7 @@ sub bitblt_transMulMix(dest as uinteger ptr,_
                 
                 MIX_STEP_HALF()
                 
-                movdqu		[edi],		xmm2
+                movq		[edi],		xmm2
                 
                 add         esi,        8
                 add         edi,        8
@@ -1891,7 +1891,7 @@ sub bitblt_transMulMix(dest as uinteger ptr,_
                 
                 MIX_STEP_HALF()
                 
-                movdqu		[edi],		xmm2
+                movd		[edi],		xmm2
                         
                 add         esi,        4
                 add         edi,        4 
@@ -2047,12 +2047,17 @@ sub pmapFix(byref x as integer, byref y as integer)
     y_r = y
     x_r = pmap(x_r, 0)
     y_r = pmap(y_r, 1)
-    #ifdef SCALE_2X
-        x = x_r / 2
-        y = y_r / 2
+    #ifndef SCALE_ELLIOTT
+        #ifdef SCALE_2X
+            x = x_r / 2
+            y = y_r / 2
+        #else
+            x = x_r
+            y = y_r
+        #endif
     #else
-        x = x_r
-        y = y_r
+        x = x_r / 1.25
+        y = y_r / 1.25
     #endif
     'if x > SCRX*0.5 then x -= 1
     'if y > SCRY*0.5 then y -= 1
@@ -2065,12 +2070,17 @@ function pmapFixV(v as Vector2D) as Vector2D
     y_r = v.ys
     x_r = pmap(x_r, 0)
     y_r = pmap(y_r, 1)
-    #ifdef SCALE_2X
-        vr.xs = int(x_r / 2)
-        vr.ys = int(y_r / 2)
+    #ifndef SCALE_ELLIOTT
+        #ifdef SCALE_2X
+            vr.xs = int(x_r / 2.0)
+            vr.ys = int(y_r / 2.0)
+        #else
+            vr.xs = x_r
+            vr.ys = y_r
+        #endif
     #else
-        vr.xs = x_r
-        vr.ys = y_r
+        vr.xs = int(x_r / 1.25)
+        vr.ys = int(y_r / 1.25)
     #endif
     if vr.xs > int(SCRX*0.5) then vr.xs -= 1
     if vr.ys > int(SCRY*0.5) then vr.ys -= 1

@@ -107,6 +107,7 @@ type Item
         declare sub setValue(value_ as string, value_tag as string)
         
         declare sub throw(signal_tag as string, parameter_string as string = "")
+        declare sub fireExternalSlot(ID as string, slot_tag as string, parameter_string as string = "")
         
         declare sub _initAddParameter_(param_tag as string, param_type as _Item_valueTypes_e)
         declare sub _initAddSlot_(slot_tag as string, slot_num as Item_slotEnum_e)

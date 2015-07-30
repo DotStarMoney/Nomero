@@ -96,7 +96,6 @@ type DynamicController
         declare sub setParameter(param_ as double, ID_ as string, param_tag as string)
         declare sub setParameter(param_ as string, ID_ as string, param_tag as string)
         
-        'items keep track of their item types and will reject a call to a non-matching item
         declare sub getValue(byref value_ as Vector2D, ID_ as string, value_tag as string)
         declare sub getValue(byref value_ as integer, ID_ as string, value_tag as string)
         declare sub getValue(byref value_ as double, ID_ as string, value_tag as string)

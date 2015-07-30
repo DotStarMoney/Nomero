@@ -23,6 +23,10 @@
 
 #define DControl link.dynamiccontroller_ptr
 
+#macro CREATE_ANIMS(_N_)
+    anims_n = _N_
+    anims = new Animation[anims_n]
+#endmacro
 #macro PREP_LIT_ANIMATION()
     dim as integer numLights
     dim as LightPair ptr ptr lights
@@ -41,7 +45,15 @@
         anims[_ANIM_].drawAnimation(scnbuff, _X_, _Y_, link.gamespace_ptr->camera,_FLAGS_,ANIM_TRANS)
     end if  
 #endmacro
-
+#macro DRAW_LIT_ANIMATION_BRIGHT(_ANIM_, _X_, _Y_, _FLAGS_, _FORCE_)
+    if link.level_ptr->shouldLight() then
+        anims[_ANIM_].drawAnimationLit(scnbuff, _X_, _Y_,_
+                                       lights, numLights, link.level_ptr->getObjectAmbientLevel(),_
+                                       link.gamespace_ptr->camera,_FLAGS_,_FORCE_,ANIM_TRANS)            
+    else
+        anims[_ANIM_].drawAnimation(scnbuff, _X_, _Y_, link.gamespace_ptr->camera,_FLAGS_,ANIM_TRANS)
+    end if  
+#endmacro
 #macro PREP_LIGHTS(_DIFFFILE_, _SPECFILE_, _ANIM0_, _ANIM1_, _FAST_)
     anims[_ANIM0_].load(_DIFFFILE_)
     anims[_ANIM1_].load(_SPECFILE_)
@@ -441,6 +453,9 @@ sub Item.fireSlot(slot_tag as string, parameter_string as string)
             end if
         next i        
     end if
+end sub
+sub Item.fireExternalSlot(ID as string, slot_tag as string, parameter_string as string = "")
+    link.dynamiccontroller_ptr->fireSlot(ID, slot_tag, parameter_string)
 end sub
 function Item.getValueContainer(value_tag as string) as _Item_valueContainer_t ptr
     dim as _Item_valueContainer_t value_ptr

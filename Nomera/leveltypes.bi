@@ -9,6 +9,9 @@
 #define LIGHT_EFFECT_VALUE 5
 #define MIST_OBJECTS_PER_LAYER 30
 
+#define LEVEL_ON 1
+#define LEVEL_OFF 65535
+
 enum ObjectType_t
     EFFECT
     PORTAL
@@ -25,6 +28,8 @@ type Object_t
     as Vector2D p
     as Vector2D size
     as any ptr data_
+    as single depth
+    as ushort drawless
 end type
 
 type destroyedBlocks_t
@@ -98,6 +103,8 @@ Type Level_LayerData
     as ushort receiver
     as ushort occluding
     as single depth
+    as ushort isHidden
+    as zstring ptr groupName
 end type
 
 enum PortalDirection_t

@@ -1,0 +1,168 @@
+'#puzzle1234
+type ITEM_DATA
+    as integer ptr values
+    as integer ptr startValues
+    as integer curValue
+    as integer startValue
+    as zstring ptr ptr tubeIDs
+    as integer hasInit 
+    as integer complete
+    as integer completeDance
+    as integer completeDanceFrames
+end type
+
+publish value "curCycle", integer
+parameter "tubeID1", string
+parameter "tubeID2", string
+parameter "tubeID3", string
+parameter "tubeID4", string
+signal $solved
+
+
+'---------------------------------
+
+function _init()
+    dim as integer i
+    dim as string tubeName
+    
+    data.startValue = 0
+    data.complete = 0
+    
+    data.startValues = new integer[4]
+    data.startValues[0] = 17 '2
+    data.startValues[1] = 17 '1
+    data.startValues[2] = 13 '4
+    data.startValues[3] = 13 '3
+    
+    data.values = new integer[4]
+    data.values[0] = 1
+    data.values[1] = 2
+    data.values[2] = 3
+    data.values[3] = 4
+    data.hasInit = 0
+    
+    data.curValue = data.startValue
+    
+    
+    anims_n = 1
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "nixie.txt")
+    
+    data.tubeIDs = new zstring ptr[4]
+    
+    for i = 0 to 3
+        getParameter(tubeName, "tubeID" + str(i + 1))
+        data.tubeIDs[i] = allocate(len(tubeName) + 1)
+        *(data.tubeIDs[i]) = tubeName
+    next i
+    
+end function
+
+'---------------------------------
+
+function _flush()
+    dim as integer i
+    for i = 0 to 3
+        deallocate(data.tubeIDs[i])
+    next i
+    delete(data.tubeIDs)
+    delete(data.values)
+    delete(data.tubeIDs)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    dim as integer posX, posY, frame
+    dim as integer i
+    dim as zimage ptr nimage
+    PREP_LIT_ANIMATION()
+    for i = 0 to 3
+       
+        frame = data.values[i]
+        if i <> data.curValue then frame = 36
+        
+        posX = (frame * 16) mod 320
+        posY = int((frame * 16) / 320) * 32
+        if data.curValue = i then
+            nimage = anims[0].getRawZImage()
+            nimage->putTRANS(scnbuff, p.x + i*16, p.y, posX, posY, posX+15, posY+31)  
+        else
+            anims[0].drawImageLit(scnbuff, p.x + i*16, p.y, posX, posY, posX+15, posY+31,_
+                                 lights, numLights, link.level_ptr->getObjectAmbientLevel())   
+        end if
+ 
+    next i
+    for i = 0 to 3
+        if data.curValue = i then nimage->putGLOW(scnbuff, p.x + i*16 - 16, p.y - 5, 272, 32, 319, 63, &hFFFFFFFF)
+    next i
+end function
+
+'----------------------------------
+
+sub initializeTubes()
+    dim as integer i
+    if data.hasInit = 0 then
+        data.hasInit = 1
+        for i = 0 to 3
+            fireExternalSlot(*(data.tubeIDs[i]), "setup", "startLevel = " + str(data.startValues[i]))                    
+        next i        
+    end if
+end sub
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer total, i, curLevel
+    
+    initializeTubes()
+    
+    total = 0
+    for i = 0 to 3
+        getOtherValue(curLevel, *(data.tubeIDs[i]), "level")        
+        total += curLevel
+    next i
+    if total = 80 andAlso data.complete = 0 then
+        data.complete = 1
+        data.completeDance = 94
+        data.curValue = 0
+        for i = 0 to 3
+            fireExternalSlot(*(data.tubeIDs[i]), "lockUp")        
+        next i    
+        throw($solved)
+        link.soundeffects_ptr->playSound(SND_SUCCESS)
+        'link.gamespace_ptr->setShakeStyle(1)
+        'link.gamespace_ptr->vibrateScreen(60)
+    end if
+    if data.completeDance > 0 then 
+        data.completeDance -= 1
+        if (data.completeDance mod 4) = 0 then data.curValue = (data.curValue + 1) mod 4
+    end if
+    if data.completeDance = 0 andAlso data.complete = 1 then data.curValue = -1
+end function
+
+'-----------------------------------
+
+slot $reset()
+    if data.complete = 0 then
+        data.curValue = data.startValue
+        data.hasInit = 0
+    end if
+end slot
+
+slot $cycle(target as integer)
+    dim as string tubeID
+    if data.complete = 0 then
+        if target < 1 orElse target > 4 then target = 1
+        fireExternalSlot(*(data.tubeIDs[target - 1]), "activate", "amount = " + str(data.curValue + 1))
+        data.curValue = (data.curValue + 1) mod 4
+    end if
+end slot
+
+

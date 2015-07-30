@@ -13,22 +13,33 @@ using fb
 
 #define MAX_TREES 50
 
-#ifdef SCALE_2X
-	screenres SCRX*2,SCRY*2,32
+#ifndef SCALE_ELLIOTT
+    #ifdef SCALE_2X
+        screenres SCRX*2,SCRY*2,32
+    #else
+        screenres SCRX, SCRY, 32
+    #endif
 #else
-	screenres SCRX, SCRY, 32
-#endif
+    screenres 800, 600, 32
+#endif 
+
 
 #macro sync()
-    #ifdef SCALE_2X
-        screenlock	
-            scale2sync scnbuff
-        screenunlock
+    #ifndef SCALE_ELLIOTT
+        #ifdef SCALE_2X
+            screenlock	
+                scale2sync scnbuff
+            screenunlock
+        #else
+            put (0,0), scnbuff, PSET
+        #endif
     #else
-        put (0,0), scnbuff, PSET
+        put (80,60), scnbuff, PSET    
+    
     #endif
 #endmacro
 randomize timer
+setmouse ,,0
 FSOUND_Init(44100, 16, 0)
 
 #ifdef INTRO
@@ -72,8 +83,8 @@ FSOUND_Init(44100, 16, 0)
         menuSound(2) = FSOUND_SAMPLE_Load(FSOUND_FREE,"menuBack.wav",0,0,0)
         
         
-        logoLight.diffuse_fbimg = png_load("Lights\Golden_diffuse.png")
-        logoLight.specular_fbimg = png_load("Lights\Golden_specular.png")
+        logoLight.diffuse_fbimg = png_load("objects\media\Lights\Golden_diffuse.png")
+        logoLight.specular_fbimg = png_load("objects\media\Lights\Golden_specular.png")
         logoLight.w = 512
         logoLight.h = 512
         pressSelect_last = 0
@@ -113,7 +124,7 @@ FSOUND_Init(44100, 16, 0)
         
         i = 0
         while i < MAX_TREES
-            if treePos(max(i-1, 0)).y >= treePos(i).y then
+            if treePos(_max_(i-1, 0)).y >= treePos(i).y then
                 i += 1
             else
                 swap treePos(i - 1), treePos(i)
@@ -260,6 +271,7 @@ FSOUND_Init(44100, 16, 0)
             end if
             lastDire = dire
             pressSelect_last = pressSelect
+            '/
         loop until quitMenu
         
         baseTexture.flush()

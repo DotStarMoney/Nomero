@@ -172,7 +172,9 @@ type layer_t
     as ushort occluding
     as ushort mergeless
     as ushort order
+    as ushort isHidden
     as integer empty
+    as zstring ptr groupName
 end type
 
 
@@ -267,6 +269,8 @@ type object_t
     as ushort object_type
     as ushort object_shape
     as ushort inRangeSet
+    as ushort drawLess
+    as single depth
     as Vector2D p
     as Vector2D size
     as any ptr data_
@@ -495,6 +499,8 @@ do
                                 layers(N_layers - 1).isFallout = 65535
                                 layers(N_layers - 1).isReceiver = 65535
                                 layers(N_layers - 1).occluding = 65535
+                                layers(N_layers - 1).groupName = 0
+                                layers(N_layers - 1).isHidden = 65535
                                 if item_content <> "{}" then 
                                     propertyline = 1
                                     propertyType = 0
@@ -540,6 +546,8 @@ do
                                 objects(N_objects - 1).object_name = trimQuotes(item_content)
                                 objects(N_objects - 1).data_ = 0
                                 objects(N_objects - 1).inRangeSet = curObjDepth
+                                objects(N_objects - 1).drawless = 65535
+                                objects(N_objects - 1).depth = 1.0                                
                             elseif item_tag = "type" then
                                 item_content = trimQuotes(item_content)
                                 if left(ucase(item_content), 6) = "EFFECT" then
@@ -561,9 +569,14 @@ do
                             elseif item_tag = "y" then
                                 objects(N_objects - 1).p.setY(val(item_content))
                             elseif item_tag = "width" then
-                                objects(N_objects - 1).size.setX(val(item_content))
+                                if objects(N_objects - 1).drawless = 65535 then objects(N_objects - 1).size.setX(val(item_content))
                             elseif item_tag = "height" then
-                                objects(N_objects - 1).size.setY(val(item_content))
+                                if objects(N_objects - 1).drawless = 65535 then objects(N_objects - 1).size.setY(val(item_content))
+                            elseif item_tag = "gid" then
+                                objects(N_objects - 1).drawless = 1
+                                objects(N_objects - 1).size = Vector2D(16, 16)
+                            elseif item_tag = "depth" then
+                                objects(N_objects - 1).depth = val(trim(item_content))
                             elseif item_tag = "properties" then
                                 if item_content <> "{}" then 
                                     propertyline = 1
@@ -657,6 +670,13 @@ do
                         layers(N_layers - 1).isReceiver = 1 
                     elseif left(lcase(item_tag), 9) = "occluding" then
                         layers(N_layers - 1).occluding = 1    
+                    elseif left(lcase(item_tag), 4) = "hide" then
+                        layers(N_layers - 1).isHidden = 1
+                    elseif left(lcase(item_tag), 5) = "group" then
+                        item_content = trim(item_content)
+                        layers(N_layers - 1).groupName = allocate(len(item_content) + 1)
+                        *(layers(N_layers - 1).groupName) = item_content
+                        layers(N_layers - 1).mergeless = 1
                     end if
                 elseif propertyType = 1 then
                     with tempEffect
@@ -783,7 +803,7 @@ do
                         elseif left(lcase(item_tag), 4) = "time" then
                             tempObjSpawner->spawn_time = val(item_content)
                         elseif left(lcase(item_tag), 5) = "count" then
-                            tempObjSpawner->spawn_count = val(item_content)
+                            tempObjSpawner->spawn_count = val(item_content)                         
                         elseif left(lcase(item_tag), 2) = "id" then
                             item_content = ucase(trimwhite(item_content))
                             newZstring(tempObjSpawner->id, item_content)
@@ -1004,7 +1024,7 @@ dim as string normFilename
 dim as HashTable combinedTiles
 dim as HashTable rotatedTiles
 dim as integer foundOneRotated = 0
-dim as integer curRotatedHeight = 1024
+dim as integer curRotatedHeight = 4096
 dim as integer ptr tempRotatedImg
 dim as integer finalHeight, j
 dim as integer N_rotated = 0
@@ -1286,18 +1306,18 @@ Do
         if right(curfile, 3) = "png" then
             curAtlas = png_load("tilesets\" & curfile)
         else
-            curAtlas = imagecreate(320,4096)
+            curAtlas = imagecreate(320,8192)
             bload "tilesets\" & curfile, curAtlas
         end if
         
         normFilename = left(curfile, len(curfile) - 4) + "_norm"
         if fileexists(normFilename+".bmp") then
-            curAtlas_norm = imagecreate(320,4096)
+            curAtlas_norm = imagecreate(320,8192)
             bload "tilesets\" & normFilename & ".bmp", curAtlas_norm           
         elseif fileexists(normFilename+".png") then
             curAtlas_norm = png_load("tilesets\" & normFilename & ".png")
         else
-            curAtlas_norm = imagecreate(320,4096)
+            curAtlas_norm = imagecreate(320,8192)
         end if
         
         tileA = 0
@@ -1380,11 +1400,9 @@ tempMaskImg = imagecreate(16,16,0)
 cmpImg(0) = imagecreate(16,16,0)
 cmpImg(1) = imagecreate(16,16,0)
 
-dim as integer ptr mergedTiles = imagecreate(320, 4096)
-dim as integer ptr mergedTiles_norm = imagecreate(320, 4096)
+dim as integer ptr mergedTiles = imagecreate(320, 8192)
+dim as integer ptr mergedTiles_norm = imagecreate(320, 8192)
 
-print
-print
 for activeLayer = 0 to 4
     select case activeLayer
     case 0
@@ -1911,12 +1929,15 @@ put #f,,newLayersNum
 Print "Writing layers..."
 
 
+#define safeZstring(_X_) iif(_X_, *(_X_) + chr(0), chr(0))
 
 
 for i = 0 to N_layers - 1
     if layers(i).empty = 0 then
         if ucase(left(layers(i).layer_name, 9)) <> "COLLISION" then
             put #f,,layers(i).layer_name
+            put #f,,safeZstring(layers(i).groupName)
+            put #f,,layers(i).isHidden            
             put #f,,layers(i).order
             put #f,,layers(i).depth
             put #f,,layers(i).parallax
@@ -1936,7 +1957,6 @@ for i = 0 to N_layers - 1
     end if
 next i 
 
-#define safeZstring(_X_) iif(_X_, *(_X_) + chr(0), chr(0))
 
 put #f,,N_objects
 for i = 0 to N_objects - 1
@@ -1947,6 +1967,8 @@ for i = 0 to N_objects - 1
         put #f,,.inRangeSet
         put #f,,.p
         put #f,,.size
+        put #f,,.depth
+        put #f,,.drawless
         select case .object_type
         case EFFECT
             tempObjEffect = .data_
@@ -1987,29 +2009,7 @@ for i = 0 to N_objects - 1
             put #f,,tempObjSpawner->spawn_count
             put #f,,tempObjSpawner->spawn_time
             
-            
-                        
-            
-            
-            
-            /'
-            print "--------------------------------------------"
-            print safeZstring(tempObjSpawner->spawn_objectName)
-            print safeZstring(tempObjSpawner->ID)
-            print tempObjSpawner->spawn_parameters_N
-            for q = 0 to tempObjSpawner->spawn_parameters_N - 1
-                print "",safeZstring(tempObjSpawner->spawn_parameterNames[q]), safeZstring(tempObjSpawner->spawn_parameterValues[q])                
-            next q
-            print tempObjSpawner->spawn_signals_N
-            for q = 0 to tempObjSpawner->spawn_signals_N - 1
-                print "",safeZstring(tempObjSpawner->spawn_signalNames[q]), safeZstring(tempObjSpawner->spawn_signalParameterStrings[q])         
-                print "",tempObjSpawner->spawn_targets_N[q]         
-                for j = 0 to tempObjSpawner->spawn_targets_N[q] - 1
-                    print "","",safeZstring(tempObjSpawner->spawn_signalTargetIDs[q][j]), safeZstring(tempObjSpawner->spawn_signalTargetSlots[q][j])                     
-                next j
-            next q               
-            sleep
-            '/
+
         end select
     end with
 next i
