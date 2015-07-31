@@ -5,19 +5,33 @@ type ITEM_DATA
     as integer countFrame
     as integer ptr revealLayers
     as integer ptr hideLayers
+    as integer ptr glowTargets
+    as integer ptr glowCurrent
 end type
 
 
 parameter "hideLayers", string
 parameter "showLayers", string
+signal $endSequence
 
 '---------------------------------
 
 function _init()
     dim as string revealTag
     dim as string hideTag
+    dim as integer i
     data.enable = 0
     data.countFrame = 0
+  
+  
+    data.glowTargets = new integer[4]
+    data.glowCurrent = new integer[4]
+    
+    for i = 0 to 3
+        data.glowTargets[i] = 0
+        data.glowCurrent[i] = 0
+    next i
+   
   
     getParameter(hideTag, "hideLayers")
     getParameter(revealTag, "showLayers")
@@ -34,6 +48,8 @@ end function
 function _flush()
     if data.hideLayers then delete(data.hideLayers)
     if data.revealLayers then delete(data.revealLayers)
+    delete(data.glowTargets)
+    delete(data.glowCurrent)
 end function
 
 '---------------------------------
@@ -53,41 +69,91 @@ end function
 '----------------------------------
 
 function _run(t as double)
+    dim as integer i
     if data.enable then data.countFrame += 1
-    select case data.countFrame
-    case 125
+    
+    if data.countFrame = 125 then
         link.soundeffects_ptr->playSound(SND_RUMBLE)
-    case 130
-        link.gamespace_ptr->vibrateScreen(600)
-    case 250
+    elseif data.countFrame = 130 then
+        link.gamespace_ptr->vibrateScreen(510)
+    elseif data.countFrame = 250 then 
         
-        link.level_ptr->setHide(data.hideLayers[3])
-        link.level_ptr->setUnhide(data.revealLayers[3])
-        link.level_ptr->setUnhide(data.revealLayers[2])
-        link.level_ptr->setGlow(data.revealLayers[2], &h1fffffff)        
-        link.level_ptr->setUnhide(data.revealLayers[1])
-        link.level_ptr->setGlow(data.revealLayers[1], &h0fffffff)        
-        link.level_ptr->setUnhide(data.revealLayers[0])
-        link.level_ptr->setGlow(data.revealLayers[0], &h07ffffff)        
-    case 310
 
-        link.level_ptr->setHide(data.hideLayers[2])
-        link.level_ptr->setGlow(data.revealLayers[2], &hffffffff)        
-        link.level_ptr->setGlow(data.revealLayers[1], &h1fffffff)        
-        link.level_ptr->setGlow(data.revealLayers[0], &h0fffffff) 
+        data.glowTargets[3] = &hff
+        data.glowTargets[2] = &h7f
+        data.glowTargets[1] = &h4f
+        data.glowTargets[0] = &h10
+        link.soundeffects_ptr->playSound(SND_POW)
+        
+        setAmbientLevels(&hffffffff, &h00020203, &h00020203)
 
-    case 370
+  
+    elseif data.countFrame = 370 then
+
+        data.glowTargets[2] = &hff
+        data.glowTargets[1] = &h7f
+        data.glowTargets[0] = &h46
+        link.soundeffects_ptr->playSound(SND_POW)
+
+        setAmbientLevels(&hffffffff, &h00040406, &h00040406)
+
+    elseif data.countFrame = 490 then
     
-        link.level_ptr->setHide(data.hideLayers[1])
-        link.level_ptr->setGlow(data.revealLayers[1], &hffffffff)        
-        link.level_ptr->setGlow(data.revealLayers[0], &h1fffffff)    
+        data.glowTargets[1] = &hff
+        data.glowTargets[0] = &h4F
+        link.soundeffects_ptr->playSound(SND_POW)
+        
+        setAmbientLevels(&hffffffff, &h00000000, &h00000000)
+
     
-    case 430
+    elseif data.countFrame = 640 then
     
-        link.level_ptr->setHide(data.hideLayers[0])
-        link.level_ptr->setGlow(data.revealLayers[0], &hffffffff)    
-    end select
+        data.glowTargets[0] = &hff
+        link.soundeffects_ptr->playSound(SND_POW)
+        link.gamespace_ptr->lockAction = 0
+        throw($endSequence)
+        
+        setAmbientLevels(&hff000000, &h00ffffff, &h00ffffff)
+
+    end if
+    
+    for i = 0 to 3
+        if data.glowCurrent[i] < data.glowTargets[i] then data.glowCurrent[i] += 45
+        if data.glowCurrent[i] > data.glowTargets[i] then data.glowCurrent[i] = data.glowTargets[i]
+        if data.glowCurrent[i] = 0 then
+            link.level_ptr->setHide(data.revealLayers[i])
+        else
+            link.level_ptr->setUnhide(data.revealLayers[i])
+        end if
+        if data.glowCurrent[i] = 255 then
+            link.level_ptr->setHide(data.hideLayers[i])
+        else
+            link.level_ptr->setUnhide(data.hideLayers[i])
+        end if
+        link.level_ptr->setGlow(data.revealLayers[i], (data.glowCurrent[i] shl 24) or ((data.glowCurrent[i]) shl 16) or ((data.glowCurrent[i]) shl 8) or ((data.glowCurrent[i])))
+    next i
+    
 end function
+'-----------------------------------
+
+sub setAmbientLevels(glowAmount as integer, subAmountPlayer as integer, subAmountUnlit as integer)
+    dim as integer col
+    dim as integer i
+    dim as integer layersN
+    col = link.level_ptr->getObjectAmbientLevel()
+    subColor(col, subAmountUnlit)
+    link.level_ptr->setObjectAmbientLevel(col)
+    col = link.level_ptr->getHiddenObjectAmbientLevel()
+    subColor(col, subAmountPlayer)
+    link.level_ptr->setHiddenObjectAmbientLevel(col)   
+    for i = 0 to link.level_ptr->getLayerN() - 1
+        link.level_ptr->setGlow(i, glowAmount)
+        col = link.level_ptr->getAmbientLevel(i)
+        subColor(col, subAmountUnlit)
+        link.level_ptr->setAmbientLevel(i, col)
+    next i
+end sub
+
 
 '-----------------------------------
 slot $start()

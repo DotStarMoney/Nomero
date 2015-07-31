@@ -107,6 +107,8 @@ type ITEM_TELEPORTERREVEALSEQUENCE_TYPE_DATA
     as integer countFrame
     as integer ptr revealLayers
     as integer ptr hideLayers
+    as integer ptr glowTargets
+    as integer ptr glowCurrent
 end type
 type ITEM_TELEPORTERSWITCH_TYPE_DATA
     as integer cycleTime
@@ -144,6 +146,7 @@ enum Item_slotEnum_e
     ITEM_ALIENSPINNER_SLOT_INTERACT_E
     ITEM_ANTIPERSONNELMINE_SLOT_EXPLODE_E
     ITEM_BIGOSCILLOSCOPE_SLOT_INTERACT_E
+    ITEM_DEEPSPOTLIGHT_SLOT_ENABLE_E
     ITEM_ELECTRICMINE_SLOT_EXPLODE_E
     ITEM_FREIGHTELEVATOR_SLOT_INTERACT_E
     ITEM_FREQUENCYCOUNTER_SLOT_INTERACT_E

@@ -616,7 +616,9 @@ sub DynamicController.throw(signal_ID as string, signal_tag as string, parameter
     dim as string thisParameterString
    
     itemNode = connections.retrieve(signal_ID)
+
     if itemNode then
+     
         outgoingSignal = itemNode->signals.retrieve(signal_tag)
         if outgoingSignal then
             BEGIN_DHASH(curSlot, outgoingSignal->outgoingToSlots)

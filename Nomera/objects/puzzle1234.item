@@ -29,10 +29,10 @@ function _init()
     data.complete = 0
     
     data.startValues = new integer[4]
-    data.startValues[0] = 17 '2
-    data.startValues[1] = 17 '1
-    data.startValues[2] = 13 '4
-    data.startValues[3] = 13 '3
+    data.startValues[0] = 16 '2
+    data.startValues[1] = 14 '1
+    data.startValues[2] = 10 '4
+    data.startValues[3] = 10 '3
     
     data.values = new integer[4]
     data.values[0] = 1

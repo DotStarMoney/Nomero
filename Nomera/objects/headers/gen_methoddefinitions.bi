@@ -443,10 +443,16 @@ sub Item.COVERSMOKE_PROC_CONSTRUCT()
     _initAddParameter_("ISSOLID", _ITEM_VALUE_INTEGER)
     _initAddParameter_("INITVELOCITY", _ITEM_VALUE_VECTOR2D)
 end sub
+sub Item.DEEPSPOTLIGHT_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
+    
+    setParameter(0, "disable")
+end sub
 sub Item.DEEPSPOTLIGHT_PROC_INIT()
     
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "lightflare.txt")
+
     
-   
 end sub
 sub Item.DEEPSPOTLIGHT_PROC_FLUSH()
 
@@ -458,13 +464,38 @@ function Item.DEEPSPOTLIGHT_PROC_RUN(t as double) as integer
     return 0
 end function
 sub Item.DEEPSPOTLIGHT_PROC_DRAW(scnbuff as integer ptr)
-    
-
+    dim as integer disable
+    getParameter(disable, "disable")
+    if disable = 0 then        
+        anims[0].setGlow(&h9fffffff)
+        anims[0].drawAnimation(scnbuff, drawX, drawY)
+        pset scnbuff, (drawX, drawY), &hffff00ff
+    end if
 end sub
 sub Item.DEEPSPOTLIGHT_PROC_DRAWOVERLAY(scnbuff as integer ptr)
-
+    dim as integer col, glow
+    dim as integer disable
+    getParameter(disable, "disable")
+    if disable = 0 then
+        if drawX > link.gamespace_ptr->camera.x - SCRX*0.5 andAlso drawX < link.gamespace_ptr->camera.x + SCRX*0.5 then
+            if drawY > link.gamespace_ptr->camera.y - SCRY*0.5 andAlso drawY < link.gamespace_ptr->camera.y + SCRY*0.5 then
+                col = point(drawX, drawY, scnbuff)
+                if col = &hfefe00fe then 
+                    col = &hffffffff
+                else
+                    col = 0
+                end if
+                glow = (col shr 24) and &hff
+        
+                anims[0].setGlow((glow shl 24) or &h00ffffff)
+                anims[0].drawAnimation(scnbuff, drawX, drawY)
+            end if
+        end if
+    end if
 end sub
 sub Item.DEEPSPOTLIGHT_PROC_CONSTRUCT()
+    _initAddSlot_("ENABLE", ITEM_DEEPSPOTLIGHT_SLOT_ENABLE_E)
+    _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
 end sub
 #define ITEM_ELECTRICMINE_DEFINE_MAX_RAYCAST_ATTEMPTS 10
 #define ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST 80
@@ -1129,10 +1160,10 @@ sub Item.PUZZLE1234_PROC_INIT()
     data_.PUZZLE1234_DATA->complete = 0
     
     data_.PUZZLE1234_DATA->startValues = new integer[4]
-    data_.PUZZLE1234_DATA->startValues[0] = 17 
-    data_.PUZZLE1234_DATA->startValues[1] = 17 
-    data_.PUZZLE1234_DATA->startValues[2] = 13 
-    data_.PUZZLE1234_DATA->startValues[3] = 13 
+    data_.PUZZLE1234_DATA->startValues[0] = 16 
+    data_.PUZZLE1234_DATA->startValues[1] = 14 
+    data_.PUZZLE1234_DATA->startValues[2] = 10 
+    data_.PUZZLE1234_DATA->startValues[3] = 10 
     
     data_.PUZZLE1234_DATA->values = new integer[4]
     data_.PUZZLE1234_DATA->values[0] = 1
@@ -1527,6 +1558,23 @@ sub Item.TANDY2000_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_TANDY2000_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
+sub Item.setAmbientLevels(glowAmount as integer, subAmountPlayer as integer, subAmountUnlit as integer)
+    dim as integer col
+    dim as integer i
+    dim as integer layersN
+    col = link.level_ptr->getObjectAmbientLevel()
+    subColor(col, subAmountUnlit)
+    link.level_ptr->setObjectAmbientLevel(col)
+    col = link.level_ptr->getHiddenObjectAmbientLevel()
+    subColor(col, subAmountPlayer)
+    link.level_ptr->setHiddenObjectAmbientLevel(col)   
+    for i = 0 to link.level_ptr->getLayerN() - 1
+        link.level_ptr->setGlow(i, glowAmount)
+        col = link.level_ptr->getAmbientLevel(i)
+        subColor(col, subAmountUnlit)
+        link.level_ptr->setAmbientLevel(i, col)
+    next i
+end sub
 sub Item.TELEPORTERREVEALSEQUENCE_SLOT_START(pvPair() as _Item_slotValuePair_t)
     link.level_ptr->fadeMistOut()
     link.gamespace_ptr->lockAction = 1
@@ -1538,8 +1586,19 @@ sub Item.TELEPORTERREVEALSEQUENCE_PROC_INIT()
     data_.TELEPORTERREVEALSEQUENCE_DATA = new ITEM_TELEPORTERREVEALSEQUENCE_TYPE_DATA
     dim as string revealTag
     dim as string hideTag
+    dim as integer i
     data_.TELEPORTERREVEALSEQUENCE_DATA->enable = 0
     data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 0
+  
+  
+    data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets = new integer[4]
+    data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent = new integer[4]
+    
+    for i = 0 to 3
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[i] = 0
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i] = 0
+    next i
+   
   
     getParameter(hideTag, "hideLayers")
     getParameter(revealTag, "showLayers")
@@ -1553,45 +1612,77 @@ end sub
 sub Item.TELEPORTERREVEALSEQUENCE_PROC_FLUSH()
     if data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers then delete(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers)
     if data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers then delete(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers)
+    delete(data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets)
+    delete(data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent)
     if anims_n then delete(anims)
     if data_.TELEPORTERREVEALSEQUENCE_DATA then delete(data_.TELEPORTERREVEALSEQUENCE_DATA)
     data_.TELEPORTERREVEALSEQUENCE_DATA = 0
 end sub
 function Item.TELEPORTERREVEALSEQUENCE_PROC_RUN(t as double) as integer
+    dim as integer i
     if data_.TELEPORTERREVEALSEQUENCE_DATA->enable then data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame += 1
-    select case data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame
-    case 125
+    
+    if data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 125 then
         link.soundeffects_ptr->playSound(SND_RUMBLE)
-    case 130
-        link.gamespace_ptr->vibrateScreen(600)
-    case 250
+    elseif data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 130 then
+        link.gamespace_ptr->vibrateScreen(510)
+    elseif data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 250 then 
         
-        link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[3])
-        link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[3])
-        link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[2])
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[2], &h1fffffff)        
-        link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[1])
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[1], &h0fffffff)        
-        link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0])
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0], &h07ffffff)        
-    case 310
 
-        link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[2])
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[2], &hffffffff)        
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[1], &h1fffffff)        
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0], &h0fffffff) 
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[3] = &hff
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[2] = &h7f
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[1] = &h4f
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[0] = &h10
+        link.soundeffects_ptr->playSound(SND_POW)
+        
+        setAmbientLevels(&hffffffff, &h00020203, &h00020203)
 
-    case 370
+  
+    elseif data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 370 then
+
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[2] = &hff
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[1] = &h7f
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[0] = &h46
+        link.soundeffects_ptr->playSound(SND_POW)
+
+        setAmbientLevels(&hffffffff, &h00040406, &h00040406)
+
+    elseif data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 490 then
     
-        link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[1])
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[1], &hffffffff)        
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0], &h1fffffff)    
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[1] = &hff
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[0] = &h4F
+        link.soundeffects_ptr->playSound(SND_POW)
+        
+        setAmbientLevels(&hffffffff, &h00000000, &h00000000)
+
     
-    case 430
+    elseif data_.TELEPORTERREVEALSEQUENCE_DATA->countFrame = 640 then
     
-        link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[0])
-        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[0], &hffffffff)    
-    end select
+        data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[0] = &hff
+        link.soundeffects_ptr->playSound(SND_POW)
+        link.gamespace_ptr->lockAction = 0
+        throw("ENDSEQUENCE")
+        
+        setAmbientLevels(&hff000000, &h00ffffff, &h00ffffff)
+
+    end if
+    
+    for i = 0 to 3
+        if data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i] < data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[i] then data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i] += 45
+        if data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i] > data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[i] then data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i] = data_.TELEPORTERREVEALSEQUENCE_DATA->glowTargets[i]
+        if data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i] = 0 then
+            link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[i])
+        else
+            link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[i])
+        end if
+        if data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i] = 255 then
+            link.level_ptr->setHide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[i])
+        else
+            link.level_ptr->setUnhide(data_.TELEPORTERREVEALSEQUENCE_DATA->hideLayers[i])
+        end if
+        link.level_ptr->setGlow(data_.TELEPORTERREVEALSEQUENCE_DATA->revealLayers[i], (data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i] shl 24) or ((data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i]) shl 16) or ((data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i]) shl 8) or ((data_.TELEPORTERREVEALSEQUENCE_DATA->glowCurrent[i])))
+    next i
+    
     return 0
 end function
 sub Item.TELEPORTERREVEALSEQUENCE_PROC_DRAW(scnbuff as integer ptr)
@@ -1601,6 +1692,7 @@ sub Item.TELEPORTERREVEALSEQUENCE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
 sub Item.TELEPORTERREVEALSEQUENCE_PROC_CONSTRUCT()
+    _initAddSignal_("ENDSEQUENCE")
     _initAddSlot_("START", ITEM_TELEPORTERREVEALSEQUENCE_SLOT_START_E)
     _initAddParameter_("HIDELAYERS", _ITEM_VALUE_ZSTRING)
     _initAddParameter_("SHOWLAYERS", _ITEM_VALUE_ZSTRING)
@@ -1611,7 +1703,7 @@ sub Item.TELEPORTERSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     getParameter(enabled, "disable")
     enabled = 1 - enabled
     if data_.TELEPORTERSWITCH_DATA->cycleTime = 0 then
-        if enabled = 1 then
+        if enabled = 0 then
             data_.TELEPORTERSWITCH_DATA->cycleTime = 30 
         else
             data_.TELEPORTERSWITCH_DATA->state = 1  

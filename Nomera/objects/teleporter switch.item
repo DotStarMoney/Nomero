@@ -86,7 +86,7 @@ slot $interact()
     getParameter(enabled, "disable")
     enabled = 1 - enabled
     if data.cycleTime = 0 then
-        if enabled = 1 then
+        if enabled = 0 then
             data.cycleTime = 30 
         else
             data.state = 1  

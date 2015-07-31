@@ -1,11 +1,15 @@
 '#deep spotlight
 
+parameter "disable", integer
+
 '---------------------------------
 
 function _init()
     
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "lightflare.txt")
+
     
-   
 end function
 
 '---------------------------------
@@ -17,14 +21,37 @@ end function
 '---------------------------------
 
 function _draw(scnbuff as integer ptr)
-    
-
+    dim as integer disable
+    getParameter(disable, "disable")
+    if disable = 0 then        
+        anims[0].setGlow(&h9fffffff)
+        anims[0].drawAnimation(scnbuff, drawX, drawY)
+        pset scnbuff, (drawX, drawY), &hffff00ff
+    end if
 end function
 
 '----------------------------------
 
 function _drawOverlay(scnbuff as integer ptr)
-
+    dim as integer col, glow
+    dim as integer disable
+    getParameter(disable, "disable")
+    if disable = 0 then
+        if drawX > link.gamespace_ptr->camera.x - SCRX*0.5 andAlso drawX < link.gamespace_ptr->camera.x + SCRX*0.5 then
+            if drawY > link.gamespace_ptr->camera.y - SCRY*0.5 andAlso drawY < link.gamespace_ptr->camera.y + SCRY*0.5 then
+                col = point(drawX, drawY, scnbuff)
+                if col = &hfefe00fe then 
+                    col = &hffffffff
+                else
+                    col = 0
+                end if
+                glow = (col shr 24) and &hff
+        
+                anims[0].setGlow((glow shl 24) or &h00ffffff)
+                anims[0].drawAnimation(scnbuff, drawX, drawY)
+            end if
+        end if
+    end if
 end function
 
 '----------------------------------
@@ -36,5 +63,8 @@ end function
 
 '-----------------------------------
 
-
+slot $enable()
+    
+    setParameter(0, "disable")
+end slot
 

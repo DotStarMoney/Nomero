@@ -178,7 +178,7 @@ return {
       y = 0,
       width = 252,
       height = 168,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         ["background"] = "",
@@ -553,7 +553,7 @@ return {
       y = 0,
       width = 252,
       height = 168,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         ["background"] = "",
@@ -740,7 +740,7 @@ return {
       y = 0,
       width = 252,
       height = 168,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         ["background"] = "",
@@ -928,7 +928,7 @@ return {
       y = 0,
       width = 252,
       height = 168,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         ["background"] = "",
@@ -1115,7 +1115,7 @@ return {
       y = 0,
       width = 252,
       height = 168,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         ["background"] = "",
@@ -1303,7 +1303,7 @@ return {
       y = 0,
       width = 252,
       height = 168,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         ["background"] = "",
@@ -1490,7 +1490,7 @@ return {
       y = 0,
       width = 252,
       height = 168,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {
         ["background"] = "",
@@ -3904,7 +3904,7 @@ return {
           name = "spot1",
           type = "Spawn",
           shape = "ellipse",
-          x = 2240,
+          x = 2160,
           y = 1120,
           width = 32,
           height = 32,
@@ -3921,7 +3921,7 @@ return {
           name = "spot2",
           type = "Spawn",
           shape = "ellipse",
-          x = 2240,
+          x = 2160,
           y = 1392,
           width = 32,
           height = 32,

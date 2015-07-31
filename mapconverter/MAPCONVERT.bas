@@ -499,7 +499,8 @@ do
                                 layers(N_layers - 1).isFallout = 65535
                                 layers(N_layers - 1).isReceiver = 65535
                                 layers(N_layers - 1).occluding = 65535
-                                layers(N_layers - 1).groupName = 0
+                                layers(N_layers - 1).groupName = allocate(len("MAIN") + 1)
+                                *(layers(N_layers - 1).groupName) = "MAIN"
                                 layers(N_layers - 1).isHidden = 65535
                                 if item_content <> "{}" then 
                                     propertyline = 1
@@ -672,9 +673,10 @@ do
                         layers(N_layers - 1).isHidden = 1
                     elseif left(lcase(item_tag), 5) = "group" then
                         item_content = trim(item_content)
+                        deallocate(layers(N_layers - 1).groupName)
                         layers(N_layers - 1).groupName = allocate(len(item_content) + 1)
-                        *(layers(N_layers - 1).groupName) = item_content
-                        layers(N_layers - 1).mergeless = 1
+                        *(layers(N_layers - 1).groupName) = ucase(item_content)
+                        'layers(N_layers - 1).mergeless = 1
                     end if
                 elseif propertyType = 1 then
                     with tempEffect
@@ -962,8 +964,8 @@ for i = 0 to N_layers - 1
     print "   ";layers(i).inRangeSet
     print "   ";layers(i).isDestructible
     print "   ";layers(i).isFallout
+    print "   ";*(layers(i).groupName)
 next i
-
 Print "Analyzing map contents..."
 
 dim as ushort temp
@@ -1256,6 +1258,8 @@ type mergeStack_t
     as integer     newTile
     as integer     tileset
     as integer     tileNum
+    as string      groupName
+    as string      setName
 end type
 
 
@@ -1287,7 +1291,7 @@ dim as integer stackPos, tileX, tileY, remInd, isAnim, animSearch, firstInLoop, 
 dim as integer ptr cmpImg(0 to 1)
 dim as integer tileEmpty, maskComp, numTilesSet
 stackPos = 0
-redim as mergeStack_t mergeStack(N_runs)
+dim as mergeStack_t mergeStack(0 to 127)
 dim as any ptr rollReturn
 dim as Hashtable curListHash
 dim as List tilesetListHashes
@@ -1409,7 +1413,7 @@ cmpImg(1) = imagecreate(16,16,0)
 
 dim as integer ptr mergedTiles = imagecreate(320, 8192)
 dim as integer ptr mergedTiles_norm = imagecreate(320, 8192)
-
+dim as string tempString
 
 for activeLayer = 0 to 4
     select case activeLayer
@@ -1424,11 +1428,15 @@ for activeLayer = 0 to 4
     case 4
         curRange = ACTIVE_FRONT
     end select
+    cls
     for q = 0 to map_width*map_height - 1
-        locate Csrlin - 2, 1: print space(20)
-        locate Csrlin - 1, 1: print "Progress... " & str(int(((q + (map_width*map_height) * activeLayer)  / (map_width * map_height * 4 - 1)) * 100)) & "%"
-        print "Refactored tiles: " & str(N_merges)
+        locate 1, 1: print "Progress... " & str(int(((q + (map_width*map_height) * activeLayer)  / (map_width * map_height * 4 - 1)) * 100)) & "%"
+        locate 2, 1: print "Refactored tiles: " & str(N_merges)
         N_runs = 0
+        for i = 0 to 127
+            mergeStack(i).groupName = ""
+            'if mergeStack(i).groupName then deallocate(mergeStack(i).groupName)
+        next i
         for i = N_layers - 1 to 0 step -1
             if i <> collisionLayer andAlso layers(i).inRangeSet = curRange then
                 if layers(i).layer_data[q] <> 0 then
@@ -1498,16 +1506,18 @@ for activeLayer = 0 to 4
                         line sMask, (0,0)-(15,15), 0, BF
                         
                         if ((curFlags and MERGELESS_MASK) = 0) andAlso (isAnim = 0) then
-                            for j = N_runs - 1 to 0 step -1                            
+                            for j = N_runs - 1 to 0 step -1       
+                                deleteTile = 0
                                 if (mergeStack(j).depth <> layers(i).depth) then
                                     findFullCoverage = 1
                                 else    
-                                    
                                     if ((mergeStack(j).flags and MERGELESS_MASK) = 0) andAlso (mergeStack(j).newTile = 1) then
                                         if (mergeStack(j).ambientLevel = layers(i).ambientLevel) andALso _
-                                           (mergeStack(j).flags = curFlags) andAlso _
-                                           (findFullCoverage = 0) then    
-                                            
+                                           (mergeStack(j).flags = curFlags) andAlso (mergeStack(j).groupName = *(layers(i).groupName)) andAlso _
+                                           (findFullCoverage = 0) andAlso (mergeStack(j).setName <> layers(i).layer_name) then    
+                                           
+
+                                                                                       
                                             if maskCompare(coverageMask, mergeStack(j).mask) = DISJOINT then                                                
                                                 if N_runs > 1 then
                                                     tempStackItem = mergeStack(j)
@@ -1517,7 +1527,10 @@ for activeLayer = 0 to 4
                                                     mergeStack(N_runs - 1) = tempStackItem
                                                 end if
                                             
-
+                                                'if layers(mergeStack(N_runs - 1).layer).layer_name = "Parallax 1" then
+                                                '    print "HERE 1"
+                                                '    'sleep
+                                                'end if
                                                 layers(mergeStack(N_runs - 1).layer).layer_data[q] = 0
                                                 
                                                 mergeStack(N_runs - 1).layer = i
@@ -1538,13 +1551,12 @@ for activeLayer = 0 to 4
                                     put coverageMask, (0,0), mergeStack(j).mask, OR
                                     if mergeStack(j).flags and FALLOUT_MASK then put foMask, (0,0), mergeStack(j).mask, OR
                                     if mergeStack(j).flags and DESTRUCTIBLE_MASK then put dMask, (0,0), mergeStack(j).mask, OR
-                                    if ((mergeStack(j).flags and DESTRUCTIBLE_MASK) = 0) and _
+                                    if ((mergeStack(j).flags and DESTRUCTIBLE_MASK) = 0) andAlso _
                                        ((mergeStack(j).flags and FALLOUT_MASK) = 0) then 
                                         put sMask, (0,0), mergeStack(j).mask, OR 
                                         put foMask, (0,0), mergeStack(j).mask, OR 
                                         put dMask, (0,0), mergeStack(j).mask, OR 
                                     end if
-                                    deleteTile = 0
                                     if (curFlags and DESTRUCTIBLE_MASK) and (curFlags and FALLOUT_MASK) then
                                         maskComp = maskCompare(curMask, coverageMask)
                                         if findFullCoverage = 0 then
@@ -1573,13 +1585,15 @@ for activeLayer = 0 to 4
                                         else
                                             if maskComp = FULL_COVERING then deleteTile = 1
                                         end if
-                                        
                                     end if
                                 end if
-                                if deleteTile = 1 then
-                                    ''''''''''''''''''''''''''''''
+                                
+                                if deleteTile = 1 andAlso (mergeStack(j).groupName = *(layers(i).groupName)) then
                                     layers(i).layer_data[q] = 0
-
+                                    'if layers(i).layer_name = "Parallax 1" then
+                                    '    print "HERE 2"
+                                    '    sleep
+                                    'end if
                                     pushRun = 0
                                     exit for
                                 end if
@@ -1589,11 +1603,25 @@ for activeLayer = 0 to 4
                             
                         if pushRun = 1 then
                             N_runs += 1
-                            redim preserve as mergeStack_t mergeStack(N_runs - 1)
+                            'redim preserve as mergeStack_t mergeStack(N_runs - 1)
                             mergeStack(N_runs - 1).layer = i
                             mergeStack(N_runs - 1).mask = imagecreate(16,16,0)
                             mergeStack(N_runs - 1).depth = layers(i).depth
                             mergeStack(N_runs - 1).ambientLevel = layers(i).ambientLevel
+                            
+                            'tempString = *(layers(i).groupName)
+                            'mergeStack(N_runs - 1).groupName = allocate(len(tempString)+1)
+                            'print len(*(layers(i).groupName))+1, *(layers(i).groupName)
+                            'sleep
+                            tempString = *(layers(i).groupName)
+                            mergeStack(N_runs - 1).groupName = tempString
+                            'print *(mergeStack(N_runs - 1).groupName)
+                            'sleep
+                            mergeStack(N_runs - 1).setName = layers(i).layer_name
+                            'print mergeStack(N_runs - 1).setName, layers(i).layer_name, N_runs - 1
+                            'sleep
+                            
+                            
                             mergeStack(N_runs - 1).flags = curFlags
                             mergeStack(N_runs - 1).image = imagecreate(16, 16, 0)
                             mergeStack(N_runs - 1).image_norm = imagecreate(16, 16, 0)                            
@@ -1629,15 +1657,22 @@ for activeLayer = 0 to 4
 
                     line coverageMask, (0,0)-(15,15), 0, BF
                     '''''''''''''''''''''''''''''''
-
+                    'if layers(i).layer_name = "Parallax 1" then
+                    '    print "HERE 3"
+                    '    'sleep
+                    'end if
                     layers(i).layer_data[q] = 0
+                    
                     for j = N_runs - 1 to 0 step -1
                         if (mergeStack(j).depth <> layers(i).depth) then
                             exit for
                         else    
                             if ((mergeStack(j).flags and MERGELESS_MASK) = 0) andAlso (mergeStack(j).newTile = 1) then
-                                if (mergeStack(j).ambientLevel = layers(i).ambientLevel) andALso _
-                                   (mergeStack(j).flags = curFlags) then
+                                if (mergeStack(j).ambientLevel = layers(i).ambientLevel) andAlso (mergeStack(j).groupName = *(layers(i).groupName)) andAlso _
+                                   (mergeStack(j).flags = curFlags) andAlso (mergeStack(j).setName <> layers(i).layer_name) then
+                                    
+
+                                   
                                     if maskCompare(coverageMask, mergeStack(j).mask) = DISJOINT then
                                         
                                         if N_runs > 1 then
@@ -1647,6 +1682,11 @@ for activeLayer = 0 to 4
                                             next remInd
                                             mergeStack(N_runs - 1) = tempStackItem
                                         end if
+                                        ''''''
+                                        'if layers(mergeStack(N_runs - 1).layer).layer_name = "Parallax 1" then
+                                        '    print "HERE 4"
+                                        '    'sleep
+                                        'end if
                                         layers(mergeStack(N_runs - 1).layer).layer_data[q] = 0
                                         mergeStack(N_runs - 1).layer = i
                                         exit for
@@ -1793,8 +1833,9 @@ for i = 0 to N_layers - 1
     if layers(i).empty = 1 then deletedLayers += 1
 next i
 
-print "Deleted " & str(deletedLayers) & " of " & str(N_layers) & " layers."
 
+
+print "Deleted " & str(deletedLayers) & " of " & str(N_layers) & " layers."
 
 dim as integer ptr tempImg, alphaImg
 if N_merges > 0 then
@@ -1838,7 +1879,6 @@ imagedestroy(mergedTiles)
 imagedestroy(mergedTiles_norm)
 
 
-
 print "Refactoring tile instances..."
 dim as integer ptr tempTilesetCopy
 dim as ushort totalSets = 0
@@ -1880,6 +1920,7 @@ for i = 0 to N_tilesets - 1
     end if
     tilesets(i).set_filename = "tilesets\" & tilesets(i).set_filename
 next i
+
 
 if hasCenter = 0 then
     pcenter_x = map_width * 0.5 * 16

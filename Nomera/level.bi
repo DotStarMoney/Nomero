@@ -42,6 +42,7 @@ type Level
         declare function getWidth() as integer
         declare function getHeight() as integer
         declare function getName() as string
+        declare function getLayerN() as integer
         declare sub drawLayer(scnbuff as uinteger ptr,_
                               tl_x as integer, tl_y as integer,_
                               br_x as integer, br_y as integer,_
@@ -90,6 +91,8 @@ type Level
         declare sub setUnhide(lyr as integer)
         declare sub setGlow(lyr as integer, glow as integer)
         
+        declare function getAmbientLevel(lyr as integer) as integer
+        declare sub setAmbientLevel(lyr as integer, col as integer)
         
        
         dim as integer justLoaded

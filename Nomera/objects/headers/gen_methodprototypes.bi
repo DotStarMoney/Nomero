@@ -31,6 +31,7 @@ declare function COVERSMOKE_PROC_RUN(t as double) as integer
 declare sub COVERSMOKE_PROC_DRAW(scnbuff as integer ptr)
 declare sub COVERSMOKE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub COVERSMOKE_PROC_CONSTRUCT()
+declare sub DEEPSPOTLIGHT_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
 declare sub DEEPSPOTLIGHT_PROC_INIT()
 declare sub DEEPSPOTLIGHT_PROC_FLUSH()
 declare function DEEPSPOTLIGHT_PROC_RUN(t as double) as integer
@@ -121,6 +122,7 @@ declare function TANDY2000_PROC_RUN(t as double) as integer
 declare sub TANDY2000_PROC_DRAW(scnbuff as integer ptr)
 declare sub TANDY2000_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub TANDY2000_PROC_CONSTRUCT()
+declare sub setAmbientLevels(glowAmount as integer, subAmountPlayer as integer, subAmountUnlit as integer)
 declare sub TELEPORTERREVEALSEQUENCE_SLOT_START(pvPair() as _Item_slotValuePair_t)
 declare sub TELEPORTERREVEALSEQUENCE_PROC_INIT()
 declare sub TELEPORTERREVEALSEQUENCE_PROC_FLUSH()

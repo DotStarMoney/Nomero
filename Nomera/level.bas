@@ -1096,6 +1096,13 @@ sub level.drawSmoke(scnbuff as integer ptr)
         
 end sub
 
+function level.getAmbientLevel(lyr as integer) as integer
+    return layerData[lyr].ambientLevel
+end function
+sub level.setAmbientLevel(lyr as integer, col as integer)
+    layerData[lyr].ambientLevel = col
+end sub
+
 sub level.setObjectAmbientLevel(col as integer)
     objectAmbientLevel = col
 end sub
@@ -1130,6 +1137,10 @@ function level.getGroup(group_tag as string, byref layer_nums as integer ptr) as
         layer_nums = 0
         return 0
     end if
+end function
+
+function level.getLayerN() as integer
+    return blocks_N
 end function
 
 sub level.load(filename as string)
@@ -1350,7 +1361,7 @@ sub level.load(filename as string)
             get #f,,layerData[lyr].receiver
             get #f,,layerData[lyr].occluding
             layerData[lyr].glow = &hffffffff
-            
+
             layerData[lyr].windyMistLayer = -1
             if windyMist <> 65535 then
                 if layerData[lyr].depth < 1.0 andAlso layerData[lyr].isHidden = LEVEL_OFF then 
