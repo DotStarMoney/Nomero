@@ -48,6 +48,7 @@ type GameSpace
         as Vector2D lastSpawn
         as string lastMap
         as integer lockAction
+        as integer lockCamera
         as integer winStatus
         as integer shouldBail
         as integer bailFrame

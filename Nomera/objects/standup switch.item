@@ -1,0 +1,82 @@
+'#standup switch
+type ITEM_DATA
+    as integer state
+end type
+
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 64))
+signal $turnOn
+signal $turnOff
+parameter "state", integer
+
+'---------------------------------
+
+function _init()
+    dim as integer cstate
+    getParameter(cstate, "state")
+   
+    data.state = cstate
+    
+    
+    CREATE_ANIMS(2)
+    anims[0].load(MEDIA_PATH + "standswitch.txt")
+    anims[1].load(MEDIA_PATH + "standswitch.txt")
+    anims[1].hardswitch(1)
+
+    setToState()
+end function
+
+'---------------------------------
+
+function _flush()
+    
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+    anims[1].drawAnimation(scnbuff, p.x, p.y)
+    
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    anims[0].step_animation()
+    anims[1].step_animation()
+end function
+
+'-----------------------------------
+
+sub setToState()
+    if data.state = 0 then
+        anims[0].restart()
+        anims[1].restart()
+        anims[0].pause()
+        anims[1].pause()
+    else
+        anims[0].play()
+        anims[1].play()        
+    end if
+end sub
+
+slot $interact()
+    data.state = 1 - data.state
+    setToState()
+    if data.state = 1 then
+        link.soundeffects_ptr->playSound(SND_CLACKUP)
+        throw($turnON)
+    else
+        link.soundeffects_ptr->playSound(SND_CLACKDOWN)   
+        throw($turnOFF)
+    end if
+end slot

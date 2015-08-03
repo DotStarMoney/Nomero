@@ -899,8 +899,76 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 	as_bound = link.gamespace_ptr->camera - Vector2D(SCRX, SCRY) * 0.5 
 	bs_bound = link.gamespace_ptr->camera + Vector2D(SCRX, SCRY) * 0.5 
 	
+
+	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
+	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
+
+    if interactShowHilight then
+        if (int(interactCycle * 0.25) = 0) orElse (int(interactCycle * 0.25) = 2) then
+            ntl = Vector2D(interactHilightTL.x - interactCycle*0.5 + 6, interactHilightTL.y - interactCycle*0.5 + 6)
+            nbr = Vector2D(interactHilightBR.x + interactCycle*0.5 - 6, interactHilightBR.y + interactCycle*0.5 - 6)
+            line scnbuff, (ntl.x, ntl.y)-(nbr.x, nbr.y), &hcf003f, B
+            line scnbuff, (ntl.x + 1, ntl.y + 1)-(nbr.x - 1, nbr.y - 1), &h3f001f, B
+            line scnbuff, ((ntl.x + nbr.x)*0.5, ntl.y)-((ntl.x + nbr.x)*0.5, ntl.y + 4), &hcf003f
+            line scnbuff, ((ntl.x + nbr.x)*0.5, nbr.y)-((ntl.x + nbr.x)*0.5, nbr.y - 4), &hcf003f
+            line scnbuff, (ntl.x, (ntl.y + nbr.y)*0.5)-(ntl.x + 4, (ntl.y + nbr.y)*0.5), &hcf003f
+            line scnbuff, (nbr.x, (ntl.y + nbr.y)*0.5)-(nbr.x - 4, (ntl.y + nbr.y)*0.5), &hcf003f
+        end if
+    end if
+    
+    LOCK_TO_SCREEN()
+    
+    '216 -> 180
+    hudTrim.putTRANS(scnbuff, SCRX*0.5 - 180, 425, 0, 0, 470, 49)
+    drawHexPrism(scnbuff, 68, 452, spinnerAngle, 42, 40, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
+    
+    
+    /'
+    totalWidth = 0
+    for i = 0 to 9
+        thisWidth = bombData(i).tilePosY + 32
+        if thisWidth < 0 then thisWidth = 0
+        tilePlaceX(i) = totalWidth - (32 - thisWidth)*0.5
+        totalWidth += thisWidth
+    next i
+    '/
+    
+    for i = 0 to 9     
+        tilePlaceX(i) = i * 33 + 224'-= totalWidth * 0.5
+        posY = (SCRY - 32 - 14) - bombData(i).tilePosY
+        if posY > -32 then
+            bombListTiles.putTRANS(scnbuff, tilePlaceX(i), posY, i*32, 0, i*32+31, 31)
+            bombListTiles.putTRANS(scnbuff, tilePlaceX(i), posY, bombData(i).bombType*32, 32, bombData(i).bombType*32+31, 63)
+        end if
+    next i
+  
+    
 	
-	for i = 0 to 9 
+    
+    
+    curPos = Vector2D(194, 434)
+    nd = intToBCD(spinnerCount(spinnerItem), @digits(0))
+    for i = 0 to nd - 1
+        hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,0, 23 + digits(i)*8,15)
+        curPos -= Vector2D(8, 0)
+    next i
+   
+    
+    curPos = Vector2D(194, 455)
+    nd = intToBCD(142, @digits(0))
+    for i = 0 to nd - 1
+        hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,16, 23 + digits(i)*8,31)
+        curPos -= Vector2D(8, 0)
+    next i
+    
+    drawDetectMeter(scnbuff, (sin(timer * 0.5) + 1) * 50)
+    
+    huditembar.putTRANS(scnbuff, 0, itemBarPos, 0, 0, 639, 21)
+    
+    
+    UNLOCK_TO_SCREEN()
+    
+    for i = 0 to 9 
 		if bombData(i).animating then
 			if bombData(i).hasBomb then
                 bombPos = link.dynamiccontroller_ptr->getPos(bombData(i).ID)
@@ -1010,75 +1078,6 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
 			end if
 		end if
 	next i
-    
-
-	silhouette.setGlow(&h00FFFFFF or ((revealSilo and &hff) shl 24))
-	if revealSilo > 0 then silhouette.drawAnimationOverride(scnbuff, body.p.x(), body.p.y(), anim.getAnimation(), anim.getFrame(), link.gamespace_ptr->camera, 4*facing)	
-
-    if interactShowHilight then
-        if (int(interactCycle * 0.25) = 0) orElse (int(interactCycle * 0.25) = 2) then
-            ntl = Vector2D(interactHilightTL.x - interactCycle*0.5 + 6, interactHilightTL.y - interactCycle*0.5 + 6)
-            nbr = Vector2D(interactHilightBR.x + interactCycle*0.5 - 6, interactHilightBR.y + interactCycle*0.5 - 6)
-            line scnbuff, (ntl.x, ntl.y)-(nbr.x, nbr.y), &hcf003f, B
-            line scnbuff, (ntl.x + 1, ntl.y + 1)-(nbr.x - 1, nbr.y - 1), &h3f001f, B
-            line scnbuff, ((ntl.x + nbr.x)*0.5, ntl.y)-((ntl.x + nbr.x)*0.5, ntl.y + 4), &hcf003f
-            line scnbuff, ((ntl.x + nbr.x)*0.5, nbr.y)-((ntl.x + nbr.x)*0.5, nbr.y - 4), &hcf003f
-            line scnbuff, (ntl.x, (ntl.y + nbr.y)*0.5)-(ntl.x + 4, (ntl.y + nbr.y)*0.5), &hcf003f
-            line scnbuff, (nbr.x, (ntl.y + nbr.y)*0.5)-(nbr.x - 4, (ntl.y + nbr.y)*0.5), &hcf003f
-        end if
-    end if
-    
-    LOCK_TO_SCREEN()
-    
-    '216 -> 180
-    hudTrim.putTRANS(scnbuff, SCRX*0.5 - 180, 425, 0, 0, 470, 49)
-    drawHexPrism(scnbuff, 68, 452, spinnerAngle, 42, 40, hudspinner.getRawImage(), 48, 48, &b0000000000111111)
-    
-    
-    /'
-    totalWidth = 0
-    for i = 0 to 9
-        thisWidth = bombData(i).tilePosY + 32
-        if thisWidth < 0 then thisWidth = 0
-        tilePlaceX(i) = totalWidth - (32 - thisWidth)*0.5
-        totalWidth += thisWidth
-    next i
-    '/
-    
-    for i = 0 to 9     
-        tilePlaceX(i) = i * 33 + 224'-= totalWidth * 0.5
-        posY = (SCRY - 32 - 14) - bombData(i).tilePosY
-        if posY > -32 then
-            bombListTiles.putTRANS(scnbuff, tilePlaceX(i), posY, i*32, 0, i*32+31, 31)
-            bombListTiles.putTRANS(scnbuff, tilePlaceX(i), posY, bombData(i).bombType*32, 32, bombData(i).bombType*32+31, 63)
-        end if
-    next i
-  
-    
-	
-    
-    
-    curPos = Vector2D(194, 434)
-    nd = intToBCD(spinnerCount(spinnerItem), @digits(0))
-    for i = 0 to nd - 1
-        hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,0, 23 + digits(i)*8,15)
-        curPos -= Vector2D(8, 0)
-    next i
-   
-    
-    curPos = Vector2D(194, 455)
-    nd = intToBCD(142, @digits(0))
-    for i = 0 to nd - 1
-        hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,16, 23 + digits(i)*8,31)
-        curPos -= Vector2D(8, 0)
-    next i
-    
-    drawDetectMeter(scnbuff, (sin(timer * 0.5) + 1) * 50)
-    
-    huditembar.putTRANS(scnbuff, 0, itemBarPos, 0, 0, 639, 21)
-    
-    
-    UNLOCK_TO_SCREEN()
 end sub 
 sub Player.drawDetectMeter(scnbuff as integer ptr, lvl as integer)
     dim as integer nPieces, i, posx, posy

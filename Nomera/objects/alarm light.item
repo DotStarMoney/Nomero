@@ -1,0 +1,64 @@
+'#alarm spinner
+
+type ITEM_DATA
+    as integer fade
+    as integer fadeDir
+end type
+
+
+'---------------------------------
+
+function _init()
+    dim as integer i, amt
+    data.fade = int(rnd * 20) + 64
+    data.fadeDir =  3
+
+    CREATE_ANIMS(2)
+    anims[0].load(MEDIA_PATH + "alarmlight.txt")
+    anims[1].load(MEDIA_PATH + "alarmlightoverlay.txt")
+    anims[0].play()
+    anims[1].play()
+    
+    amt = int(rnd * 60)
+    for i = 0 to amt
+        anims[0].step_animation()
+        anims[1].step_animation()    
+    next i
+end function
+
+'---------------------------------
+
+function _flush()
+ 
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    anims[0].drawAnimation(scnbuff, p.x+size.x*0.5, p.y+size.y*0.5)
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    anims[1].setGlow((data.fade shl 24) or &h00ffffff)
+    anims[1].drawAnimation(scnbuff, p.x+size.x*0.5, p.y+size.y*0.5)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    anims[0].step_animation()
+    anims[1].step_animation()
+    data.fade += data.fadeDir
+    if data.fade > 100 then 
+        data.fade = 100
+        data.fadeDir *= -1
+    elseif data.fade < 64 then
+        data.fade = 64
+        data.fadeDir *= -1
+    end if
+end function
+
+'-----------------------------------

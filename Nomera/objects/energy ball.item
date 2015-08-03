@@ -1,0 +1,66 @@
+'#energy ball
+
+type ITEM_DATA
+    as integer body_i
+    as TinyBody body
+end type
+
+parameter "takeCamera", integer
+
+'---------------------------------
+
+function _init()
+    
+
+    data.body = TinyBody(p, 16, 10)
+    data.body.elasticity = 0.2
+    data.body_i = link.tinyspace_ptr->addBody(@(data.body))
+
+    
+    CREATE_ANIMS(1)
+    
+    anims[0].load(MEDIA_PATH + "balllaunch2.txt")
+
+end function
+
+'---------------------------------
+
+function _flush()
+    link.tinyspace_ptr->removeBody(data.body_i)
+ 
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+
+    anims[0].drawAnimation(scnbuff, p.x, p.y)
+    
+    
+
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer takeCamera
+    
+    getParameter(takeCamera, "takeCamera")
+    p = data.body.p
+    
+    if link.gamespace_ptr->lockCamera = 0 andAlso takeCamera = 1 then
+        link.gamespace_ptr->camera = p * 0.1 + link.gamespace_ptr->camera * 0.9
+    end if
+    
+end function
+
+'-----------------------------------
+
+
+

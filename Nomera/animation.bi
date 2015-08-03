@@ -111,7 +111,10 @@ type Animation
                                      lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
                                      cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0, typeOverride as integer = ANIM_NONE)      
                                      
-                                     
+        declare sub drawImage(scnbuff as uinteger ptr, x as integer, y as integer, x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
+                              cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0, typeOverride as integer = ANIM_NONE) 
+
+                              
         declare sub drawAnimationOverride(scnbuff as uinteger ptr, x as integer, y as integer, anim as integer, frame as integer, cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0)
         
         declare sub step_animation()

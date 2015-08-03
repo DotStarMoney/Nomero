@@ -914,6 +914,7 @@ sub Animation.drawAnimationLit(scnbuff as uinteger ptr, x as integer, y as integ
                                
 end sub
 
+
 sub Animation.drawImageLit(scnbuff as uinteger ptr, x as integer, y as integer, x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
                            lightList as LightPair ptr ptr, lightList_N as integer, ambientLight as integer,_
                            cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0, typeOverride as integer = ANIM_NONE)   
@@ -996,3 +997,37 @@ sub Animation.drawImageLit(scnbuff as uinteger ptr, x as integer, y as integer, 
     end with          
 
 end sub                           
+sub Animation.drawImage(scnbuff as uinteger ptr, x as integer, y as integer, x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
+                        cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, forceShading as integer = 0, typeOverride as integer = ANIM_NONE)   
+    Dim as Vector2D off
+    dim as integer start_x, start_y
+    dim as integer a_x, a_y
+    dim as integer b_x, b_y
+    dim as integer drawW, drawH
+    dim as integer pos_x, pos_y
+    dim as integer i
+    dim as Anim_DrawType_e drawMode
+    dim as zimage  drawImg
+    
+    with data_->animations[currentAnim]
+		
+        fetchImageData currentAnim, drawFrame, drawFlags, drawImg, drawW, drawH, off, start_x, start_y
+        
+        drawMode = data_->drawMode
+        if typeOverride <> ANIM_NONE then drawMode = typeOverride
+        
+        select case drawMode
+        case ANIM_TRANS
+    
+            drawImg.putTRANS(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1)
+
+			
+		case ANIM_GLOW
+
+            drawImg.putGLOW(scnbuff, x + off.x, y + off.y, x0, y0, x1, y1, glowValue)
+
+		end select
+		
+    end with          
+
+end sub 

@@ -1,0 +1,68 @@
+'#red wall light
+
+type ITEM_DATA
+    as integer curFrame
+    as integer speedCount
+    as integer frameDir
+end type
+#define ANIM_SPEED 10
+
+'---------------------------------
+
+function _init()
+    data.curFrame = 0
+    data.speedCount = ANIM_SPEED
+    data.frameDir = 1
+
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "red wall light.txt")
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallRed_Diffuse.txt", MEDIA_PATH + "Lights\SmallRed_Specular.txt", 1, 2, 1)  
+
+end function
+
+'---------------------------------
+
+function _flush()
+    
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    anims[0].drawImage(scnbuff, drawX, drawY, data.curFrame*32, 0, data.curFrame*32 + 31, 31,,,,ANIM_TRANS)
+    'anims[0].setGlow(&hafffffff) 'or ((100 + ((4 - data.curFrame) * 20)) shl 24))
+    anims[0].drawImage(scnbuff, drawX, drawY, 128, 0, 159, 31)
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    /'
+    data.speedCount -= 1
+    if data.speedCount = 0 then
+        data.speedCount = ANIM_SPEED
+        data.curFrame += data.frameDir
+        if data.curFrame = 4 then
+            data.curFrame = 2
+            data.frameDir *= -1
+        elseif data.curFrame = -1 then
+            data.curFrame = 1
+            data.frameDir *= -1
+        end if
+    end if
+    '/
+  
+    lightState = 1
+    light.texture.x = drawX + size.x * 0.5
+    light.texture.y = drawY + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+end function
+
+'-----------------------------------

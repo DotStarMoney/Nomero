@@ -72,6 +72,53 @@ sub Item.ACCENTLIGHT_PROC_CONSTRUCT()
     _initAddParameter_("MODE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("FAST", _ITEM_VALUE_INTEGER)
 end sub
+sub Item.ALARMSPINNER_PROC_INIT()
+    data_.ALARMSPINNER_DATA = new ITEM_ALARMSPINNER_TYPE_DATA
+    dim as integer i, amt
+    data_.ALARMSPINNER_DATA->fade = int(rnd * 20) + 64
+    data_.ALARMSPINNER_DATA->fadeDir =  3
+
+    CREATE_ANIMS(2)
+    anims[0].load(MEDIA_PATH + "alarmlight.txt")
+    anims[1].load(MEDIA_PATH + "alarmlightoverlay.txt")
+    anims[0].play()
+    anims[1].play()
+    
+    amt = int(rnd * 60)
+    for i = 0 to amt
+        anims[0].step_animation()
+        anims[1].step_animation()    
+    next i
+end sub
+sub Item.ALARMSPINNER_PROC_FLUSH()
+ 
+    if anims_n then delete(anims)
+    if data_.ALARMSPINNER_DATA then delete(data_.ALARMSPINNER_DATA)
+    data_.ALARMSPINNER_DATA = 0
+end sub
+function Item.ALARMSPINNER_PROC_RUN(t as double) as integer
+    anims[0].step_animation()
+    anims[1].step_animation()
+    data_.ALARMSPINNER_DATA->fade += data_.ALARMSPINNER_DATA->fadeDir
+    if data_.ALARMSPINNER_DATA->fade > 100 then 
+        data_.ALARMSPINNER_DATA->fade = 100
+        data_.ALARMSPINNER_DATA->fadeDir *= -1
+    elseif data_.ALARMSPINNER_DATA->fade < 64 then
+        data_.ALARMSPINNER_DATA->fade = 64
+        data_.ALARMSPINNER_DATA->fadeDir *= -1
+    end if
+    return 0
+end function
+sub Item.ALARMSPINNER_PROC_DRAW(scnbuff as integer ptr)
+    anims[0].drawAnimation(scnbuff, p.x+size.x*0.5, p.y+size.y*0.5)
+end sub
+sub Item.ALARMSPINNER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    anims[1].setGlow((data_.ALARMSPINNER_DATA->fade shl 24) or &h00ffffff)
+    anims[1].drawAnimation(scnbuff, p.x+size.x*0.5, p.y+size.y*0.5)
+
+end sub
+sub Item.ALARMSPINNER_PROC_CONSTRUCT()
+end sub
 sub Item.ALIENSPINNER_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 
 end sub
@@ -298,6 +345,72 @@ sub Item.ANTIPERSONNELMINE_PROC_CONSTRUCT()
     _initAddSlot_("EXPLODE", ITEM_ANTIPERSONNELMINE_SLOT_EXPLODE_E)
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.BALLSPAWNER_SLOT_SPAWN(pvPair() as _Item_slotValuePair_t)
+    if data_.BALLSPAWNER_DATA->revUpFrames = 0 then
+        data_.BALLSPAWNER_DATA->revUpFrames = 60
+        link.gamespace_ptr->lockAction = 1
+        link.gamespace_ptr->lockCamera = 0
+    end if
+end sub
+sub Item.BALLSPAWNER_PROC_INIT()
+    data_.BALLSPAWNER_DATA = new ITEM_BALLSPAWNER_TYPE_DATA
+
+    data_.BALLSPAWNER_DATA->revUpFrames = 0
+
+    CREATE_ANIMS(3)
+    
+    anims[0].load(MEDIA_PATH + "balllaunchdevice.txt")
+    anims[1].load(MEDIA_PATH + "balllaunchdevice.txt")
+    anims[1].hardSwitch(1)
+    anims[1].play()
+    
+    anims[2].load(MEDIA_PATH + "balllaunch2.txt")
+    anims[2].hardswitch(1)
+
+    
+end sub
+sub Item.BALLSPAWNER_PROC_FLUSH()
+    
+    if anims_n then delete(anims)
+    if data_.BALLSPAWNER_DATA then delete(data_.BALLSPAWNER_DATA)
+    data_.BALLSPAWNER_DATA = 0
+end sub
+function Item.BALLSPAWNER_PROC_RUN(t as double) as integer
+    dim as Item ptr eball
+    anims[1].step_animation()
+
+    if data_.BALLSPAWNER_DATA->revUpFrames > 0 then 
+        data_.BALLSPAWNER_DATA->revUpFrames -= 1
+        
+        if data_.BALLSPAWNER_DATA->revUpFrames = 0 then
+            eball = DControl->constructItem(DControl->itemStringToType("ENERGY BALL"))
+            
+            eball->setParameter(1, "takeCamera")
+            
+            DControl->initItem(eball, Vector2D(p.x + 24, p.y + 30))
+            
+        end if
+    end if
+    return 0
+end function
+sub Item.BALLSPAWNER_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+    
+    
+    anims[1].drawAnimation(scnbuff, p.x, p.y)
+    
+    
+    anims[2].drawAnimation(scnbuff, p.x, p.y)
+
+end sub
+sub Item.BALLSPAWNER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.BALLSPAWNER_PROC_CONSTRUCT()
+    _initAddSlot_("SPAWN", ITEM_BALLSPAWNER_SLOT_SPAWN_E)
 end sub
 sub Item.BIGOSCILLOSCOPE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     data_.BIGOSCILLOSCOPE_DATA->dontDraw = 1 - data_.BIGOSCILLOSCOPE_DATA->dontDraw
@@ -689,6 +802,52 @@ sub Item.ELECTRICMINE_PROC_CONSTRUCT()
     _initAddSlot_("EXPLODE", ITEM_ELECTRICMINE_SLOT_EXPLODE_E)
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.ENERGYBALL_PROC_INIT()
+    data_.ENERGYBALL_DATA = new ITEM_ENERGYBALL_TYPE_DATA
+    
+
+    data_.ENERGYBALL_DATA->body = TinyBody(p, 16, 10)
+    data_.ENERGYBALL_DATA->body.elasticity = 0.2
+    data_.ENERGYBALL_DATA->body_i = link.tinyspace_ptr->addBody(@(data_.ENERGYBALL_DATA->body))
+
+    
+    CREATE_ANIMS(1)
+    
+    anims[0].load(MEDIA_PATH + "balllaunch2.txt")
+
+end sub
+sub Item.ENERGYBALL_PROC_FLUSH()
+    link.tinyspace_ptr->removeBody(data_.ENERGYBALL_DATA->body_i)
+ 
+    if anims_n then delete(anims)
+    if data_.ENERGYBALL_DATA then delete(data_.ENERGYBALL_DATA)
+    data_.ENERGYBALL_DATA = 0
+end sub
+function Item.ENERGYBALL_PROC_RUN(t as double) as integer
+    dim as integer takeCamera
+    
+    getParameter(takeCamera, "takeCamera")
+    p = data_.ENERGYBALL_DATA->body.p
+    
+    if link.gamespace_ptr->lockCamera = 0 andAlso takeCamera = 1 then
+        link.gamespace_ptr->camera = p * 0.1 + link.gamespace_ptr->camera * 0.9
+    end if
+    
+    return 0
+end function
+sub Item.ENERGYBALL_PROC_DRAW(scnbuff as integer ptr)
+
+    anims[0].drawAnimation(scnbuff, p.x, p.y)
+    
+    
+
+end sub
+sub Item.ENERGYBALL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.ENERGYBALL_PROC_CONSTRUCT()
+    _initAddParameter_("TAKECAMERA", _ITEM_VALUE_INTEGER)
 end sub
 sub Item.togglePath()
     link.soundeffects_ptr->playSound(SND_SELECT)
@@ -1268,6 +1427,44 @@ sub Item.PUZZLE1234_PROC_CONSTRUCT()
     _initAddParameter_("TUBEID3", _ITEM_VALUE_ZSTRING)
     _initAddParameter_("TUBEID4", _ITEM_VALUE_ZSTRING)
 end sub
+#define ITEM_REDWALLLIGHT_DEFINE_ANIM_SPEED 10
+sub Item.REDWALLLIGHT_PROC_INIT()
+    data_.REDWALLLIGHT_DATA = new ITEM_REDWALLLIGHT_TYPE_DATA
+    data_.REDWALLLIGHT_DATA->curFrame = 0
+    data_.REDWALLLIGHT_DATA->speedCount = ITEM_REDWALLLIGHT_DEFINE_ANIM_SPEED
+    data_.REDWALLLIGHT_DATA->frameDir = 1
+
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "red wall light.txt")
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallRed_Diffuse.txt", MEDIA_PATH + "Lights\SmallRed_Specular.txt", 1, 2, 1)  
+
+end sub
+sub Item.REDWALLLIGHT_PROC_FLUSH()
+    
+    if anims_n then delete(anims)
+    if data_.REDWALLLIGHT_DATA then delete(data_.REDWALLLIGHT_DATA)
+    data_.REDWALLLIGHT_DATA = 0
+end sub
+function Item.REDWALLLIGHT_PROC_RUN(t as double) as integer
+    
+  
+    lightState = 1
+    light.texture.x = drawX + size.x * 0.5
+    light.texture.y = drawY + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    return 0
+end function
+sub Item.REDWALLLIGHT_PROC_DRAW(scnbuff as integer ptr)
+    anims[0].drawImage(scnbuff, drawX, drawY, data_.REDWALLLIGHT_DATA->curFrame*32, 0, data_.REDWALLLIGHT_DATA->curFrame*32 + 31, 31,,,,ANIM_TRANS)
+    
+    anims[0].drawImage(scnbuff, drawX, drawY, 128, 0, 159, 31)
+end sub
+sub Item.REDWALLLIGHT_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.REDWALLLIGHT_PROC_CONSTRUCT()
+end sub
 sub Item.SHOCKTARGET1_SLOT_SHOCKTARGET(pvPair() as _Item_slotValuePair_t)
     throw("ACTIVATE")
     data_.SHOCKTARGET1_DATA->cycleTime = 50
@@ -1507,6 +1704,73 @@ sub Item.SMOKEMINE_PROC_CONSTRUCT()
     _initAddSlot_("EXPLODE", ITEM_SMOKEMINE_SLOT_EXPLODE_E)
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.setToState()
+    if data_.STANDUPSWITCH_DATA->state = 0 then
+        anims[0].restart()
+        anims[1].restart()
+        anims[0].pause()
+        anims[1].pause()
+    else
+        anims[0].play()
+        anims[1].play()        
+    end if
+end sub
+sub Item.STANDUPSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    data_.STANDUPSWITCH_DATA->state = 1 - data_.STANDUPSWITCH_DATA->state
+    setToState()
+    if data_.STANDUPSWITCH_DATA->state = 1 then
+        link.soundeffects_ptr->playSound(SND_CLACKUP)
+        throw("TURNON")
+    else
+        link.soundeffects_ptr->playSound(SND_CLACKDOWN)   
+        throw("TURNOFF")
+    end if
+end sub
+sub Item.STANDUPSWITCH_PROC_INIT()
+    data_.STANDUPSWITCH_DATA = new ITEM_STANDUPSWITCH_TYPE_DATA
+    dim as integer cstate
+    getParameter(cstate, "state")
+   
+    data_.STANDUPSWITCH_DATA->state = cstate
+    
+    
+    CREATE_ANIMS(2)
+    anims[0].load(MEDIA_PATH + "standswitch.txt")
+    anims[1].load(MEDIA_PATH + "standswitch.txt")
+    anims[1].hardswitch(1)
+
+    setToState()
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 64)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.STANDUPSWITCH_PROC_FLUSH()
+    
+    if anims_n then delete(anims)
+    if data_.STANDUPSWITCH_DATA then delete(data_.STANDUPSWITCH_DATA)
+    data_.STANDUPSWITCH_DATA = 0
+end sub
+function Item.STANDUPSWITCH_PROC_RUN(t as double) as integer
+    anims[0].step_animation()
+    anims[1].step_animation()
+    return 0
+end function
+sub Item.STANDUPSWITCH_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+    anims[1].drawAnimation(scnbuff, p.x, p.y)
+    
+end sub
+sub Item.STANDUPSWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.STANDUPSWITCH_PROC_CONSTRUCT()
+    _initAddSignal_("TURNON")
+    _initAddSignal_("TURNOFF")
+    _initAddSlot_("INTERACT", ITEM_STANDUPSWITCH_SLOT_INTERACT_E)
+    _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
 end sub
 sub Item.TANDY2000_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 

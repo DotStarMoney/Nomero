@@ -1,1 +1,1 @@
-Nomera "Teleporter.map"
+Nomera "launcher.map"

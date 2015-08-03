@@ -77,8 +77,8 @@ constructor GameSpace()
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    FSOUND_Stream_Play currentMusic, music(currentMusic)
-    FSOUND_SetVolumeAbsolute(currentMusic, 255)
+    'FSOUND_Stream_Play currentMusic, music(currentMusic)
+    FSOUND_SetVolumeAbsolute(currentMusic, 128)
     musicVol = 255
     musicVolDir = 0
    
@@ -130,8 +130,8 @@ constructor GameSpace()
     movingFrmAvg = 0
     shake = 0 
     lastTurnstyleInput = 0
+    lockCamera = 1
     
-      
     timeBeginPeriod(SLEEP_RESOLUTION)
 
 end constructor
@@ -481,34 +481,38 @@ sub GameSpace.step_process()
     START_PROFILE(0)
     
     window
-        
-    if isSwitching = 0 then
-		camera = spy.body.p * 0.1 + camera * 0.9
-	elseif isSwitching = -1 then
-		camera = spy.body.p
-	end if
-    if lvlData.getWidth() * 16 > SCRX then
-        if camera.x() < SCRX*0.5 then 
-            camera.setX(SCRX*0.5)
-        elseif camera.x() >= lvlData.getWidth()*16 - SCRX*0.5 then
-            camera.setX(lvlData.getWidth()*16 - SCRX*0.5)
-        end if
-    else
-        camera.setX(lvlData.getWidth() * 8)
-    end if
     
-    if lvlData.getHeight() * 16 > SCRY then
-        if camera.y() < SCRY*0.5 then 
-            camera.setY(SCRY*0.5)
-        elseif camera.y() >= lvlData.getHeight()*16 - SCRY*0.5 then
-            camera.setY(lvlData.getHeight()*16 - SCRY*0.5)
-        end if  
-    else
-        camera.setY(lvlData.getHeight() * 8)
-    end if
+    if lockCamera = 1 then
+   
+        if isSwitching = 0 then
+            camera = spy.body.p * 0.1 + camera * 0.9
+        elseif isSwitching = -1 then
+            camera = spy.body.p
+        end if
+    
+        if lvlData.getWidth() * 16 > SCRX then
+            if camera.x() < SCRX*0.5 then 
+                camera.setX(SCRX*0.5)
+            elseif camera.x() >= lvlData.getWidth()*16 - SCRX*0.5 then
+                camera.setX(lvlData.getWidth()*16 - SCRX*0.5)
+            end if
+        else
+            camera.setX(lvlData.getWidth() * 8)
+        end if
         
-    camera.setX(int(camera.x()))
-    camera.setY(int(camera.y()))
+        if lvlData.getHeight() * 16 > SCRY then
+            if camera.y() < SCRY*0.5 then 
+                camera.setY(SCRY*0.5)
+            elseif camera.y() >= lvlData.getHeight()*16 - SCRY*0.5 then
+                camera.setY(lvlData.getHeight()*16 - SCRY*0.5)
+            end if  
+        else
+            camera.setY(lvlData.getHeight() * 8)
+        end if
+            
+        camera.setX(int(camera.x()))
+        camera.setY(int(camera.y()))
+    end if
     
     if vibcount > 0 then
         shake = (((vibcount/3) mod 2) * 2 - 1) * iif(slowdownShake, _min_(vibcount*0.25, 4), 4)
