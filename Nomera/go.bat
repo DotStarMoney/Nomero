@@ -1,1 +1,1 @@
-Nomera "launcher.map"
+Nomera "mine.map"

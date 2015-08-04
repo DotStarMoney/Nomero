@@ -71,6 +71,15 @@ sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = 
         data_.lifeFrames = int(rnd * 20) + 5
         redCol = int(rnd * 64) + 191
         data_.data0 = rgb(redCol, rnd*redCol, 32)
+    case BLUE_SPARK
+        data_.body = TinyBody(p_, 4, 10)
+        data_.body.noCollide = 1
+        data_.body.elasticity = 0.5
+        data_.body.v = v_
+        data_.flavor = BLUE_SPARK
+        data_.lifeFrames = int(rnd * 20) + 5
+        redCol = int(rnd * 200) + 56
+        data_.data0 = rgb(128, (rnd * 0.1 + 0.9)*redCol, redCol)    
 	case WATER_DROP
 	    data_.body   = TinyBody(p_ + Vector2D(12,4), 4, 2)
         data_.body.noCollide = 0
@@ -180,6 +189,9 @@ sub ProjectileCollection.proc_collection(t as double)
             case SPARK
 				curNode->lifeFrames -= 1
 				if curNode->lifeFrames < 0 then deleteMe = 1
+            case BLUE_SPARK
+            	curNode->lifeFrames -= 1
+				if curNode->lifeFrames < 0 then deleteMe = 1
 			case HEART
 				curNode->lifeFrames -= 1
 				curNode->body.v = curNode->body.v * 0.9
@@ -255,14 +267,23 @@ sub ProjectileCollection.draw_collection(scnbuff as uinteger ptr)
     do
         curNode = proj_list.roll()
         if curNode <> 0 then
-            if curNode->flavor <> SPARK then
+            if curNode->flavor <> SPARK andAlso curNode->flavor <> BLUE_SPARK then
                 curNode->anim.drawAnimation(scnbuff, curNode->body.p.x(), curNode->body.p.y()) 
             else
-                norm = curNode->body.v
-                norm.normalize()
-                norm = norm * 2
-                line scnbuff, (curNode->body.p.x - norm.x, curNode->body.p.y - norm.y)- _
-                              (curNode->body.p.x + norm.x, curNode->body.p.y + norm.y), curNode->data0
+                if curNode->flavor = SPARK then
+                    norm = curNode->body.v
+                    norm.normalize()
+                    norm = norm * 2
+                    line scnbuff, (curNode->body.p.x - norm.x, curNode->body.p.y - norm.y)- _
+                                  (curNode->body.p.x + norm.x, curNode->body.p.y + norm.y), curNode->data0
+                else
+                    norm = curNode->body.v
+                    norm.normalize()
+                    norm = norm * 1
+                    line scnbuff, (curNode->body.p.x - norm.x, curNode->body.p.y - norm.y)- _
+                                  (curNode->body.p.x + norm.x, curNode->body.p.y + norm.y), curNode->data0                
+                
+                end if
             end if
         else
 			exit do

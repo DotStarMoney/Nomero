@@ -236,6 +236,14 @@ sub Item.ALIENSPINNER_PROC_CONSTRUCT()
 end sub
 #define ITEM_ANTIPERSONNELMINE_DEFINE_BOMB_STICKYNESS 0
 #define ITEM_ANTIPERSONNELMINE_DEFINE_MINE_FREEFALL_MAX 30
+#define ITEM_ANTIPERSONNELMINE_DEFINE_EXPLOSION_RADIUS 150
+sub Item.explodeReact()
+    Dim as ObjectSlotSet reactions
+    
+    querySlots(reactions, "explosion reaction", new Circle2D(Vector2D(p.x, p.y), ITEM_ANTIPERSONNELMINE_DEFINE_EXPLOSION_RADIUS))
+    reactions.throw("source = "+str(p))
+
+end sub
 sub Item.ANTIPERSONNELMINE_SLOT_EXPLODE(pvPair() as _Item_slotValuePair_t)
     dim as integer i
 
@@ -254,6 +262,7 @@ sub Item.ANTIPERSONNELMINE_SLOT_EXPLODE(pvPair() as _Item_slotValuePair_t)
         link.gamespace_ptr->setShakeStyle(0)
         link.gamespace_ptr->vibrateScreen()
         link.level_ptr->addFallout(p.x, p.y)
+        explodeReact()
     end if
 end sub
 sub Item.ANTIPERSONNELMINE_PROC_INIT()
@@ -403,7 +412,7 @@ sub Item.BALLSPAWNER_PROC_DRAW(scnbuff as integer ptr)
     anims[1].drawAnimation(scnbuff, p.x, p.y)
     
     
-    anims[2].drawAnimation(scnbuff, p.x, p.y)
+    anims[2].drawAnimation(scnbuff, p.x, p.y,,,ANIM_TRANS)
 
 end sub
 sub Item.BALLSPAWNER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
@@ -803,19 +812,49 @@ sub Item.ELECTRICMINE_PROC_CONSTRUCT()
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
 end sub
+#define ITEM_ENERGYBALL_DEFINE_MAX_RAYCAST_ATTEMPTS 10
+#define ITEM_ENERGYBALL_DEFINE_RAYCAST_DIST 150
+sub Item.ENERGYBALL_SLOT_REACT(pvPair() as _Item_slotValuePair_t)
+    dim as Vector2D source
+    matchParameter(source, "SOURCE", pvPair())
+    dim as Vector2D v
+    dim as double mag
+    v = source - p
+    mag = v.magnitude()
+    
+    v.normalize()
+    
+    mag = 150 - mag
+    if mag < 0 then mag = 0
+    mag /= 150.0
+    
+    
+    data_.ENERGYBALL_DATA->body.v -= (v * mag) * 300
+    
+
+end sub
 sub Item.ENERGYBALL_PROC_INIT()
     data_.ENERGYBALL_DATA = new ITEM_ENERGYBALL_TYPE_DATA
-    
 
+    data_.ENERGYBALL_DATA->soundTimer = 0
+    data_.ENERGYBALL_DATA->flashTimer = 0
+    data_.ENERGYBALL_DATA->lastCollide = 0
     data_.ENERGYBALL_DATA->body = TinyBody(p, 16, 10)
     data_.ENERGYBALL_DATA->body.elasticity = 0.2
+    data_.ENERGYBALL_DATA->body.friction = 0.5
+    data_.ENERGYBALL_DATA->body.f += Vector2D(0, -DEFAULT_GRAV)*data_.ENERGYBALL_DATA->body.m*0.75
     data_.ENERGYBALL_DATA->body_i = link.tinyspace_ptr->addBody(@(data_.ENERGYBALL_DATA->body))
 
-    
-    CREATE_ANIMS(1)
+    CREATE_ANIMS(2)
     
     anims[0].load(MEDIA_PATH + "balllaunch2.txt")
+    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 1, 2, 0)  
 
+    data_.ENERGYBALL_DATA->arcs_n = 0
+    data_.ENERGYBALL_DATA->arcs = new ITEM_ENERGYBALL_TYPE_arcData_t[2]
+    
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "EXPLOSION REACTION", "REACT", new Circle2D(Vector2D(0,0), 17))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "EXPLOSION REACTION", p)
 end sub
 sub Item.ENERGYBALL_PROC_FLUSH()
     link.tinyspace_ptr->removeBody(data_.ENERGYBALL_DATA->body_i)
@@ -826,27 +865,106 @@ sub Item.ENERGYBALL_PROC_FLUSH()
 end sub
 function Item.ENERGYBALL_PROC_RUN(t as double) as integer
     dim as integer takeCamera
+    dim as integer i
+    dim as double randAngle, dist
+    dim as Vector2D v, pt, nv
+    anims[0].step_animation()
     
     getParameter(takeCamera, "takeCamera")
     p = data_.ENERGYBALL_DATA->body.p
     
+    
+    DControl->setTargetSlotOffset(ID, "explosion reaction", p) 
+
     if link.gamespace_ptr->lockCamera = 0 andAlso takeCamera = 1 then
         link.gamespace_ptr->camera = p * 0.1 + link.gamespace_ptr->camera * 0.9
     end if
     
+    if int(rnd * 30) = 0 then
+        data_.ENERGYBALL_DATA->flashTimer = int(rnd * 4) + 5
+        for i = 0 to data_.ENERGYBALL_DATA->arcs_n - 1
+            link.electricarc_ptr->destroy(data_.ENERGYBALL_DATA->arcs[i].arcID)
+        next i
+        data_.ENERGYBALL_DATA->arcs_n = 0  
+        if data_.ENERGYBALL_DATA->arcs_n < 2 then
+            for i = 0 to ITEM_ENERGYBALL_DEFINE_MAX_RAYCAST_ATTEMPTS - 1
+                randAngle = rnd*(_PI_*2)
+                v = Vector2D(cos(randAngle), sin(randAngle))*ITEM_ENERGYBALL_DEFINE_RAYCAST_DIST
+                dist = link.tinyspace_ptr->raycast(p, v, pt)
+                if dist >= 0 then
+               
+                    data_.ENERGYBALL_DATA->arcs[data_.ENERGYBALL_DATA->arcs_n].arcID = link.electricarc_ptr->create()
+                    data_.ENERGYBALL_DATA->arcs[data_.ENERGYBALL_DATA->arcs_n].bPos = Vector2D(0, 0)
+                    data_.ENERGYBALL_DATA->arcs[data_.ENERGYBALL_DATA->arcs_n].endPos = pt
+                    link.electricarc_ptr->setPoints(data_.ENERGYBALL_DATA->arcs[data_.ENERGYBALL_DATA->arcs_n].arcID, p + data_.ENERGYBALL_DATA->arcs[data_.ENERGYBALL_DATA->arcs_n].bPos, pt)
+
+                    data_.ENERGYBALL_DATA->arcs_n += 1
+                    if data_.ENERGYBALL_DATA->arcs_n = 2 then exit for
+                end if
+            next i
+        end if
+    end if
+    
+    
+    for i = 0 to data_.ENERGYBALL_DATA->arcs_n - 1
+        link.electricarc_ptr->setPoints(data_.ENERGYBALL_DATA->arcs[i].arcID, p + data_.ENERGYBALL_DATA->arcs[i].bPos, data_.ENERGYBALL_DATA->arcs[i].endPos)
+    next i
+    if data_.ENERGYBALL_DATA->flashTimer > 0 then
+        lightState = 1
+        data_.ENERGYBALL_DATA->flashTimer -= 1
+        anims[0].play()
+    else
+        for i = 0 to data_.ENERGYBALL_DATA->arcs_n - 1
+            link.electricarc_ptr->destroy(data_.ENERGYBALL_DATA->arcs[i].arcID)
+        next i
+        data_.ENERGYBALL_DATA->arcs_n = 0
+        lightState = 0
+        anims[0].restart()
+        anims[0].pause()
+    end if
+ 
+    if data_.ENERGYBALL_DATA->body.didCollide andAlso data_.ENERGYBALL_DATA->lastCollide = 0 then
+        v = link.tinyspace_ptr->getGroundingNormal(data_.ENERGYBALL_DATA->body_i, Vector2D(0, -1), Vector2D(0, -1), -1)
+        for i = 0 to 20
+            nv = Vector2D((rnd * 2 - 1), (rnd * 2 - 1))
+            nv.normalize
+            link.projectilecollection_ptr->create(p + -v*17, nv*100, BLUE_SPARK)
+        next i
+        data_.ENERGYBALL_DATA->flashTimer = 6
+        if data_.ENERGYBALL_DATA->soundTimer = 0 then 
+            link.soundeffects_ptr->playSound(SND_GLASSTAP)
+            data_.ENERGYBALL_DATA->soundTimer = 10
+        end if
+    end if
+    
+    if data_.ENERGYBALL_DATA->soundTimer > 0 then data_.ENERGYBALL_DATA->soundTimer -= 1
+
+    data_.ENERGYBALL_DATA->lastCollide = data_.ENERGYBALL_DATA->body.didCollide
+    data_.ENERGYBALL_DATA->body.didCollide = 0
+    
+    light.texture.x = p.x
+    light.texture.y = p.y
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    
     return 0
 end function
 sub Item.ENERGYBALL_PROC_DRAW(scnbuff as integer ptr)
+        
+    anims[0].setGlow(&h5fffffff)
+    anims[0].drawAnimation(scnbuff, p.x+(int(rnd * 7) - 3), p.y+(int(rnd * 7) - 3))
 
+    anims[0].setGlow(&hffffffff)
     anims[0].drawAnimation(scnbuff, p.x, p.y)
     
-    
-
+    anims[0].setGlow(&h4fffffff)
+    anims[0].drawAnimation(scnbuff, p.x+(int(rnd * 5) - 2), p.y+(int(rnd * 5) - 2))
 end sub
 sub Item.ENERGYBALL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
 sub Item.ENERGYBALL_PROC_CONSTRUCT()
+    _initAddSlot_("REACT", ITEM_ENERGYBALL_SLOT_REACT_E)
     _initAddParameter_("TAKECAMERA", _ITEM_VALUE_INTEGER)
 end sub
 sub Item.togglePath()

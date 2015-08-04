@@ -51,9 +51,19 @@ type ITEM_ELECTRICMINE_TYPE_DATA
     as integer arcs_n
     as integer deathFrames
 end type
+type ITEM_ENERGYBALL_TYPE_arcData_t
+    as integer arcID
+    as Vector2D bPos
+    as Vector2D endPos
+end type
 type ITEM_ENERGYBALL_TYPE_DATA
     as integer body_i
+    as integer lastCollide
     as TinyBody body
+    as integer flashTimer
+    as ITEM_ENERGYBALL_TYPE_arcData_t ptr arcs
+    as integer arcs_n
+    as integer soundTimer
 end type
 type ITEM_FREIGHTELEVATOR_TYPE_DATA 
     as TinyDynamic ptr platformHi
@@ -173,6 +183,7 @@ enum Item_slotEnum_e
     ITEM_BIGOSCILLOSCOPE_SLOT_INTERACT_E
     ITEM_DEEPSPOTLIGHT_SLOT_ENABLE_E
     ITEM_ELECTRICMINE_SLOT_EXPLODE_E
+    ITEM_ENERGYBALL_SLOT_REACT_E
     ITEM_FREIGHTELEVATOR_SLOT_INTERACT_E
     ITEM_FREQUENCYCOUNTER_SLOT_INTERACT_E
     ITEM_INTERFACE_SLOT_INTERACT_E

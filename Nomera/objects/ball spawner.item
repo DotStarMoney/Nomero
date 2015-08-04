@@ -41,7 +41,7 @@ function _draw(scnbuff as integer ptr)
     anims[1].drawAnimation(scnbuff, p.x, p.y)
     
     
-    anims[2].drawAnimation(scnbuff, p.x, p.y)
+    anims[2].drawAnimation(scnbuff, p.x, p.y,,,ANIM_TRANS)
 
 end function
 

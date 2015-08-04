@@ -17,6 +17,7 @@ enum Projectiles
     WATER_DROP
     BULLET
     SPARK
+    BLUE_SPARK
 end enum
 
 

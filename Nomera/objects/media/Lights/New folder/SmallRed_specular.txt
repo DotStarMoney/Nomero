@@ -1,8 +1,0 @@
-      #IMAGE NAME
-"SmallRed_specular.png"
-      #IMAGE SIZE
-256,256
-      #DRAW MODE
-"TRANS"
-      #NUMBER OF ANIMATIONS
-0

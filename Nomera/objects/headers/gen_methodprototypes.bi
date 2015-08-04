@@ -17,6 +17,7 @@ declare function ALIENSPINNER_PROC_RUN(t as double) as integer
 declare sub ALIENSPINNER_PROC_DRAW(scnbuff as integer ptr)
 declare sub ALIENSPINNER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub ALIENSPINNER_PROC_CONSTRUCT()
+declare sub explodeReact()
 declare sub ANTIPERSONNELMINE_SLOT_EXPLODE(pvPair() as _Item_slotValuePair_t)
 declare sub ANTIPERSONNELMINE_PROC_INIT()
 declare sub ANTIPERSONNELMINE_PROC_FLUSH()
@@ -58,6 +59,7 @@ declare function ELECTRICMINE_PROC_RUN(t as double) as integer
 declare sub ELECTRICMINE_PROC_DRAW(scnbuff as integer ptr)
 declare sub ELECTRICMINE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub ELECTRICMINE_PROC_CONSTRUCT()
+declare sub ENERGYBALL_SLOT_REACT(pvPair() as _Item_slotValuePair_t)
 declare sub ENERGYBALL_PROC_INIT()
 declare sub ENERGYBALL_PROC_FLUSH()
 declare function ENERGYBALL_PROC_RUN(t as double) as integer

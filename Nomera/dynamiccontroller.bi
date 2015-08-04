@@ -35,6 +35,14 @@ type DynamicController_itemPair_t
     as integer usedKeyBank
 end type
 
+/'
+type DynamicController_postFrame_t
+    as DynamicController_itemPair_t itemPair_
+    as Vector2D p_
+    as Vector2D size_
+    as double depth_
+end type
+'/
 type DynamicController_connectionNode_t
     as Hashtable slots   'on slot name
     as Hashtable signals 'on signal name
@@ -140,6 +148,7 @@ type DynamicController
         
         as integer isProcessing
         as List addItemPost
+        as Hashtable postPairs
         
 end type
 	

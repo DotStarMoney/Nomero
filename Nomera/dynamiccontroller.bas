@@ -18,6 +18,7 @@ constructor DynamicController()
     drawobjects_activeFront.init(sizeof(Item ptr))
     drawobjects_background.init(sizeof(Item ptr))    
     addItemPost.init(sizeof(DynamicController_itemPair_t))
+    postPairs.init(sizeof(DynamicController_itemPair_t ptr))
     isProcessing = 0
     
     #include "objects\headers\gen_namestypes.bi"
@@ -260,6 +261,7 @@ sub DynamicController.process(t as double)
         itemIdPairs.insert(curItem->item_->getID(), curItem)
     END_LIST()
     addItemPost.flush()
+    postPairs.flush()
     
 end sub
 sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = ACTIVE)
@@ -324,6 +326,7 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
         refItem = itemIdPairs.insert(ID_, newItem)    
     else
         refItem = addItemPost.push_back(newItem)
+        postPairs.insert(ID_, @refItem)
     end if
 
     if drawLess = 0 then
@@ -562,7 +565,11 @@ sub DynamicController.addPublishedValue(publishee_ID as string, value_tag as str
     pvalue.tag_ = allocate(len(value_tag) + 1)
     *(pvalue.tag_) = value_tag
     pvalue.target = target
-    pvalue.item_ = cast(DynamicController_itemPair_t ptr, itemIdPairs.retrieve(publishee_ID))->item_
+    if isProcessing = 0 then
+        pvalue.item_ = cast(DynamicController_itemPair_t ptr, itemIdPairs.retrieve(publishee_ID))->item_
+    else
+        pvalue.item_ = (*cast(DynamicController_itemPair_t ptr ptr, postPairs.retrieve(publishee_ID)))->item_
+    end if
     pvaluePtr = allPublishedValues.insert(publishee_ID, value_tag, @pvalue)
     pvaluePtr->hash2Dindex = 0
 end sub
@@ -570,12 +577,19 @@ sub DynamicController.addPublishedSlot(publishee_ID as string, slot_tag as strin
     dim as DynamicController_publishSlot_t pslot
     dim as DynamicController_publishSlot_t ptr pslotPtr
     dim as Vector2D a, b
+ 
     pslot.tag_ = allocate(len(slot_tag) + 1)
     *(pslot.tag_) = slot_tag
     pslot.slot_tag_ = allocate(len(actual_slot_tag) + 1)
-    *(pslot.slot_tag_) = actual_slot_tag    
+    *(pslot.slot_tag_) = actual_slot_tag  
+
     pslot.target = target
-    pslot.item_ = cast(DynamicController_itemPair_t ptr, itemIdPairs.retrieve(publishee_ID))->item_
+    if isProcessing = 0 then
+        pslot.item_ = cast(DynamicController_itemPair_t ptr, itemIdPairs.retrieve(publishee_ID))->item_
+    else
+        pslot.item_ = (*cast(DynamicController_itemPair_t ptr ptr, postPairs.retrieve(publishee_ID)))->item_    
+    end if
+   
     pslotPtr = allPublishedSlots.insert(publishee_ID, slot_tag, @pslot)
     pslotPtr->hash2Dindex = 0
 end sub

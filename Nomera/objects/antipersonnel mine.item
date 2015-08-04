@@ -8,6 +8,7 @@ type ITEM_DATA
 end type
 #define BOMB_STICKYNESS 0
 #define MINE_FREEFALL_MAX 30
+#define EXPLOSION_RADIUS 150
 
 parameter "orientation", integer
 parameter "colorIndex", integer
@@ -109,6 +110,14 @@ end function
 
 '-----------------------------------
 
+sub explodeReact()
+    Dim as SlotSet reactions
+    
+    querySlots(reactions, "explosion reaction", new Circle2D(Vector2D(p.x, p.y), EXPLOSION_RADIUS))
+    reactions.throw("source = "+str(p))
+
+end sub
+
 slot $explode()
     dim as integer i
 
@@ -127,5 +136,6 @@ slot $explode()
         link.gamespace_ptr->setShakeStyle(0)
         link.gamespace_ptr->vibrateScreen()
         link.level_ptr->addFallout(p.x, p.y)
+        explodeReact()
     end if
 end slot

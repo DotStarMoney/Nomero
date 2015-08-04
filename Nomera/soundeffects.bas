@@ -35,7 +35,8 @@ sub SoundEffects.init()
     sounds(SND_CLACKDOWN)      = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\clackDown.wav",0,0,0)         :volume(SND_CLACKDOWN)      = 32     
     sounds(SND_SUCCESS)        = FSOUND_SAMPLE_Load(FSOUND_FREE,"success.wav",0,0,0)                         :volume(SND_SUCCESS)        = 40  
     sounds(SND_RUMBLE)         = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\rockslide_raw2.wav",0,0,0)    :volume(SND_RUMBLE)         = 255   
-    sounds(SND_POW)            = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\Pow.wav",0,0,0)               :volume(SND_POW)         = 255   
+    sounds(SND_POW)            = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\Pow.wav",0,0,0)               :volume(SND_POW)            = 255   
+    sounds(SND_GLASSTAP)       = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\glasstap.wav",0,0,0)          :volume(SND_GLASSTAP)       = 10   
 
 end sub
 
