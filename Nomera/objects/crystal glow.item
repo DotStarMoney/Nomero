@@ -1,0 +1,69 @@
+'#crystal glow
+
+parameter "flavor", integer
+parameter "orientation", integer
+parameter "lowCutoff", Vector2D
+
+
+'---------------------------------
+
+function _init()
+    dim as integer flavor
+    
+    getParameter(flavor, "flavor")
+    
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "crystalglow.txt")
+    anims[0].hardSwitch(flavor - 1)
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 1, 2, 1)  
+
+    
+    
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    dim as integer flags
+    
+    getParameter(flags, "orientation")
+    
+    if flags and 1 then
+        anims[0].drawAnimation(scnbuff, p.x, p.y + 2, ,flags)
+    else
+        anims[0].drawAnimation(scnbuff, p.x, p.y, ,flags)
+    end if
+
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+
+
+    if int(rnd * 40) = 0 then 
+        link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)
+    
+    end if
+
+    lightState = 1
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+end function
+
+'-----------------------------------

@@ -815,6 +815,8 @@ do
                             objects(N_objects - 1).inRangeSet = ACTIVE_FRONT                  
                         elseif left(lcase(item_tag), 6) = "active" then
                             objects(N_objects - 1).inRangeSet = ACTIVE
+                        elseif left(lcase(item_tag), 10) = "foreground" then
+                            objects(N_objects - 1).inRangeSet = FOREGROUND
                         elseif left(lcase(trimwhite(item_tag)), 2) = "p(" then                            
                             item_tag = trimwhite(item_tag)
                             item_tag = right(item_tag, len(item_tag) - 2)

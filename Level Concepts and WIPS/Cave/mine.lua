@@ -7,7 +7,11 @@ return {
   tilewidth = 16,
   tileheight = 16,
   properties = {
-    ["default start"] = "90, 40"
+    ["ambient level"] = "&h1f1f2f",
+    ["default start"] = "90, 40",
+    ["hidden ambient level"] = "&h0f0f1f",
+    ["light objects"] = "",
+    ["music"] = "TestTheme.ogg"
   },
   tilesets = {
     {
@@ -157,7 +161,11 @@ return {
       height = 52,
       visible = true,
       opacity = 1,
-      properties = {},
+      properties = {
+        ["ambient level"] = "&h0f0f1f",
+        ["illuminated"] = "",
+        ["receiver"] = ""
+      },
       encoding = "lua",
       data = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -289,7 +297,12 @@ return {
       height = 52,
       visible = true,
       opacity = 1,
-      properties = {},
+      properties = {
+        ["active front"] = "",
+        ["ambient level"] = "&h0f0f1f",
+        ["illuminated"] = "",
+        ["receiver"] = ""
+      },
       encoding = "lua",
       data = {
         394, 395, 396, 397, 398, 399, 400, 9, 10, 11, 12, 13, 14, 15, 16, 9, 10, 11, 12, 13, 14, 15, 16, 9, 10, 11, 12, 13, 14, 15, 16, 9, 10, 11, 12, 13, 14, 15, 16, 393, 394, 395, 396, 397, 398, 399, 400, 393, 394, 395, 396, 397, 398, 399, 400, 9, 10, 11, 12, 13, 14, 15, 16, 9, 10, 11, 12, 13, 14, 15, 16, 9, 10, 11, 12, 13, 14, 15, 16, 393, 394, 395, 396, 397, 398, 399, 400, 9, 10, 11, 12, 13, 14, 15, 16, 9, 10, 11, 12, 13, 14, 15, 16, 9, 10,
@@ -355,7 +368,12 @@ return {
       height = 52,
       visible = true,
       opacity = 1,
-      properties = {},
+      properties = {
+        ["active front"] = "",
+        ["ambient level"] = "&h0f0f1f",
+        ["illuminated"] = "",
+        ["receiver"] = ""
+      },
       encoding = "lua",
       data = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 201, 202, 203, 204, 205, 206, 207, 208, 201, 202, 203, 204, 205, 206, 207, 208, 201, 202,
@@ -421,7 +439,12 @@ return {
       height = 52,
       visible = true,
       opacity = 1,
-      properties = {},
+      properties = {
+        ["active front"] = "",
+        ["ambient level"] = "&h0f0f1f",
+        ["illuminated"] = "",
+        ["receiver"] = ""
+      },
       encoding = "lua",
       data = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -488,7 +511,10 @@ return {
       visible = true,
       opacity = 1,
       properties = {
-        ["foreground"] = ""
+        ["ambient level"] = "&h0f0f1f",
+        ["foreground"] = "",
+        ["illuminated"] = "",
+        ["receiver"] = ""
       },
       encoding = "lua",
       data = {
@@ -621,7 +647,7 @@ return {
       y = 0,
       width = 105,
       height = 52,
-      visible = true,
+      visible = false,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -678,6 +704,350 @@ return {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      }
+    },
+    {
+      type = "objectgroup",
+      name = "Objects",
+      visible = true,
+      opacity = 1,
+      properties = {},
+      objects = {
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1216,
+          y = 96,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["active front"] = "",
+            ["p(flavor)"] = "2",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1584,
+          y = 384,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["p(flavor)"] = "2",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 752,
+          y = 96,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["p(flavor)"] = "2",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 896,
+          y = 96,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["p(flavor)"] = "1",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1056,
+          y = 0,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["p(flavor)"] = "1",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1376,
+          y = 96,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["p(flavor)"] = "1",
+            ["p(lowCutoff)"] = "(0, 32)",
+            ["p(orientation)"] = "2",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1392,
+          y = 160,
+          width = 64,
+          height = 48,
+          visible = true,
+          properties = {
+            ["p(flavor)"] = "2",
+            ["p(orientation)"] = "3",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 464,
+          y = 96,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["p(flavor)"] = "2",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 208,
+          y = 96,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["p(flavor)"] = "1",
+            ["p(lowCutoff)"] = "(0, 32)",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 432,
+          y = 32,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["p(flavor)"] = "1",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1216,
+          y = 352,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["p(flavor)"] = "1",
+            ["p(orientation)"] = "6",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 192,
+          y = 608,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["p(flavor)"] = "1",
+            ["p(orientation)"] = "0",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 304,
+          y = 608,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["p(flavor)"] = "2",
+            ["p(orientation)"] = "0",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 704,
+          y = 496,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["p(flavor)"] = "2",
+            ["p(orientation)"] = "0",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1392,
+          y = 272,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["p(flavor)"] = "2",
+            ["p(orientation)"] = "0",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "crystal glow",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 928,
+          y = 656,
+          width = 48,
+          height = 64,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["p(flavor)"] = "1",
+            ["p(orientation)"] = "0",
+            ["spawn"] = "crystal glow"
+          }
+        },
+        {
+          name = "lantern",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 608,
+          y = 464,
+          width = 48,
+          height = 48,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["spawn"] = "mine lantern"
+          }
+        },
+        {
+          name = "lantern",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 544,
+          y = 208,
+          width = 48,
+          height = 48,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["spawn"] = "mine lantern"
+          }
+        },
+        {
+          name = "lantern",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1472,
+          y = 496,
+          width = 48,
+          height = 48,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["spawn"] = "mine lantern"
+          }
+        },
+        {
+          name = "lantern",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1088,
+          y = 496,
+          width = 48,
+          height = 48,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["spawn"] = "mine lantern"
+          }
+        },
+        {
+          name = "lantern",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1184,
+          y = 160,
+          width = 48,
+          height = 48,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["spawn"] = "mine lantern"
+          }
+        },
+        {
+          name = "lantern",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 160,
+          y = 416,
+          width = 48,
+          height = 48,
+          visible = true,
+          properties = {
+            ["foreground"] = "",
+            ["spawn"] = "mine lantern"
+          }
+        }
       }
     }
   }

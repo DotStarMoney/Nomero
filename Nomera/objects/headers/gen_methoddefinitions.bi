@@ -565,6 +565,59 @@ sub Item.COVERSMOKE_PROC_CONSTRUCT()
     _initAddParameter_("ISSOLID", _ITEM_VALUE_INTEGER)
     _initAddParameter_("INITVELOCITY", _ITEM_VALUE_VECTOR2D)
 end sub
+sub Item.CRYSTALGLOW_PROC_INIT()
+    dim as integer flavor
+    
+    getParameter(flavor, "flavor")
+    
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "crystalglow.txt")
+    anims[0].hardSwitch(flavor - 1)
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 1, 2, 1)  
+
+    
+    
+end sub
+sub Item.CRYSTALGLOW_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+end sub
+function Item.CRYSTALGLOW_PROC_RUN(t as double) as integer
+
+
+    if int(rnd * 40) = 0 then 
+        link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)
+    
+    end if
+
+    lightState = 1
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    return 0
+end function
+sub Item.CRYSTALGLOW_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer flags
+    
+    getParameter(flags, "orientation")
+    
+    if flags and 1 then
+        anims[0].drawAnimation(scnbuff, p.x, p.y + 2, ,flags)
+    else
+        anims[0].drawAnimation(scnbuff, p.x, p.y, ,flags)
+    end if
+
+end sub
+sub Item.CRYSTALGLOW_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.CRYSTALGLOW_PROC_CONSTRUCT()
+    _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("LOWCUTOFF", _ITEM_VALUE_VECTOR2D)
+end sub
 sub Item.DEEPSPOTLIGHT_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
     
     setParameter(0, "disable")
@@ -951,13 +1004,13 @@ function Item.ENERGYBALL_PROC_RUN(t as double) as integer
 end function
 sub Item.ENERGYBALL_PROC_DRAW(scnbuff as integer ptr)
         
-    anims[0].setGlow(&h5fffffff)
+    anims[0].setGlow(&h6fffffff)
     anims[0].drawAnimation(scnbuff, p.x+(int(rnd * 7) - 3), p.y+(int(rnd * 7) - 3))
 
     anims[0].setGlow(&hffffffff)
     anims[0].drawAnimation(scnbuff, p.x, p.y)
     
-    anims[0].setGlow(&h4fffffff)
+    anims[0].setGlow(&h5fffffff)
     anims[0].drawAnimation(scnbuff, p.x+(int(rnd * 5) - 2), p.y+(int(rnd * 5) - 2))
 end sub
 sub Item.ENERGYBALL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
@@ -1214,6 +1267,120 @@ sub Item.INTERFACE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.INTERFACE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_INTERFACE_SLOT_INTERACT_E)
+end sub
+#define ITEM_MINELANTERN_DEFINE_MOTH_ANGLE_VAR_DEG 45
+#define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MIN 10
+#define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MAX 40
+function Item.MINELANTERN_FUNCTION_pickTarget(curP as Vector2D) as Vector2D
+    dim as Vector2D center, v
+    dim as double angle
+    center = p + size*0.5
+    v = (center - curP)
+    v.normalize()
+    if v = Vector2D(0, 0) then v = Vector2D(1, 0)
+    
+    angle = v.angle() + (((rnd * ITEM_MINELANTERN_DEFINE_MOTH_ANGLE_VAR_DEG * 2) - ITEM_MINELANTERN_DEFINE_MOTH_ANGLE_VAR_DEG) * (_PI_ / 180.0))
+    v = Vector2D(cos(angle), sin(angle)) * ((rnd * (ITEM_MINELANTERN_DEFINE_MOTH_MAG_MAX - ITEM_MINELANTERN_DEFINE_MOTH_MAG_MIN)) + ITEM_MINELANTERN_DEFINE_MOTH_MAG_MIN)
+    
+    return center + v
+end function
+sub Item.MINELANTERN_PROC_INIT()
+    data_.MINELANTERN_DATA = new ITEM_MINELANTERN_TYPE_DATA
+    dim as integer i
+    
+    CREATE_ANIMS(4)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LanternGlow_Diffuse.txt", MEDIA_PATH + "Lights\LanternGlow_Specular.txt", 2, 3, 0)  
+    
+    anims[0].load(MEDIA_PATH + "lantern.txt")
+    anims[1].load(MEDIA_PATH + "lantern.txt")
+    anims[1].hardswitch(1)
+    
+    if int(rnd * 2) = 0 then 
+        data_.MINELANTERN_DATA->moths_N = int(rnd * 3) + 1
+    else
+        data_.MINELANTERN_DATA->moths_N = 0
+    end if
+    
+    if data_.MINELANTERN_DATA->moths_N then
+        data_.MINELANTERN_DATA->moths = new ITEM_MINELANTERN_TYPE_mothData_t[data_.MINELANTERN_DATA->moths_N]
+        for i = 0 to data_.MINELANTERN_DATA->moths_N - 1
+            data_.MINELANTERN_DATA->moths[i].anim = new Animation()
+            data_.MINELANTERN_DATA->moths[i].anim->load(MEDIA_PATH + "lantern.txt")
+            data_.MINELANTERN_DATA->moths[i].anim->hardSwitch(2)
+            data_.MINELANTERN_DATA->moths[i].anim->play()
+            data_.MINELANTERN_DATA->moths[i].p = p + size * 0.5 + Vector2D(int(rnd * 33) - 16, int(rnd * 33) - 16)
+            data_.MINELANTERN_DATA->moths[i].drawP = data_.MINELANTERN_DATA->moths[i].p + Vector2D(int(rnd * 3) - 1, int(rnd * 3) - 1)
+            data_.MINELANTERN_DATA->moths[i].target = MINELANTERN_FUNCTION_pickTarget(data_.MINELANTERN_DATA->moths[i].p)
+            data_.MINELANTERN_DATA->moths[i].f = Vector2D(0,0)
+            data_.MINELANTERN_DATA->moths[i].v = Vector2D(0,0)
+        next i
+    end if
+    
+    data_.MINELANTERN_DATA->frame = 0
+    data_.MINELANTERN_DATA->flickerCounter = 0
+    
+end sub
+sub Item.MINELANTERN_PROC_FLUSH()
+    dim as integer i
+    for i = 0 to data_.MINELANTERN_DATA->moths_N - 1
+        delete(data_.MINELANTERN_DATA->moths[i].anim)
+    next i
+    if data_.MINELANTERN_DATA->moths then delete(data_.MINELANTERN_DATA->moths)
+    data_.MINELANTERN_DATA->moths = 0
+    if anims_n then delete(anims)
+    if data_.MINELANTERN_DATA then delete(data_.MINELANTERN_DATA)
+    data_.MINELANTERN_DATA = 0
+end sub
+function Item.MINELANTERN_PROC_RUN(t as double) as integer
+    dim as integer i
+    dim as double mag
+    dim as Vector2D v
+    for i = 0 to data_.MINELANTERN_DATA->moths_N - 1
+        data_.MINELANTERN_DATA->moths[i].anim->step_animation()
+        v = data_.MINELANTERN_DATA->moths[i].target - data_.MINELANTERN_DATA->moths[i].p
+        v.normalize()
+        data_.MINELANTERN_DATA->moths[i].f += v
+        data_.MINELANTERN_DATA->moths[i].v += data_.MINELANTERN_DATA->moths[i].f
+        data_.MINELANTERN_DATA->moths[i].f *= 0.9
+        data_.MINELANTERN_DATA->moths[i].v *= 0.9
+        data_.MINELANTERN_DATA->moths[i].p += data_.MINELANTERN_DATA->moths[i].v * 0.02
+        if (data_.MINELANTERN_DATA->moths[i].p - data_.MINELANTERN_DATA->moths[i].target).magnitude() < 8 then data_.MINELANTERN_DATA->moths[i].target = MINELANTERN_FUNCTION_pickTarget(data_.MINELANTERN_DATA->moths[i].p)
+        data_.MINELANTERN_DATA->moths[i].drawP = data_.MINELANTERN_DATA->moths[i].p + Vector2D(int(rnd * 3) - 1, int(rnd * 3) - 1)
+    next i
+    
+    data_.MINELANTERN_DATA->frame += 1
+    
+    if int(rnd * 200) = 0 then data_.MINELANTERN_DATA->flickerCounter = int(rnd * 10) + 5
+    if data_.MINELANTERN_DATA->flickerCounter > 0 then data_.MINELANTERN_DATA->flickerCounter -= 1
+
+    lightState = 1
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    return 0
+end function
+sub Item.MINELANTERN_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer i
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+    if iif(data_.MINELANTERN_DATA->flickerCounter > 0, int(data_.MINELANTERN_DATA->frame * 0.5) and 1, 1) then anims[1].drawAnimation(scnbuff, p.x, p.y)
+    
+    for i = 0 to data_.MINELANTERN_DATA->moths_N - 1
+        if link.level_ptr->shouldLight() then
+            data_.MINELANTERN_DATA->moths[i].anim->drawAnimationLit(scnbuff, data_.MINELANTERN_DATA->moths[i].drawp.x, data_.MINELANTERN_DATA->moths[i].drawp.y,_
+                                           lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
+                                           link.gamespace_ptr->camera,,,ANIM_TRANS)            
+        else
+            data_.MINELANTERN_DATA->moths[i].anim->drawAnimation(scnbuff, data_.MINELANTERN_DATA->moths[i].drawp.x, data_.MINELANTERN_DATA->moths[i].drawp.y, link.gamespace_ptr->camera,,ANIM_TRANS)
+        end if  
+    next i
+end sub
+sub Item.MINELANTERN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.MINELANTERN_PROC_CONSTRUCT()
 end sub
 sub Item.MOMENTARYTOGGLESWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     if data_.MOMENTARYTOGGLESWITCH_DATA->toggleCycle = 0 then

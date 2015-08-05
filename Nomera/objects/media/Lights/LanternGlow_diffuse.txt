@@ -1,0 +1,8 @@
+      #IMAGE NAME
+"LanternGlow_diffuse.png"
+      #IMAGE SIZE
+512,512
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+0

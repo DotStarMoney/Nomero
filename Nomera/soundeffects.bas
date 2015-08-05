@@ -11,7 +11,7 @@ sub SoundEffects.init()
 	sounds(SND_EXPLODE_2)	   = FSOUND_SAMPLE_Load(FSOUND_FREE,"explode2.wav",0,0,0)                        :volume(SND_EXPLODE_2)      = 255
 	sounds(SND_JUMP) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"jump.wav",0,0,0)                            :volume(SND_JUMP)           = 196
 	sounds(SND_FULLCHARGE) 	   = FSOUND_SAMPLE_Load(FSOUND_FREE,"fullcharge.wav",0,0,0)                      :volume(SND_FULLCHARGE)     = 255
-	sounds(SND_LAND) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"land.wav",0,0,0)                            :volume(SND_LAND)           = 190
+	sounds(SND_LAND) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"land.wav",0,0,0)                            :volume(SND_LAND)           = 128
 	sounds(SND_THROW)		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"throw.wav",0,0,0)                           :volume(SND_THROW)          = 255
 	sounds(SND_SHOOT)		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"shoot.wav",0,0,0)                           :volume(SND_SHOOT)	         = 255
 	sounds(SND_ALARM) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"alert.wav",0,0,0)                           :volume(SND_ALARM)          = 255

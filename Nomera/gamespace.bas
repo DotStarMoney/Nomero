@@ -338,6 +338,8 @@ sub GameSpace.step_draw()
     
     START_PROFILE(1)
     lvlData.drawLayers(scnbuff, FOREGROUND, camera.x(), camera.y(), Vector2D(0, shake))
+    dynControl.drawDynamics(scnbuff, FOREGROUND)
+    
     RECORD_PROFILE(1)
 
 

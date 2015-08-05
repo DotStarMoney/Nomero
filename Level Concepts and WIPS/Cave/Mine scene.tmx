@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="105" height="52" tilewidth="16" tileheight="16">
  <properties>
+  <property name="ambient level" value="&amp;h1f1f2f"/>
   <property name="default start" value="90, 40"/>
+  <property name="hidden ambient level" value="&amp;h0f0f1f"/>
+  <property name="light objects" value=""/>
+  <property name="music" value="TestTheme.ogg"/>
  </properties>
  <tileset firstgid="1" name="Mine" tilewidth="16" tileheight="16">
   <image source="Mine.bmp" trans="ff00ff" width="256" height="1728"/>
@@ -75,6 +79,11 @@
 </data>
  </layer>
  <layer name="Tile Layer 3" width="105" height="52">
+  <properties>
+   <property name="ambient level" value="&amp;h0f0f1f"/>
+   <property name="illuminated" value=""/>
+   <property name="receiver" value=""/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -187,6 +196,12 @@
 </data>
  </layer>
  <layer name="Tile Layer 1" width="105" height="52">
+  <properties>
+   <property name="active front" value=""/>
+   <property name="ambient level" value="&amp;h0f0f1f"/>
+   <property name="illuminated" value=""/>
+   <property name="receiver" value=""/>
+  </properties>
   <data encoding="csv">
 394,395,396,397,398,399,400,9,10,11,12,13,14,15,16,9,10,11,12,13,14,15,16,9,10,11,12,13,14,15,16,9,10,11,12,13,14,15,16,393,394,395,396,397,398,399,400,393,394,395,396,397,398,399,400,9,10,11,12,13,14,15,16,9,10,11,12,13,14,15,16,9,10,11,12,13,14,15,16,393,394,395,396,397,398,399,400,9,10,11,12,13,14,15,16,9,10,11,12,13,14,15,16,9,10,
 410,411,412,413,414,415,416,25,26,27,28,29,30,31,32,25,26,27,28,29,30,31,32,25,26,27,28,29,30,31,32,25,26,27,28,29,30,31,32,409,410,411,412,413,414,415,416,409,410,411,412,413,414,415,416,25,26,27,28,29,30,31,32,25,26,27,28,29,30,31,32,25,26,27,28,29,30,31,32,409,410,411,412,413,414,415,416,25,26,27,28,29,30,31,32,25,26,27,28,29,30,31,32,25,26,
@@ -243,6 +258,12 @@
 </data>
  </layer>
  <layer name="Tile Layer 4" width="105" height="52">
+  <properties>
+   <property name="active front" value=""/>
+   <property name="ambient level" value="&amp;h0f0f1f"/>
+   <property name="illuminated" value=""/>
+   <property name="receiver" value=""/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,201,202,203,204,205,206,207,208,201,202,203,204,205,206,207,208,201,202,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,217,218,219,220,221,222,223,224,217,218,219,220,221,222,223,224,217,218,
@@ -299,6 +320,12 @@
 </data>
  </layer>
  <layer name="Tile Layer 5" width="105" height="52">
+  <properties>
+   <property name="active front" value=""/>
+   <property name="ambient level" value="&amp;h0f0f1f"/>
+   <property name="illuminated" value=""/>
+   <property name="receiver" value=""/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -356,7 +383,10 @@
  </layer>
  <layer name="StonesFront" width="105" height="52">
   <properties>
+   <property name="ambient level" value="&amp;h0f0f1f"/>
    <property name="foreground" value=""/>
+   <property name="illuminated" value=""/>
+   <property name="receiver" value=""/>
   </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -472,7 +502,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer name="Collision" width="105" height="52">
+ <layer name="Collision" width="105" height="52" visible="0">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -528,4 +558,165 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup name="Objects" width="105" height="52">
+  <object name="crystal glow" type="Spawn" x="1216" y="96" width="48" height="64">
+   <properties>
+    <property name="active front" value=""/>
+    <property name="p(flavor)" value="2"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="1584" y="384" width="48" height="64">
+   <properties>
+    <property name="p(flavor)" value="2"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="752" y="96" width="48" height="64">
+   <properties>
+    <property name="p(flavor)" value="2"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="896" y="96" width="48" height="64">
+   <properties>
+    <property name="p(flavor)" value="1"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="1056" y="0" width="48" height="64">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="p(flavor)" value="1"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="1376" y="96" width="48" height="64">
+   <properties>
+    <property name="p(flavor)" value="1"/>
+    <property name="p(lowCutoff)" value="(0, 32)"/>
+    <property name="p(orientation)" value="2"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="1392" y="160" width="64" height="48">
+   <properties>
+    <property name="p(flavor)" value="2"/>
+    <property name="p(orientation)" value="3"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="464" y="96" width="48" height="64">
+   <properties>
+    <property name="p(flavor)" value="2"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="208" y="96" width="48" height="64">
+   <properties>
+    <property name="p(flavor)" value="1"/>
+    <property name="p(lowCutoff)" value="(0, 32)"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="432" y="32" width="48" height="64">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="p(flavor)" value="1"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="1216" y="352" width="48" height="64">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="p(flavor)" value="1"/>
+    <property name="p(orientation)" value="6"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="192" y="608" width="48" height="64">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="p(flavor)" value="1"/>
+    <property name="p(orientation)" value="0"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="304" y="608" width="48" height="64">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="p(flavor)" value="2"/>
+    <property name="p(orientation)" value="0"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="704" y="496" width="48" height="64">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="p(flavor)" value="2"/>
+    <property name="p(orientation)" value="0"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="1392" y="272" width="48" height="64">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="p(flavor)" value="2"/>
+    <property name="p(orientation)" value="0"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="crystal glow" type="Spawn" x="928" y="656" width="48" height="64">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="p(flavor)" value="1"/>
+    <property name="p(orientation)" value="0"/>
+    <property name="spawn" value="crystal glow"/>
+   </properties>
+  </object>
+  <object name="lantern" type="Spawn" x="608" y="464" width="48" height="48">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="spawn" value="mine lantern"/>
+   </properties>
+  </object>
+  <object name="lantern" type="Spawn" x="544" y="208" width="48" height="48">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="spawn" value="mine lantern"/>
+   </properties>
+  </object>
+  <object name="lantern" type="Spawn" x="1472" y="496" width="48" height="48">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="spawn" value="mine lantern"/>
+   </properties>
+  </object>
+  <object name="lantern" type="Spawn" x="1088" y="496" width="48" height="48">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="spawn" value="mine lantern"/>
+   </properties>
+  </object>
+  <object name="lantern" type="Spawn" x="1184" y="160" width="48" height="48">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="spawn" value="mine lantern"/>
+   </properties>
+  </object>
+  <object name="lantern" type="Spawn" x="160" y="416" width="48" height="48">
+   <properties>
+    <property name="foreground" value=""/>
+    <property name="spawn" value="mine lantern"/>
+   </properties>
+  </object>
+ </objectgroup>
 </map>

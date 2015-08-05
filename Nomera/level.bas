@@ -973,7 +973,7 @@ sub level.processLights()
                                         if modBlock->tileset < 65535 then
                                             if (modBlock->light(0) <> @(lightList[i]->shaded)) andAlso _
                                                (modBlock->light(1) <> @(lightList[i]->shaded)) andAlso _
-                                               (modBlock->light(2) <> @(lightList[i]->shaded)) then
+                                               (modBlock->light(2) <> @(lightList[i]->shaded)) andAlso modBlock->numLights < 3 then
                                             
                                                 modBlock->light(modBlock->numLights) = @(lightList[i]->shaded)
                                                 modBlock->numLights += 1
@@ -988,7 +988,7 @@ sub level.processLights()
                                         if modBlock->tileset < 65535 then
                                             if (modBlock->light(0) <> @(lightList[i]->texture)) andAlso _
                                                (modBlock->light(1) <> @(lightList[i]->texture)) andAlso _
-                                               (modBlock->light(2) <> @(lightList[i]->texture)) then
+                                               (modBlock->light(2) <> @(lightList[i]->texture)) andAlso modBlock->numLights < 3 then
                                             
                                                 modBlock->light(modBlock->numLights) = @(lightList[i]->texture)
                                                 modBlock->numLights += 1
@@ -1057,7 +1057,7 @@ sub level.processLights()
                                 if modBlock->tileset < 65535 then
                                     if (modBlock->light(0) <> @(lightList[i]->texture)) andAlso _
                                        (modBlock->light(1) <> @(lightList[i]->texture)) andAlso _
-                                       (modBlock->light(2) <> @(lightList[i]->texture)) then
+                                       (modBlock->light(2) <> @(lightList[i]->texture)) andAlso modBlock->numLights < 3 then
                                     
                                         modBlock->light(modBlock->numLights) = @(lightList[i]->texture)
                                         modBlock->numLights += 1

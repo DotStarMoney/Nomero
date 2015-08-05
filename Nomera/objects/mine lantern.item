@@ -1,0 +1,144 @@
+'#mine lantern
+
+
+type mothData_t
+    as Vector2D drawP
+    as Vector2D p
+    as Vector2D v
+    as Vector2D f
+    as Vector2D target
+    as Animation ptr anim
+end type
+
+type ITEM_DATA
+    as integer frame
+    as integer flickerCounter
+    as integer moths_N
+    as mothData_t ptr moths
+end type
+
+#define MOTH_ANGLE_VAR_DEG 45
+#define MOTH_MAG_MIN 10
+#define MOTH_MAG_MAX 40
+
+function pickTarget(curP as Vector2D) as Vector2D
+    dim as Vector2D center, v
+    dim as double angle
+    center = p + size*0.5
+    v = (center - curP)
+    v.normalize()
+    if v = Vector2D(0, 0) then v = Vector2D(1, 0)
+    
+    angle = v.angle() + (((rnd * MOTH_ANGLE_VAR_DEG * 2) - MOTH_ANGLE_VAR_DEG) * (_PI_ / 180.0))
+    v = Vector2D(cos(angle), sin(angle)) * ((rnd * (MOTH_MAG_MAX - MOTH_MAG_MIN)) + MOTH_MAG_MIN)
+    
+    return center + v
+end function
+
+'---------------------------------
+
+function _init()
+    dim as integer i
+    
+    CREATE_ANIMS(4)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LanternGlow_Diffuse.txt", MEDIA_PATH + "Lights\LanternGlow_Specular.txt", 2, 3, 0)  
+    
+    anims[0].load(MEDIA_PATH + "lantern.txt")
+    anims[1].load(MEDIA_PATH + "lantern.txt")
+    anims[1].hardswitch(1)
+    
+    if int(rnd * 2) = 0 then 
+        data.moths_N = int(rnd * 3) + 1
+    else
+        data.moths_N = 0
+    end if
+    
+    if data.moths_N then
+        data.moths = new mothData_t[data.moths_N]
+        for i = 0 to data.moths_N - 1
+            data.moths[i].anim = new Animation()
+            data.moths[i].anim->load(MEDIA_PATH + "lantern.txt")
+            data.moths[i].anim->hardSwitch(2)
+            data.moths[i].anim->play()
+            data.moths[i].p = p + size * 0.5 + Vector2D(int(rnd * 33) - 16, int(rnd * 33) - 16)
+            data.moths[i].drawP = data.moths[i].p + Vector2D(int(rnd * 3) - 1, int(rnd * 3) - 1)
+            data.moths[i].target = pickTarget(data.moths[i].p)
+            data.moths[i].f = Vector2D(0,0)
+            data.moths[i].v = Vector2D(0,0)
+        next i
+    end if
+    
+    data.frame = 0
+    data.flickerCounter = 0
+    
+end function
+
+'---------------------------------
+
+function _flush()
+    dim as integer i
+    for i = 0 to data.moths_N - 1
+        delete(data.moths[i].anim)
+    next i
+    if data.moths then delete(data.moths)
+    data.moths = 0
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    dim as integer i
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+    if iif(data.flickerCounter > 0, int(data.frame * 0.5) and 1, 1) then anims[1].drawAnimation(scnbuff, p.x, p.y)
+    
+    for i = 0 to data.moths_N - 1
+        if link.level_ptr->shouldLight() then
+            data.moths[i].anim->drawAnimationLit(scnbuff, data.moths[i].drawp.x, data.moths[i].drawp.y,_
+                                           lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
+                                           link.gamespace_ptr->camera,,,ANIM_TRANS)            
+        else
+            data.moths[i].anim->drawAnimation(scnbuff, data.moths[i].drawp.x, data.moths[i].drawp.y, link.gamespace_ptr->camera,,ANIM_TRANS)
+        end if  
+    next i
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer i
+    dim as double mag
+    dim as Vector2D v
+    for i = 0 to data.moths_N - 1
+        data.moths[i].anim->step_animation()
+        v = data.moths[i].target - data.moths[i].p
+        v.normalize()
+        data.moths[i].f += v
+        data.moths[i].v += data.moths[i].f
+        data.moths[i].f *= 0.9
+        data.moths[i].v *= 0.9
+        data.moths[i].p += data.moths[i].v * 0.02
+        if (data.moths[i].p - data.moths[i].target).magnitude() < 8 then data.moths[i].target = pickTarget(data.moths[i].p)
+        data.moths[i].drawP = data.moths[i].p + Vector2D(int(rnd * 3) - 1, int(rnd * 3) - 1)
+    next i
+    
+    data.frame += 1
+    
+    if int(rnd * 200) = 0 then data.flickerCounter = int(rnd * 10) + 5
+    if data.flickerCounter > 0 then data.flickerCounter -= 1
+
+    lightState = 1'iif(data.flickerCounter > 0, int(data.frame * 1) and 1, 1)
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+end function
+
+'-----------------------------------

@@ -55,13 +55,13 @@ end function
 
 function _draw(scnbuff as integer ptr)
         
-    anims[0].setGlow(&h5fffffff)
+    anims[0].setGlow(&h6fffffff)
     anims[0].drawAnimation(scnbuff, p.x+(int(rnd * 7) - 3), p.y+(int(rnd * 7) - 3))
 
     anims[0].setGlow(&hffffffff)
     anims[0].drawAnimation(scnbuff, p.x, p.y)
     
-    anims[0].setGlow(&h4fffffff)
+    anims[0].setGlow(&h5fffffff)
     anims[0].drawAnimation(scnbuff, p.x+(int(rnd * 5) - 2), p.y+(int(rnd * 5) - 2))
 end function
 '----------------------------------

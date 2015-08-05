@@ -17,6 +17,7 @@ constructor DynamicController()
     drawobjects_active.init(sizeof(Item ptr))
     drawobjects_activeFront.init(sizeof(Item ptr))
     drawobjects_background.init(sizeof(Item ptr))    
+    drawobjects_foreground.init(sizeof(Item ptr))    
     addItemPost.init(sizeof(DynamicController_itemPair_t))
     postPairs.init(sizeof(DynamicController_itemPair_t ptr))
     isProcessing = 0
@@ -49,6 +50,8 @@ sub DynamicController.flush()
     drawobjects_active.clean()
     drawobjects_activefront.clean()
     drawobjects_background.clean()
+    drawobjects_foreground.clean()
+
 
     BEGIN_DHASH(curPublish, allPublishedValues)
         if curPublish->target then delete(curPublish->target)
@@ -158,6 +161,8 @@ sub DynamicController.removeItem(ID_ as string)
         drawObjects_activeFront.remove(ID_)
     elseif drawObjects_background.exists(ID_) then
         drawObjects_background.remove(ID_)
+    elseif drawObjects_foreground.exists(ID_) then
+        drawobjects_foreground.remove(ID_)
     end if
     
 
@@ -279,6 +284,10 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = AC
         BEGIN_HASH(curItem, drawobjects_background)
             (*curItem)->drawItem(scnbuff)
         END_HASH()     
+    case FOREGROUND
+        BEGIN_HASH(curItem, drawobjects_foreground)
+            (*curItem)->drawItem(scnbuff)
+        END_HASH()         
     case OVERLAY
         BEGIN_HASH(curItem, drawobjects_background)
             (*curItem)->drawItemOverlay(scnbuff)
@@ -336,6 +345,8 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
             drawobjects_active.insert(ID_, @refItem->item_)
         elseif order = BACKGROUND then
             drawobjects_background.insert(ID_, @refItem->item_) 
+        elseif order = FOREGROUND then
+            drawobjects_foreground.insert(ID_, @refItem->item_) 
         end if
     end if
   
@@ -380,7 +391,9 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
         elseif order = ACTIVE then
             drawobjects_active.insert(ID_, @refItem->item_)
         elseif order = BACKGROUND then
-            drawobjects_background.insert(ID_, @refItem->item_)        
+            drawobjects_background.insert(ID_, @refItem->item_) 
+        elseif order = FOREGROUND then
+            drawobjects_foreground.insert(ID_, @refItem->item_) 
         end if
     end if
   

@@ -43,6 +43,7 @@ type DynamicController_postFrame_t
     as double depth_
 end type
 '/
+
 type DynamicController_connectionNode_t
     as Hashtable slots   'on slot name
     as Hashtable signals 'on signal name
@@ -142,6 +143,7 @@ type DynamicController
         as Hashtable drawobjects_background
 		as Hashtable drawobjects_active      
         as Hashtable drawobjects_activeFront 
+        as Hashtable drawobjects_foreground
         
         as KeyBank itemIdGenerator
 		as ObjectLink link
@@ -152,5 +154,6 @@ type DynamicController
         
 end type
 	
-	
+
+    
 #endif

@@ -45,6 +45,12 @@ declare function COVERSMOKE_PROC_RUN(t as double) as integer
 declare sub COVERSMOKE_PROC_DRAW(scnbuff as integer ptr)
 declare sub COVERSMOKE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub COVERSMOKE_PROC_CONSTRUCT()
+declare sub CRYSTALGLOW_PROC_INIT()
+declare sub CRYSTALGLOW_PROC_FLUSH()
+declare function CRYSTALGLOW_PROC_RUN(t as double) as integer
+declare sub CRYSTALGLOW_PROC_DRAW(scnbuff as integer ptr)
+declare sub CRYSTALGLOW_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub CRYSTALGLOW_PROC_CONSTRUCT()
 declare sub DEEPSPOTLIGHT_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
 declare sub DEEPSPOTLIGHT_PROC_INIT()
 declare sub DEEPSPOTLIGHT_PROC_FLUSH()
@@ -88,6 +94,13 @@ declare function INTERFACE_PROC_RUN(t as double) as integer
 declare sub INTERFACE_PROC_DRAW(scnbuff as integer ptr)
 declare sub INTERFACE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub INTERFACE_PROC_CONSTRUCT()
+declare function MINELANTERN_FUNCTION_pickTarget(curP as Vector2D) as Vector2D
+declare sub MINELANTERN_PROC_INIT()
+declare sub MINELANTERN_PROC_FLUSH()
+declare function MINELANTERN_PROC_RUN(t as double) as integer
+declare sub MINELANTERN_PROC_DRAW(scnbuff as integer ptr)
+declare sub MINELANTERN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub MINELANTERN_PROC_CONSTRUCT()
 declare sub MOMENTARYTOGGLESWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 declare sub MOMENTARYTOGGLESWITCH_PROC_INIT()
 declare sub MOMENTARYTOGGLESWITCH_PROC_FLUSH()

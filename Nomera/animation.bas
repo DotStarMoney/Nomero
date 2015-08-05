@@ -706,7 +706,7 @@ sub Animation.fetchImageData(animNum as integer, frameNum as integer, rotatedFla
         end if
         drawW = .frame_width
 		drawH = .frame_height
-				   
+     	   
 		if (rotatedFlag = 0) orElse (rotatedFlag > 7) then
 
 			imgdata = data_->image
@@ -730,7 +730,7 @@ sub Animation.fetchImageData(animNum as integer, frameNum as integer, rotatedFla
                     rotateTempNorm = imagecreate(newW, newH)
                     copyImageRotate(data_->image.getNorm(), rotateTempNorm, rotatedFlag, start_x, start_y, drawW, drawH, 0, 0, 1) 
                 end if    
-                tempRotGroup->rotatedGroup[rotatedFlag].create(drawW, drawH, rotateTemp, rotateTempNorm)
+                tempRotGroup->rotatedGroup[rotatedFlag].create(newW, newH, rotateTemp, rotateTempNorm)
 				drawW = newW
 				drawH = newH
 				imgdata = tempRotGroup->rotatedGroup[rotatedFlag]

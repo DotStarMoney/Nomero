@@ -614,6 +614,7 @@ sub copyImageRotate(src as uinteger ptr, dest as uinteger ptr,_
 				                  
                                   
                 col = *cast(integer ptr, @dataSrc[xpos*4 + ypos*pitchSrc])  
+                
                 if treatAsNorm = 1 then
                     bx = (col and &hff) - 128
                     by = ((col shr 8) and &hff) - 128
