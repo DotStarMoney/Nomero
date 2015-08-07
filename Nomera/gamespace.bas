@@ -30,7 +30,8 @@ constructor GameSpace()
     link.soundeffects_ptr = @soundFX
     link.pathtracker_ptr = @tracker
     link.electricarc_ptr = @arcEffects
-    
+      
+   
     graphicFX.setLink(link)
     triggers.setLink(link)
     soundFX.setLink(link)
@@ -40,8 +41,7 @@ constructor GameSpace()
     dynControl.setLink(link)
     lvlData.setLink(link)
 	projectiles.setLink(link)
-    
-    
+  
 
     movingFrmAvg = 0.016
     vibcount = 0
@@ -62,7 +62,7 @@ constructor GameSpace()
     spy.body_i = world.addBody(@(spy.body))
     spy.body.friction = 2
 
-	
+
     effects.setParent(@this, @lvlData)
     projectiles.setParent(@world, @lvlData, @this)
     spy.setParent(@world, @lvlData, @projectiles, @this)
@@ -133,6 +133,66 @@ constructor GameSpace()
     lockCamera = 1
     
     timeBeginPeriod(SLEEP_RESOLUTION)
+    
+    #ifdef KICKSTARTER
+        
+        'spy.initPathing()
+	
+        dim as string fname, extract, levelName
+        dim as integer filenum, tag
+        dim as recordFrame_t frame
+        dim as Item ptr sitem
+        dim as recordFrame_t ptr frames
+        dim as integer frames_N
+        dim as integer soldierType, stamp
+        fname = Dir("pathing\"+lcase(lvlData.getName())+"\*.path") 
+
+        Do Until Len(fname) = 0 
+            
+            extract = right(fname, len(fname) - instrrev(fname, "_"))
+            stamp = val(left(extract, instr(extract, ".") - 1))
+
+            if stamp <> spy.timeStamp then
+                
+                filenum = freefile
+                open "pathing\"+lcase(lvlData.getName())+"\"+fname for binary as filenum
+                
+                frames = 0
+                frames_N = 0
+                get #filenum,,soldierType
+                get #filenum,,tag
+                getStringFromFile(filenum, levelName)
+                if levelName = lvlData.getName() then
+
+                    'print fname
+
+                    while not eof(filenum)
+                        get #filenum, ,frame
+                        
+                        frames_N += 1
+                        frames = reallocate(frames, sizeof(recordFrame_t) * frames_N)
+                        frames[frames_N - 1] = frame
+                        
+                    wend
+                    
+                    
+                    sitem = dynControl.constructItem(dynControl.itemStringToType("RECORDED SOLDIER"), ACTIVE_FRONT)
+                    sitem->setParameter(soldierType, "soldierType")
+                    sitem->setParameter(cast(integer, frames), "frames_ptr")
+                    sitem->setParameter(frames_N, "frames_N")
+                    sitem->setParameter(tag, "tag")
+                    dynControl.initItem(sitem)
+                    
+                    
+                end if
+                    
+                close #filenum
+            end if
+            fname = Dir()
+
+        Loop
+        'sleep            
+    #endif
 
 end constructor
 

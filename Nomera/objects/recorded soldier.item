@@ -1,0 +1,349 @@
+'#recorded soldier
+
+type ITEM_DATA
+    as recordFrame_t ptr frames
+    as integer frames_n
+    as integer stype
+    as integer curFrame
+    as integer displayIndex
+    as integer tag
+    as integer dire
+    as integer bulletCooldown
+    as integer facing
+    as integer alertType
+    as integer alertFrames
+    as double proximity
+    as integer frameCount
+    as integer death
+    as integer zapTime
+    as integer kaboom
+    as double deathRise
+end type
+
+parameter "soldierType", integer
+parameter "frames_ptr", integer
+parameter "frames_N", integer
+parameter "tag", integer
+
+publish slot "lightoccluder", $drawAsOccluder
+publish slot "explosion reaction", $react, Circle2D(Vector2D(0,-10), 24)
+publish slot "shock target", $shockTarget, Circle2D(Vector2D(0,-10), 14)
+
+
+'---------------------------------
+
+function _init()
+    dim as integer tempInt
+    
+    data.curFrame = 0
+    data.frames = 0
+    getParameter(data.stype, "soldierType")   
+    getParameter(tempInt, "frames_ptr")
+    data.frames = cast(recordFrame_t ptr, tempInt)
+    getParameter(data.frames_n, "frames_N")
+   
+    getParameter(data.tag, "tag")
+   
+    CREATE_ANIMS(6)
+    select case data.stype
+    case RED_SOLDIER
+        anims[0].load(MEDIA_PATH + "NPC\cherry.txt")    
+    case YELLOW_SOLDIER
+        anims[0].load(MEDIA_PATH + "NPC\lemon.txt")
+    case KARTOFEL
+        anims[0].load(MEDIA_PATH + "NPC\kartofel.txt")        
+    end select
+    anims[1].load(MEDIA_PATH + "muzzleflash.txt")
+     
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 2, 3, 1)  
+
+    anims[4].load(MEDIA_PATH + "NPC\detectmeter.txt")
+    anims[4].play()
+    
+    anims[5].load(MEDIA_PATH + "NPC\alerts.txt")
+    anims[5].play()
+    
+    data.frameCount = int(rnd * 200)
+    
+    data.dire = -1
+    data.facing = -1
+    data.kaboom = 0
+    data.alertType = 0
+    data.alertFrames = 0
+    data.deathRise = 1
+   
+    data.death = 0
+    data.zapTime = 0
+end function
+
+'---------------------------------
+
+function _flush()
+    if data.frames then deallocate(data.frames)
+    
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    dim as integer flags, curFrame, glow
+    dim as double floatAmount
+    drawInto(scnbuff)
+    select case data.dire
+    case -1
+        flags = 0
+    case 1
+        flags = 4
+    end select
+    'drawStringShadow scnbuff, p.x - len(str(data.tag))*4, p.y - 4, str(data.tag), &hffffff
+
+    if data.death = 0 then
+        if data.bulletcooldown > 0 andAlso data.bulletcooldown < 4 then
+            if data.frames[data.displayIndex].upsUPDOWN andAlso data.stype <> YELLOW_SOLDIER then
+                anims[1].drawAnimation(scnbuff, p.x + data.dire * 24, p.y + -9, ,flags)        
+            else
+                anims[1].drawAnimation(scnbuff, p.x + data.dire * 24, p.y + -15, ,flags)
+            end if
+        end if
+
+        if data.proximity > 0 andAlso data.stype <> KARTOFEL then
+            curFrame = data.proximity * 8
+            floatAmount = sin(data.frameCount * 0.1) * 3
+            glow = data.proximity * 1000
+            if glow > 255 then glow = 255
+            if curFrame > 5 then curFrame = 5
+            anims[4].setGlow(&h00ffffff or ((glow shr 1) shl 24))
+            if curFrame = 5 then
+                curFrame = 5 + (int(data.frameCount * 0.3333) and 1)
+                anims[4].drawImage(scnbuff, p.x-10, p.y - 10 + floatAmount, curFrame*20, 0, curFrame*20+ 19, 19)
+            else                               
+                anims[4].drawImage(scnbuff, p.x-10, p.y - 10 + floatAmount, curFrame*20, 0, curFrame*20+ 19, 19)
+            end if
+        end if
+        
+        if data.alertType > 0 then
+            floatAmount = sin(data.frameCount * 0.1) * -3
+            anims[5].drawAnimation(scnbuff, p.x, p.y - 63 + floatAmount)
+        end if
+    end if
+end function
+
+'----------------------------------
+
+sub drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, override_ as integer = 0)
+    dim as integer flags
+    PREP_LIT_ANIMATION()
+
+    select case data.dire
+    case -1
+        flags = 0
+    case 1
+        flags = 4
+    end select
+    
+    if link.level_ptr->shouldLight() andAlso override_ = 0 then
+        anims[0].drawAnimationLit(dest_img, p.x - x, p.y - y,_
+                                       lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
+                                       link.gamespace_ptr->camera,flags,1,ANIM_TRANS)            
+    else
+        anims[0].drawAnimation(dest_img, p.x - x, p.y - y,,flags,ANIM_TRANS)
+    end if  
+    
+    
+end sub
+
+slot $drawAsOccluder(dest as integer, x as integer, y as integer)
+    drawInto(cast(integer ptr, dest), x, y, 1)
+end slot
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as recordFrame_t fr
+    dim as item ptr sitem
+    anims[0].step_animation()
+    anims[5].step_animation()
+    
+    if data.death = 0 then
+        data.curFrame += 1
+        if data.curFrame > data.frames_n then data.curFrame = data.frames_n
+        
+        data.displayIndex = data.curFrame - 1
+        fr = data.frames[data.displayIndex]
+        p.xs = fr.p.x
+        p.ys = fr.p.y
+    end if
+
+    
+    DControl->setTargetSlotOffset(ID, "explosion reaction", p) 
+    DControl->setTargetSlotOffset(ID, "shock target", p) 
+
+    if data.death = 0 then
+        if fr.direLEFTRIGHT <> 0 then data.dire = fr.direLEFTRIGHT
+        
+        if data.stype <> KARTOFEL then
+            if fr.onLadder then
+                if anims[0].getAnimation() <> 2 then anims[0].switch(3)
+                if fr.direLEFTRIGHT orElse fr.upsUPDOWN then
+                    anims[0].play()
+                else
+                    anims[0].pause()
+                end if
+            elseif fr.grounded then
+                if fr.upsUPDOWN <> 1 then
+                    if fr.direLEFTRIGHT then
+                        if anims[0].getAnimation() <> 1 andAlso anims[0].isSwitching() = 0 then anims[0].switch(1)
+                    elseif fr.pressQ = 0 then
+                        if anims[0].getAnimation() <> 0 andAlso anims[0].isSwitching() = 0 then anims[0].switch(0)
+                    end if
+                end if
+                if fr.upsUPDOWN = 1 andALso fr.pressQ = 0 then
+                    if anims[0].getAnimation() <> 1 andAlso anims[0].isSwitching() = 0 then anims[0].switch(4)
+                end if
+                anims[0].play()
+            else
+                anims[0].hardSwitch(2)
+                anims[0].play() 
+            end if
+        else
+            if fr.grounded then
+                if fr.direLEFTRIGHT then
+                    if anims[0].getAnimation() <> 1 andAlso anims[0].isSwitching() = 0 then anims[0].switch(1)
+                else
+                    if anims[0].getAnimation() <> 0 andAlso anims[0].getAnimation() <> 7 andAlso anims[0].isSwitching() = 0 then anims[0].switch(0)
+                end if
+            else
+                anims[0].hardSwitch(0)
+                anims[0].play()
+            end if
+        end if
+        if fr.pressQ then
+            if fr.grounded then
+                if fr.upsUPDOWN then
+                    if anims[0].getAnimation() <> 8 andAlso anims[0].isSwitching() = 0 then anims[0].switch(8)
+                else
+                    if anims[0].getAnimation() <> 7 andAlso anims[0].isSwitching() = 0 then anims[0].switch(7)            
+                end if
+            end if
+            if data.bulletCooldown = 0 then
+                if data.stype <> KARTOFEL then
+                    sitem = DControl->constructItem(DControl->itemstringtotype("RECORDED BULLET"), ACTIVE_FRONT)
+                    sitem->setParameter(Vector2D(data.dire, 0), "heading")
+                    if fr.upsUPDOWN andAlso data.stype <> YELLOW_SOLDIER then
+                        DControl->initItem(sitem, p + Vector2D(data.dire * 20, -8))
+                        link.projectilecollection_ptr->create(p + Vector2D(data.dire * 12, -9), Vector2D((rnd * 3 - 1)*0.5+data.dire*-0.6, -rnd - 0.5) * 100, CARTRIDGE)                
+                    else
+                        DControl->initItem(sitem, p + Vector2D(data.dire * 20, -14))
+                        link.projectilecollection_ptr->create(p + Vector2D(data.dire * 12, -15), Vector2D((rnd * 3 - 1)*0.5+data.dire*-0.6, -rnd - 0.5) * 100, CARTRIDGE)
+                    end if
+                    data.bulletCooldown = 6
+                          
+                else
+                
+                
+                end if
+            end if
+        end if
+        if data.bulletCooldown > 0 then data.bulletCooldown -= 1
+
+        if data.stype <> KARTOFEL then
+            if fr.dire2AS = 1 then
+                data.alertType = 1
+                anims[5].hardswitch(0)
+                data.alertFrames += 1
+            elseif fr.dire2AS = -1 then
+                data.alertType = 2
+                anims[5].hardswitch(1)
+                data.alertFrames += 1
+            else
+                if data.alertFrames > 0 then data.alertFrames -= 1
+            end if
+            if data.alertFrames = 0 andAlso data.alertType > 0 then
+                if anims[5].isSwitching = 0 then
+                    anims[5].switch(2 - data.alertType)
+                end if
+                if anims[5].done() then
+                    data.alertType = 0
+                end if
+            end if
+        end if
+        
+        if data.bulletCooldown > 0 andAlso data.bulletCooldown < 3 then 
+            lightState = 1
+        else
+            lightState = 0
+        end if
+        
+        data.proximity = 100 - (link.player_ptr->body.p - p).magnitude()
+        if data.proximity < 0 then data.proximity = 0
+        data.proximity /= 100
+        data.frameCount += 1
+        light.texture.x = p.x + data.dire*20
+        light.texture.y = p.y - 15
+        light.shaded.x = light.texture.x
+        light.shaded.y = light.texture.y  
+    else
+        if data.zapTime = 0 then
+            if data.kaboom = 0 then p.ys -= data.deathRise
+            data.deathRise += 0.5
+            if anims[0].getFrame() = 3 andAlso data.kaboom = 0 then
+                data.kaboom = 1
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(p, FLASH,,1)
+                link.soundeffects_ptr->playSound(SND_EXPLODE)
+
+            end if
+            if anims[0].done() then
+                
+                return 1
+            end if
+        else
+            data.zapTime -= 1
+            if int(data.frameCount * 0.5) and 1 then 
+                lightState = 1
+            else
+                lightState = 0
+            end if
+            light.texture.x = p.x 
+            light.texture.y = p.y - 15
+            light.shaded.x = light.texture.x
+            light.shaded.y = light.texture.y  
+            if data.zapTime = 0 then anims[0].hardswitch(6)    
+        end if
+    end if
+    
+
+end function
+
+'-----------------------------------
+slot $shockTarget(source as Vector2D)
+    if data.stype <> KARTOFEL then
+        if data.death = 0 then
+            data.zapTime = 50
+            data.death = 1
+            anims[0].hardswitch(5)
+        end if
+    end if
+end slot
+
+slot $react(source as Vector2D)
+    dim as Vector2D v
+    dim as double mag
+    v = source - p
+    mag = v.magnitude()
+    if data.stype <> KARTOFEL then
+        if mag < 64 then
+            if data.death = 0 then
+                data.death = 1
+                anims[0].hardswitch(6)
+            end if
+        end if
+    end if
+end slot

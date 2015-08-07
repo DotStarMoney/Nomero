@@ -93,7 +93,48 @@ constructor Player
     for i = 0 to 5
         spinnerCount(i) = 16
     next i
+  
+    #ifdef KICKSTARTER
+    useSoldier = -1
+    #endif
+
 end constructor
+
+#ifdef KICKSTARTER
+sub Player.initPathing
+     
+        dim as string filename = ""
+        dim as recordFrame_t ptr recordData
+        
+        useSoldier = YELLOW_SOLDIER
+        
+        select case useSoldier
+        case RED_SOLDIER
+            filename += "RED_SOLDIER"
+        case YELLOW_SOLDIER
+            filename += "YELLOW_SOLDIER"
+        case KARTOFEL
+            filename += "KARTOFEL"
+        end select
+        timeStamp = int(timer)
+        filename = "pathing\" + lcase(link.level_ptr->getName()) +  "\" + filename + "_" + str(timeStamp) + ".path"
+     
+        recordFileNum = freefile        
+        open filename for binary as recordFileNum 
+        put #recordFileNum,,useSoldier
+        put #recordFileNum,,timeStamp
+        put #recordFileNum,,(link.level_ptr->getName() + chr(0))
+       
+end sub
+#endif
+
+
+destructor Player()
+    #ifdef KICKSTARTER
+        close #recordFileNum
+    #endif
+
+end destructor
 
 function Player.getState() as PlayerState
     return state    
@@ -381,6 +422,41 @@ sub Player.processControls(dire as integer, jump as integer,_
 	_jump_ = jump
 	_ups_ = ups
 	_shift_ = shift
+    
+    #ifdef KICKSTARTER
+    dim as recordFrame_t frame
+
+    if useSoldier <> -1 then
+        frame.p = body.p
+        frame.direLEFTRIGHT = dire
+        frame.jumpZ = jump
+        frame.fireX = fire
+        frame.upsUPDOWN = ups
+        frame.sprintSHIFT = shift
+        frame.pressQ = deactivateAll
+        frame.pressW = explodeAll
+        if numbers(0) then
+            frame.dire2AS = -1
+        elseif numbers(1) then
+            frame.dire2AS = 1
+        else
+            frame.dire2AS = 0
+        end if
+        if state = ON_LADDER then
+            frame.onLadder = 1
+        else
+            frame.onLadder = 0
+        end if
+        if state = GROUNDED then
+            frame.grounded = 1
+        else
+            frame.grounded = 0
+        end if
+        put #recordFileNum,,frame
+    end if
+    #endif
+    
+    
     
     isCrouching = 0
     canTrigger = 0
@@ -873,6 +949,8 @@ sub Player.processControls(dire as integer, jump as integer,_
             itemBarLife = 0
         end if
     end if
+    
+
     
         
     lastUps = ups

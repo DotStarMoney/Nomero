@@ -128,6 +128,22 @@ declare function PUZZLE1234_PROC_RUN(t as double) as integer
 declare sub PUZZLE1234_PROC_DRAW(scnbuff as integer ptr)
 declare sub PUZZLE1234_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub PUZZLE1234_PROC_CONSTRUCT()
+declare sub RECORDEDBULLET_PROC_INIT()
+declare sub RECORDEDBULLET_PROC_FLUSH()
+declare function RECORDEDBULLET_PROC_RUN(t as double) as integer
+declare sub RECORDEDBULLET_PROC_DRAW(scnbuff as integer ptr)
+declare sub RECORDEDBULLET_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub RECORDEDBULLET_PROC_CONSTRUCT()
+declare sub drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, override_ as integer = 0)
+declare sub RECORDEDSOLDIER_SLOT_DRAWASOCCLUDER(pvPair() as _Item_slotValuePair_t)
+declare sub RECORDEDSOLDIER_SLOT_SHOCKTARGET(pvPair() as _Item_slotValuePair_t)
+declare sub RECORDEDSOLDIER_SLOT_REACT(pvPair() as _Item_slotValuePair_t)
+declare sub RECORDEDSOLDIER_PROC_INIT()
+declare sub RECORDEDSOLDIER_PROC_FLUSH()
+declare function RECORDEDSOLDIER_PROC_RUN(t as double) as integer
+declare sub RECORDEDSOLDIER_PROC_DRAW(scnbuff as integer ptr)
+declare sub RECORDEDSOLDIER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub RECORDEDSOLDIER_PROC_CONSTRUCT()
 declare sub REDWALLLIGHT_PROC_INIT()
 declare sub REDWALLLIGHT_PROC_FLUSH()
 declare function REDWALLLIGHT_PROC_RUN(t as double) as integer

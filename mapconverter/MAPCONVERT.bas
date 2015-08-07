@@ -381,6 +381,8 @@ do
         lne = left(lne, len(lne)-1)
     wend
     
+
+    
     if dataline = 0 then
         if propertyline = 0 then
             curPos = findChar(lne,"=",,chr(34)) 

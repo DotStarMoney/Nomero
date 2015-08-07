@@ -38,13 +38,20 @@ sub ProjectileCollection.setLink(link_ as ObjectLink)
 	link = link_
 end sub
 
-sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = CHERRY_BOMB)
+sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = CHERRY_BOMB, noCollide as integer = 0)
     dim as Projectile_t data_
     dim as Projectile_t ptr data_ptr
     dim as integer redCol
     if parent_space = 0 then exit sub
   	
     select case f_
+    CASE CARTRIDGE
+        data_.body = TinyBody(p_, 4, 10)
+        data_.body.noCollide = noCollide
+        data_.body.elasticity = 0.3
+        data_.body.v = v_
+        data_.flavor = CARTRIDGE
+        data_.lifeFrames = 40
     case CHERRY_BOMB    
         data_.body   = TinyBody(p_, 8, 10)
         data_.body.noCollide = 0
@@ -64,13 +71,14 @@ sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = 
         data_.lifeFrames = 15
     case SPARK
         data_.body = TinyBody(p_, 4, 10)
-        data_.body.noCollide = 0
+        data_.body.noCollide = noCollide
         data_.body.elasticity = 0.5
         data_.body.v = v_
         data_.flavor = SPARK
         data_.lifeFrames = int(rnd * 20) + 5
         redCol = int(rnd * 64) + 191
         data_.data0 = rgb(redCol, rnd*redCol, 32)
+        
     case BLUE_SPARK
         data_.body = TinyBody(p_, 4, 10)
         data_.body.noCollide = 1
@@ -115,6 +123,7 @@ sub ProjectileCollection.create(p_ as Vector2D, v_ as Vector2D, f_ as integer = 
 
 	
     data_ptr->body_i = link.tinyspace_ptr->addBody(@data_ptr->body)
+    
 end sub
 
 sub ProjectileCollection.checkDynamicCollision(p_ as Vector2D, size_ as Vector2D)
@@ -179,6 +188,10 @@ sub ProjectileCollection.proc_collection(t as double)
 			deleteMe = 0
 			
 			select case cur.flavor
+            case CARTRIDGE
+                
+				curNode->lifeFrames -= 1
+				if curNode->lifeFrames < 0 then deleteMe = 1            
 			case DETRITIS
 				curNode->lifeFrames -= 1
 				curNode->body.v = curNode->body.v * 0.9
@@ -256,7 +269,9 @@ sub ProjectileCollection.proc_collection(t as double)
 		else
 			exit do
 		end if
+        
     loop
+    
 end sub
 
 sub ProjectileCollection.draw_collection(scnbuff as uinteger ptr)
@@ -267,22 +282,32 @@ sub ProjectileCollection.draw_collection(scnbuff as uinteger ptr)
     do
         curNode = proj_list.roll()
         if curNode <> 0 then
-            if curNode->flavor <> SPARK andAlso curNode->flavor <> BLUE_SPARK then
-                curNode->anim.drawAnimation(scnbuff, curNode->body.p.x(), curNode->body.p.y()) 
-            else
-                if curNode->flavor = SPARK then
-                    norm = curNode->body.v
-                    norm.normalize()
-                    norm = norm * 2
-                    line scnbuff, (curNode->body.p.x - norm.x, curNode->body.p.y - norm.y)- _
-                                  (curNode->body.p.x + norm.x, curNode->body.p.y + norm.y), curNode->data0
-                else
-                    norm = curNode->body.v
-                    norm.normalize()
-                    norm = norm * 1
-                    line scnbuff, (curNode->body.p.x - norm.x, curNode->body.p.y - norm.y)- _
-                                  (curNode->body.p.x + norm.x, curNode->body.p.y + norm.y), curNode->data0                
+            if curNode->flavor = CARTRIDGE then
                 
+                line scnbuff, (curNode->body.p.x - 2, curNode->body.p.y - 0)- _
+                              (curNode->body.p.x + 2, curNode->body.p.y + 1), rgb(48,48,48), BF
+                line scnbuff, (curNode->body.p.x - 2, curNode->body.p.y - 0)- _
+                              (curNode->body.p.x - 1, curNode->body.p.y + 1), rgb(16,16,16), BF                     
+        
+                
+            else
+                if curNode->flavor <> SPARK andAlso curNode->flavor <> BLUE_SPARK then
+                    curNode->anim.drawAnimation(scnbuff, curNode->body.p.x(), curNode->body.p.y()) 
+                else
+                    if curNode->flavor = SPARK then
+                        norm = curNode->body.v
+                        norm.normalize()
+                        norm = norm * 2
+                        line scnbuff, (curNode->body.p.x - norm.x, curNode->body.p.y - norm.y)- _
+                                      (curNode->body.p.x + norm.x, curNode->body.p.y + norm.y), curNode->data0
+                    else
+                        norm = curNode->body.v
+                        norm.normalize()
+                        norm = norm * 1
+                        line scnbuff, (curNode->body.p.x - norm.x, curNode->body.p.y - norm.y)- _
+                                      (curNode->body.p.x + norm.x, curNode->body.p.y + norm.y), curNode->data0                
+                    
+                    end if
                 end if
             end if
         else

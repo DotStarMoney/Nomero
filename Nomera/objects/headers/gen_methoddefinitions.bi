@@ -1712,6 +1712,408 @@ sub Item.PUZZLE1234_PROC_CONSTRUCT()
     _initAddParameter_("TUBEID3", _ITEM_VALUE_ZSTRING)
     _initAddParameter_("TUBEID4", _ITEM_VALUE_ZSTRING)
 end sub
+sub Item.RECORDEDBULLET_PROC_INIT()
+    data_.RECORDEDBULLET_DATA = new ITEM_RECORDEDBULLET_TYPE_DATA
+    getParameter(data_.RECORDEDBULLET_DATA->heading, "heading")
+    data_.RECORDEDBULLET_DATA->hasTraj = 0
+    data_.RECORDEDBULLET_DATA->lifeFrames = 8
+    data_.RECORDEDBULLET_DATA->cmul = rnd*0.75 + 0.25
+    data_.RECORDEDBULLET_DATA->heading += Vector2D(0,(rnd*3.0 - 1.0)*0.002)
+    
+    data_.RECORDEDBULLET_DATA->cbase = 96
+end sub
+sub Item.RECORDEDBULLET_PROC_FLUSH()
+    
+    if anims_n then delete(anims)
+    if data_.RECORDEDBULLET_DATA then delete(data_.RECORDEDBULLET_DATA)
+    data_.RECORDEDBULLET_DATA = 0
+end sub
+function Item.RECORDEDBULLET_PROC_RUN(t as double) as integer
+    dim as Vector2D dest, pt
+    dim as integer i
+    dim as double dist
+    if data_.RECORDEDBULLET_DATA->hasTraj = 0 then
+        data_.RECORDEDBULLET_DATA->hasTraj = 1
+        dest = p + data_.RECORDEDBULLET_DATA->heading * 5000
+        if dest.xs < 0 then 
+            dest.xs = 0
+        elseif dest.xs > link.level_ptr->getWidth()*16 then
+            dest.xs = link.level_ptr->getWidth()*16
+        end if
+        if dest.ys < 0 then 
+            dest.ys = 0
+        elseif dest.ys > link.level_ptr->getHeight()*16 then
+            dest.ys = link.level_ptr->getHeight()*16
+        end if        
+        dist = link.tinyspace_ptr->raycast(p, dest - p, pt)
+        if dist < 0 then pt = dest
+        
+        data_.RECORDEDBULLET_DATA->a = p
+        data_.RECORDEDBULLET_DATA->b = pt
+        
+        link.projectilecollection_ptr->create(data_.RECORDEDBULLET_DATA->b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+        if int(rnd * 3) = 0 then
+            link.projectilecollection_ptr->create(data_.RECORDEDBULLET_DATA->b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+            link.projectilecollection_ptr->create(data_.RECORDEDBULLET_DATA->b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+        end if
+    end if
+    data_.RECORDEDBULLET_DATA->cbase -= 60
+    
+    data_.RECORDEDBULLET_DATA->lifeFrames -= 1
+    if data_.RECORDEDBULLET_DATA->lifeFrames <= 0 then return 1
+    
+    
+    return 0
+end function
+sub Item.RECORDEDBULLET_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer i
+    dim as double cval
+    dim as Vector2D dvec, na, nb
+    dvec = data_.RECORDEDBULLET_DATA->b - data_.RECORDEDBULLET_DATA->a
+    na = data_.RECORDEDBULLET_DATA->a
+    
+    for i = 0 to 63
+        nb = na + dvec / 64.0
+        cval = (data_.RECORDEDBULLET_DATA->cbase + i*4) * data_.RECORDEDBULLET_DATA->cmul 
+        if cval < 0 then cval = 0
+        if cval > 255 then cval = 255
+        line link.level_ptr->getSmokeTexture, (na.x, na.y)-(nb.x, nb.y), rgb(cval, cval, cval*0.75) 
+        na = nb
+    next i
+end sub
+sub Item.RECORDEDBULLET_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.RECORDEDBULLET_PROC_CONSTRUCT()
+    _initAddParameter_("HEADING", _ITEM_VALUE_VECTOR2D)
+end sub
+sub Item.drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, override_ as integer = 0)
+    dim as integer flags
+    PREP_LIT_ANIMATION()
+
+    select case data_.RECORDEDSOLDIER_DATA->dire
+    case -1
+        flags = 0
+    case 1
+        flags = 4
+    end select
+    
+    if link.level_ptr->shouldLight() andAlso override_ = 0 then
+        anims[0].drawAnimationLit(dest_img, p.x - x, p.y - y,_
+                                       lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
+                                       link.gamespace_ptr->camera,flags,1,ANIM_TRANS)            
+    else
+        anims[0].drawAnimation(dest_img, p.x - x, p.y - y,,flags,ANIM_TRANS)
+    end if  
+    
+    
+end sub
+sub Item.RECORDEDSOLDIER_SLOT_DRAWASOCCLUDER(pvPair() as _Item_slotValuePair_t)
+    dim as integer y
+    dim as integer x
+    dim as integer dest
+    matchParameter(y, "Y", pvPair())
+    matchParameter(x, "X", pvPair())
+    matchParameter(dest, "DEST", pvPair())
+    drawInto(cast(integer ptr, dest), x, y, 1)
+end sub
+sub Item.RECORDEDSOLDIER_SLOT_SHOCKTARGET(pvPair() as _Item_slotValuePair_t)
+    dim as Vector2D source
+    matchParameter(source, "SOURCE", pvPair())
+    if data_.RECORDEDSOLDIER_DATA->stype <> KARTOFEL then
+        if data_.RECORDEDSOLDIER_DATA->death = 0 then
+            data_.RECORDEDSOLDIER_DATA->zapTime = 50
+            data_.RECORDEDSOLDIER_DATA->death = 1
+            anims[0].hardswitch(5)
+        end if
+    end if
+end sub
+sub Item.RECORDEDSOLDIER_SLOT_REACT(pvPair() as _Item_slotValuePair_t)
+    dim as Vector2D source
+    matchParameter(source, "SOURCE", pvPair())
+    dim as Vector2D v
+    dim as double mag
+    v = source - p
+    mag = v.magnitude()
+    if data_.RECORDEDSOLDIER_DATA->stype <> KARTOFEL then
+        if mag < 64 then
+            if data_.RECORDEDSOLDIER_DATA->death = 0 then
+                data_.RECORDEDSOLDIER_DATA->death = 1
+                anims[0].hardswitch(6)
+            end if
+        end if
+    end if
+end sub
+sub Item.RECORDEDSOLDIER_PROC_INIT()
+    data_.RECORDEDSOLDIER_DATA = new ITEM_RECORDEDSOLDIER_TYPE_DATA
+    dim as integer tempInt
+    
+    data_.RECORDEDSOLDIER_DATA->curFrame = 0
+    data_.RECORDEDSOLDIER_DATA->frames = 0
+    getParameter(data_.RECORDEDSOLDIER_DATA->stype, "soldierType")   
+    getParameter(tempInt, "frames_ptr")
+    data_.RECORDEDSOLDIER_DATA->frames = cast(recordFrame_t ptr, tempInt)
+    getParameter(data_.RECORDEDSOLDIER_DATA->frames_n, "frames_N")
+   
+    getParameter(data_.RECORDEDSOLDIER_DATA->tag, "tag")
+   
+    CREATE_ANIMS(6)
+    select case data_.RECORDEDSOLDIER_DATA->stype
+    case RED_SOLDIER
+        anims[0].load(MEDIA_PATH + "NPC\cherry.txt")    
+    case YELLOW_SOLDIER
+        anims[0].load(MEDIA_PATH + "NPC\lemon.txt")
+    case KARTOFEL
+        anims[0].load(MEDIA_PATH + "NPC\kartofel.txt")        
+    end select
+    anims[1].load(MEDIA_PATH + "muzzleflash.txt")
+     
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 2, 3, 1)  
+
+    anims[4].load(MEDIA_PATH + "NPC\detectmeter.txt")
+    anims[4].play()
+    
+    anims[5].load(MEDIA_PATH + "NPC\alerts.txt")
+    anims[5].play()
+    
+    data_.RECORDEDSOLDIER_DATA->frameCount = int(rnd * 200)
+    
+    data_.RECORDEDSOLDIER_DATA->dire = -1
+    data_.RECORDEDSOLDIER_DATA->facing = -1
+    data_.RECORDEDSOLDIER_DATA->kaboom = 0
+    data_.RECORDEDSOLDIER_DATA->alertType = 0
+    data_.RECORDEDSOLDIER_DATA->alertFrames = 0
+    data_.RECORDEDSOLDIER_DATA->deathRise = 1
+   
+    data_.RECORDEDSOLDIER_DATA->death = 0
+    data_.RECORDEDSOLDIER_DATA->zapTime = 0
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "LIGHTOCCLUDER", "DRAWASOCCLUDER")
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "EXPLOSION REACTION", "REACT", new Circle2D(Vector2D(0,-10), 24))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "EXPLOSION REACTION", p)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "SHOCK TARGET", "SHOCKTARGET", new Circle2D(Vector2D(0,-10), 14))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "SHOCK TARGET", p)
+end sub
+sub Item.RECORDEDSOLDIER_PROC_FLUSH()
+    if data_.RECORDEDSOLDIER_DATA->frames then deallocate(data_.RECORDEDSOLDIER_DATA->frames)
+    
+    if anims_n then delete(anims)
+    if data_.RECORDEDSOLDIER_DATA then delete(data_.RECORDEDSOLDIER_DATA)
+    data_.RECORDEDSOLDIER_DATA = 0
+end sub
+function Item.RECORDEDSOLDIER_PROC_RUN(t as double) as integer
+    dim as recordFrame_t fr
+    dim as item ptr sitem
+    anims[0].step_animation()
+    anims[5].step_animation()
+    
+    if data_.RECORDEDSOLDIER_DATA->death = 0 then
+        data_.RECORDEDSOLDIER_DATA->curFrame += 1
+        if data_.RECORDEDSOLDIER_DATA->curFrame > data_.RECORDEDSOLDIER_DATA->frames_n then data_.RECORDEDSOLDIER_DATA->curFrame = data_.RECORDEDSOLDIER_DATA->frames_n
+        
+        data_.RECORDEDSOLDIER_DATA->displayIndex = data_.RECORDEDSOLDIER_DATA->curFrame - 1
+        fr = data_.RECORDEDSOLDIER_DATA->frames[data_.RECORDEDSOLDIER_DATA->displayIndex]
+        p.xs = fr.p.x
+        p.ys = fr.p.y
+    end if
+
+    
+    DControl->setTargetSlotOffset(ID, "explosion reaction", p) 
+    DControl->setTargetSlotOffset(ID, "shock target", p) 
+
+    if data_.RECORDEDSOLDIER_DATA->death = 0 then
+        if fr.direLEFTRIGHT <> 0 then data_.RECORDEDSOLDIER_DATA->dire = fr.direLEFTRIGHT
+        
+        if data_.RECORDEDSOLDIER_DATA->stype <> KARTOFEL then
+            if fr.onLadder then
+                if anims[0].getAnimation() <> 2 then anims[0].switch(3)
+                if fr.direLEFTRIGHT orElse fr.upsUPDOWN then
+                    anims[0].play()
+                else
+                    anims[0].pause()
+                end if
+            elseif fr.grounded then
+                if fr.upsUPDOWN <> 1 then
+                    if fr.direLEFTRIGHT then
+                        if anims[0].getAnimation() <> 1 andAlso anims[0].isSwitching() = 0 then anims[0].switch(1)
+                    elseif fr.pressQ = 0 then
+                        if anims[0].getAnimation() <> 0 andAlso anims[0].isSwitching() = 0 then anims[0].switch(0)
+                    end if
+                end if
+                if fr.upsUPDOWN = 1 andALso fr.pressQ = 0 then
+                    if anims[0].getAnimation() <> 1 andAlso anims[0].isSwitching() = 0 then anims[0].switch(4)
+                end if
+                anims[0].play()
+            else
+                anims[0].hardSwitch(2)
+                anims[0].play() 
+            end if
+        else
+            if fr.grounded then
+                if fr.direLEFTRIGHT then
+                    if anims[0].getAnimation() <> 1 andAlso anims[0].isSwitching() = 0 then anims[0].switch(1)
+                else
+                    if anims[0].getAnimation() <> 0 andAlso anims[0].getAnimation() <> 7 andAlso anims[0].isSwitching() = 0 then anims[0].switch(0)
+                end if
+            else
+                anims[0].hardSwitch(0)
+                anims[0].play()
+            end if
+        end if
+        if fr.pressQ then
+            if fr.grounded then
+                if fr.upsUPDOWN then
+                    if anims[0].getAnimation() <> 8 andAlso anims[0].isSwitching() = 0 then anims[0].switch(8)
+                else
+                    if anims[0].getAnimation() <> 7 andAlso anims[0].isSwitching() = 0 then anims[0].switch(7)            
+                end if
+            end if
+            if data_.RECORDEDSOLDIER_DATA->bulletCooldown = 0 then
+                if data_.RECORDEDSOLDIER_DATA->stype <> KARTOFEL then
+                    sitem = DControl->constructItem(DControl->itemstringtotype("RECORDED BULLET"), ACTIVE_FRONT)
+                    sitem->setParameter(Vector2D(data_.RECORDEDSOLDIER_DATA->dire, 0), "heading")
+                    if fr.upsUPDOWN andAlso data_.RECORDEDSOLDIER_DATA->stype <> YELLOW_SOLDIER then
+                        DControl->initItem(sitem, p + Vector2D(data_.RECORDEDSOLDIER_DATA->dire * 20, -8))
+                        link.projectilecollection_ptr->create(p + Vector2D(data_.RECORDEDSOLDIER_DATA->dire * 12, -9), Vector2D((rnd * 3 - 1)*0.5+data_.RECORDEDSOLDIER_DATA->dire*-0.6, -rnd - 0.5) * 100, CARTRIDGE)                
+                    else
+                        DControl->initItem(sitem, p + Vector2D(data_.RECORDEDSOLDIER_DATA->dire * 20, -14))
+                        link.projectilecollection_ptr->create(p + Vector2D(data_.RECORDEDSOLDIER_DATA->dire * 12, -15), Vector2D((rnd * 3 - 1)*0.5+data_.RECORDEDSOLDIER_DATA->dire*-0.6, -rnd - 0.5) * 100, CARTRIDGE)
+                    end if
+                    data_.RECORDEDSOLDIER_DATA->bulletCooldown = 6
+                          
+                else
+                
+                
+                end if
+            end if
+        end if
+        if data_.RECORDEDSOLDIER_DATA->bulletCooldown > 0 then data_.RECORDEDSOLDIER_DATA->bulletCooldown -= 1
+
+        if data_.RECORDEDSOLDIER_DATA->stype <> KARTOFEL then
+            if fr.dire2AS = 1 then
+                data_.RECORDEDSOLDIER_DATA->alertType = 1
+                anims[5].hardswitch(0)
+                data_.RECORDEDSOLDIER_DATA->alertFrames += 1
+            elseif fr.dire2AS = -1 then
+                data_.RECORDEDSOLDIER_DATA->alertType = 2
+                anims[5].hardswitch(1)
+                data_.RECORDEDSOLDIER_DATA->alertFrames += 1
+            else
+                if data_.RECORDEDSOLDIER_DATA->alertFrames > 0 then data_.RECORDEDSOLDIER_DATA->alertFrames -= 1
+            end if
+            if data_.RECORDEDSOLDIER_DATA->alertFrames = 0 andAlso data_.RECORDEDSOLDIER_DATA->alertType > 0 then
+                if anims[5].isSwitching = 0 then
+                    anims[5].switch(2 - data_.RECORDEDSOLDIER_DATA->alertType)
+                end if
+                if anims[5].done() then
+                    data_.RECORDEDSOLDIER_DATA->alertType = 0
+                end if
+            end if
+        end if
+        
+        if data_.RECORDEDSOLDIER_DATA->bulletCooldown > 0 andAlso data_.RECORDEDSOLDIER_DATA->bulletCooldown < 3 then 
+            lightState = 1
+        else
+            lightState = 0
+        end if
+        
+        data_.RECORDEDSOLDIER_DATA->proximity = 100 - (link.player_ptr->body.p - p).magnitude()
+        if data_.RECORDEDSOLDIER_DATA->proximity < 0 then data_.RECORDEDSOLDIER_DATA->proximity = 0
+        data_.RECORDEDSOLDIER_DATA->proximity /= 100
+        data_.RECORDEDSOLDIER_DATA->frameCount += 1
+        light.texture.x = p.x + data_.RECORDEDSOLDIER_DATA->dire*20
+        light.texture.y = p.y - 15
+        light.shaded.x = light.texture.x
+        light.shaded.y = light.texture.y  
+    else
+        if data_.RECORDEDSOLDIER_DATA->zapTime = 0 then
+            if data_.RECORDEDSOLDIER_DATA->kaboom = 0 then p.ys -= data_.RECORDEDSOLDIER_DATA->deathRise
+            data_.RECORDEDSOLDIER_DATA->deathRise += 0.5
+            if anims[0].getFrame() = 3 andAlso data_.RECORDEDSOLDIER_DATA->kaboom = 0 then
+                data_.RECORDEDSOLDIER_DATA->kaboom = 1
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(p, FLASH,,1)
+                link.soundeffects_ptr->playSound(SND_EXPLODE)
+
+            end if
+            if anims[0].done() then
+                
+                return 1
+            end if
+        else
+            data_.RECORDEDSOLDIER_DATA->zapTime -= 1
+            if int(data_.RECORDEDSOLDIER_DATA->frameCount * 0.5) and 1 then 
+                lightState = 1
+            else
+                lightState = 0
+            end if
+            light.texture.x = p.x 
+            light.texture.y = p.y - 15
+            light.shaded.x = light.texture.x
+            light.shaded.y = light.texture.y  
+            if data_.RECORDEDSOLDIER_DATA->zapTime = 0 then anims[0].hardswitch(6)    
+        end if
+    end if
+    
+
+    return 0
+end function
+sub Item.RECORDEDSOLDIER_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer flags, curFrame, glow
+    dim as double floatAmount
+    drawInto(scnbuff)
+    select case data_.RECORDEDSOLDIER_DATA->dire
+    case -1
+        flags = 0
+    case 1
+        flags = 4
+    end select
+    
+
+    if data_.RECORDEDSOLDIER_DATA->death = 0 then
+        if data_.RECORDEDSOLDIER_DATA->bulletcooldown > 0 andAlso data_.RECORDEDSOLDIER_DATA->bulletcooldown < 4 then
+            if data_.RECORDEDSOLDIER_DATA->frames[data_.RECORDEDSOLDIER_DATA->displayIndex].upsUPDOWN andAlso data_.RECORDEDSOLDIER_DATA->stype <> YELLOW_SOLDIER then
+                anims[1].drawAnimation(scnbuff, p.x + data_.RECORDEDSOLDIER_DATA->dire * 24, p.y + -9, ,flags)        
+            else
+                anims[1].drawAnimation(scnbuff, p.x + data_.RECORDEDSOLDIER_DATA->dire * 24, p.y + -15, ,flags)
+            end if
+        end if
+
+        if data_.RECORDEDSOLDIER_DATA->proximity > 0 andAlso data_.RECORDEDSOLDIER_DATA->stype <> KARTOFEL then
+            curFrame = data_.RECORDEDSOLDIER_DATA->proximity * 8
+            floatAmount = sin(data_.RECORDEDSOLDIER_DATA->frameCount * 0.1) * 3
+            glow = data_.RECORDEDSOLDIER_DATA->proximity * 1000
+            if glow > 255 then glow = 255
+            if curFrame > 5 then curFrame = 5
+            anims[4].setGlow(&h00ffffff or ((glow shr 1) shl 24))
+            if curFrame = 5 then
+                curFrame = 5 + (int(data_.RECORDEDSOLDIER_DATA->frameCount * 0.3333) and 1)
+                anims[4].drawImage(scnbuff, p.x-10, p.y - 10 + floatAmount, curFrame*20, 0, curFrame*20+ 19, 19)
+            else                               
+                anims[4].drawImage(scnbuff, p.x-10, p.y - 10 + floatAmount, curFrame*20, 0, curFrame*20+ 19, 19)
+            end if
+        end if
+        
+        if data_.RECORDEDSOLDIER_DATA->alertType > 0 then
+            floatAmount = sin(data_.RECORDEDSOLDIER_DATA->frameCount * 0.1) * -3
+            anims[5].drawAnimation(scnbuff, p.x, p.y - 63 + floatAmount)
+        end if
+    end if
+end sub
+sub Item.RECORDEDSOLDIER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.RECORDEDSOLDIER_PROC_CONSTRUCT()
+    _initAddSlot_("DRAWASOCCLUDER", ITEM_RECORDEDSOLDIER_SLOT_DRAWASOCCLUDER_E)
+    _initAddSlot_("SHOCKTARGET", ITEM_RECORDEDSOLDIER_SLOT_SHOCKTARGET_E)
+    _initAddSlot_("REACT", ITEM_RECORDEDSOLDIER_SLOT_REACT_E)
+    _initAddParameter_("SOLDIERTYPE", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("FRAMES_PTR", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("FRAMES_N", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("TAG", _ITEM_VALUE_INTEGER)
+end sub
 #define ITEM_REDWALLLIGHT_DEFINE_ANIM_SPEED 10
 sub Item.REDWALLLIGHT_PROC_INIT()
     data_.REDWALLLIGHT_DATA = new ITEM_REDWALLLIGHT_TYPE_DATA

@@ -125,6 +125,7 @@ type Animation
         declare function getFrame() as integer
         declare function getGlow() as integer
         declare function getRawImage() as integer ptr
+        declare function isSwitching() as integer
         declare function getRawZImage() as zimage ptr
         
         declare function getFramePixelCount(rotatedFlags as integer = 0) as integer

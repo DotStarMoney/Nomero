@@ -306,6 +306,7 @@ sub Animation.advance()
     dim as integer shouldAdvance
     delayCounter += speed
     shouldAdvance = 0
+    completed = 0
     with data_->animations[currentAnim]
         if .usePerFrameDelay = 1 then
             if delayCounter >= .frame_data[currentFrame].delay then
@@ -517,7 +518,7 @@ sub Animation.step_Loop()
             case ANIM_TO_COMPLETION
                 advance()
                 if drawFrame >= .frame_n orElse reachedEnd = 1 then 
-                    applySwitch()                    
+                    applySwitch()   
                 end if
             case ANIM_INSTANT
                 applySwitch()
@@ -526,6 +527,7 @@ sub Animation.step_Loop()
                 advance()
                 if currentFrame <> lastFrame orElse reachedEnd = 1 then 
                     applySwitch()
+
                 end if
             case ANIM_AFTER_RELEASE_POINT
                 lastFrame = currentFrame
@@ -542,6 +544,7 @@ sub Animation.step_Loop()
                 next i
                 if shouldApplySwitch then
                     applySwitch()
+
                 end if
             case ANIM_REVERSE
                 delayCounter -= speed
@@ -560,6 +563,9 @@ sub Animation.step_Loop()
                     if currentFrame = -1 then
                         currentFrame = 0
                         applySwitch()
+                        completed = 1
+
+                        
                     end if
                 end if
             case ANIM_JUMP_TO_RELEASE_THEN_REVERSE
@@ -579,6 +585,7 @@ sub Animation.step_Loop()
                     if currentFrame = -1 then
                         currentFrame = 0
                         applySwitch()
+                        
                     end if
                 end if
             end select
@@ -632,6 +639,9 @@ sub Animation.applySwitch()
     delayCounter = 0
     reachedEnd = 0
 end sub
+function Animation.isSwitching() as integer
+    return isReleasing
+end function
 
 sub Animation.step_Still()
     if isReleasing = 1 then

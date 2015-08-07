@@ -17,6 +17,9 @@
 #define BOMB_SCREEN_IND_RAD 18
 #define SCREEN_IND_BOUND 0
 
+
+
+
 enum PlayerState
     ON_LADDER
     JUMPING
@@ -54,6 +57,7 @@ end type
 type Player
     public:
         declare constructor
+        declare destructor
         declare sub setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr,_
                               gs as any ptr)
         declare sub setLink(link_ as objectlink)
@@ -108,6 +112,12 @@ type Player
         freeJumpFrames as integer
         as PlayerState state
         
+        #ifdef KICKSTARTER
+            declare sub initPathing()
+            as integer recordFileNum
+            as integer timeStamp
+            as integer useSoldier
+        #endif
     private: 
         declare function onLadder() as integer
         declare function onSpikes() as integer
@@ -182,6 +192,7 @@ type Player
         as zimage detectmeter
         as zimage huditembar
         
+
 End type
 
 #endif

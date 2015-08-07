@@ -1,0 +1,99 @@
+'#recorded bullet
+
+type ITEM_DATA
+    as Vector2D heading
+    as integer hasTraj
+    as integer lifeFrames
+    as double cmul
+    as Vector2D a
+    as Vector2D b
+    as integer cbase
+end type
+
+parameter "heading", Vector2D
+
+
+
+'---------------------------------
+
+function _init()
+    getParameter(data.heading, "heading")
+    data.hasTraj = 0
+    data.lifeFrames = 8
+    data.cmul = rnd*0.75 + 0.25
+    data.heading += Vector2D(0,(rnd*3.0 - 1.0)*0.002)
+    'data.heading.normalize()
+    data.cbase = 96
+end function
+
+'---------------------------------
+
+function _flush()
+    
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    dim as integer i
+    dim as double cval
+    dim as Vector2D dvec, na, nb
+    dvec = data.b - data.a
+    na = data.a
+    'data.cbase = 0
+    for i = 0 to 63
+        nb = na + dvec / 64.0
+        cval = (data.cbase + i*4) * data.cmul 
+        if cval < 0 then cval = 0
+        if cval > 255 then cval = 255
+        line link.level_ptr->getSmokeTexture, (na.x, na.y)-(nb.x, nb.y), rgb(cval, cval, cval*0.75) 
+        na = nb
+    next i
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as Vector2D dest, pt
+    dim as integer i
+    dim as double dist
+    if data.hasTraj = 0 then
+        data.hasTraj = 1
+        dest = p + data.heading * 5000
+        if dest.xs < 0 then 
+            dest.xs = 0
+        elseif dest.xs > link.level_ptr->getWidth()*16 then
+            dest.xs = link.level_ptr->getWidth()*16
+        end if
+        if dest.ys < 0 then 
+            dest.ys = 0
+        elseif dest.ys > link.level_ptr->getHeight()*16 then
+            dest.ys = link.level_ptr->getHeight()*16
+        end if        
+        dist = link.tinyspace_ptr->raycast(p, dest - p, pt)
+        if dist < 0 then pt = dest
+        
+        data.a = p
+        data.b = pt
+        
+        link.projectilecollection_ptr->create(data.b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+        if int(rnd * 3) = 0 then
+            link.projectilecollection_ptr->create(data.b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+            link.projectilecollection_ptr->create(data.b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+        end if
+    end if
+    data.cbase -= 60
+    'if data.cbase < 0 then data.cbase = 0
+    data.lifeFrames -= 1
+    if data.lifeFrames <= 0 then return 1
+    
+    
+end function
+
+'-----------------------------------

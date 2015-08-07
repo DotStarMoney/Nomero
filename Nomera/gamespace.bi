@@ -20,7 +20,7 @@
 #include "pathtracker.bi"
 #include "electricarc.bi"
 
-#define FPS_TARGET 50
+#define FPS_TARGET 60
 
 
 

@@ -37,7 +37,7 @@ sub SoundEffects.init()
     sounds(SND_RUMBLE)         = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\rockslide_raw2.wav",0,0,0)    :volume(SND_RUMBLE)         = 255   
     sounds(SND_POW)            = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\Pow.wav",0,0,0)               :volume(SND_POW)            = 255   
     sounds(SND_GLASSTAP)       = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\glasstap.wav",0,0,0)          :volume(SND_GLASSTAP)       = 10   
-
+    sounds(SND_MACHINEGUN)     = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\machinegun.wav",0,0,0)        :volume(SND_MACHINEGUN)     = 30   
 end sub
 
 sub SoundEffects.setLink(link_ as objectLink)
@@ -64,6 +64,7 @@ function SoundEffects.playSound(s as SoundEffect_e) as integer
 		end if	   
 	end if
     chnl = FSOUND_PlaySound(FSOUND_FREE, sounds(s))
+    'FSOUND_SetPaused(chnl, 1)
     select case s
     case SND_GEARS
         FSOUND_SetLoopMode(chnl, FSOUND_LOOP_NORMAL)
@@ -71,5 +72,7 @@ function SoundEffects.playSound(s as SoundEffect_e) as integer
         FSOUND_SetLoopMode(chnl, FSOUND_LOOP_OFF)
     end select
     FSOUND_SetVolumeAbsolute chnl, volume(s)
+    'FSOUND_SetPaused(chnl, 0)
+
     return chnl
 end function

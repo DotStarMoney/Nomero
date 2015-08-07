@@ -124,6 +124,34 @@ type ITEM_PUZZLE1234_TYPE_DATA
     as integer completeDance
     as integer completeDanceFrames
 end type
+type ITEM_RECORDEDBULLET_TYPE_DATA
+    as Vector2D heading
+    as integer hasTraj
+    as integer lifeFrames
+    as double cmul
+    as Vector2D a
+    as Vector2D b
+    as integer cbase
+end type
+type ITEM_RECORDEDSOLDIER_TYPE_DATA
+    as recordFrame_t ptr frames
+    as integer frames_n
+    as integer stype
+    as integer curFrame
+    as integer displayIndex
+    as integer tag
+    as integer dire
+    as integer bulletCooldown
+    as integer facing
+    as integer alertType
+    as integer alertFrames
+    as double proximity
+    as integer frameCount
+    as integer death
+    as integer zapTime
+    as integer kaboom
+    as double deathRise
+end type
 type ITEM_REDWALLLIGHT_TYPE_DATA
     as integer curFrame
     as integer speedCount
@@ -182,6 +210,8 @@ enum Item_Type_e
     ITEM_MOMENTARYTOGGLESWITCH
     ITEM_PUZZLETUBE1
     ITEM_PUZZLE1234
+    ITEM_RECORDEDBULLET
+    ITEM_RECORDEDSOLDIER
     ITEM_REDWALLLIGHT
     ITEM_SHOCKTARGET1
     ITEM_SMALLOSCILLOSCOPE
@@ -210,6 +240,9 @@ enum Item_slotEnum_e
     ITEM_PUZZLETUBE1_SLOT_SETUP_E
     ITEM_PUZZLE1234_SLOT_RESET_E
     ITEM_PUZZLE1234_SLOT_CYCLE_E
+    ITEM_RECORDEDSOLDIER_SLOT_DRAWASOCCLUDER_E
+    ITEM_RECORDEDSOLDIER_SLOT_SHOCKTARGET_E
+    ITEM_RECORDEDSOLDIER_SLOT_REACT_E
     ITEM_SHOCKTARGET1_SLOT_SHOCKTARGET_E
     ITEM_SMALLOSCILLOSCOPE_SLOT_INTERACT_E
     ITEM_SMOKEMINE_SLOT_EXPLODE_E
@@ -237,6 +270,8 @@ union Item_objectData_u
     as ITEM_MOMENTARYTOGGLESWITCH_TYPE_DATA ptr MOMENTARYTOGGLESWITCH_DATA
     as ITEM_PUZZLETUBE1_TYPE_DATA ptr PUZZLETUBE1_DATA
     as ITEM_PUZZLE1234_TYPE_DATA ptr PUZZLE1234_DATA
+    as ITEM_RECORDEDBULLET_TYPE_DATA ptr RECORDEDBULLET_DATA
+    as ITEM_RECORDEDSOLDIER_TYPE_DATA ptr RECORDEDSOLDIER_DATA
     as ITEM_REDWALLLIGHT_TYPE_DATA ptr REDWALLLIGHT_DATA
     as ITEM_SHOCKTARGET1_TYPE_DATA ptr SHOCKTARGET1_DATA
     as ITEM_SMALLOSCILLOSCOPE_TYPE_DATA ptr SMALLOSCILLOSCOPE_DATA

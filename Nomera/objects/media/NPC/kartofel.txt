@@ -1,0 +1,32 @@
+      #IMAGE NAME
+"kartofel.png"
+      #IMAGE SIZE
+280,96
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+2
+      #DEFAULT ANIMATION
+0
+      #INDIVIDUAL ANIMATION DATA
+      #-- STANDING STILL --
+"STILL","TO COMPLETION","NO"
+1         #NUM FRAMES
+70,96     #WIDTH/HEIGHT
+0         #DELAY
+0,0       #START/END CELL
+0         #LOOP POINT
+-35,-78   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+      #-- WALKING --
+"LOOP","TO COMPLETION","NO"
+4         #NUM FRAMES
+70,96     #WIDTH/HEIGHT
+3         #DELAY
+0,3       #START/END CELL
+0         #LOOP POINT
+-35,-78   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+

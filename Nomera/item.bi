@@ -11,10 +11,12 @@
 #include "tinyspace.bi"
 #include "objectslotset.bi"
 #include "objectvalueset.bi"
+#include "constants.bi"
 
 #include "objects\headers\gen_itemdefines.bi"
 
 #include "itemvaluecontainer.bi"
+
 
 type _Item_slotTable_t
     as Item_slotEnum_e slotE

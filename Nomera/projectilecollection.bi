@@ -18,6 +18,7 @@ enum Projectiles
     BULLET
     SPARK
     BLUE_SPARK
+    CARTRIDGE
 end enum
 
 
@@ -38,7 +39,7 @@ type ProjectileCollection
         declare constructor()
         declare destructor()
 		declare sub setLink(link_ as ObjectLink)
-        declare sub create(p_ as Vector2D, v_ as Vector2D, f_ as integer = CHERRY_BOMB)
+        declare sub create(p_ as Vector2D, v_ as Vector2D, f_ as integer = CHERRY_BOMB, noCollide as integer = 0)
         declare sub draw_collection(scnbuff as uinteger ptr)
         declare sub proc_collection(t as double)
         declare sub setParent(TS as TinySpace ptr, LS as Level_ ptr, GS as any ptr)

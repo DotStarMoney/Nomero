@@ -3,6 +3,9 @@
 
 #include "debug.bi"
 
+#define KICKSTARTER
+
+
 '#define SCALE_2X
 '#define SCALE_ELLIOTT
 #define SCRX 640
@@ -21,6 +24,27 @@ enum shapeType
     ELLIPSE
     RECTANGLE
 end enum
+
+
+#ifdef KICKSTARTER
+#include "vector2d.bi"
+#define RED_SOLDIER 0
+#define YELLOW_SOLDIER 1
+#define KARTOFEL 2
+type recordFrame_t field = 1
+    as Vector2D p
+    as integer direLEFTRIGHT
+    as integer dire2AS
+    as integer jumpZ
+    as integer fireX
+    as integer upsUPDOWN
+    as integer sprintSHIFT
+    as integer pressQ
+    as integer pressW
+    as integer onLadder
+    as integer grounded
+end type
+#endif
 
 #define ITEM_HEADER "objects\headers\"
 

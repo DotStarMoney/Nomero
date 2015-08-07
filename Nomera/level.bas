@@ -877,6 +877,7 @@ sub level.processLights()
     dim as integer order, cornerX, cornerY
     dim as integer x0, y0, x1, y1
     dim as integer dposx, dposy
+    dim as ObjectSlotSet occluders
         
     lightList_N = link.dynamiccontroller_ptr->populateLightList(lightList)    
     
@@ -1004,6 +1005,8 @@ sub level.processLights()
                 next order
                 
                 link.player_ptr->drawPlayerInto(lightList[i]->occlusion_fbimg, cornerX, cornerY)
+                link.dynamiccontroller_ptr->querySlots(occluders, "lightoccluder")
+                occluders.throw("dest = " + str(lightList[i]->occlusion_fbimg) + ", x = " + str(cornerX) + ", y = " + str(cornerY))
 
                 
                 line lightList[i]->occlusion_fbimg, (lightList[i]->texture.w*0.5 - 4, lightList[i]->texture.h*0.5 - 4)-_

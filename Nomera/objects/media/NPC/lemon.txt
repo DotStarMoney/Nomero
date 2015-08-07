@@ -1,0 +1,106 @@
+      #IMAGE NAME
+"lemon.png"
+      #IMAGE SIZE
+360,280
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+9
+      #DEFAULT ANIMATION
+0
+      #INDIVIDUAL ANIMATION DATA
+      #-- STANDING STILL --
+"STILL","TO COMPLETION","NO"
+1         #NUM FRAMES
+40,70     #WIDTH/HEIGHT
+0         #DELAY
+18,18     #START/END CELL
+0         #LOOP POINT
+-20,-52   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+      #-- WALKING --
+"LOOP","AFTER RELEASE POINT","NO"  
+8         #NUM FRAMES
+40,70     #WIDTH/HEIGHT
+5         #DELAY
+0,7       #START/END CELL
+0         #LOOP POINT
+-20,-52   #OFFSET
+4         #NUM RELEASE FRAMES
+2
+3
+5
+7
+"NO"      #PER FRAME DATA?
+      #-- JUMPING --
+"STILL","TO COMPLETION","NO"
+1         #NUM FRAMES
+40,70     #WIDTH/HEIGHT
+0         #DELAY
+0,0       #START/END CELL
+0         #LOOP POINT
+-20,-52   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+      #-- CLIMBING --
+"LOOP","INSTANT","NO"  
+9         #NUM FRAMES
+40,72     #WIDTH/HEIGHT
+3         #DELAY
+9,17      #START/END CELL
+3         #LOOP POINT
+-20,-52   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+      #-- CROUCHING --
+"STILL","TO COMPLETION","NO"
+1         #NUM FRAMES
+40,70     #WIDTH/HEIGHT
+0         #DELAY
+18,18     #START/END CELL
+0         #LOOP POINT
+-20,-52   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+      #-- ZAPPED --
+"LOOP","TO COMPLETION","NO"
+2         #NUM FRAMES
+40,70     #WIDTH/HEIGHT
+2         #DELAY
+27,28     #START/END CELL
+0         #LOOP POINT
+-20,-52   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+      #-- EXPLODE --
+"ONE SHOT","TO COMPLETION","NO"
+6         #NUM FRAMES
+40,70     #WIDTH/HEIGHT
+3         #DELAY
+19,24     #START/END CELL
+0         #LOOP POINT
+-20,-52   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+      #-- FIRE --
+"LOOP","INSTANT","NO"
+2         #NUM FRAMES
+40,70     #WIDTH/HEIGHT
+3         #DELAY
+29,30     #START/END CELL
+0         #LOOP POINT
+-20,-52   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+      #-- CROUCH FIRE --
+"LOOP","INSTANT","NO"
+2         #NUM FRAMES
+40,70     #WIDTH/HEIGHT
+3         #DELAY
+29,30     #START/END CELL
+0         #LOOP POINT
+-20,-52   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?
+
