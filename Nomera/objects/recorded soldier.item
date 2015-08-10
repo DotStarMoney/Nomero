@@ -123,7 +123,7 @@ function _draw(scnbuff as integer ptr)
         
         if data.alertType > 0 then
             floatAmount = sin(data.frameCount * 0.1) * -3
-            anims[5].drawAnimation(scnbuff, p.x, p.y - 63 + floatAmount)
+            anims[5].drawAnimation(scnbuff, p.x, p.y - 60 + floatAmount)
         end if
     end if
 end function
@@ -132,6 +132,7 @@ end function
 
 sub drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, override_ as integer = 0)
     dim as integer flags
+    dim as integer jiggle
     PREP_LIT_ANIMATION()
 
     select case data.dire
@@ -141,12 +142,17 @@ sub drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, overri
         flags = 4
     end select
     
+    if data.death andAlso data.zapTime then
+        jiggle = ((int(data.frameCount * 0.33) and 1) * 2 - 1) * 1
+    else
+        jiggle = 0
+    end if  
     if link.level_ptr->shouldLight() andAlso override_ = 0 then
-        anims[0].drawAnimationLit(dest_img, p.x - x, p.y - y,_
+        anims[0].drawAnimationLit(dest_img, p.x - x + jiggle, p.y - y,_
                                        lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
                                        link.gamespace_ptr->camera,flags,1,ANIM_TRANS)            
     else
-        anims[0].drawAnimation(dest_img, p.x - x, p.y - y,,flags,ANIM_TRANS)
+        anims[0].drawAnimation(dest_img, p.x - x + jiggle, p.y - y,,flags,ANIM_TRANS)
     end if  
     
     
@@ -181,6 +187,7 @@ function _run(t as double)
     
     DControl->setTargetSlotOffset(ID, "explosion reaction", p) 
     DControl->setTargetSlotOffset(ID, "shock target", p) 
+    data.frameCount += 1
 
     if data.death = 0 then
         if fr.direLEFTRIGHT <> 0 then data.dire = fr.direLEFTRIGHT
@@ -281,7 +288,6 @@ function _run(t as double)
         data.proximity = 100 - (link.player_ptr->body.p - p).magnitude()
         if data.proximity < 0 then data.proximity = 0
         data.proximity /= 100
-        data.frameCount += 1
         light.texture.x = p.x + data.dire*20
         light.texture.y = p.y - 15
         light.shaded.x = light.texture.x
@@ -298,14 +304,14 @@ function _run(t as double)
                 link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
                 link.oneshoteffects_ptr->create(p, FLASH,,1)
                 link.soundeffects_ptr->playSound(SND_EXPLODE)
-
+                doDeath()
             end if
             if anims[0].done() then
-                
                 return 1
             end if
         else
             data.zapTime -= 1
+            link.projectilecollection_ptr->create(Vector2D(p.x, p.y - 10), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, BLUE_SPARK)
             if int(data.frameCount * 0.5) and 1 then 
                 lightState = 1
             else
@@ -321,6 +327,43 @@ function _run(t as double)
     
 
 end function
+
+sub addCash(vel as Vector2D)
+    dim as Item ptr sitem
+    dim as integer cashScale
+    sitem = DControl->constructItem(DControl->itemStringToType("CASH"), ACTIVE_FRONT)
+    
+    cashScale = int(rnd * 100)
+    if cashScale < 10 then
+        sitem->setParameter(2, "billType")
+    elseif cashScale < 40 then
+        sitem->setParameter(1, "billType")
+    else
+        sitem->setParameter(0, "billType")
+    end if
+    
+    sitem->setParameter(vel, "velocity")
+    
+    
+    DControl->initItem(sitem, p)
+end sub
+
+sub doDeath()
+    dim as integer i
+    dim as integer numBills
+    dim as Vector2D v
+    dim as double ang, mag
+    
+    numBills = int(rnd * 10) + 5
+    
+    for i = 0 to numBills - 1
+        ang = rnd*2*_PI_
+        mag = rnd*300 + 100
+        v = Vector2D(cos(ang), sin(ang) - 0.5) * mag
+        
+        addCash(v)
+    next i
+end sub
 
 '-----------------------------------
 slot $shockTarget(source as Vector2D)

@@ -1,0 +1,137 @@
+      #IMAGE NAME
+"collectables.png"
+      #IMAGE SIZE
+320,288
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+10
+      #DEFAULT ANIMATION
+0
+      #INDIVIDUAL ANIMATION DATA
+      #-- BILL 1 --
+"LOOP","INSTANT","YES"
+6         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+0         #DELAY
+6,11      #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"YES"     #PER FRAME DATA?
+0,0,40
+0,0,5
+0,0,5
+0,0,5
+0,0,5
+0,0,5
+      #-- BILL 2 --
+"LOOP","INSTANT","YES"
+6         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+0         #DELAY
+13,18     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"YES"     #PER FRAME DATA?
+0,0,25
+0,0,5
+0,0,5
+0,0,5
+0,0,5
+0,0,5
+      #-- SMALL COIN --
+"LOOP","INSTANT","NO"
+6         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+4         #DELAY
+19,24     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- LARGE COIN --
+"LOOP","INSTANT","NO"
+12         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+4         #DELAY
+26,37     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- LARGE HEART --
+"LOOP","INSTANT","NO"
+6         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+4         #DELAY
+38,43     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- SMALL HEART --
+"LOOP","INSTANT","NO"
+7         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+4         #DELAY
+44,50     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- SPARKLE 1 --
+"ONE SHOT","INSTANT","YES"
+8         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+0         #DELAY
+51,58     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"YES"     #PER FRAME DATA?
+0,0,0
+0,0,0
+0,0,0
+0,0,0
+0,0,2
+0,0,2
+0,0,2
+0,0,2
+      #-- SPARKLE 2 --
+"ONE SHOT","INSTANT","NO"
+5         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+3         #DELAY
+60,64     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- KEY --
+"LOOP","INSTANT","YES"
+6         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+0         #DELAY
+65,70     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"YES"     #PER FRAME DATA?
+0,0,50
+0,0,3
+0,0,3
+0,0,3
+0,0,3
+0,0,3
+      #-- INTEL --
+"LOOP","INSTANT","NO"
+12         #NUM FRAMES
+32,32     #WIDTH/HEIGHT
+5         #DELAY
+71,82     #START/END CELL
+0         #LOOP POINT
+-16,-16   #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?

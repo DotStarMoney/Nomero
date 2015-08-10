@@ -1,0 +1,45 @@
+'#red post light
+
+
+
+'---------------------------------
+
+function _init()
+
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "postbulb.txt")
+    PREP_LIGHTS(MEDIA_PATH + "Lights\TinyRed_Diffuse.txt", MEDIA_PATH + "Lights\TinyRed_Specular.txt", 1, 2, 1)  
+
+end function
+
+'---------------------------------
+
+function _flush()
+    
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    anims[0].drawAnimation(scnbuff, p.x+size.x*0.5, p.y+size.y*0.5 + 5)
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+
+  
+    lightState = 1
+    light.texture.x = drawX + size.x * 0.5
+    light.texture.y = drawY + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+end function
+
+'-----------------------------------

@@ -1,0 +1,64 @@
+'#spotlight control
+
+type ITEM_DATA
+    as integer transitFrames
+    as integer dire
+end type
+
+'---------------------------------
+
+function _init()
+
+    CREATE_ANIMS(3)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\MediumWhite_Diffuse.txt", MEDIA_PATH + "Lights\MediumWhite_Specular.txt", 0, 1, 1)  
+    data.transitFrames = 240
+    data.dire = 1
+    
+    anims[2].load(MEDIA_PATH + "halo.txt")
+        
+end function
+
+'---------------------------------
+
+function _flush()
+    
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    anims[2].setGlow(&h7fffffff)
+    anims[2].drawAnimation(scnbuff, p.x+size.x*0.5,p.y+size.y*0.5)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    'dim as Vector2D v
+    'v = link.player_ptr->body.p - p
+    'v.normalize()
+    
+    
+    p += vector2d(data.dire, 0)
+    
+    data.transitFrames -= 1
+    if data.transitFrames = 0 then
+        data.dire *= -1
+        data.transitFrames = 480
+    end if
+    
+
+    lightState = 1
+    light.texture.x = p.x + size.x*0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+end function
+
+'-----------------------------------

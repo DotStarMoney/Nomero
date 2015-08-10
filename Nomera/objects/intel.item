@@ -1,0 +1,62 @@
+'#intelligence
+
+type ITEM_DATA
+    as zimage ptr img
+    as integer frameCount
+end type
+
+function _init()
+    data.img = new zImage()
+    data.img->load(MEDIA_PATH + "burst3.png")
+    data.frameCount = int(rnd * 1000)
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "collectables.txt")
+    anims[0].hardSwitch(9)
+    anims[0].play()
+    
+    
+end function
+
+'---------------------------------
+
+function _flush()
+    delete(data.img)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    dim as integer dx, dy
+    dim as Vector2D odraw
+    
+    
+    odraw = p + size*0.5
+    dx = odraw.x
+    dy = odraw.y
+    pmapFix(dx, dy)
+    rotozoom_alpha2(scnbuff, data.img->getData(), dx, dy, data.frameCount, 1, 1)
+    
+    anims[0].drawAnimation(scnbuff, odraw.x, odraw.y)
+    
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    anims[0].step_animation()
+    data.frameCount += 1
+    
+    
+    if data.frameCount mod 7 = 0 then link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)
+    
+    
+end function
+
+'-----------------------------------

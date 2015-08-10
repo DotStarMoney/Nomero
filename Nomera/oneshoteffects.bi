@@ -16,6 +16,8 @@ enum EffectType_
     BLUE_FLASH
     ELECTRIC_FLASH
     LITTLE_PULSE
+    SPARKLE2
+    SPARKLE3
 end enum
 
 type Effect_t

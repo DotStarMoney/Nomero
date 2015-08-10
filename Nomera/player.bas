@@ -54,6 +54,9 @@ constructor Player
     coverValue = 0.65
     itemBarLife = ITEM_BAR_LIFE
     itemBarPos = MIN_ITEM_BAR_POS
+    money = 0
+    displayMoney = 0
+    addedMoneyCounter = 0
     
     
     isCrouching = 0
@@ -960,6 +963,12 @@ sub Player.processControls(dire as integer, jump as integer,_
     lastVel = body.v
 end sub
 
+sub Player.addMoney(amount as integer)
+    money += amount
+    addedMoneyCounter = 120
+    displayMoney += amount
+end sub
+
 sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
 	dim as Vector2D center, curPos
 	dim as Vector2D bombPos, ntl, nbr
@@ -1033,7 +1042,7 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
    
     
     curPos = Vector2D(194, 455)
-    nd = intToBCD(142, @digits(0))
+    nd = intToBCD(money, @digits(0))
     for i = 0 to nd - 1
         hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,16, 23 + digits(i)*8,31)
         curPos -= Vector2D(8, 0)
@@ -1045,6 +1054,17 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
     
     
     UNLOCK_TO_SCREEN()
+    
+    if addedMoneyCounter > 0 then
+        nd = intToBCD(displayMoney, @digits(0))
+        curPos = body.p - Vector2D(0,60) + Vector2D(4,0)*nd - Vector2D(2,0)
+        for i = 0 to nd - 1
+            hudDigits.putTRANS(scnbuff, curPos.x, curPos.y, 16 + digits(i)*8,16, 23 + digits(i)*8,31)
+            curPos -= Vector2D(8, 0)
+        next i
+        hudDigits.putTRANS(scnbuff, curPos.x - 2, curPos.y - 2, 0,16,7,31)
+        
+    end if
     
     for i = 0 to 9 
 		if bombData(i).animating then
@@ -1284,5 +1304,10 @@ sub Player.processItems(t as double)
 		end if
 	next bombNumber
 	
-
+    if addedMoneyCounter > 0 then
+        addedMoneyCounter -= 1
+    else
+        displayMoney = 0
+    end if
+   
 end sub

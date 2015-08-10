@@ -330,7 +330,8 @@ sub drawMode7Ceiling(dst as integer ptr, src as integer ptr,_
                     packuswb    mm0,            mm6
                     
                     movd        mm1,            [edi]
-                    por         mm0,            mm1                    
+                    paddusb     mm0,            mm1
+                    'por         mm0,            mm1                    
                     movd        [edi],          mm0
                     
                     add         ebx,            edx

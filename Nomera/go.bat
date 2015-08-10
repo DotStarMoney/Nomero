@@ -1,1 +1,1 @@
-Nomera "mine.map"
+Nomera "wood.map"

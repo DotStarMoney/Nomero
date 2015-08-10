@@ -1,0 +1,141 @@
+'#cash
+
+type ITEM_DATA
+    as integer frameCount
+    as integer denom
+    as TinyBody body
+    as integer body_i
+    as integer state
+    as integer displayFrames
+    as integer displayY
+end type
+
+parameter "billType", integer
+parameter "velocity", Vector2D
+
+function _init()
+    dim as integer animNum
+    dim as integer i
+    
+    getParameter(data.denom, "billType")
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "collectables.txt")
+    select case data.denom
+    case 0
+        animNum = 2
+    case 1
+        animNum = 3
+    case 2
+        animNum = 1
+    end select
+    anims[0].hardSwitch(animNum)
+    anims[0].play()
+
+    data.frameCount = int(rnd * 64)
+    for i = 0 to 19
+        anims[0].step_animation()
+    next i
+    
+    data.body = TinyBody(p, 8, int(rnd * 5) + 10)
+    data.body.elasticity = 0.5
+    data.body.friction = 1
+    data.body_i = link.tinyspace_ptr->addBody(@(data.body))
+    data.body.f = -Vector2D(0,DEFAULT_GRAV) * data.body.m * 0.25
+    data.body.p = p
+    getParameter(data.body.v, "velocity") 
+    
+    data.displayFrames = 0
+    
+    
+    data.state = 0
+end function
+
+'---------------------------------
+
+function _flush()
+
+    if data.body_i <> -1 then link.tinyspace_ptr->removeBody(data.body_i)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    dim as double bob
+    PREP_LIT_ANIMATION()
+    
+    
+    bob = sin(data.frameCount * 0.143) * 3 
+    if data.state = 0 then
+        DRAW_LIT_ANIMATION(0, p.x, p.y + bob, 0, 0)
+    else
+
+    end if
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    dim as double bob
+    
+    
+    bob = sin(data.frameCount * 0.143) * 3 
+    if data.state = 1 then
+        select case data.denom
+        case 0
+            drawStringShadow scnbuff, p.x - 8 , p.y - 5 + bob, "R1", &haf2f2f
+        case 1
+            drawStringShadow scnbuff, p.x - 8, p.y - 5 + bob, "R5", &hff7f4f        
+        case 2
+            drawStringShadow scnbuff, p.x - 12, p.y - 5 + bob, "R10", &h7faf3f
+        end select
+    end if
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as vector2d pv
+    dim as double pmag
+    anims[0].step_animation()
+    data.frameCount += 1
+    
+    if data.state = 0 then
+        p = data.body.p
+        
+        data.body.v *= 0.98
+        
+
+        
+        
+        pv = link.player_ptr->body.p - (p - Vector2D(0, -7))
+        pmag = pv.magnitude()
+    
+        if pmag < 20 then
+            link.tinyspace_ptr->removeBody(data.body_i)
+            data.body_i = -1
+            data.state = 1
+            data.displayFrames = 60
+            select case data.denom
+            case 0
+                link.player_ptr->addMoney(1)
+            case 1
+                link.player_ptr->addMoney(5)
+            case 2
+                link.player_ptr->addMoney(10)
+            end select
+            return 0
+        end if
+    
+        pv /= pmag
+        if pmag < 80 then data.body.v += pv*20
+    else
+        data.displayFrames -= 1
+        if data.displayFrames <= 0 then return 1
+    end if
+    if int(rnd * 20) = 0 then
+        link.oneshoteffects_ptr->create(p + Vector2D(rnd * 20 - 10, rnd * 20 - 10), SPARKLE3)
+    end if
+end function
+
+'-----------------------------------

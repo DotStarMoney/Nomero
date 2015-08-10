@@ -112,6 +112,10 @@ type Player
         freeJumpFrames as integer
         as PlayerState state
         
+        as integer addedMoneyCounter
+        as integer displayMoney
+        declare sub addMoney(amount as integer)
+        
         #ifdef KICKSTARTER
             declare sub initPathing()
             as integer recordFileNum
@@ -181,7 +185,7 @@ type Player
         as integer interactCycle
         as integer  interactIntroDelay
         as integer  interactShowHilight
-        
+        as integer money
         
         as integer itemBarLife
         as integer itemBarPos

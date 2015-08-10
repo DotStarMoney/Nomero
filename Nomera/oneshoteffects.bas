@@ -63,6 +63,16 @@ sub OneShotEffects.create(p_ as Vector2D, fx as EffectType_ = EXPLODE, _
         this.head_->data_.anim.load("sparkle.txt")
         this.head_->data_.anim.play()
 		this.head_->data_.anim.setSpeed(s_)
+    case SPARKLE2
+        this.head_->data_.anim.load("objects\media\collectables.txt")
+        this.head_->data_.anim.hardswitch(6)
+        this.head_->data_.anim.play()
+		this.head_->data_.anim.setSpeed(s_)
+    case SPARKLE3
+        this.head_->data_.anim.load("objects\media\collectables.txt")
+        this.head_->data_.anim.hardswitch(7)
+        this.head_->data_.anim.play()
+		this.head_->data_.anim.setSpeed(s_)
     case RADAR
         this.head_->data_.anim.load("radaranim.txt")
         this.head_->data_.anim.play()

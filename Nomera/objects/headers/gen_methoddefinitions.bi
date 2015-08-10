@@ -474,6 +474,127 @@ sub Item.BIGOSCILLOSCOPE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_BIGOSCILLOSCOPE_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
+sub Item.CASH_PROC_INIT()
+    data_.CASH_DATA = new ITEM_CASH_TYPE_DATA
+    dim as integer animNum
+    dim as integer i
+    
+    getParameter(data_.CASH_DATA->denom, "billType")
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "collectables.txt")
+    select case data_.CASH_DATA->denom
+    case 0
+        animNum = 2
+    case 1
+        animNum = 3
+    case 2
+        animNum = 1
+    end select
+    anims[0].hardSwitch(animNum)
+    anims[0].play()
+
+    data_.CASH_DATA->frameCount = int(rnd * 64)
+    for i = 0 to 19
+        anims[0].step_animation()
+    next i
+    
+    data_.CASH_DATA->body = TinyBody(p, 8, int(rnd * 5) + 10)
+    data_.CASH_DATA->body.elasticity = 0.5
+    data_.CASH_DATA->body.friction = 1
+    data_.CASH_DATA->body_i = link.tinyspace_ptr->addBody(@(data_.CASH_DATA->body))
+    data_.CASH_DATA->body.f = -Vector2D(0,DEFAULT_GRAV) * data_.CASH_DATA->body.m * 0.25
+    data_.CASH_DATA->body.p = p
+    getParameter(data_.CASH_DATA->body.v, "velocity") 
+    
+    data_.CASH_DATA->displayFrames = 0
+    
+    
+    data_.CASH_DATA->state = 0
+end sub
+sub Item.CASH_PROC_FLUSH()
+
+    if data_.CASH_DATA->body_i <> -1 then link.tinyspace_ptr->removeBody(data_.CASH_DATA->body_i)
+    if anims_n then delete(anims)
+    if data_.CASH_DATA then delete(data_.CASH_DATA)
+    data_.CASH_DATA = 0
+end sub
+function Item.CASH_PROC_RUN(t as double) as integer
+    dim as vector2d pv
+    dim as double pmag
+    anims[0].step_animation()
+    data_.CASH_DATA->frameCount += 1
+    
+    if data_.CASH_DATA->state = 0 then
+        p = data_.CASH_DATA->body.p
+        
+        data_.CASH_DATA->body.v *= 0.98
+        
+
+        
+        
+        pv = link.player_ptr->body.p - (p - Vector2D(0, -7))
+        pmag = pv.magnitude()
+    
+        if pmag < 20 then
+            link.tinyspace_ptr->removeBody(data_.CASH_DATA->body_i)
+            data_.CASH_DATA->body_i = -1
+            data_.CASH_DATA->state = 1
+            data_.CASH_DATA->displayFrames = 60
+            select case data_.CASH_DATA->denom
+            case 0
+                link.player_ptr->addMoney(1)
+            case 1
+                link.player_ptr->addMoney(5)
+            case 2
+                link.player_ptr->addMoney(10)
+            end select
+            return 0
+        end if
+    
+        pv /= pmag
+        if pmag < 80 then data_.CASH_DATA->body.v += pv*20
+    else
+        data_.CASH_DATA->displayFrames -= 1
+        if data_.CASH_DATA->displayFrames <= 0 then return 1
+    end if
+    if int(rnd * 20) = 0 then
+        link.oneshoteffects_ptr->create(p + Vector2D(rnd * 20 - 10, rnd * 20 - 10), SPARKLE3)
+    end if
+    return 0
+end function
+sub Item.CASH_PROC_DRAW(scnbuff as integer ptr)
+    dim as double bob
+    PREP_LIT_ANIMATION()
+    
+    
+    bob = sin(data_.CASH_DATA->frameCount * 0.143) * 3 
+    if data_.CASH_DATA->state = 0 then
+        DRAW_LIT_ANIMATION(0, p.x, p.y + bob, 0, 0)
+    else
+
+    end if
+end sub
+sub Item.CASH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    dim as double bob
+    
+    
+    bob = sin(data_.CASH_DATA->frameCount * 0.143) * 3 
+    if data_.CASH_DATA->state = 1 then
+        select case data_.CASH_DATA->denom
+        case 0
+            drawStringShadow scnbuff, p.x - 8 , p.y - 5 + bob, "R1", &haf2f2f
+        case 1
+            drawStringShadow scnbuff, p.x - 8, p.y - 5 + bob, "R5", &hff7f4f        
+        case 2
+            drawStringShadow scnbuff, p.x - 12, p.y - 5 + bob, "R10", &h7faf3f
+        end select
+    end if
+end sub
+sub Item.CASH_PROC_CONSTRUCT()
+    _initAddParameter_("BILLTYPE", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("VELOCITY", _ITEM_VALUE_VECTOR2D)
+end sub
 #define ITEM_COVERSMOKE_DEFINE_LIFETIME 300
 #define ITEM_COVERSMOKE_DEFINE_DAMPING_MAX 0.95
 sub Item.COVERSMOKE_PROC_INIT()
@@ -1215,6 +1336,54 @@ sub Item.FREQUENCYCOUNTER_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_FREQUENCYCOUNTER_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
+sub Item.INTELLIGENCE_PROC_INIT()
+    data_.INTELLIGENCE_DATA = new ITEM_INTELLIGENCE_TYPE_DATA
+    data_.INTELLIGENCE_DATA->img = new zImage()
+    data_.INTELLIGENCE_DATA->img->load(MEDIA_PATH + "burst3.png")
+    data_.INTELLIGENCE_DATA->frameCount = int(rnd * 1000)
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "collectables.txt")
+    anims[0].hardSwitch(9)
+    anims[0].play()
+    
+    
+end sub
+sub Item.INTELLIGENCE_PROC_FLUSH()
+    delete(data_.INTELLIGENCE_DATA->img)
+    if anims_n then delete(anims)
+    if data_.INTELLIGENCE_DATA then delete(data_.INTELLIGENCE_DATA)
+    data_.INTELLIGENCE_DATA = 0
+end sub
+function Item.INTELLIGENCE_PROC_RUN(t as double) as integer
+    anims[0].step_animation()
+    data_.INTELLIGENCE_DATA->frameCount += 1
+    
+    
+    if data_.INTELLIGENCE_DATA->frameCount mod 7 = 0 then link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)
+    
+    
+    return 0
+end function
+sub Item.INTELLIGENCE_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer dx, dy
+    dim as Vector2D odraw
+    
+    
+    odraw = p + size*0.5
+    dx = odraw.x
+    dy = odraw.y
+    pmapFix(dx, dy)
+    rotozoom_alpha2(scnbuff, data_.INTELLIGENCE_DATA->img->getData(), dx, dy, data_.INTELLIGENCE_DATA->frameCount, 1, 1)
+    
+    anims[0].drawAnimation(scnbuff, odraw.x, odraw.y)
+    
+end sub
+sub Item.INTELLIGENCE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    
+end sub
+sub Item.INTELLIGENCE_PROC_CONSTRUCT()
+end sub
 sub Item.INTERFACE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 
     data_.INTERFACE_DATA->dontDraw = 1 - data_.INTERFACE_DATA->dontDraw
@@ -1789,6 +1958,7 @@ sub Item.RECORDEDBULLET_PROC_CONSTRUCT()
 end sub
 sub Item.drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, override_ as integer = 0)
     dim as integer flags
+    dim as integer jiggle
     PREP_LIT_ANIMATION()
 
     select case data_.RECORDEDSOLDIER_DATA->dire
@@ -1798,15 +1968,55 @@ sub Item.drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, o
         flags = 4
     end select
     
+    if data_.RECORDEDSOLDIER_DATA->death andAlso data_.RECORDEDSOLDIER_DATA->zapTime then
+        jiggle = ((int(data_.RECORDEDSOLDIER_DATA->frameCount * 0.33) and 1) * 2 - 1) * 1
+    else
+        jiggle = 0
+    end if  
     if link.level_ptr->shouldLight() andAlso override_ = 0 then
-        anims[0].drawAnimationLit(dest_img, p.x - x, p.y - y,_
+        anims[0].drawAnimationLit(dest_img, p.x - x + jiggle, p.y - y,_
                                        lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
                                        link.gamespace_ptr->camera,flags,1,ANIM_TRANS)            
     else
-        anims[0].drawAnimation(dest_img, p.x - x, p.y - y,,flags,ANIM_TRANS)
+        anims[0].drawAnimation(dest_img, p.x - x + jiggle, p.y - y,,flags,ANIM_TRANS)
     end if  
     
     
+end sub
+sub Item.addCash(vel as Vector2D)
+    dim as Item ptr sitem
+    dim as integer cashScale
+    sitem = DControl->constructItem(DControl->itemStringToType("CASH"), ACTIVE_FRONT)
+    
+    cashScale = int(rnd * 100)
+    if cashScale < 10 then
+        sitem->setParameter(2, "billType")
+    elseif cashScale < 40 then
+        sitem->setParameter(1, "billType")
+    else
+        sitem->setParameter(0, "billType")
+    end if
+    
+    sitem->setParameter(vel, "velocity")
+    
+    
+    DControl->initItem(sitem, p)
+end sub
+sub Item.doDeath()
+    dim as integer i
+    dim as integer numBills
+    dim as Vector2D v
+    dim as double ang, mag
+    
+    numBills = int(rnd * 10) + 5
+    
+    for i = 0 to numBills - 1
+        ang = rnd*2*_PI_
+        mag = rnd*300 + 100
+        v = Vector2D(cos(ang), sin(ang) - 0.5) * mag
+        
+        addCash(v)
+    next i
 end sub
 sub Item.RECORDEDSOLDIER_SLOT_DRAWASOCCLUDER(pvPair() as _Item_slotValuePair_t)
     dim as integer y
@@ -1919,6 +2129,7 @@ function Item.RECORDEDSOLDIER_PROC_RUN(t as double) as integer
     
     DControl->setTargetSlotOffset(ID, "explosion reaction", p) 
     DControl->setTargetSlotOffset(ID, "shock target", p) 
+    data_.RECORDEDSOLDIER_DATA->frameCount += 1
 
     if data_.RECORDEDSOLDIER_DATA->death = 0 then
         if fr.direLEFTRIGHT <> 0 then data_.RECORDEDSOLDIER_DATA->dire = fr.direLEFTRIGHT
@@ -2019,7 +2230,6 @@ function Item.RECORDEDSOLDIER_PROC_RUN(t as double) as integer
         data_.RECORDEDSOLDIER_DATA->proximity = 100 - (link.player_ptr->body.p - p).magnitude()
         if data_.RECORDEDSOLDIER_DATA->proximity < 0 then data_.RECORDEDSOLDIER_DATA->proximity = 0
         data_.RECORDEDSOLDIER_DATA->proximity /= 100
-        data_.RECORDEDSOLDIER_DATA->frameCount += 1
         light.texture.x = p.x + data_.RECORDEDSOLDIER_DATA->dire*20
         light.texture.y = p.y - 15
         light.shaded.x = light.texture.x
@@ -2036,14 +2246,14 @@ function Item.RECORDEDSOLDIER_PROC_RUN(t as double) as integer
                 link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
                 link.oneshoteffects_ptr->create(p, FLASH,,1)
                 link.soundeffects_ptr->playSound(SND_EXPLODE)
-
+                doDeath()
             end if
             if anims[0].done() then
-                
                 return 1
             end if
         else
             data_.RECORDEDSOLDIER_DATA->zapTime -= 1
+            link.projectilecollection_ptr->create(Vector2D(p.x, p.y - 10), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, BLUE_SPARK)
             if int(data_.RECORDEDSOLDIER_DATA->frameCount * 0.5) and 1 then 
                 lightState = 1
             else
@@ -2098,7 +2308,7 @@ sub Item.RECORDEDSOLDIER_PROC_DRAW(scnbuff as integer ptr)
         
         if data_.RECORDEDSOLDIER_DATA->alertType > 0 then
             floatAmount = sin(data_.RECORDEDSOLDIER_DATA->frameCount * 0.1) * -3
-            anims[5].drawAnimation(scnbuff, p.x, p.y - 63 + floatAmount)
+            anims[5].drawAnimation(scnbuff, p.x, p.y - 60 + floatAmount)
         end if
     end if
 end sub
@@ -2113,6 +2323,35 @@ sub Item.RECORDEDSOLDIER_PROC_CONSTRUCT()
     _initAddParameter_("FRAMES_PTR", _ITEM_VALUE_INTEGER)
     _initAddParameter_("FRAMES_N", _ITEM_VALUE_INTEGER)
     _initAddParameter_("TAG", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.REDPOSTLIGHT_PROC_INIT()
+
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "postbulb.txt")
+    PREP_LIGHTS(MEDIA_PATH + "Lights\TinyRed_Diffuse.txt", MEDIA_PATH + "Lights\TinyRed_Specular.txt", 1, 2, 1)  
+
+end sub
+sub Item.REDPOSTLIGHT_PROC_FLUSH()
+    
+    if anims_n then delete(anims)
+end sub
+function Item.REDPOSTLIGHT_PROC_RUN(t as double) as integer
+
+  
+    lightState = 1
+    light.texture.x = drawX + size.x * 0.5
+    light.texture.y = drawY + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    return 0
+end function
+sub Item.REDPOSTLIGHT_PROC_DRAW(scnbuff as integer ptr)
+    anims[0].drawAnimation(scnbuff, p.x+size.x*0.5, p.y+size.y*0.5 + 5)
+end sub
+sub Item.REDPOSTLIGHT_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.REDPOSTLIGHT_PROC_CONSTRUCT()
 end sub
 #define ITEM_REDWALLLIGHT_DEFINE_ANIM_SPEED 10
 sub Item.REDWALLLIGHT_PROC_INIT()
@@ -2391,6 +2630,54 @@ sub Item.SMOKEMINE_PROC_CONSTRUCT()
     _initAddSlot_("EXPLODE", ITEM_SMOKEMINE_SLOT_EXPLODE_E)
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.SPOTLIGHTCONTROL_PROC_INIT()
+    data_.SPOTLIGHTCONTROL_DATA = new ITEM_SPOTLIGHTCONTROL_TYPE_DATA
+
+    CREATE_ANIMS(3)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\MediumWhite_Diffuse.txt", MEDIA_PATH + "Lights\MediumWhite_Specular.txt", 0, 1, 1)  
+    data_.SPOTLIGHTCONTROL_DATA->transitFrames = 240
+    data_.SPOTLIGHTCONTROL_DATA->dire = 1
+    
+    anims[2].load(MEDIA_PATH + "halo.txt")
+        
+end sub
+sub Item.SPOTLIGHTCONTROL_PROC_FLUSH()
+    
+    if anims_n then delete(anims)
+    if data_.SPOTLIGHTCONTROL_DATA then delete(data_.SPOTLIGHTCONTROL_DATA)
+    data_.SPOTLIGHTCONTROL_DATA = 0
+end sub
+function Item.SPOTLIGHTCONTROL_PROC_RUN(t as double) as integer
+    
+    
+    
+    
+    
+    p += vector2d(data_.SPOTLIGHTCONTROL_DATA->dire, 0)
+    
+    data_.SPOTLIGHTCONTROL_DATA->transitFrames -= 1
+    if data_.SPOTLIGHTCONTROL_DATA->transitFrames = 0 then
+        data_.SPOTLIGHTCONTROL_DATA->dire *= -1
+        data_.SPOTLIGHTCONTROL_DATA->transitFrames = 480
+    end if
+    
+
+    lightState = 1
+    light.texture.x = p.x + size.x*0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    return 0
+end function
+sub Item.SPOTLIGHTCONTROL_PROC_DRAW(scnbuff as integer ptr)
+end sub
+sub Item.SPOTLIGHTCONTROL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    anims[2].setGlow(&h7fffffff)
+    anims[2].drawAnimation(scnbuff, p.x+size.x*0.5,p.y+size.y*0.5)
+
+end sub
+sub Item.SPOTLIGHTCONTROL_PROC_CONSTRUCT()
 end sub
 sub Item.setToState()
     if data_.STANDUPSWITCH_DATA->state = 0 then

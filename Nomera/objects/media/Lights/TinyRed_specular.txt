@@ -1,0 +1,8 @@
+      #IMAGE NAME
+"TinyRed_specular.png"
+      #IMAGE SIZE
+128,128
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+0
