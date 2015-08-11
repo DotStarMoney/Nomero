@@ -1,0 +1,100 @@
+'#nixie flicker
+
+type ITEM_DATA
+    as integer ptr tubeValues
+    as integer ptr valueFixed
+    as integer countup
+    as integer countA
+end type
+
+function _init()
+    dim as integer i
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "nixie.txt")
+    anims[0].play()     
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\RedOrange_Diffuse.txt", MEDIA_PATH + "Lights\RedOrange_Specular.txt", 1, 2, 0)  
+
+    data.tubeValues = new integer[6]
+    data.valueFixed = new integer[6]
+    for i = 0 to 5
+        data.tubeValues[i] = int(rnd * 36)
+        data.valueFixed[i] = 0
+    next i
+    data.countup = 0
+    data.countA = 0
+end function
+
+'---------------------------------
+
+function _flush()
+    delete(data.tubeValues)
+    delete(data.valueFixed)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    dim as integer i, frame, posX, posY
+    
+    for i = 0 to 5
+        frame = data.tubeValues[i]
+        if lightState = 0 andAlso (data.valueFixed[i] = 0) then frame = 36
+        posX = (frame * 16) mod 320
+        posY = int((frame * 16) / 320) * 32
+        anims[0].drawImageLit(scnbuff, p.x + i*16 + iif(i > 2, 16, 0), p.y, posX, posY, posX+15, posY+31,_
+                              lights, numLights, iif((lightState = 0) andAlso (data.valueFixed[i] = 0), &h404040, &hFF8080),_
+                              ,,0) 
+    next i
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer i, value
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+
+    data.countup += 1
+    
+    if data.countup < 603 then
+        data.countA += 1
+        if data.countA >= 2 then
+            data.countA = 0
+            lightState = 1 - lightState
+            for i = 0 to 5
+                if data.countup > (300 + i*60) then
+                    select case i
+                    case 0
+                        value = 30
+                    case 1
+                        value = 31
+                    case 2
+                        value = 11
+                    case 3
+                        value = 0
+                    case 4
+                        value = 7
+                    case 5
+                        value = 6
+                    end select 
+                    data.valueFixed[i] = 1
+                else
+                    value = int(rnd * 36)
+                end if
+                data.tubeValues[i] = value
+            next i
+        end if
+    else
+        lightState = 1
+    end if    
+end function

@@ -9,6 +9,7 @@
 #include "objectslotset.bi"
 #include "locktoscreen.bi"
 #include "constants.bi"
+#include "C64Draw.bi"
 
 #define ifVector2D(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_VECTOR2D, 1, 0)
 #define ifInteger(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_INTEGER, 1, 0)

@@ -3,6 +3,15 @@
 type ITEM_DATA
     as integer transitFrames
     as integer dire
+    as integer tracking
+    as Vector2D stopPos
+    as integer sweepDire
+    as integer visibleFrames
+    as integer caughtFrames
+    as double suspicionLevel
+    as integer stopBuffer
+    as double noticeBuffer
+    as Vector2D v
 end type
 
 '---------------------------------
@@ -15,7 +24,14 @@ function _init()
     data.dire = 1
     
     anims[2].load(MEDIA_PATH + "halo.txt")
-        
+    data.tracking = 0
+    data.stopPos = p
+    data.sweepDire = int(rnd * 2) * 2 - 1
+    data.visibleFrames = 0
+    data.suspicionLevel = 0
+    data.noticeBuffer = 0
+    data.stopBuffer = 20
+    data.v = Vector2D(0,0)
 end function
 
 '---------------------------------
@@ -33,28 +49,111 @@ end function
 
 function _drawOverlay(scnbuff as integer ptr)
     anims[2].setGlow(&h7fffffff)
-    anims[2].drawAnimation(scnbuff, p.x+size.x*0.5,p.y+size.y*0.5)
+    'anims[2].drawAnimation(scnbuff, p.x+size.x*0.5,p.y+size.y*0.5)
 
 end function
 
 '----------------------------------
 
 function _run(t as double)
-    'dim as Vector2D v
-    'v = link.player_ptr->body.p - p
-    'v.normalize()
+    dim as Vector2D v
+    dim as double vmag
     
+    select case data.tracking
+    case 0
+        data.v += Vector2D(data.sweepDire, 0)*0.1
+        if data.v.magnitude() > 1 then data.v.normalize()
+        p += data.v
+        if data.stopBuffer <= 0 then
+            if p.x < _max_(data.stopPos.x - 300, 0) then
+                p.xs = _max_(data.stopPos.x - 300, 0)
+                data.sweepDire *= -1
+                data.stopBuffer = 20
+            elseif p.x > _min_(data.stopPos.x + 300, link.level_ptr->getWidth()*16) then
+                p.xs = _min_(data.stopPos.x + 300, link.level_ptr->getWidth()*16)
+                data.sweepDire *= -1
+                data.stopBuffer = 20
+            end if
+        end if
+        if data.stopBuffer > 0 then data.stopBuffer -= 1
+       
+       
+        if link.player_ptr->getCovered() < _min_(_max_((100.0 / _max_((link.player_ptr->body.p - (p + size*0.5)).magnitude(), 1.0)) - 0.3, 0.0), 0.60)then 
+            data.noticeBuffer += 1              
+        elseif link.player_ptr->getCovered() < 0.65 then
+            v = link.player_ptr->body.p - (p + size*0.5)
+            if v.magnitude() < 100 then 
+                data.noticeBuffer = 0
+                data.tracking = 1
+                data.caughtFrames = 110 - data.suspicionLevel
+                data.visibleFrames = 100
+                data.suspicionLevel += 20
+                if data.suspicionLevel > 100 then data.suspicionLevel = 100                
+            end if
+        else
+            data.noticeBuffer -= 0.25
+            if data.noticeBuffer <= 0 then data.noticeBuffer = 0
+        end if
+        
+        if data.noticeBuffer >= 10 then
+            data.tracking = 1
+            data.caughtFrames = 180 - data.suspicionLevel
+            data.visibleFrames = 60
+            data.suspicionLevel += 20
+            if data.suspicionLevel > 100 then data.suspicionLevel = 100
+        end if
+    case 1
+        data.noticeBuffer = 0
+        data.caughtFrames -= 1
+        if data.caughtFrames <= 0 then data.tracking = 2
+        if link.player_ptr->getCovered() >= 0.65 then
+            data.visibleFrames -= 1
+            if data.visibleFrames <= 0 then data.tracking = 0
+        end if    
+        p += data.v
+        data.v *= 0.95
+    case 2
+        
+        v = link.player_ptr->body.p - (p + size*0.5)
+        vmag = v.magnitude()
+        if vmag > 10 then
+            v /= vmag
+            data.v += v * 0.1
+            if data.v.magnitude() > 1 then data.v.normalize()
+            
+            p += data.v*2
+        else
+            data.v *= 0.95
+            p += data.v*2
+        end if
+        if link.player_ptr->getCovered() > 0.65 then
+            data.noticeBuffer += 0.5
+        else
+            data.noticeBuffer -= 1
+            data.suspicionLevel += 0.25
+            if data.suspicionLevel > 100 then data.suspicionLevel = 100
+            if data.noticeBuffer <= 0 then data.noticeBuffer = 0
+        end if
+        if data.noticeBuffer >= 10 + data.suspicionLevel then
+            data.tracking = 1
+            data.caughtFrames = 240 - data.suspicionLevel
+            data.visibleFrames = 120
+        end if
+    end select
     
-    p += vector2d(data.dire, 0)
-    
-    data.transitFrames -= 1
-    if data.transitFrames = 0 then
-        data.dire *= -1
-        data.transitFrames = 480
-    end if
     
 
-    lightState = 1
+    
+    'p += vector2d(data.dire, 0)
+    
+    'data.transitFrames -= 1
+    'if data.transitFrames = 0 then
+    '    data.dire *= -1
+    '    data.transitFrames = 480
+    'end if
+    
+
+    'lightState = 1
     light.texture.x = p.x + size.x*0.5
     light.texture.y = p.y + size.y * 0.5
     light.shaded.x = light.texture.x

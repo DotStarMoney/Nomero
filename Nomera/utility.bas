@@ -2100,6 +2100,7 @@ function AnyClip(px as integer, py as integer ,_
    
     px1 = px       : py1 = py
     px2 = px+sx - 1: py2 = py+sy - 1
+    
     If px2 < btl_x Then Return 0
     If px1 > bbr_x Then Return 0
     If py2 < btl_y Then Return 0

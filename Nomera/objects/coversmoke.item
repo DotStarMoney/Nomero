@@ -105,9 +105,11 @@ function _run(t as double)
     data.lifeFrames -= 1
     if data.driftForce > 10000    then data.driftForce = 10000
     if data.driftVelocity > 10000 then data.driftVelocity = 10000
+    
     if anims[0].done then 
         return 1
     end if
+    
 end function
 
 '-----------------------------------

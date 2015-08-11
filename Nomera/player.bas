@@ -185,6 +185,7 @@ sub Player.drawPlayer(scnbuff as uinteger ptr)
 end sub
 
 sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer, positionless as integer = 0)
+    
     if positionless = 0 then
         if harmedFlashing > 0 then
             if chargeFlicker < 4 then anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy,,4*facing)
@@ -560,7 +561,7 @@ sub Player.processControls(dire as integer, jump as integer,_
         gtan = parent->getGroundingNormal(body_i, Vector2D(0,-1), Vector2D(dire,0), this.groundDot)
         gtan = gtan.perp()   
         if jumpHoldFrames = 0 orElse (lastGrounded = 0) then state = GROUNDED
-		if lastState <> GROUNDED andAlso lastVel.magnitude() > 300 andAlso landedSFXFrames = 0 then
+		if lastState <> GROUNDED andAlso lastVel.magnitude() > 350 andAlso landedSFXFrames = 0 then
 			landedSFXFrames = 8
 			link.soundeffects_ptr->playSound(SND_LAND)
 		end if
@@ -968,6 +969,10 @@ sub Player.addMoney(amount as integer)
     addedMoneyCounter = 120
     displayMoney += amount
 end sub
+
+function Player.getCovered() as double
+    return covered
+end function
 
 sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
 	dim as Vector2D center, curPos

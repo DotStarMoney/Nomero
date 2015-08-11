@@ -1,0 +1,216 @@
+'#laser emitter
+
+type ITEM_DATA
+    as integer ptr collisionTexture
+    as double lengthHit
+    as integer drawHit
+    as Vector2D hitSpot
+end type
+
+parameter "facing", integer
+
+'---------------------------------
+
+function _init()
+    dim as Vector2D t_p, t_size
+    dim as integer facing
+    getParameter(facing, "facing")
+    
+    CREATE_ANIMS(3)
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "laser.txt")
+    anims[0].play()
+    anims[1].load(MEDIA_PATH + "laser.txt")
+    anims[1].play()
+    anims[1].hardSwitch(4)
+    anims[1].setPrealphaTarget(link.level_ptr->getSmokeTexture())
+    anims[2].load(MEDIA_PATH + "laserhit.txt")
+    anims[2].play()
+    link.player_ptr->getBounds(t_p, t_size)
+    if facing = 1 orElse facing = 3 then
+        data.collisionTexture = imagecreate(t_size.x, 1)
+    else
+        data.collisionTexture = imagecreate(1, t_size.y)    
+    end if
+    data.lengthHit = 0
+    data.drawHit = 0
+end function
+
+'---------------------------------
+
+function _flush()
+    if data.collisionTexture then
+        imagedestroy(data.collisionTexture)
+        data.collisionTexture = 0
+    end if
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    dim as integer facing, i
+    dim as vector2d ptn
+    getParameter(facing, "facing")
+    select case facing
+    case 0
+        ptn = p + Vector2D(0, 0)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 3, 0)           
+    case 1
+        ptn = p + Vector2D(0, size.y*0.5)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0, 0)     
+    case 2
+        ptn = p + Vector2D(0, 16)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 1, 0) 
+    case 3
+        ptn = p + Vector2D(-32 + size.x, size.y*0.5)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4, 0)
+    end select
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    dim as integer facing
+    dim as Vector2D start, curPos
+    dim as double length
+    getParameter(facing, "facing")
+    select case facing
+    case 2
+        start = p + Vector2D(16, 29)
+        length = data.lengthHit
+        curPos = start
+        if data.drawHit = 0 then length -= 12
+        while length >= 32
+            anims[1].drawAnimation(scnbuff, curPos.x-17, curPos.y,,1,ANIM_PREALPHA_TARGET)        
+            curPos += Vector2D(0, 32)
+            length -= 32
+        wend
+        anims[1].setClippingBoundaries(0, 0, 0, 32 - length)
+        anims[1].drawAnimation(scnbuff, curPos.x-17, curPos.y,,1,ANIM_PREALPHA_TARGET)        
+        anims[1].setClippingBoundaries(0, 0, 0, 0)
+        if data.drawHit = 1 then
+            anims[2].drawAnimation(scnbuff, start.x, start.y + data.lengthHit - 16)                
+        end if
+    case 1
+        start = p + Vector2D(13, 16)
+        length = data.lengthHit
+        curPos = start
+        if data.drawHit = 0 then length -= 12
+        while length >= 32
+            anims[1].drawAnimation(scnbuff, curPos.x, curPos.y,,,ANIM_PREALPHA_TARGET)        
+            curPos += Vector2D(32, 0)
+            length -= 32
+        wend
+        anims[1].setClippingBoundaries(0, 0, 32 - length, 0)
+        anims[1].drawAnimation(scnbuff, curPos.x, curPos.y,,,ANIM_PREALPHA_TARGET)        
+        anims[1].setClippingBoundaries(0, 0, 0, 0)
+        if data.drawHit = 1 then
+            anims[2].drawAnimation(scnbuff, start.x + data.lengthHit, start.y)                
+        end if
+    case 3
+        start = p + Vector2D(size.x - 13, 16)
+        length = data.lengthHit 
+        curPos = start
+        if data.drawHit = 0 then length -= 12
+        while length >= 32
+            anims[1].drawAnimation(scnbuff, curPos.x - 32, curPos.y,,,ANIM_PREALPHA_TARGET)        
+            curPos -= Vector2D(32, 0)
+            length -= 32
+        wend
+        anims[1].setClippingBoundaries(32 - length, 0, 0, 0)
+        anims[1].drawAnimation(scnbuff, curPos.x - 32, curPos.y,,,ANIM_PREALPHA_TARGET)        
+        anims[1].setClippingBoundaries(32 - length, 0, 0, 0)
+        if data.drawHit = 1 then
+            anims[2].drawAnimation(scnbuff, start.x + data.lengthHit, start.y)                
+        end if
+    end select
+    
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as Vector2d tl, hitsize, br, pt
+    dim as integer hit, facing
+    dim as double dist, firstX, firstY
+    dim as integer length
+    dim as SlotSet hitTargets
+    getParameter(facing, "facing")
+    link.player_ptr->getBounds(tl, hitsize)
+    br = tl + hitsize
+    data.drawHit = 0
+    hit = 0
+    window
+    select case facing
+    case 2
+        line data.collisionTexture, (0, 0)-(0, hitsize.y - 1), &hffff00ff
+        dist = link.tinyspace_ptr->raycast(p + Vector2D(16, 13), Vector2D(0, 2000), pt)
+        if (tl.x <= (p.x + 16)) andAlso (br.x >= (p.x + 16)) andAlso (br.y >= (p.y + 13)) then
+            firstY = _max_(p.y + 13, tl.y) - tl.y
+            length = firstY
+            firstX = tl.x - (p.x + 16)
+            
+            link.player_ptr->drawPlayerInto(data.collisionTexture, firstX, length, 1)
+            
+            if raycastImage(data.collisionTexture, 0, length, 0, 1) then
+                hit = 1
+                if firstY > 0 then
+                    length = length - firstY
+                else
+                    length = (tl.y + length) - (p.y + 13)
+                end if
+            end if
+        end if   
+    case 3
+        line data.collisionTexture, (0, 0)-(hitsize.x - 1, 0), &hffff00ff
+        dist = link.tinyspace_ptr->raycast(p + Vector2D(size.x - 13, 16), Vector2D(-2000, 0), pt)
+        if (tl.y <= (p.y + 16)) andAlso (br.y >= (p.y + 16)) andAlso (tl.x <= (p.x + size.x - 13)) then
+            firstX = br.x - _min_(p.x + size.x - 13, br.x)
+            length = firstX
+            firstY = tl.y - (p.y + 16)
+            link.player_ptr->drawPlayerInto(data.collisionTexture, length, firstY, 1)
+            if raycastImage(data.collisionTexture, hitsize.x - 1 - length, 0, -1, 0) then
+                hit = 1
+                if firstX > 0 then
+                    length = length - firstX
+                else
+                    length = (p.x + size.x - 13) - (br.x - length)
+                end if
+            end if
+        end if
+    case 1
+        line data.collisionTexture, (0, 0)-(hitsize.x - 1, 0), &hffff00ff
+        dist = link.tinyspace_ptr->raycast(p + Vector2D(13, 16), Vector2D(2000, 0), pt)
+        if (tl.y <= (p.y + 16)) andAlso (br.y >= (p.y + 16)) andAlso (br.x >= (p.x + 13)) then
+            firstX = _max_(p.x + 13, tl.x) - tl.x
+            length = firstX
+            firstY = tl.y - (p.y + 16)
+            link.player_ptr->drawPlayerInto(data.collisionTexture, length, firstY, 1)
+            if raycastImage(data.collisionTexture, length, 0, 1, 0) then
+                hit = 1
+                if firstX > 0 then
+                    length = length - firstX
+                else
+                    length = (tl.x + length) - (p.x + 13)
+                end if
+            end if
+        end if
+    end select
+    if length < dist andAlso hit then 
+        dist = length
+        data.drawHit = 1
+    else
+        dist += 2
+    end if
+    if dist = -1 then dist = 0
+    data.lengthHit = dist
+    select case facing
+    case 2
+        data.hitSpot = p + Vector2D(16, 29) + Vector2D(0, data.lengthHit - 16)
+        querySlots(hitTargets, "laser recieve", new Circle2D(data.hitSpot, 10))
+        hitTargets.throw()
+    end select
+end function
+
+'-----------------------------------

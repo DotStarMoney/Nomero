@@ -595,6 +595,29 @@ sub Item.CASH_PROC_CONSTRUCT()
     _initAddParameter_("BILLTYPE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("VELOCITY", _ITEM_VALUE_VECTOR2D)
 end sub
+sub Item.CEILINGFAN_PROC_INIT()
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "ceilingfan.txt")
+    anims[0].play()
+end sub
+sub Item.CEILINGFAN_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+end sub
+function Item.CEILINGFAN_PROC_RUN(t as double) as integer
+    anims[0].step_animation()
+    return 0
+end function
+sub Item.CEILINGFAN_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+end sub
+sub Item.CEILINGFAN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+  
+end sub
+sub Item.CEILINGFAN_PROC_CONSTRUCT()
+end sub
 #define ITEM_COVERSMOKE_DEFINE_LIFETIME 300
 #define ITEM_COVERSMOKE_DEFINE_DAMPING_MAX 0.95
 sub Item.COVERSMOKE_PROC_INIT()
@@ -671,9 +694,11 @@ function Item.COVERSMOKE_PROC_RUN(t as double) as integer
     data_.COVERSMOKE_DATA->lifeFrames -= 1
     if data_.COVERSMOKE_DATA->driftForce > 10000    then data_.COVERSMOKE_DATA->driftForce = 10000
     if data_.COVERSMOKE_DATA->driftVelocity > 10000 then data_.COVERSMOKE_DATA->driftVelocity = 10000
+    
     if anims[0].done then 
         return 1
     end if
+    
     return 0
 end function
 sub Item.COVERSMOKE_PROC_DRAW(scnbuff as integer ptr)
@@ -1141,6 +1166,29 @@ sub Item.ENERGYBALL_PROC_CONSTRUCT()
     _initAddSlot_("REACT", ITEM_ENERGYBALL_SLOT_REACT_E)
     _initAddParameter_("TAKECAMERA", _ITEM_VALUE_INTEGER)
 end sub
+sub Item.FISHBOWL_PROC_INIT()
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "swimmingfish.txt")
+    anims[0].play()
+end sub
+sub Item.FISHBOWL_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+end sub
+function Item.FISHBOWL_PROC_RUN(t as double) as integer
+    anims[0].step_animation()
+    return 0
+end function
+sub Item.FISHBOWL_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+end sub
+sub Item.FISHBOWL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+  
+end sub
+sub Item.FISHBOWL_PROC_CONSTRUCT()
+end sub
 sub Item.togglePath()
     link.soundeffects_ptr->playSound(SND_SELECT)
     data_.FREIGHTELEVATOR_DATA->gearSound = link.soundeffects_ptr->playSound(SND_GEARS)
@@ -1437,6 +1485,300 @@ end sub
 sub Item.INTERFACE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_INTERFACE_SLOT_INTERACT_E)
 end sub
+sub Item.LASEREMITTER_PROC_INIT()
+    data_.LASEREMITTER_DATA = new ITEM_LASEREMITTER_TYPE_DATA
+    dim as Vector2D t_p, t_size
+    dim as integer facing
+    getParameter(facing, "facing")
+    
+    CREATE_ANIMS(3)
+    anims = new Animation[anims_n]
+    anims[0].load(MEDIA_PATH + "laser.txt")
+    anims[0].play()
+    anims[1].load(MEDIA_PATH + "laser.txt")
+    anims[1].play()
+    anims[1].hardSwitch(4)
+    anims[1].setPrealphaTarget(link.level_ptr->getSmokeTexture())
+    anims[2].load(MEDIA_PATH + "laserhit.txt")
+    anims[2].play()
+    link.player_ptr->getBounds(t_p, t_size)
+    if facing = 1 orElse facing = 3 then
+        data_.LASEREMITTER_DATA->collisionTexture = imagecreate(t_size.x, 1)
+    else
+        data_.LASEREMITTER_DATA->collisionTexture = imagecreate(1, t_size.y)    
+    end if
+    data_.LASEREMITTER_DATA->lengthHit = 0
+    data_.LASEREMITTER_DATA->drawHit = 0
+end sub
+sub Item.LASEREMITTER_PROC_FLUSH()
+    if data_.LASEREMITTER_DATA->collisionTexture then
+        imagedestroy(data_.LASEREMITTER_DATA->collisionTexture)
+        data_.LASEREMITTER_DATA->collisionTexture = 0
+    end if
+    if anims_n then delete(anims)
+    if data_.LASEREMITTER_DATA then delete(data_.LASEREMITTER_DATA)
+    data_.LASEREMITTER_DATA = 0
+end sub
+function Item.LASEREMITTER_PROC_RUN(t as double) as integer
+    dim as Vector2d tl, hitsize, br, pt
+    dim as integer hit, facing
+    dim as double dist, firstX, firstY
+    dim as integer length
+    dim as ObjectSlotSet hitTargets
+    getParameter(facing, "facing")
+    link.player_ptr->getBounds(tl, hitsize)
+    br = tl + hitsize
+    data_.LASEREMITTER_DATA->drawHit = 0
+    hit = 0
+    window
+    select case facing
+    case 2
+        line data_.LASEREMITTER_DATA->collisionTexture, (0, 0)-(0, hitsize.y - 1), &hffff00ff
+        dist = link.tinyspace_ptr->raycast(p + Vector2D(16, 13), Vector2D(0, 2000), pt)
+        if (tl.x <= (p.x + 16)) andAlso (br.x >= (p.x + 16)) andAlso (br.y >= (p.y + 13)) then
+            firstY = _max_(p.y + 13, tl.y) - tl.y
+            length = firstY
+            firstX = tl.x - (p.x + 16)
+            
+            link.player_ptr->drawPlayerInto(data_.LASEREMITTER_DATA->collisionTexture, firstX, length, 1)
+            
+            if raycastImage(data_.LASEREMITTER_DATA->collisionTexture, 0, length, 0, 1) then
+                hit = 1
+                if firstY > 0 then
+                    length = length - firstY
+                else
+                    length = (tl.y + length) - (p.y + 13)
+                end if
+            end if
+        end if   
+    case 3
+        line data_.LASEREMITTER_DATA->collisionTexture, (0, 0)-(hitsize.x - 1, 0), &hffff00ff
+        dist = link.tinyspace_ptr->raycast(p + Vector2D(size.x - 13, 16), Vector2D(-2000, 0), pt)
+        if (tl.y <= (p.y + 16)) andAlso (br.y >= (p.y + 16)) andAlso (tl.x <= (p.x + size.x - 13)) then
+            firstX = br.x - _min_(p.x + size.x - 13, br.x)
+            length = firstX
+            firstY = tl.y - (p.y + 16)
+            link.player_ptr->drawPlayerInto(data_.LASEREMITTER_DATA->collisionTexture, length, firstY, 1)
+            if raycastImage(data_.LASEREMITTER_DATA->collisionTexture, hitsize.x - 1 - length, 0, -1, 0) then
+                hit = 1
+                if firstX > 0 then
+                    length = length - firstX
+                else
+                    length = (p.x + size.x - 13) - (br.x - length)
+                end if
+            end if
+        end if
+    case 1
+        line data_.LASEREMITTER_DATA->collisionTexture, (0, 0)-(hitsize.x - 1, 0), &hffff00ff
+        dist = link.tinyspace_ptr->raycast(p + Vector2D(13, 16), Vector2D(2000, 0), pt)
+        if (tl.y <= (p.y + 16)) andAlso (br.y >= (p.y + 16)) andAlso (br.x >= (p.x + 13)) then
+            firstX = _max_(p.x + 13, tl.x) - tl.x
+            length = firstX
+            firstY = tl.y - (p.y + 16)
+            link.player_ptr->drawPlayerInto(data_.LASEREMITTER_DATA->collisionTexture, length, firstY, 1)
+            if raycastImage(data_.LASEREMITTER_DATA->collisionTexture, length, 0, 1, 0) then
+                hit = 1
+                if firstX > 0 then
+                    length = length - firstX
+                else
+                    length = (tl.x + length) - (p.x + 13)
+                end if
+            end if
+        end if
+    end select
+    if length < dist andAlso hit then 
+        dist = length
+        data_.LASEREMITTER_DATA->drawHit = 1
+    else
+        dist += 2
+    end if
+    if dist = -1 then dist = 0
+    data_.LASEREMITTER_DATA->lengthHit = dist
+    select case facing
+    case 2
+        data_.LASEREMITTER_DATA->hitSpot = p + Vector2D(16, 29) + Vector2D(0, data_.LASEREMITTER_DATA->lengthHit - 16)
+        querySlots(hitTargets, "laser recieve", new Circle2D(data_.LASEREMITTER_DATA->hitSpot, 10))
+        hitTargets.throw()
+    end select
+    return 0
+end function
+sub Item.LASEREMITTER_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    dim as integer facing, i
+    dim as vector2d ptn
+    getParameter(facing, "facing")
+    select case facing
+    case 0
+        ptn = p + Vector2D(0, 0)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 3, 0)           
+    case 1
+        ptn = p + Vector2D(0, size.y*0.5)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0, 0)     
+    case 2
+        ptn = p + Vector2D(0, 16)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 1, 0) 
+    case 3
+        ptn = p + Vector2D(-32 + size.x, size.y*0.5)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4, 0)
+    end select
+end sub
+sub Item.LASEREMITTER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    dim as integer facing
+    dim as Vector2D start, curPos
+    dim as double length
+    getParameter(facing, "facing")
+    select case facing
+    case 2
+        start = p + Vector2D(16, 29)
+        length = data_.LASEREMITTER_DATA->lengthHit
+        curPos = start
+        if data_.LASEREMITTER_DATA->drawHit = 0 then length -= 12
+        while length >= 32
+            anims[1].drawAnimation(scnbuff, curPos.x-17, curPos.y,,1,ANIM_PREALPHA_TARGET)        
+            curPos += Vector2D(0, 32)
+            length -= 32
+        wend
+        anims[1].setClippingBoundaries(0, 0, 0, 32 - length)
+        anims[1].drawAnimation(scnbuff, curPos.x-17, curPos.y,,1,ANIM_PREALPHA_TARGET)        
+        anims[1].setClippingBoundaries(0, 0, 0, 0)
+        if data_.LASEREMITTER_DATA->drawHit = 1 then
+            anims[2].drawAnimation(scnbuff, start.x, start.y + data_.LASEREMITTER_DATA->lengthHit - 16)                
+        end if
+    case 1
+        start = p + Vector2D(13, 16)
+        length = data_.LASEREMITTER_DATA->lengthHit
+        curPos = start
+        if data_.LASEREMITTER_DATA->drawHit = 0 then length -= 12
+        while length >= 32
+            anims[1].drawAnimation(scnbuff, curPos.x, curPos.y,,,ANIM_PREALPHA_TARGET)        
+            curPos += Vector2D(32, 0)
+            length -= 32
+        wend
+        anims[1].setClippingBoundaries(0, 0, 32 - length, 0)
+        anims[1].drawAnimation(scnbuff, curPos.x, curPos.y,,,ANIM_PREALPHA_TARGET)        
+        anims[1].setClippingBoundaries(0, 0, 0, 0)
+        if data_.LASEREMITTER_DATA->drawHit = 1 then
+            anims[2].drawAnimation(scnbuff, start.x + data_.LASEREMITTER_DATA->lengthHit, start.y)                
+        end if
+    case 3
+        start = p + Vector2D(size.x - 13, 16)
+        length = data_.LASEREMITTER_DATA->lengthHit 
+        curPos = start
+        if data_.LASEREMITTER_DATA->drawHit = 0 then length -= 12
+        while length >= 32
+            anims[1].drawAnimation(scnbuff, curPos.x - 32, curPos.y,,,ANIM_PREALPHA_TARGET)        
+            curPos -= Vector2D(32, 0)
+            length -= 32
+        wend
+        anims[1].setClippingBoundaries(32 - length, 0, 0, 0)
+        anims[1].drawAnimation(scnbuff, curPos.x - 32, curPos.y,,,ANIM_PREALPHA_TARGET)        
+        anims[1].setClippingBoundaries(32 - length, 0, 0, 0)
+        if data_.LASEREMITTER_DATA->drawHit = 1 then
+            anims[2].drawAnimation(scnbuff, start.x + data_.LASEREMITTER_DATA->lengthHit, start.y)                
+        end if
+    end select
+    
+end sub
+sub Item.LASEREMITTER_PROC_CONSTRUCT()
+    _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.LASERRECEIVER_SLOT_RECIEVE(pvPair() as _Item_slotValuePair_t)
+    data_.LASERRECEIVER_DATA->targetFrames = 10
+end sub
+sub Item.LASERRECEIVER_PROC_INIT()
+    data_.LASERRECEIVER_DATA = new ITEM_LASERRECEIVER_TYPE_DATA
+    data_.LASERRECEIVER_DATA->state = 0
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "laser.txt")
+    anims[0].hardSwitch(1)
+    anims[1].load(MEDIA_PATH + "laser.txt")
+    anims[1].hardSwitch(2)
+    anims[2].load(MEDIA_PATH + "laser.txt")
+    anims[2].hardSwitch(3)    
+    
+    data_.LASERRECEIVER_DATA->targetFrames = 10
+    
+    
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "LASER RECIEVE", "RECIEVE", new Circle2D(Vector2D(0,32), 10))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "LASER RECIEVE", p)
+end sub
+sub Item.LASERRECEIVER_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.LASERRECEIVER_DATA then delete(data_.LASERRECEIVER_DATA)
+    data_.LASERRECEIVER_DATA = 0
+end sub
+function Item.LASERRECEIVER_PROC_RUN(t as double) as integer
+    if data_.LASERRECEIVER_DATA->targetFrames > 0 then
+        data_.LASERRECEIVER_DATA->targetFrames -= 1
+        data_.LASERRECEIVER_DATA->state = 0
+    else
+        data_.LASERRECEIVER_DATA->state = 1
+    end if
+    
+    
+    return 0
+end function
+sub Item.LASERRECEIVER_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    dim as integer facing, i
+    dim as vector2d ptn
+    getParameter(facing, "facing")
+    
+    select case facing
+    case 0
+        ptn = p + Vector2D(0, 16)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 3, 0)           
+    case 1
+        ptn = p + Vector2D(0, size.y*0.5)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 0, 0)     
+    case 2
+        ptn = p + Vector2D(0, 16)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 1, 0) 
+    case 3
+        ptn = p + Vector2D(-32 + size.x, size.y*0.5)
+        DRAW_LIT_ANIMATION(0, ptn.x, ptn.y, 4, 0)
+    end select
+    if data_.LASERRECEIVER_DATA->state = 0 then
+        select case facing
+        case 0
+            ptn = p + Vector2D(0, 16)
+            anims[1].drawAnimation(scnbuff, ptn.x, ptn.y,,3)           
+        case 1
+            ptn = p + Vector2D(0, size.y*0.5)
+            anims[1].drawAnimation(scnbuff, ptn.x, ptn.y,,0)           
+        case 2
+            ptn = p + Vector2D(0, 16)
+            anims[1].drawAnimation(scnbuff, ptn.x, ptn.y,,1)           
+        case 3
+            ptn = p + Vector2D(-32 + size.x, size.y*0.5)
+            anims[1].drawAnimation(scnbuff, ptn.x, ptn.y,,4)           
+        end select    
+    else
+        select case facing
+        case 0
+            ptn = p + Vector2D(0, 16)
+            anims[2].drawAnimation(scnbuff, ptn.x, ptn.y,,3)           
+        case 1
+            ptn = p + Vector2D(0, size.y*0.5)
+            anims[2].drawAnimation(scnbuff, ptn.x, ptn.y,,0)           
+        case 2
+            ptn = p + Vector2D(0, 16)
+            anims[2].drawAnimation(scnbuff, ptn.x, ptn.y,,1)           
+        case 3
+            ptn = p + Vector2D(-32 + size.x, size.y*0.5)
+            anims[2].drawAnimation(scnbuff, ptn.x, ptn.y,,4)           
+        end select      
+    end if
+    
+end sub
+sub Item.LASERRECEIVER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    
+end sub
+sub Item.LASERRECEIVER_PROC_CONSTRUCT()
+    _initAddSlot_("RECIEVE", ITEM_LASERRECEIVER_SLOT_RECIEVE_E)
+    _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
+end sub
 #define ITEM_MINELANTERN_DEFINE_MOTH_ANGLE_VAR_DEG 45
 #define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MIN 10
 #define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MAX 40
@@ -1617,6 +1959,92 @@ sub Item.MOMENTARYTOGGLESWITCH_PROC_CONSTRUCT()
     _initAddSignal_("ACTIVATE")
     _initAddSlot_("INTERACT", ITEM_MOMENTARYTOGGLESWITCH_SLOT_INTERACT_E)
     _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.NIXIEFLICKER_PROC_INIT()
+    data_.NIXIEFLICKER_DATA = new ITEM_NIXIEFLICKER_TYPE_DATA
+    dim as integer i
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "nixie.txt")
+    anims[0].play()     
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\RedOrange_Diffuse.txt", MEDIA_PATH + "Lights\RedOrange_Specular.txt", 1, 2, 0)  
+
+    data_.NIXIEFLICKER_DATA->tubeValues = new integer[6]
+    data_.NIXIEFLICKER_DATA->valueFixed = new integer[6]
+    for i = 0 to 5
+        data_.NIXIEFLICKER_DATA->tubeValues[i] = int(rnd * 36)
+        data_.NIXIEFLICKER_DATA->valueFixed[i] = 0
+    next i
+    data_.NIXIEFLICKER_DATA->countup = 0
+    data_.NIXIEFLICKER_DATA->countA = 0
+end sub
+sub Item.NIXIEFLICKER_PROC_FLUSH()
+    delete(data_.NIXIEFLICKER_DATA->tubeValues)
+    delete(data_.NIXIEFLICKER_DATA->valueFixed)
+    if anims_n then delete(anims)
+    if data_.NIXIEFLICKER_DATA then delete(data_.NIXIEFLICKER_DATA)
+    data_.NIXIEFLICKER_DATA = 0
+end sub
+function Item.NIXIEFLICKER_PROC_RUN(t as double) as integer
+    dim as integer i, value
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+
+    data_.NIXIEFLICKER_DATA->countup += 1
+    
+    if data_.NIXIEFLICKER_DATA->countup < 603 then
+        data_.NIXIEFLICKER_DATA->countA += 1
+        if data_.NIXIEFLICKER_DATA->countA >= 2 then
+            data_.NIXIEFLICKER_DATA->countA = 0
+            lightState = 1 - lightState
+            for i = 0 to 5
+                if data_.NIXIEFLICKER_DATA->countup > (300 + i*60) then
+                    select case i
+                    case 0
+                        value = 30
+                    case 1
+                        value = 31
+                    case 2
+                        value = 11
+                    case 3
+                        value = 0
+                    case 4
+                        value = 7
+                    case 5
+                        value = 6
+                    end select 
+                    data_.NIXIEFLICKER_DATA->valueFixed[i] = 1
+                else
+                    value = int(rnd * 36)
+                end if
+                data_.NIXIEFLICKER_DATA->tubeValues[i] = value
+            next i
+        end if
+    else
+        lightState = 1
+    end if    
+    return 0
+end function
+sub Item.NIXIEFLICKER_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    dim as integer i, frame, posX, posY
+    
+    for i = 0 to 5
+        frame = data_.NIXIEFLICKER_DATA->tubeValues[i]
+        if lightState = 0 andAlso (data_.NIXIEFLICKER_DATA->valueFixed[i] = 0) then frame = 36
+        posX = (frame * 16) mod 320
+        posY = int((frame * 16) / 320) * 32
+        anims[0].drawImageLit(scnbuff, p.x + i*16 + iif(i > 2, 16, 0), p.y, posX, posY, posX+15, posY+31,_
+                              lights, numLights, iif((lightState = 0) andAlso (data_.NIXIEFLICKER_DATA->valueFixed[i] = 0), &h404040, &hFF8080),_
+                              ,,0) 
+    next i
+end sub
+sub Item.NIXIEFLICKER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    
+end sub
+sub Item.NIXIEFLICKER_PROC_CONSTRUCT()
 end sub
 #define ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES 20
 sub Item.doBubbles(t as double)
@@ -1880,6 +2308,117 @@ sub Item.PUZZLE1234_PROC_CONSTRUCT()
     _initAddParameter_("TUBEID2", _ITEM_VALUE_ZSTRING)
     _initAddParameter_("TUBEID3", _ITEM_VALUE_ZSTRING)
     _initAddParameter_("TUBEID4", _ITEM_VALUE_ZSTRING)
+end sub
+#define ITEM_RAZ200_DEFINE_STARNUM 40
+sub Item.RAZ200_PROC_INIT()
+    data_.RAZ200_DATA = new ITEM_RAZ200_TYPE_DATA
+    dim as integer i
+    C64.loadStandardPallette(C64_standardPallette)
+    C64.loadScreenSpace(C64_standardScreen,C64_standardPallette)
+    C64.loadFont(data_.RAZ200_DATA->Arena,C64.ArenaB)
+    data_.RAZ200_DATA->titleImage = c64.loadImage(C64_standardScreen, MEDIA_PATH + "logo.bmp")
+    data_.RAZ200_DATA->bigBunImage = c64.loadImage(C64_standardScreen, MEDIA_PATH + "bigbun.bmp")
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "raz200.txt")
+    
+    data_.RAZ200_DATA->glare = new zimage()
+    data_.RAZ200_DATA->glare->load(MEDIA_PATH + "raz200glare.png")
+    
+    data_.RAZ200_DATA->devicePos = p + Vector2D(size.x*0.5 - 172, size.y - 335)
+    data_.RAZ200_DATA->frameCount = int(rnd * 100)
+    
+    data_.RAZ200_DATA->stars = new ITEM_RAZ200_TYPE_backStar[ITEM_RAZ200_DEFINE_STARNUM]
+    for i = 0 to ITEM_RAZ200_DEFINE_STARNUM - 1
+        data_.RAZ200_DATA->stars[i].x = int(rnd * 160)
+        data_.RAZ200_DATA->stars[i].y = int(rnd * 200)
+        data_.RAZ200_DATA->stars[i].flavor = int(rnd * 3)
+        data_.RAZ200_DATA->stars[i].speedX = 0
+        data_.RAZ200_DATA->stars[i].speedY = data_.RAZ200_DATA->stars[i].flavor + 1
+    next i   
+end sub
+sub Item.RAZ200_PROC_FLUSH()
+    C64.deleteImage(data_.RAZ200_DATA->titleImage)
+    C64.deleteImage(data_.RAZ200_DATA->bigBunImage)
+    delete(data_.RAZ200_DATA->glare)
+    delete(data_.RAZ200_DATA->stars)
+    if anims_n then delete(anims)
+    if data_.RAZ200_DATA then delete(data_.RAZ200_DATA)
+    data_.RAZ200_DATA = 0
+end sub
+function Item.RAZ200_PROC_RUN(t as double) as integer
+    dim as integer i, rand
+    dim as integer arenaCol
+    c64.clearScreen(C64_standardScreen,0)
+
+    for i = 0 to ITEM_RAZ200_DEFINE_STARNUM - 1
+        data_.RAZ200_DATA->stars[i].x += data_.RAZ200_DATA->stars[i].speedX 
+        data_.RAZ200_DATA->stars[i].y += data_.RAZ200_DATA->stars[i].speedY
+        if data_.RAZ200_DATA->stars[i].y > 200 then
+            data_.RAZ200_DATA->stars[i].y = 0
+            rand = int(rnd * 15)
+            if rand < 2 then
+                data_.RAZ200_DATA->stars[i].flavor = 0
+            elseif rand < 6 then
+                data_.RAZ200_DATA->stars[i].flavor = 1
+            else
+                data_.RAZ200_DATA->stars[i].flavor = 2
+            end if
+            data_.RAZ200_DATA->stars[i].speedY = data_.RAZ200_DATA->stars[i].flavor + 1
+            data_.RAZ200_DATA->stars[i].speedX = 0
+        end if
+        select case data_.RAZ200_DATA->stars[i].flavor
+        case 0
+            c64.PIXEL(C64_standardScreen, data_.RAZ200_DATA->stars[i].x, data_.RAZ200_DATA->stars[i].y, 11)
+        case 1
+            c64.PIXEL(C64_standardScreen, data_.RAZ200_DATA->stars[i].x, data_.RAZ200_DATA->stars[i].y, 12)
+        case 2
+            c64.PIXEL(C64_standardScreen, data_.RAZ200_DATA->stars[i].x, data_.RAZ200_DATA->stars[i].y, 1)
+        end select
+    next i
+    
+    
+    c64.drawImage(C64_standardScreen,0,0,data_.RAZ200_DATA->titleImage,0,0,159,198,"PSET", 40, 2, 1)
+    c64.drawImage(C64_standardScreen,12,133,data_.RAZ200_DATA->bigBunImage,0,0,59,56,"PSET")
+   
+   
+    if (int(data_.RAZ200_DATA->frameCount * 0.25) and 1) then
+        arenaCol = 3
+    else
+        arenaCol = 6
+    end if
+    c64.TEXT(c64_standardScreen,90,143,"PRESS",data_.RAZ200_DATA->Arena,arenaCol)
+    c64.TEXT(c64_standardScreen,90,155,"ENTER",data_.RAZ200_DATA->Arena,arenaCol)
+
+    
+    data_.RAZ200_DATA->frameCount += 1
+    return 0
+end function
+sub Item.RAZ200_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    dim as integer dx, dy
+   
+ 
+    DRAW_LIT_ANIMATION(0, data_.RAZ200_DATA->devicePos.x, data_.RAZ200_DATA->devicePos.y, 0, 0)
+    
+    
+    dx = data_.RAZ200_DATA->devicePos.x + 12
+    dy = data_.RAZ200_DATA->devicePos.y + 19
+    
+    pmapFix(dx, dy)
+    c64.drawScreen(scnbuff, dx, dy, c64_standardScreen)
+    
+    dx = data_.RAZ200_DATA->devicePos.x
+    dy = data_.RAZ200_DATA->devicePos.y  
+    pmapFix(dx, dy)
+
+    bitblt_addRGBA_Clip(scnbuff, dx, dy, data_.RAZ200_DATA->glare->getData(),0,0,343,235)
+    
+end sub
+sub Item.RAZ200_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    
+end sub
+sub Item.RAZ200_PROC_CONSTRUCT()
 end sub
 sub Item.RECORDEDBULLET_PROC_INIT()
     data_.RECORDEDBULLET_DATA = new ITEM_RECORDEDBULLET_TYPE_DATA
@@ -2587,12 +3126,14 @@ function Item.SMOKEMINE_PROC_RUN(t as double) as integer
         data_.SMOKEMINE_DATA->dyingFrames += 1
         anims[3].step_animation()
         if (data_.SMOKEMINE_DATA->dyingFrames mod 2) = 0 then 
+            
             curItem = DControl->constructItem(DControl->itemStringToType("coversmoke"))
             
             curItem->setParameter(data_.SMOKEMINE_DATA->dyingFrames mod 4, "isSolid")
             curItem->setParameter(Vector2D(((2.0*rnd) - 1.0)*80.0, -100 - rnd*25), "initVelocity")
         
             DControl->initItem(curItem, p + Vector2D(0, -100 + data_.SMOKEMINE_DATA->dyingFrames*0.25))
+            
         end if
         if data_.SMOKEMINE_DATA->dyingFrames = ITEM_SMOKEMINE_DEFINE_RELEASE_TIME - 4 then link.oneshoteffects_ptr->create(p, SMOKE,,1)
         if data_.SMOKEMINE_DATA->dyingFrames >= ITEM_SMOKEMINE_DEFINE_RELEASE_TIME then return 1
@@ -2640,7 +3181,14 @@ sub Item.SPOTLIGHTCONTROL_PROC_INIT()
     data_.SPOTLIGHTCONTROL_DATA->dire = 1
     
     anims[2].load(MEDIA_PATH + "halo.txt")
-        
+    data_.SPOTLIGHTCONTROL_DATA->tracking = 0
+    data_.SPOTLIGHTCONTROL_DATA->stopPos = p
+    data_.SPOTLIGHTCONTROL_DATA->sweepDire = int(rnd * 2) * 2 - 1
+    data_.SPOTLIGHTCONTROL_DATA->visibleFrames = 0
+    data_.SPOTLIGHTCONTROL_DATA->suspicionLevel = 0
+    data_.SPOTLIGHTCONTROL_DATA->noticeBuffer = 0
+    data_.SPOTLIGHTCONTROL_DATA->stopBuffer = 20
+    data_.SPOTLIGHTCONTROL_DATA->v = Vector2D(0,0)
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_FLUSH()
     
@@ -2649,21 +3197,104 @@ sub Item.SPOTLIGHTCONTROL_PROC_FLUSH()
     data_.SPOTLIGHTCONTROL_DATA = 0
 end sub
 function Item.SPOTLIGHTCONTROL_PROC_RUN(t as double) as integer
+    dim as Vector2D v
+    dim as double vmag
     
+    select case data_.SPOTLIGHTCONTROL_DATA->tracking
+    case 0
+        data_.SPOTLIGHTCONTROL_DATA->v += Vector2D(data_.SPOTLIGHTCONTROL_DATA->sweepDire, 0)*0.1
+        if data_.SPOTLIGHTCONTROL_DATA->v.magnitude() > 1 then data_.SPOTLIGHTCONTROL_DATA->v.normalize()
+        p += data_.SPOTLIGHTCONTROL_DATA->v
+        if data_.SPOTLIGHTCONTROL_DATA->stopBuffer <= 0 then
+            if p.x < _max_(data_.SPOTLIGHTCONTROL_DATA->stopPos.x - 300, 0) then
+                p.xs = _max_(data_.SPOTLIGHTCONTROL_DATA->stopPos.x - 300, 0)
+                data_.SPOTLIGHTCONTROL_DATA->sweepDire *= -1
+                data_.SPOTLIGHTCONTROL_DATA->stopBuffer = 20
+            elseif p.x > _min_(data_.SPOTLIGHTCONTROL_DATA->stopPos.x + 300, link.level_ptr->getWidth()*16) then
+                p.xs = _min_(data_.SPOTLIGHTCONTROL_DATA->stopPos.x + 300, link.level_ptr->getWidth()*16)
+                data_.SPOTLIGHTCONTROL_DATA->sweepDire *= -1
+                data_.SPOTLIGHTCONTROL_DATA->stopBuffer = 20
+            end if
+        end if
+        if data_.SPOTLIGHTCONTROL_DATA->stopBuffer > 0 then data_.SPOTLIGHTCONTROL_DATA->stopBuffer -= 1
+       
+       
+        if link.player_ptr->getCovered() < _min_(_max_((100.0 / _max_((link.player_ptr->body.p - (p + size*0.5)).magnitude(), 1.0)) - 0.3, 0.0), 0.60)then 
+            data_.SPOTLIGHTCONTROL_DATA->noticeBuffer += 1              
+        elseif link.player_ptr->getCovered() < 0.65 then
+            v = link.player_ptr->body.p - (p + size*0.5)
+            if v.magnitude() < 100 then 
+                data_.SPOTLIGHTCONTROL_DATA->noticeBuffer = 0
+                data_.SPOTLIGHTCONTROL_DATA->tracking = 1
+                data_.SPOTLIGHTCONTROL_DATA->caughtFrames = 110 - data_.SPOTLIGHTCONTROL_DATA->suspicionLevel
+                data_.SPOTLIGHTCONTROL_DATA->visibleFrames = 100
+                data_.SPOTLIGHTCONTROL_DATA->suspicionLevel += 20
+                if data_.SPOTLIGHTCONTROL_DATA->suspicionLevel > 100 then data_.SPOTLIGHTCONTROL_DATA->suspicionLevel = 100                
+            end if
+        else
+            data_.SPOTLIGHTCONTROL_DATA->noticeBuffer -= 0.25
+            if data_.SPOTLIGHTCONTROL_DATA->noticeBuffer <= 0 then data_.SPOTLIGHTCONTROL_DATA->noticeBuffer = 0
+        end if
+        
+        if data_.SPOTLIGHTCONTROL_DATA->noticeBuffer >= 10 then
+            data_.SPOTLIGHTCONTROL_DATA->tracking = 1
+            data_.SPOTLIGHTCONTROL_DATA->caughtFrames = 180 - data_.SPOTLIGHTCONTROL_DATA->suspicionLevel
+            data_.SPOTLIGHTCONTROL_DATA->visibleFrames = 60
+            data_.SPOTLIGHTCONTROL_DATA->suspicionLevel += 20
+            if data_.SPOTLIGHTCONTROL_DATA->suspicionLevel > 100 then data_.SPOTLIGHTCONTROL_DATA->suspicionLevel = 100
+        end if
+    case 1
+        data_.SPOTLIGHTCONTROL_DATA->noticeBuffer = 0
+        data_.SPOTLIGHTCONTROL_DATA->caughtFrames -= 1
+        if data_.SPOTLIGHTCONTROL_DATA->caughtFrames <= 0 then data_.SPOTLIGHTCONTROL_DATA->tracking = 2
+        if link.player_ptr->getCovered() >= 0.65 then
+            data_.SPOTLIGHTCONTROL_DATA->visibleFrames -= 1
+            if data_.SPOTLIGHTCONTROL_DATA->visibleFrames <= 0 then data_.SPOTLIGHTCONTROL_DATA->tracking = 0
+        end if    
+        p += data_.SPOTLIGHTCONTROL_DATA->v
+        data_.SPOTLIGHTCONTROL_DATA->v *= 0.95
+    case 2
+        
+        v = link.player_ptr->body.p - (p + size*0.5)
+        vmag = v.magnitude()
+        if vmag > 10 then
+            v /= vmag
+            data_.SPOTLIGHTCONTROL_DATA->v += v * 0.1
+            if data_.SPOTLIGHTCONTROL_DATA->v.magnitude() > 1 then data_.SPOTLIGHTCONTROL_DATA->v.normalize()
+            
+            p += data_.SPOTLIGHTCONTROL_DATA->v*2
+        else
+            data_.SPOTLIGHTCONTROL_DATA->v *= 0.95
+            p += data_.SPOTLIGHTCONTROL_DATA->v*2
+        end if
+        if link.player_ptr->getCovered() > 0.65 then
+            data_.SPOTLIGHTCONTROL_DATA->noticeBuffer += 0.5
+        else
+            data_.SPOTLIGHTCONTROL_DATA->noticeBuffer -= 1
+            data_.SPOTLIGHTCONTROL_DATA->suspicionLevel += 0.25
+            if data_.SPOTLIGHTCONTROL_DATA->suspicionLevel > 100 then data_.SPOTLIGHTCONTROL_DATA->suspicionLevel = 100
+            if data_.SPOTLIGHTCONTROL_DATA->noticeBuffer <= 0 then data_.SPOTLIGHTCONTROL_DATA->noticeBuffer = 0
+        end if
+        if data_.SPOTLIGHTCONTROL_DATA->noticeBuffer >= 10 + data_.SPOTLIGHTCONTROL_DATA->suspicionLevel then
+            data_.SPOTLIGHTCONTROL_DATA->tracking = 1
+            data_.SPOTLIGHTCONTROL_DATA->caughtFrames = 240 - data_.SPOTLIGHTCONTROL_DATA->suspicionLevel
+            data_.SPOTLIGHTCONTROL_DATA->visibleFrames = 120
+        end if
+    end select
     
-    
-    
-    
-    p += vector2d(data_.SPOTLIGHTCONTROL_DATA->dire, 0)
-    
-    data_.SPOTLIGHTCONTROL_DATA->transitFrames -= 1
-    if data_.SPOTLIGHTCONTROL_DATA->transitFrames = 0 then
-        data_.SPOTLIGHTCONTROL_DATA->dire *= -1
-        data_.SPOTLIGHTCONTROL_DATA->transitFrames = 480
-    end if
     
 
-    lightState = 1
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
     light.texture.x = p.x + size.x*0.5
     light.texture.y = p.y + size.y * 0.5
     light.shaded.x = light.texture.x
@@ -2674,7 +3305,7 @@ sub Item.SPOTLIGHTCONTROL_PROC_DRAW(scnbuff as integer ptr)
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     anims[2].setGlow(&h7fffffff)
-    anims[2].drawAnimation(scnbuff, p.x+size.x*0.5,p.y+size.y*0.5)
+    
 
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_CONSTRUCT()
@@ -3079,4 +3710,27 @@ sub Item.TUBEPUZZLEMAP_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.TUBEPUZZLEMAP_PROC_CONSTRUCT()
     _initAddSlot_("UPDATE", ITEM_TUBEPUZZLEMAP_SLOT_UPDATE_E)
+end sub
+sub Item.VENTWIRES_PROC_INIT()
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "ventwires.txt")
+    anims[0].play()
+end sub
+sub Item.VENTWIRES_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+end sub
+function Item.VENTWIRES_PROC_RUN(t as double) as integer
+    anims[0].step_animation()
+    return 0
+end function
+sub Item.VENTWIRES_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+end sub
+sub Item.VENTWIRES_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+  
+end sub
+sub Item.VENTWIRES_PROC_CONSTRUCT()
 end sub

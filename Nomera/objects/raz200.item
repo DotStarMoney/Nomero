@@ -1,0 +1,134 @@
+'#raz 200
+
+type backStar
+    as integer flavor
+    as integer x, y
+    as integer speedX, speedY
+end type
+
+type ITEM_DATA
+    as Vector2D devicePos
+    as C64.fontSpace Arena
+    as C64.Image     titleImage, bigBunImage
+    as zimage ptr glare
+    as integer frameCount
+    as backStar ptr stars
+end type
+
+#define STARNUM 40
+
+function _init()
+    dim as integer i
+    C64.loadStandardPallette(C64_standardPallette)
+    C64.loadScreenSpace(C64_standardScreen,C64_standardPallette)
+    C64.loadFont(data.Arena,C64.ArenaB)
+    data.titleImage = c64.loadImage(C64_standardScreen, MEDIA_PATH + "logo.bmp")
+    data.bigBunImage = c64.loadImage(C64_standardScreen, MEDIA_PATH + "bigbun.bmp")
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "raz200.txt")
+    
+    data.glare = new zimage()
+    data.glare->load(MEDIA_PATH + "raz200glare.png")
+    
+    data.devicePos = p + Vector2D(size.x*0.5 - 172, size.y - 335)
+    data.frameCount = int(rnd * 100)
+    
+    data.stars = new backStar[STARNUM]
+    for i = 0 to STARNUM - 1
+        data.stars[i].x = int(rnd * 160)
+        data.stars[i].y = int(rnd * 200)
+        data.stars[i].flavor = int(rnd * 3)
+        data.stars[i].speedX = 0
+        data.stars[i].speedY = data.stars[i].flavor + 1
+    next i   
+end function
+
+'---------------------------------
+
+function _flush()
+    C64.deleteImage(data.titleImage)
+    C64.deleteImage(data.bigBunImage)
+    delete(data.glare)
+    delete(data.stars)
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    dim as integer dx, dy
+   
+ 
+    DRAW_LIT_ANIMATION(0, data.devicePos.x, data.devicePos.y, 0, 0)
+    
+    
+    dx = data.devicePos.x + 12
+    dy = data.devicePos.y + 19
+    
+    pmapFix(dx, dy)
+    c64.drawScreen(scnbuff, dx, dy, c64_standardScreen)
+    
+    dx = data.devicePos.x
+    dy = data.devicePos.y  
+    pmapFix(dx, dy)
+
+    bitblt_addRGBA_Clip(scnbuff, dx, dy, data.glare->getData(),0,0,343,235)
+    
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer i, rand
+    dim as integer arenaCol
+    c64.clearScreen(C64_standardScreen,0)
+
+    for i = 0 to STARNUM - 1
+        data.stars[i].x += data.stars[i].speedX 
+        data.stars[i].y += data.stars[i].speedY
+        if data.stars[i].y > 200 then
+            data.stars[i].y = 0
+            rand = int(rnd * 15)
+            if rand < 2 then
+                data.stars[i].flavor = 0
+            elseif rand < 6 then
+                data.stars[i].flavor = 1
+            else
+                data.stars[i].flavor = 2
+            end if
+            data.stars[i].speedY = data.stars[i].flavor + 1
+            data.stars[i].speedX = 0
+        end if
+        select case data.stars[i].flavor
+        case 0
+            c64.PIXEL(C64_standardScreen, data.stars[i].x, data.stars[i].y, 11)
+        case 1
+            c64.PIXEL(C64_standardScreen, data.stars[i].x, data.stars[i].y, 12)
+        case 2
+            c64.PIXEL(C64_standardScreen, data.stars[i].x, data.stars[i].y, 1)
+        end select
+    next i
+    
+    
+    c64.drawImage(C64_standardScreen,0,0,data.titleImage,0,0,159,198,"PSET", 40, 2, 1)
+    c64.drawImage(C64_standardScreen,12,133,data.bigBunImage,0,0,59,56,"PSET")
+   
+   
+    if (int(data.frameCount * 0.25) and 1) then
+        arenaCol = 3
+    else
+        arenaCol = 6
+    end if
+    c64.TEXT(c64_standardScreen,90,143,"PRESS",data.Arena,arenaCol)
+    c64.TEXT(c64_standardScreen,90,155,"ENTER",data.Arena,arenaCol)
+
+    
+    data.frameCount += 1
+end function

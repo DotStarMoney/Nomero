@@ -81,6 +81,7 @@ type Player
 											 byref ups_p as integer, byref shift_p as integer)
         declare function beingHarmed() as integer
         declare sub removeItemReference(data_ as integer)
+        declare function getCovered() as double
 		
 		explodeAllHoldFrames as integer
 		deactivateHoldFrames as integer

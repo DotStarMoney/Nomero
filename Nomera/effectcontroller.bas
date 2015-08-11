@@ -208,6 +208,9 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
 				link.oneshoteffects_ptr->create(e_loc + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
 				link.oneshoteffects_ptr->create(e_loc + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
 				link.oneshoteffects_ptr->create(e_loc + Vector2D(rnd * 48 - 24, rnd * 48 - 24),,,2)
+                link.oneshoteffects_ptr->create(e_loc + Vector2D(rnd * 48 - 24, rnd * 48 - 24))
+                link.oneshoteffects_ptr->create(e_loc, FLASH,,1)
+
 				link.soundeffects_ptr->playSound(SND_EXPLODE)
 
 				for i = 1 to 3
@@ -217,7 +220,7 @@ function EffectController.processEffect(byref effect_p as ObjectEffect_t) as int
 				link.level_ptr->addFallout(e_loc.x(), e_loc.y())
 				link.gamespace_ptr->vibrateScreen()	
 				
-				link.soundeffects_ptr->playSound(SND_EXPLODE)
+				'link.soundeffects_ptr->playSound(SND_EXPLODE)
 				return 1
 			end if
 		end if

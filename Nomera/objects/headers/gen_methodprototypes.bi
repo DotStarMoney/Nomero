@@ -45,6 +45,12 @@ declare function CASH_PROC_RUN(t as double) as integer
 declare sub CASH_PROC_DRAW(scnbuff as integer ptr)
 declare sub CASH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub CASH_PROC_CONSTRUCT()
+declare sub CEILINGFAN_PROC_INIT()
+declare sub CEILINGFAN_PROC_FLUSH()
+declare function CEILINGFAN_PROC_RUN(t as double) as integer
+declare sub CEILINGFAN_PROC_DRAW(scnbuff as integer ptr)
+declare sub CEILINGFAN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub CEILINGFAN_PROC_CONSTRUCT()
 declare sub COVERSMOKE_PROC_INIT()
 declare sub COVERSMOKE_PROC_FLUSH()
 declare function COVERSMOKE_PROC_RUN(t as double) as integer
@@ -78,6 +84,12 @@ declare function ENERGYBALL_PROC_RUN(t as double) as integer
 declare sub ENERGYBALL_PROC_DRAW(scnbuff as integer ptr)
 declare sub ENERGYBALL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub ENERGYBALL_PROC_CONSTRUCT()
+declare sub FISHBOWL_PROC_INIT()
+declare sub FISHBOWL_PROC_FLUSH()
+declare function FISHBOWL_PROC_RUN(t as double) as integer
+declare sub FISHBOWL_PROC_DRAW(scnbuff as integer ptr)
+declare sub FISHBOWL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub FISHBOWL_PROC_CONSTRUCT()
 declare sub togglePath()
 declare sub FREIGHTELEVATOR_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 declare sub FREIGHTELEVATOR_PROC_INIT()
@@ -106,6 +118,19 @@ declare function INTERFACE_PROC_RUN(t as double) as integer
 declare sub INTERFACE_PROC_DRAW(scnbuff as integer ptr)
 declare sub INTERFACE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub INTERFACE_PROC_CONSTRUCT()
+declare sub LASEREMITTER_PROC_INIT()
+declare sub LASEREMITTER_PROC_FLUSH()
+declare function LASEREMITTER_PROC_RUN(t as double) as integer
+declare sub LASEREMITTER_PROC_DRAW(scnbuff as integer ptr)
+declare sub LASEREMITTER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub LASEREMITTER_PROC_CONSTRUCT()
+declare sub LASERRECEIVER_SLOT_RECIEVE(pvPair() as _Item_slotValuePair_t)
+declare sub LASERRECEIVER_PROC_INIT()
+declare sub LASERRECEIVER_PROC_FLUSH()
+declare function LASERRECEIVER_PROC_RUN(t as double) as integer
+declare sub LASERRECEIVER_PROC_DRAW(scnbuff as integer ptr)
+declare sub LASERRECEIVER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub LASERRECEIVER_PROC_CONSTRUCT()
 declare function MINELANTERN_FUNCTION_pickTarget(curP as Vector2D) as Vector2D
 declare sub MINELANTERN_PROC_INIT()
 declare sub MINELANTERN_PROC_FLUSH()
@@ -120,6 +145,12 @@ declare function MOMENTARYTOGGLESWITCH_PROC_RUN(t as double) as integer
 declare sub MOMENTARYTOGGLESWITCH_PROC_DRAW(scnbuff as integer ptr)
 declare sub MOMENTARYTOGGLESWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub MOMENTARYTOGGLESWITCH_PROC_CONSTRUCT()
+declare sub NIXIEFLICKER_PROC_INIT()
+declare sub NIXIEFLICKER_PROC_FLUSH()
+declare function NIXIEFLICKER_PROC_RUN(t as double) as integer
+declare sub NIXIEFLICKER_PROC_DRAW(scnbuff as integer ptr)
+declare sub NIXIEFLICKER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub NIXIEFLICKER_PROC_CONSTRUCT()
 declare sub doBubbles(t as double)
 declare sub PUZZLETUBE1_SLOT_ACTIVATE(pvPair() as _Item_slotValuePair_t)
 declare sub PUZZLETUBE1_SLOT_RESET(pvPair() as _Item_slotValuePair_t)
@@ -140,6 +171,12 @@ declare function PUZZLE1234_PROC_RUN(t as double) as integer
 declare sub PUZZLE1234_PROC_DRAW(scnbuff as integer ptr)
 declare sub PUZZLE1234_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub PUZZLE1234_PROC_CONSTRUCT()
+declare sub RAZ200_PROC_INIT()
+declare sub RAZ200_PROC_FLUSH()
+declare function RAZ200_PROC_RUN(t as double) as integer
+declare sub RAZ200_PROC_DRAW(scnbuff as integer ptr)
+declare sub RAZ200_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub RAZ200_PROC_CONSTRUCT()
 declare sub RECORDEDBULLET_PROC_INIT()
 declare sub RECORDEDBULLET_PROC_FLUSH()
 declare function RECORDEDBULLET_PROC_RUN(t as double) as integer
@@ -235,3 +272,9 @@ declare function TUBEPUZZLEMAP_PROC_RUN(t as double) as integer
 declare sub TUBEPUZZLEMAP_PROC_DRAW(scnbuff as integer ptr)
 declare sub TUBEPUZZLEMAP_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub TUBEPUZZLEMAP_PROC_CONSTRUCT()
+declare sub VENTWIRES_PROC_INIT()
+declare sub VENTWIRES_PROC_FLUSH()
+declare function VENTWIRES_PROC_RUN(t as double) as integer
+declare sub VENTWIRES_PROC_DRAW(scnbuff as integer ptr)
+declare sub VENTWIRES_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+declare sub VENTWIRES_PROC_CONSTRUCT()

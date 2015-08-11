@@ -1233,7 +1233,7 @@ else
     
     highTileValue += 20 * int(curRotatedHeight / 16)
 end if
-
+ 
 
 
 dim as ushort curRange
@@ -1444,7 +1444,7 @@ for activeLayer = 0 to 4
         for i = N_layers - 1 to 0 step -1
             if i <> collisionLayer andAlso layers(i).inRangeSet = curRange then
                 if layers(i).layer_data[q] <> 0 then
-                    
+
                     tileNum = layers(i).layer_data[q]
                     for j = N_tilesets - 1 to 0 step -1
                         if tileNum >= tilesets(j).set_firstID then
@@ -1455,7 +1455,7 @@ for activeLayer = 0 to 4
                     next j
                     tileX = (tileNum * 16) mod ((tilesets(curSet).set_width \ 16) * 16)
                     tileY = int((tileNum * 16) / ((tilesets(curSet).set_width \ 16) * 16)) * 16
-                    
+                               
                     put curImage, (0,0), setImages(curSet), (tileX, tileY)-(tileX+15, tileY+15), PSET
                     put curImage_norm, (0,0), setImages_norm(curSet), (tileX, tileY)-(tileX+15, tileY+15), PSET
 

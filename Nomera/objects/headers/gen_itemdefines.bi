@@ -96,6 +96,16 @@ type ITEM_INTERFACE_TYPE_DATA
     as integer cycleTime
     as integer dontDraw
 end type
+type ITEM_LASEREMITTER_TYPE_DATA
+    as integer ptr collisionTexture
+    as double lengthHit
+    as integer drawHit
+    as Vector2D hitSpot
+end type
+type ITEM_LASERRECEIVER_TYPE_DATA
+    as integer state
+    as integer targetFrames
+end type
 type ITEM_MINELANTERN_TYPE_mothData_t
     as Vector2D drawP
     as Vector2D p
@@ -112,6 +122,12 @@ type ITEM_MINELANTERN_TYPE_DATA
 end type
 type ITEM_MOMENTARYTOGGLESWITCH_TYPE_DATA 
     as integer toggleCycle
+end type
+type ITEM_NIXIEFLICKER_TYPE_DATA
+    as integer ptr tubeValues
+    as integer ptr valueFixed
+    as integer countup
+    as integer countA
 end type
 type ITEM_PUZZLETUBE1_TYPE_bubble_t
     as Vector2D p
@@ -136,6 +152,19 @@ type ITEM_PUZZLE1234_TYPE_DATA
     as integer complete
     as integer completeDance
     as integer completeDanceFrames
+end type
+type ITEM_RAZ200_TYPE_backStar
+    as integer flavor
+    as integer x, y
+    as integer speedX, speedY
+end type
+type ITEM_RAZ200_TYPE_DATA
+    as Vector2D devicePos
+    as C64.fontSpace Arena
+    as C64.Image     titleImage, bigBunImage
+    as zimage ptr glare
+    as integer frameCount
+    as ITEM_RAZ200_TYPE_backStar ptr stars
 end type
 type ITEM_RECORDEDBULLET_TYPE_DATA
     as Vector2D heading
@@ -186,6 +215,15 @@ end type
 type ITEM_SPOTLIGHTCONTROL_TYPE_DATA
     as integer transitFrames
     as integer dire
+    as integer tracking
+    as Vector2D stopPos
+    as integer sweepDire
+    as integer visibleFrames
+    as integer caughtFrames
+    as double suspicionLevel
+    as integer stopBuffer
+    as double noticeBuffer
+    as Vector2D v
 end type
 type ITEM_STANDUPSWITCH_TYPE_DATA
     as integer state
@@ -216,19 +254,25 @@ enum Item_Type_e
     ITEM_BALLSPAWNER
     ITEM_BIGOSCILLOSCOPE
     ITEM_CASH
+    ITEM_CEILINGFAN
     ITEM_COVERSMOKE
     ITEM_CRYSTALGLOW
     ITEM_DEEPSPOTLIGHT
     ITEM_ELECTRICMINE
     ITEM_ENERGYBALL
+    ITEM_FISHBOWL
     ITEM_FREIGHTELEVATOR
     ITEM_FREQUENCYCOUNTER
     ITEM_INTELLIGENCE
     ITEM_INTERFACE
+    ITEM_LASEREMITTER
+    ITEM_LASERRECEIVER
     ITEM_MINELANTERN
     ITEM_MOMENTARYTOGGLESWITCH
+    ITEM_NIXIEFLICKER
     ITEM_PUZZLETUBE1
     ITEM_PUZZLE1234
+    ITEM_RAZ200
     ITEM_RECORDEDBULLET
     ITEM_RECORDEDSOLDIER
     ITEM_REDPOSTLIGHT
@@ -242,6 +286,7 @@ enum Item_Type_e
     ITEM_TELEPORTERREVEALSEQUENCE
     ITEM_TELEPORTERSWITCH
     ITEM_TUBEPUZZLEMAP
+    ITEM_VENTWIRES
 end enum
 enum Item_slotEnum_e
     ITEM_ALIENSPINNER_SLOT_INTERACT_E
@@ -254,6 +299,7 @@ enum Item_slotEnum_e
     ITEM_FREIGHTELEVATOR_SLOT_INTERACT_E
     ITEM_FREQUENCYCOUNTER_SLOT_INTERACT_E
     ITEM_INTERFACE_SLOT_INTERACT_E
+    ITEM_LASERRECEIVER_SLOT_RECIEVE_E
     ITEM_MOMENTARYTOGGLESWITCH_SLOT_INTERACT_E
     ITEM_PUZZLETUBE1_SLOT_ACTIVATE_E
     ITEM_PUZZLETUBE1_SLOT_RESET_E
@@ -289,10 +335,14 @@ union Item_objectData_u
     as ITEM_FREQUENCYCOUNTER_TYPE_DATA ptr FREQUENCYCOUNTER_DATA
     as ITEM_INTELLIGENCE_TYPE_DATA ptr INTELLIGENCE_DATA
     as ITEM_INTERFACE_TYPE_DATA ptr INTERFACE_DATA
+    as ITEM_LASEREMITTER_TYPE_DATA ptr LASEREMITTER_DATA
+    as ITEM_LASERRECEIVER_TYPE_DATA ptr LASERRECEIVER_DATA
     as ITEM_MINELANTERN_TYPE_DATA ptr MINELANTERN_DATA
     as ITEM_MOMENTARYTOGGLESWITCH_TYPE_DATA ptr MOMENTARYTOGGLESWITCH_DATA
+    as ITEM_NIXIEFLICKER_TYPE_DATA ptr NIXIEFLICKER_DATA
     as ITEM_PUZZLETUBE1_TYPE_DATA ptr PUZZLETUBE1_DATA
     as ITEM_PUZZLE1234_TYPE_DATA ptr PUZZLE1234_DATA
+    as ITEM_RAZ200_TYPE_DATA ptr RAZ200_DATA
     as ITEM_RECORDEDBULLET_TYPE_DATA ptr RECORDEDBULLET_DATA
     as ITEM_RECORDEDSOLDIER_TYPE_DATA ptr RECORDEDSOLDIER_DATA
     as ITEM_REDWALLLIGHT_TYPE_DATA ptr REDWALLLIGHT_DATA

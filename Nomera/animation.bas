@@ -822,9 +822,9 @@ sub Animation.drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer,
  
         select case drawMode
         case ANIM_TRANS
-
+            
             drawImg.putTRANS(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x + x0, start_y + y0, start_x + drawW - 1 - x1, start_y + drawH - 1 - y1)
-			
+           
 		case ANIM_GLOW
             
             drawImg.putGLOW(scnbuff, x + off.x + adj.x, y + off.y + adj.y, start_x + x0, start_y + y0, start_x + drawW - 1 - x1, start_y + drawH - 1 - y1, glowValue)

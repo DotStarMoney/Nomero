@@ -1,1 +1,1 @@
-Nomera "wood.map"
+Nomera "shop.map"

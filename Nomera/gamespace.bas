@@ -86,7 +86,6 @@ constructor GameSpace()
     
     spy.centerToMap(lvlData.getDefaultPos())
     
-    'spy.body.p = Vector2D(3300, 1500)
     lastSpawn = spy.body.p
     camera = spy.body.p
     lastMap = lvlData.getName()
