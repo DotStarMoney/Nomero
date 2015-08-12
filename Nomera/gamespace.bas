@@ -85,6 +85,7 @@ constructor GameSpace()
     switchTracks = 0
     
     spy.centerToMap(lvlData.getDefaultPos())
+    'spy.body.p = Vector2D(700, 200)
     
     lastSpawn = spy.body.p
     camera = spy.body.p
@@ -352,11 +353,17 @@ sub GameSpace.step_draw()
     
     START_PROFILE(0)
     
+    window screen (0,0)-(SCRX-1,SCRY-1)
+    if lvlData.getWidth() < 40 orElse lvlData.getHeight() < 30 then
+        line scnbuff, (0,0)-(SCRX-1,SCRY-1), 0, BF
+    end if
     
     window screen (camera.x() - SCRX * 0.5, camera.y() - SCRY * 0.5)-_
                   (camera.x() + SCRX * 0.5, camera.y() + SCRY * 0.5)
                   
 	
+    
+    
     START_PROFILE(3)
     
     START_PROFILE(1)
@@ -366,7 +373,8 @@ sub GameSpace.step_draw()
     
     
     START_PROFILE(2)
-    if lvlData.usesSnow() = 1 then backgroundSnow.drawFlakes(scnbuff, camera)
+    if lvlData.usesSnow() then backgroundSnow.drawFlakes(scnbuff, camera)
+    if lvlData.usesSnow() = 2 then foregroundSnow.drawFlakes(scnbuff, camera)
     RECORD_PROFILE(2)
     
     START_PROFILE(1)
@@ -550,30 +558,31 @@ sub GameSpace.step_process()
         elseif isSwitching = -1 then
             camera = spy.body.p
         end if
-    
-        if lvlData.getWidth() * 16 > SCRX then
-            if camera.x() < SCRX*0.5 then 
-                camera.setX(SCRX*0.5)
-            elseif camera.x() >= lvlData.getWidth()*16 - SCRX*0.5 then
-                camera.setX(lvlData.getWidth()*16 - SCRX*0.5)
-            end if
-        else
-            camera.setX(lvlData.getWidth() * 8)
-        end if
-        
-        if lvlData.getHeight() * 16 > SCRY then
-            if camera.y() < SCRY*0.5 then 
-                camera.setY(SCRY*0.5)
-            elseif camera.y() >= lvlData.getHeight()*16 - SCRY*0.5 then
-                camera.setY(lvlData.getHeight()*16 - SCRY*0.5)
-            end if  
-        else
-            camera.setY(lvlData.getHeight() * 8)
-        end if
-            
-        camera.setX(int(camera.x()))
-        camera.setY(int(camera.y()))
     end if
+    
+    
+    if lvlData.getWidth() * 16 > SCRX then
+        if camera.x() < SCRX*0.5 then 
+            camera.setX(SCRX*0.5)
+        elseif camera.x() >= lvlData.getWidth()*16 - SCRX*0.5 then
+            camera.setX(lvlData.getWidth()*16 - SCRX*0.5)
+        end if
+    else
+        camera.setX(lvlData.getWidth() * 8)
+    end if
+    
+    if lvlData.getHeight() * 16 > SCRY then
+        if camera.y() < SCRY*0.5 then 
+            camera.setY(SCRY*0.5)
+        elseif camera.y() >= lvlData.getHeight()*16 - SCRY*0.5 then
+            camera.setY(lvlData.getHeight()*16 - SCRY*0.5)
+        end if  
+    else
+        camera.setY(lvlData.getHeight() * 8)
+    end if
+        
+    camera.setX(int(camera.x()))
+    camera.setY(int(camera.y()))
     
     if vibcount > 0 then
         shake = (((vibcount/3) mod 2) * 2 - 1) * iif(slowdownShake, _min_(vibcount*0.25, 4), 4)
@@ -675,7 +684,7 @@ sub GameSpace.step_process()
     	spy.processControls(0, 0, 0, 0, 0, numbers(), 0, 0, 0, 0, 0.01667)
     end if
     spy.processItems(0.01667)
-    if lvlData.usesSnow() = 1 then 
+    if lvlData.usesSnow() then 
         backgroundSnow.stepFlakes(camera, 0.01667)
         foregroundSnow.stepFlakes(camera, 0.01667)
     end if

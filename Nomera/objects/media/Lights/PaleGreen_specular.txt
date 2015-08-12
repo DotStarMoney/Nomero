@@ -1,0 +1,8 @@
+      #IMAGE NAME
+"PaleGreen_specular.png"
+      #IMAGE SIZE
+512,512
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+0

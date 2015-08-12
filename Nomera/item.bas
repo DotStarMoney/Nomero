@@ -150,7 +150,6 @@ sub Item.flush()
     dim as _Item_valueContainer_t ptr valueC_ptr
       
     #include "objects\headers\gen_flushcaseblock.bi"
-    
     BEGIN_HASH(valueC_ptr, parameterTable)
         if valueC_ptr->type_ = _ITEM_VALUE_ZSTRING then
             if valueC_ptr->data_.zstring_ then
@@ -173,7 +172,6 @@ sub Item.flush()
         light.shaded.specular_fbimg = 0
         light.occlusion_fbimg = 0
     end if
-
     ID = ""
 end sub
 function Item.getID() as string

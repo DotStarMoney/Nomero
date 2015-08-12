@@ -167,6 +167,7 @@ sub Player.drawPlayer(scnbuff as uinteger ptr)
     dim as integer numLights
     dim as LightPair ptr ptr lights
  
+    #ifndef NO_PLAYER
     if link.level_ptr->shouldLight() then
         numLights = link.level_ptr->getLightList(lights)
         if harmedFlashing > 0 then
@@ -181,11 +182,13 @@ sub Player.drawPlayer(scnbuff as uinteger ptr)
             anim.drawAnimation(scnbuff, body.p.x(), body.p.y(),,4*facing)
         end if
     end if
+    #ENDIF
     
 end sub
 
 sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer, positionless as integer = 0)
     
+    #IFNDEF NO_PLAYER
     if positionless = 0 then
         if harmedFlashing > 0 then
             if chargeFlicker < 4 then anim.drawAnimation(destbuff, body.p.x() - posx, body.p.y() - posy,,4*facing)
@@ -199,6 +202,7 @@ sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as int
             anim.drawAnimation(destbuff, posx - anim.getOffset().x(), posy - anim.getOffset().y(),,4*facing)
         end if    
     end if
+    #endif
 end sub
 
 function Player.beingHarmed() as integer
@@ -765,7 +769,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 			if ls.facing <> D_IN then
 				switch(ls)
 			else
-				if (ups = 1) andAlso (lastUps = 0) andAlso (state = GROUNDED) then				
+				if (ups = -1) andAlso (lastUps = 0) andAlso (state = GROUNDED) then				
 					switch(ls)
 					link.soundeffects_ptr->playSound(SND_DOOR)
 				end if

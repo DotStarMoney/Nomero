@@ -474,6 +474,140 @@ sub Item.BIGOSCILLOSCOPE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_BIGOSCILLOSCOPE_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
+#DEFINE ITEM_CABINCONTROL_DEFINE_CHARGE_TIME 2700
+sub Item.setAmbientLevels()
+    dim as integer i
+    dim as integer col
+    if data_.CABINCONTROL_DATA->state = 1 then
+        for i = 0 to link.level_ptr->getLayerN() - 1
+            col = link.level_ptr->getAmbientLevel(i)
+            addColor(col, &h3f3f3f)
+            link.level_ptr->setAmbientLevel(i, col)
+        next i
+        col = link.level_ptr->getObjectAmbientLevel()
+        addColor(col, &h3f3f3f)        
+        link.level_ptr->setObjectAmbientLevel(col)
+        col = link.level_ptr->getHiddenObjectAmbientLevel()
+        addColor(col, &h3f3f3f)        
+        link.level_ptr->setHiddenObjectAmbientLevel(col)
+    else
+        for i = 0 to link.level_ptr->getLayerN() - 1
+            col = link.level_ptr->getAmbientLevel(i)
+            subColor(col, &h3f3f3f)
+            link.level_ptr->setAmbientLevel(i, col)
+        next i    
+        col = link.level_ptr->getObjectAmbientLevel()
+        subColor(col, &h3f3f3f)        
+        link.level_ptr->setObjectAmbientLevel(col)
+        col = link.level_ptr->getHiddenObjectAmbientLevel()
+        subColor(col, &h3f3f3f)        
+        link.level_ptr->setHiddenObjectAmbientLevel(col)
+    end if
+
+end sub
+sub Item.CABINCONTROL_SLOT_STARTSEQUENCE(pvPair() as _Item_slotValuePair_t)
+    if data_.CABINCONTROL_DATA->startedSequence = 0 then
+        data_.CABINCONTROL_DATA->startedSequence = 1
+        link.gamespace_ptr->lockCamera = 0
+        link.gamespace_ptr->lockAction = 1
+    end if
+end sub
+sub Item.CABINCONTROL_SLOT_TOGGLELIGHTS(pvPair() as _Item_slotValuePair_t)
+    data_.CABINCONTROL_DATA->state = 1 - data_.CABINCONTROL_DATA->state
+    setAmbientLevels()
+end sub
+sub Item.CABINCONTROL_PROC_INIT()
+    data_.CABINCONTROL_DATA = new ITEM_CABINCONTROL_TYPE_DATA
+    data_.CABINCONTROL_DATA->state = 0
+    data_.CABINCONTROL_DATA->glowChargeFrames = 0
+    data_.CABINCONTROL_DATA->drawMural = 0
+    data_.CABINCONTROL_DATA->startedSequence = 0
+    data_.CABINCONTROL_DATA->enablePanel = 0
+    data_.CABINCONTROL_DATA->actionTimer = 0
+    
+    getParameter(data_.CABINCONTROL_DATA->muralLoc, "muralTarget")
+    getParameter(data_.CABINCONTROL_DATA->camTarget, "cameraTarget")
+
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "glowmural.txt")
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\PaleGreen_Diffuse.txt", MEDIA_PATH + "Lights\PaleGreen_Specular.txt", 1, 2, 1)  
+
+end sub
+sub Item.CABINCONTROL_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.CABINCONTROL_DATA then delete(data_.CABINCONTROL_DATA)
+    data_.CABINCONTROL_DATA = 0
+end sub
+function Item.CABINCONTROL_PROC_RUN(t as double) as integer
+    if data_.CABINCONTROL_DATA->state = 0 then
+        data_.CABINCONTROL_DATA->glowChargeFrames -= 1
+        if data_.CABINCONTROL_DATA->glowChargeFrames < 0 then data_.CABINCONTROL_DATA->glowChargeFrames = 0
+    else
+        data_.CABINCONTROL_DATA->glowChargeFrames += 1
+        if data_.CABINCONTROL_DATA->glowChargeFrames > ITEM_CABINCONTROL_DEFINE_CHARGE_TIME then 
+            data_.CABINCONTROL_DATA->glowChargeFrames = ITEM_CABINCONTROL_DEFINE_CHARGE_TIME
+            data_.CABINCONTROL_DATA->drawMural = 1
+        end if
+    end if
+    if data_.CABINCONTROL_DATA->drawMural andAlso (data_.CABINCONTROL_DATA->state = 0) then
+        lightState = 1
+        if data_.CABINCONTROL_DATA->enablePanel = 0 then 
+            throw("ENABLEPANEL")
+            data_.CABINCONTROL_DATA->enablePanel = 1
+        end if
+    else
+        lightState = 0
+    end if
+    
+    if link.gamespace_ptr->lockCamera = 0 then
+        link.gamespace_ptr->camera = Vector2D(650, 650) * 0.06 + link.gamespace_ptr->camera * 0.94
+    end if
+    
+    if data_.CABINCONTROL_DATA->startedSequence = 1 then
+        data_.CABINCONTROL_DATA->actionTimer += 1
+        select case data_.CABINCONTROL_DATA->actionTimer 
+        case 60
+            throw("LAMPENABLE")
+            throw("TURNLAMPON")
+        case 120
+            throw("MOVECOUCH")
+        case 320
+            throw("TURNLIGHTSON")
+        case 340
+            link.gamespace_ptr->lockCamera = 1
+            link.gamespace_ptr->lockAction = 0
+        end select
+    end if
+    
+    light.texture.x = data_.CABINCONTROL_DATA->muralLoc.x
+    light.texture.y = data_.CABINCONTROL_DATA->muralLoc.y
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y 
+
+    return 0
+end function
+sub Item.CABINCONTROL_PROC_DRAW(scnbuff as integer ptr)
+    if data_.CABINCONTROL_DATA->state = 0 andAlso data_.CABINCONTROL_DATA->drawMural = 1 then
+        anims[0].drawAnimation(scnbuff, data_.CABINCONTROL_DATA->muralLoc.x, data_.CABINCONTROL_DATA->muralLoc.y)
+        
+    end if
+end sub
+sub Item.CABINCONTROL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.CABINCONTROL_PROC_CONSTRUCT()
+    _initAddSignal_("ENABLEPANEL")
+    _initAddSignal_("LAMPENABLE")
+    _initAddSignal_("TURNLAMPON")
+    _initAddSignal_("MOVECOUCH")
+    _initAddSignal_("TURNLIGHTSON")
+    _initAddSlot_("STARTSEQUENCE", ITEM_CABINCONTROL_SLOT_STARTSEQUENCE_E)
+    _initAddSlot_("TOGGLELIGHTS", ITEM_CABINCONTROL_SLOT_TOGGLELIGHTS_E)
+    _initAddParameter_("MURALTARGET", _ITEM_VALUE_VECTOR2D)
+    _initAddParameter_("CAMERATARGET", _ITEM_VALUE_VECTOR2D)
+end sub
 sub Item.CASH_PROC_INIT()
     data_.CASH_DATA = new ITEM_CASH_TYPE_DATA
     dim as integer animNum
@@ -817,6 +951,95 @@ end sub
 sub Item.DEEPSPOTLIGHT_PROC_CONSTRUCT()
     _initAddSlot_("ENABLE", ITEM_DEEPSPOTLIGHT_SLOT_ENABLE_E)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.DESKLAMP_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    if data_.DESKLAMP_DATA->isDisabled = 0 then data_.DESKLAMP_DATA->fCount = 10
+    
+end sub
+sub Item.DESKLAMP_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
+    data_.DESKLAMP_DATA->isDisabled = 0
+end sub
+sub Item.DESKLAMP_PROC_INIT()
+    data_.DESKLAMP_DATA = new ITEM_DESKLAMP_TYPE_DATA
+ 
+    
+    data_.DESKLAMP_DATA->isDisabled = 0
+    data_.DESKLAMP_DATA->state = 0
+    data_.DESKLAMP_DATA->fCount = 0
+    data_.DESKLAMP_DATA->flavor = 0
+    
+    getParameter(data_.DESKLAMP_DATA->isDisabled, "disable")
+    getParameter(data_.DESKLAMP_DATA->state, "state")
+    getParameter(data_.DESKLAMP_DATA->flavor, "flavor")
+    
+    CREATE_ANIMS(5)
+    
+    if data_.DESKLAMP_DATA->flavor = 0 then
+        anims[0].load(MEDIA_PATH + "desklamp.txt")
+        anims[0].hardswitch(0)
+        anims[1].load(MEDIA_PATH + "desklamp.txt")
+        anims[1].hardswitch(1)
+        anims[2].load(MEDIA_PATH + "desklamp.txt")
+        anims[2].hardswitch(2)   
+    else
+        anims[0].load(MEDIA_PATH + "desklamp.txt")
+        anims[0].hardswitch(3)
+        anims[1].load(MEDIA_PATH + "desklamp.txt")
+        anims[1].hardswitch(4)
+        anims[2].load(MEDIA_PATH + "desklamp.txt")
+        anims[2].hardswitch(5)      
+    end if
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 3, 4, 1)  
+    
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 32)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.DESKLAMP_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.DESKLAMP_DATA then delete(data_.DESKLAMP_DATA)
+    data_.DESKLAMP_DATA = 0
+end sub
+function Item.DESKLAMP_PROC_RUN(t as double) as integer
+    if data_.DESKLAMP_DATA->state = 0 then
+        anims[1].hardSwitch(1)
+        lightState = 0
+    else
+        anims[1].hardSwitch(0)
+        lightState = 1
+    end if
+    
+    if data_.DESKLAMP_DATA->fCount > 0 then
+        if data_.DESKLAMP_DATA->fCount = 1 then data_.DESKLAMP_DATA->state = 1 - data_.DESKLAMP_DATA->state
+        data_.DESKLAMP_DATA->fCount -= 1
+    end if
+    
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.25
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y 
+    return 0
+end function
+sub Item.DESKLAMP_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0 )
+    if data_.DESKLAMP_DATA->state = 0 then
+        DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0 )
+    else
+        anims[2].drawAnimation(scnbuff, p.x, p.y)
+    end if
+end sub
+sub Item.DESKLAMP_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+  
+end sub
+sub Item.DESKLAMP_PROC_CONSTRUCT()
+    _initAddSlot_("INTERACT", ITEM_DESKLAMP_SLOT_INTERACT_E)
+    _initAddSlot_("ENABLE", ITEM_DESKLAMP_SLOT_ENABLE_E)
+    _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
 #define ITEM_ELECTRICMINE_DEFINE_MAX_RAYCAST_ATTEMPTS 10
 #define ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST 80
@@ -1189,6 +1412,82 @@ sub Item.FISHBOWL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.FISHBOWL_PROC_CONSTRUCT()
 end sub
+sub Item.FLOORLAMP_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    if data_.FLOORLAMP_DATA->isDisabled = 0 then data_.FLOORLAMP_DATA->fCount = 10
+    
+end sub
+sub Item.FLOORLAMP_SLOT_TOGGLE(pvPair() as _Item_slotValuePair_t)
+    data_.FLOORLAMP_DATA->state = 1 - data_.FLOORLAMP_DATA->state
+end sub
+sub Item.FLOORLAMP_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
+    data_.FLOORLAMP_DATA->isDisabled = 0
+end sub
+sub Item.FLOORLAMP_PROC_INIT()
+    data_.FLOORLAMP_DATA = new ITEM_FLOORLAMP_TYPE_DATA
+    CREATE_ANIMS(4)
+    anims[0].load(MEDIA_PATH + "floorlamp.txt")
+    anims[0].hardswitch(2)
+    anims[1].load(MEDIA_PATH + "floorlamp.txt")
+    anims[1].hardswitch(1)
+    
+    data_.FLOORLAMP_DATA->isDisabled = 0
+    data_.FLOORLAMP_DATA->state = 0
+    data_.FLOORLAMP_DATA->fCount = 0
+    
+    getParameter(data_.FLOORLAMP_DATA->isDisabled, "disable")
+    getParameter(data_.FLOORLAMP_DATA->state, "state")
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 2, 3, 1)  
+    
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 32)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.FLOORLAMP_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.FLOORLAMP_DATA then delete(data_.FLOORLAMP_DATA)
+    data_.FLOORLAMP_DATA = 0
+end sub
+function Item.FLOORLAMP_PROC_RUN(t as double) as integer
+    if data_.FLOORLAMP_DATA->state = 0 then
+        anims[1].hardSwitch(1)
+        lightState = 0
+    else
+        anims[1].hardSwitch(0)
+        lightState = 1
+    end if
+    
+    if data_.FLOORLAMP_DATA->fCount > 0 then
+        if data_.FLOORLAMP_DATA->fCount = 1 then data_.FLOORLAMP_DATA->state = 1 - data_.FLOORLAMP_DATA->state
+        data_.FLOORLAMP_DATA->fCount -= 1
+    end if
+    
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.25
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y 
+    return 0
+end function
+sub Item.FLOORLAMP_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y+32, 0, 0 )
+    if data_.FLOORLAMP_DATA->state = 0 then
+        DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0 )
+    else
+        anims[1].drawAnimation(scnbuff, p.x, p.y)
+    end if
+end sub
+sub Item.FLOORLAMP_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+  
+end sub
+sub Item.FLOORLAMP_PROC_CONSTRUCT()
+    _initAddSlot_("INTERACT", ITEM_FLOORLAMP_SLOT_INTERACT_E)
+    _initAddSlot_("TOGGLE", ITEM_FLOORLAMP_SLOT_TOGGLE_E)
+    _initAddSlot_("ENABLE", ITEM_FLOORLAMP_SLOT_ENABLE_E)
+    _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
+end sub
 sub Item.togglePath()
     link.soundeffects_ptr->playSound(SND_SELECT)
     data_.FREIGHTELEVATOR_DATA->gearSound = link.soundeffects_ptr->playSound(SND_GEARS)
@@ -1384,6 +1683,114 @@ sub Item.FREQUENCYCOUNTER_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_FREQUENCYCOUNTER_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
 end sub
+sub Item.HANGINGBULB_SLOT_TOGGLE(pvPair() as _Item_slotValuePair_t)
+    data_.HANGINGBULB_DATA->state = 1 - data_.HANGINGBULB_DATA->state
+end sub
+sub Item.HANGINGBULB_PROC_INIT()
+    data_.HANGINGBULB_DATA = new ITEM_HANGINGBULB_TYPE_DATA
+    dim as integer i
+    
+    getParameter(data_.HANGINGBULB_DATA->state, "state")
+    
+    CREATE_ANIMS(3)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 1, 2, 1)  
+    
+    anims[0].load(MEDIA_PATH + "bulb.txt")
+    
+ 
+end sub
+sub Item.HANGINGBULB_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.HANGINGBULB_DATA then delete(data_.HANGINGBULB_DATA)
+    data_.HANGINGBULB_DATA = 0
+end sub
+function Item.HANGINGBULB_PROC_RUN(t as double) as integer
+
+    if data_.HANGINGBULB_DATA->state = 1 then
+        lightState = 1
+        anims[0].hardSwitch(1)
+    else
+        lightState = 0
+        anims[0].hardSwitch(0)
+    end if
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.2
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    return 0
+end function
+sub Item.HANGINGBULB_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    if data_.HANGINGBULB_DATA->state = 0 then
+        DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+    else
+        anims[0].drawAnimation(scnbuff, p.x, p.y)
+    end if
+
+end sub
+sub Item.HANGINGBULB_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.HANGINGBULB_PROC_CONSTRUCT()
+    _initAddSlot_("TOGGLE", ITEM_HANGINGBULB_SLOT_TOGGLE_E)
+end sub
+sub Item.HIDDENSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    
+    if data_.HIDDENSWITCH_DATA->disable = 0 then
+        data_.HIDDENSWITCH_DATA->state = 1 - data_.HIDDENSWITCH_DATA->state
+        throw("TOGGLE")
+        if data_.HIDDENSWITCH_DATA->state = 1 then
+            throw("TURNON")
+                
+        else
+            throw("TURNOFF")
+                
+        end if
+    end if
+    
+end sub
+sub Item.HIDDENSWITCH_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
+    data_.HIDDENSWITCH_DATA->disable = 0
+end sub
+sub Item.HIDDENSWITCH_PROC_INIT()
+    data_.HIDDENSWITCH_DATA = new ITEM_HIDDENSWITCH_TYPE_DATA
+ 
+    
+    data_.HIDDENSWITCH_DATA->state = 0
+    getParameter(data_.HIDDENSWITCH_DATA->disable, "disable")
+
+    
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(8,8), Vector2D(24, 24)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.HIDDENSWITCH_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.HIDDENSWITCH_DATA then delete(data_.HIDDENSWITCH_DATA)
+    data_.HIDDENSWITCH_DATA = 0
+end sub
+function Item.HIDDENSWITCH_PROC_RUN(t as double) as integer
+
+    
+    return 0
+end function
+sub Item.HIDDENSWITCH_PROC_DRAW(scnbuff as integer ptr)
+
+end sub
+sub Item.HIDDENSWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+  
+end sub
+sub Item.HIDDENSWITCH_PROC_CONSTRUCT()
+    _initAddSignal_("TURNON")
+    _initAddSignal_("TURNOFF")
+    _initAddSignal_("TOGGLE")
+    _initAddSlot_("INTERACT", ITEM_HIDDENSWITCH_SLOT_INTERACT_E)
+    _initAddSlot_("ENABLE", ITEM_HIDDENSWITCH_SLOT_ENABLE_E)
+    _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
+    _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+end sub
 sub Item.INTELLIGENCE_PROC_INIT()
     data_.INTELLIGENCE_DATA = new ITEM_INTELLIGENCE_TYPE_DATA
     data_.INTELLIGENCE_DATA->img = new zImage()
@@ -1404,10 +1811,22 @@ sub Item.INTELLIGENCE_PROC_FLUSH()
     data_.INTELLIGENCE_DATA = 0
 end sub
 function Item.INTELLIGENCE_PROC_RUN(t as double) as integer
+    dim as vector2D v
+    dim as integer i
     anims[0].step_animation()
     data_.INTELLIGENCE_DATA->frameCount += 1
     
+    v = link.player_ptr->body.p - (p + size*0.5)
     
+    if v.magnitude < 32 then 
+        for i = 0 to 9
+        
+            link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)        
+        next i
+        link.oneshoteffects_ptr->create(p + size*0.5, BLUE_FLASH)        
+
+        return 1
+    end if
     if data_.INTELLIGENCE_DATA->frameCount mod 7 = 0 then link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)
     
     
@@ -1484,6 +1903,59 @@ sub Item.INTERFACE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.INTERFACE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_INTERFACE_SLOT_INTERACT_E)
+end sub
+sub Item.LANTERN_SLOT_TOGGLE(pvPair() as _Item_slotValuePair_t)
+    data_.LANTERN_DATA->state = 1 - data_.LANTERN_DATA->state
+
+end sub
+sub Item.LANTERN_PROC_INIT()
+    data_.LANTERN_DATA = new ITEM_LANTERN_TYPE_DATA
+    dim as integer i
+    
+    getParameter(data_.LANTERN_DATA->state, "state")
+    
+    CREATE_ANIMS(4)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 2, 3, 1)  
+    
+    anims[0].load(MEDIA_PATH + "lantern.txt")
+    anims[1].load(MEDIA_PATH + "lantern.txt")
+    anims[1].hardswitch(1)
+    
+ 
+end sub
+sub Item.LANTERN_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.LANTERN_DATA then delete(data_.LANTERN_DATA)
+    data_.LANTERN_DATA = 0
+end sub
+function Item.LANTERN_PROC_RUN(t as double) as integer
+
+    if data_.LANTERN_DATA->state = 1 then
+        lightState = 1
+    else
+        lightState = 0
+    end if
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    return 0
+end function
+sub Item.LANTERN_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer i
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
+    if data_.LANTERN_DATA->state = 1 then anims[1].drawAnimation(scnbuff, p.x, p.y)
+    
+
+end sub
+sub Item.LANTERN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.LANTERN_PROC_CONSTRUCT()
+    _initAddSlot_("TOGGLE", ITEM_LANTERN_SLOT_TOGGLE_E)
 end sub
 sub Item.LASEREMITTER_PROC_INIT()
     data_.LASEREMITTER_DATA = new ITEM_LASEREMITTER_TYPE_DATA
@@ -1778,6 +2250,73 @@ end sub
 sub Item.LASERRECEIVER_PROC_CONSTRUCT()
     _initAddSlot_("RECIEVE", ITEM_LASERRECEIVER_SLOT_RECIEVE_E)
     _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
+end sub
+sub Item.MAGICCOUCH_SLOT_MOVE(pvPair() as _Item_slotValuePair_t)
+    data_.MAGICCOUCH_DATA->platform->togglePath()
+    
+end sub
+sub Item.MAGICCOUCH_PROC_INIT()
+    data_.MAGICCOUCH_DATA = new ITEM_MAGICCOUCH_TYPE_DATA
+    dim as TinyDynamic_BASICPATH pathData
+    dim as Vector2D path(0 to 1)
+    dim as Vector2D shape(0 to 4)
+    
+    data_.MAGICCOUCH_DATA->lastState = 0
+    
+    path(0) = p 
+    path(1) = p + Vector2D(size.x - 96, 0)
+    
+    pathData.pathPointsN = 2
+    pathData.pathPoints = @(path(0))
+    pathData.type_ = TOGGLE
+    pathData.speed = 60
+    pathData.segment = 0    
+    pathData.segment_pos = 0
+        
+    data_.MAGICCOUCH_DATA->platform = new TinyDynamic(DYNA_BASICPATH)
+    data_.MAGICCOUCH_DATA->platform->importParams(@pathData)
+    
+    shape(0) = Vector2D(0,32)
+    shape(1) = Vector2D(96, 32)
+    shape(2) = Vector2D(96, 48)
+    shape(3) = Vector2D(0, 48)
+    shape(4) = shape(0)
+    data_.MAGICCOUCH_DATA->platform->importShape(@(shape(0)), 5)
+    data_.MAGICCOUCH_DATA->platform->calcBB()
+    data_.MAGICCOUCH_DATA->platform->activate()
+    
+    data_.MAGICCOUCH_DATA->platform_i = link.tinyspace_ptr->addDynamic(data_.MAGICCOUCH_DATA->platform)
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "couch.txt")
+
+end sub
+sub Item.MAGICCOUCH_PROC_FLUSH()
+    link.tinyspace_ptr->removeDynamic(data_.MAGICCOUCH_DATA->platform_i)  
+    delete(data_.MAGICCOUCH_DATA->platform)
+    if anims_n then delete(anims)
+    if data_.MAGICCOUCH_DATA then delete(data_.MAGICCOUCH_DATA)
+    data_.MAGICCOUCH_DATA = 0
+end sub
+function Item.MAGICCOUCH_PROC_RUN(t as double) as integer
+    data_.MAGICCOUCH_DATA->elevatorPos = data_.MAGICCOUCH_DATA->platform->getPointP(0)
+    
+    
+    return 0
+end function
+sub Item.MAGICCOUCH_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+
+    DRAW_LIT_ANIMATION(0, data_.MAGICCOUCH_DATA->elevatorPos.x, data_.MAGICCOUCH_DATA->elevatorPos.y - 32, 0, 0)
+
+end sub
+sub Item.MAGICCOUCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+    
+end sub
+sub Item.MAGICCOUCH_PROC_CONSTRUCT()
+    _initAddSlot_("MOVE", ITEM_MAGICCOUCH_SLOT_MOVE_E)
+    _initAddParameter_("STARTSIDE", _ITEM_VALUE_INTEGER)
 end sub
 #define ITEM_MINELANTERN_DEFINE_MOTH_ANGLE_VAR_DEG 45
 #define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MIN 10
@@ -3003,6 +3542,56 @@ sub Item.SHOCKTARGET1_PROC_CONSTRUCT()
     _initAddSignal_("ACTIVATE")
     _initAddSlot_("SHOCKTARGET", ITEM_SHOCKTARGET1_SLOT_SHOCKTARGET_E)
 end sub
+sub Item.SIGN_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    data_.SIGN_DATA->doText = 1
+    setValue(1, "interact")
+end sub
+sub Item.SIGN_PROC_INIT()
+    data_.SIGN_DATA = new ITEM_SIGN_TYPE_DATA
+    setValue(0, "interact")
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 32)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+    _initAddValue_("INTERACT", _ITEM_VALUE_INTEGER)
+    link.dynamiccontroller_ptr->addPublishedValue(ID, "INTERACT")
+end sub
+sub Item.SIGN_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.SIGN_DATA then delete(data_.SIGN_DATA)
+    data_.SIGN_DATA = 0
+end sub
+function Item.SIGN_PROC_RUN(t as double) as integer
+    dim as vector2d v
+    if data_.SIGN_DATA->doText then 
+        v = (p + size*0.5) - link.player_ptr->body.p
+        if v.magnitude() > 70 then
+            data_.SIGN_DATA->doText = 0
+            setValue(0, "interact")
+        end if
+    end if
+    return 0
+end function
+sub Item.SIGN_PROC_DRAW(scnbuff as integer ptr)
+
+end sub
+sub Item.SIGN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    dim as string text
+    dim as vector2d tl, br
+    if data_.SIGN_DATA->doText then
+    
+        getParameter(text, "text")
+        tl = Vector2D(p.x + size.x*0.5 - len(text)*4 - 4, p.y - 21)
+        br = Vector2D(p.x + size.x*0.5 + len(text)*4 + 4, p.y - 9)
+        line scnbuff, (tl.x, tl.y)-(br.x, br.y), 0, BF
+        line scnbuff, (tl.x-1, tl.y-1)-(br.x+1, br.y+1), &h7f7f7f, B
+
+        draw String scnbuff, (p.x - len(text)*4 + size.x*0.5, p.y - 18), text, &h7f7fff
+    end if
+end sub
+sub Item.SIGN_PROC_CONSTRUCT()
+    _initAddSlot_("INTERACT", ITEM_SIGN_SLOT_INTERACT_E)
+    _initAddParameter_("TEXT", _ITEM_VALUE_ZSTRING)
+end sub
 sub Item.SMALLOSCILLOSCOPE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     data_.SMALLOSCILLOSCOPE_DATA->dontDraw = 1 - data_.SMALLOSCILLOSCOPE_DATA->dontDraw
 end sub
@@ -3294,7 +3883,7 @@ function Item.SPOTLIGHTCONTROL_PROC_RUN(t as double) as integer
     
     
 
-    
+    lightState = 1
     light.texture.x = p.x + size.x*0.5
     light.texture.y = p.y + size.y * 0.5
     light.shaded.x = light.texture.x
@@ -3305,7 +3894,7 @@ sub Item.SPOTLIGHTCONTROL_PROC_DRAW(scnbuff as integer ptr)
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     anims[2].setGlow(&h7fffffff)
-    
+    anims[2].drawAnimation(scnbuff, p.x+size.x*0.5,p.y+size.y*0.5)
 
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_CONSTRUCT()
@@ -3733,4 +4322,62 @@ sub Item.VENTWIRES_PROC_DRAWOVERLAY(scnbuff as integer ptr)
   
 end sub
 sub Item.VENTWIRES_PROC_CONSTRUCT()
+end sub
+sub Item.WALLSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    
+    data_.WALLSWITCH_DATA->state = 1 - data_.WALLSWITCH_DATA->state
+    throw("TOGGLE")
+    if data_.WALLSWITCH_DATA->state = 1 then
+        throw("TURNON")
+            
+    else
+        throw("TURNOFF")
+            
+    end if
+end sub
+sub Item.WALLSWITCH_PROC_INIT()
+    data_.WALLSWITCH_DATA = new ITEM_WALLSWITCH_TYPE_DATA
+ 
+    
+    data_.WALLSWITCH_DATA->state = 0
+
+    getParameter(data_.WALLSWITCH_DATA->state, "state")
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "wallswitch.txt")
+    anims[0].play()
+    
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(8,8), Vector2D(24, 24)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.WALLSWITCH_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.WALLSWITCH_DATA then delete(data_.WALLSWITCH_DATA)
+    data_.WALLSWITCH_DATA = 0
+end sub
+function Item.WALLSWITCH_PROC_RUN(t as double) as integer
+    if data_.WALLSWITCH_DATA->state = 0 then
+        anims[0].hardSwitch(0)
+    else
+        anims[0].hardSwitch(1)
+    end if
+    
+    return 0
+end function
+sub Item.WALLSWITCH_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0 )
+
+end sub
+sub Item.WALLSWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+  
+end sub
+sub Item.WALLSWITCH_PROC_CONSTRUCT()
+    _initAddSignal_("TURNON")
+    _initAddSignal_("TURNOFF")
+    _initAddSignal_("TOGGLE")
+    _initAddSlot_("INTERACT", ITEM_WALLSWITCH_SLOT_INTERACT_E)
+    _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
 end sub

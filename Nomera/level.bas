@@ -410,8 +410,8 @@ destructor level
 end destructor
 
 function Level.usesSnow() as integer
-    if snowfall = 1 then 
-        return 1
+    if snowfall <> LEVEL_OFF then 
+        return snowfall
     else
         return 0
     end if
@@ -784,6 +784,7 @@ sub level.flush()
         BEGIN_HASH(curGroup, groups)
             delete(curGroup->layers)
         END_HASH()
+        groups.flush()
         falloutZones.rollReset()
         lightList_N = 0
         do
@@ -1754,7 +1755,7 @@ function Level.processPortalCoverage(p as Vector2D,_
 		area1 = (b.x() - a.x()) * (b.y() - a.y())
 		area2 = w * h
 		if area1 / area2 >= coverage then
-			l.fileName = *(tempPortal->to_map) + ".map"
+			l.fileName = *(tempPortal->to_map)' + ".map"
 			l.portalName = *(tempPortal->to_portal)
 			l.shouldSwitch = 1
 			l.facing = tempPortal->direction

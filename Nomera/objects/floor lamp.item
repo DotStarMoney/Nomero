@@ -1,0 +1,91 @@
+'#floor lamp
+
+type ITEM_DATA
+    as integer isDisabled
+    as integer state
+    as integer fCount
+end type
+
+parameter "disable", integer
+parameter "state", integer
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 32))
+
+
+function _init()
+    CREATE_ANIMS(4)
+    anims[0].load(MEDIA_PATH + "floorlamp.txt")
+    anims[0].hardswitch(2)
+    anims[1].load(MEDIA_PATH + "floorlamp.txt")
+    anims[1].hardswitch(1)
+    
+    data.isDisabled = 0
+    data.state = 0
+    data.fCount = 0
+    
+    getParameter(data.isDisabled, "disable")
+    getParameter(data.state, "state")
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 2, 3, 1)  
+    
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, p.x, p.y+32, 0, 0 )
+    if data.state = 0 then
+        DRAW_LIT_ANIMATION(1, p.x, p.y, 0, 0 )
+    else
+        anims[1].drawAnimation(scnbuff, p.x, p.y)
+    end if
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+  
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    if data.state = 0 then
+        anims[1].hardSwitch(1)
+        lightState = 0
+    else
+        anims[1].hardSwitch(0)
+        lightState = 1
+    end if
+    
+    if data.fCount > 0 then
+        if data.fCount = 1 then data.state = 1 - data.state
+        data.fCount -= 1
+    end if
+    
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.25
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y 
+end function
+
+'-----------------------------------
+slot $interact()
+    if data.isDisabled = 0 then data.fCount = 10
+    'play sound
+end slot
+
+slot $toggle()
+    data.state = 1 - data.state
+end slot
+
+slot $enable()
+    data.isDisabled = 0
+end slot

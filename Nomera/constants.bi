@@ -4,7 +4,7 @@
 #include "debug.bi"
 
 #define KICKSTARTER
-
+#define NO_PLAYER
 
 '#define SCALE_2X
 '#define SCALE_ELLIOTT

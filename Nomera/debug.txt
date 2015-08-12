@@ -1,0 +1,1533 @@
+already bailing
+phlusch
+Fin-e
+60, 58, 7, cabin
+tilesets\cabin_merged.png
+tilesets\lab_merged.png
+tilesets\launcher_merged.png
+tilesets\mine_merged.png
+tilesets\NixieTube_merged.png
+tilesets\shop_merged.png
+tilesets\Teleporter_merged.png
+Layers: 3
+Loading blocks...
+Loading block layer, 0
+Loading block layer, 1
+Loading block layer, 2
+Loading objects...
+Computing TinyDynamic at time: 0
+3, 7
+Resolving portals...
+Loading complete!
+------------------------------------------------------
+TIME : 434425.6348743534
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 200.1723)(0., 10.3354)
+Computing TinyDynamic at time: 0.01667
+------------------------------------------------------
+TIME : 434425.6367299408
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 200.5169)(0., 20.6708)
+Computing TinyDynamic at time: 0.03334
+------------------------------------------------------
+TIME : 434425.640455656
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 201.0337)(0., 31.0062)
+Computing TinyDynamic at time: 0.05001
+------------------------------------------------------
+TIME : 434425.6461366019
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 201.7229)(0., 41.3416)
+Computing TinyDynamic at time: 0.06668
+------------------------------------------------------
+TIME : 434425.6507189066
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 202.5844)(0., 51.677)
+Computing TinyDynamic at time: 0.08335000000000001
+------------------------------------------------------
+TIME : 434425.657475828
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 203.6181)(0., 62.0124)
+Computing TinyDynamic at time: 0.10002
+------------------------------------------------------
+TIME : 434425.6644371677
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 204.8242)(0., 72.3478)
+Computing TinyDynamic at time: 0.11669
+------------------------------------------------------
+TIME : 434425.6721285115
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 206.2025)(0., 82.6832)
+Computing TinyDynamic at time: 0.13336
+------------------------------------------------------
+TIME : 434425.681255915
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 207.7531)(0., 93.0186)
+Computing TinyDynamic at time: 0.15003
+------------------------------------------------------
+TIME : 434425.6914344902
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 209.476)(0., 103.354)
+Computing TinyDynamic at time: 0.1667
+------------------------------------------------------
+TIME : 434425.7025941019
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 211.3712)(0., 113.6894)
+Computing TinyDynamic at time: 0.18337
+------------------------------------------------------
+TIME : 434425.7148549208
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 213.4387)(0., 124.0248)
+Computing TinyDynamic at time: 0.20004
+------------------------------------------------------
+TIME : 434425.7282729694
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 215.6785)(0., 134.3602)
+Computing TinyDynamic at time: 0.21671
+------------------------------------------------------
+TIME : 434425.7422974303
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 218.0906)(0., 144.6956)
+Computing TinyDynamic at time: 0.23338
+------------------------------------------------------
+TIME : 434425.7577374235
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 220.6749)(0., 155.031)
+Computing TinyDynamic at time: 0.2500499999999999
+------------------------------------------------------
+TIME : 434425.7738595236
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 223.4316)(0., 165.3664)
+Computing TinyDynamic at time: 0.26672
+------------------------------------------------------
+TIME : 434425.7916221017
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 226.3605)(0., 175.7018)
+Computing TinyDynamic at time: 0.28339
+------------------------------------------------------
+TIME : 434425.8096836093
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 229.4618)(0., 186.0372)
+Computing TinyDynamic at time: 0.30006
+------------------------------------------------------
+TIME : 434425.8289664947
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 232.7353)(0., 196.3726)
+Computing TinyDynamic at time: 0.31673
+------------------------------------------------------
+TIME : 434425.8492406803
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 236.1811)(0., 206.708)
+Computing TinyDynamic at time: 0.3334
+------------------------------------------------------
+TIME : 434425.8704766581
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 239.7992)(0., 217.0434)
+Computing TinyDynamic at time: 0.3500700000000001
+------------------------------------------------------
+TIME : 434425.8919764979
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 243.5897)(0., 227.3788)
+Computing TinyDynamic at time: 0.3667400000000001
+------------------------------------------------------
+TIME : 434425.9112033607
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 247.5523)(0., 237.7142)
+Computing TinyDynamic at time: 0.3834100000000001
+------------------------------------------------------
+TIME : 434425.9305349985
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 251.6873)(0., 248.0496)
+Computing TinyDynamic at time: 0.4000800000000001
+------------------------------------------------------
+TIME : 434425.9478763381
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 255.9946)(0., 258.385)
+Computing TinyDynamic at time: 0.4167500000000001
+------------------------------------------------------
+TIME : 434425.9638590233
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 260.4742)(0., 268.7204)
+Computing TinyDynamic at time: 0.4334200000000001
+------------------------------------------------------
+TIME : 434425.9803335097
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 265.126)(0., 279.0558)
+Computing TinyDynamic at time: 0.4500900000000002
+------------------------------------------------------
+TIME : 434425.9946184114
+------------------------------------------------------
+Found: 0, segments.
+NO COLLIDE
+Current P,V: (700., 269.9502)(0., 289.3912)
+Computing TinyDynamic at time: 0.4667600000000002
+------------------------------------------------------
+TIME : 434426.0087946893
+------------------------------------------------------
+Found: 4, segments.
+         0 0 0 0 0, 0,0.01667,0
+         Work p: (700., 269.9502) v: (0., 289.3912) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+         0 1 0 0 0, 0,0.01667,0
+         Work p: (700., 274.9466) v: (0., 299.7266) v_adj: (0., 0.) f_adj: (0., 0.)
+Contacting on first step OR no collision
+Resolve without wrk value
+ v_adj: (0., 0.) f_adj: (0., 0.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 0
+Current P,V: (700., 274.9466)(0., 299.7266)
+Frames: 28
+Energy: 224590.0868688998
+Computing TinyDynamic at time: 0.4834300000000002
+------------------------------------------------------
+TIME : 434426.0245122294
+------------------------------------------------------
+Found: 4, segments.
+         0 0 0 0 0, 0,0.01667,0
+         Work p: (700., 274.9466) v: (0., 299.7266) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+         0 1 0 0 0, 0,0.01667,0
+         Work p: (700., 280.1154) v: (0., 310.062) v_adj: (0., 0.) f_adj: (0., 0.)
+Contacting on first step OR no collision
+Resolve without wrk value
+ v_adj: (0., 0.) f_adj: (0., 0.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 0
+Current P,V: (700., 280.1154)(0., 310.062)
+Frames: 29
+Energy: 240346.1096099998
+Computing TinyDynamic at time: 0.5001000000000002
+------------------------------------------------------
+TIME : 434426.0400082452
+------------------------------------------------------
+Found: 4, segments.
+         0 0 0 0 0, 0,0.01667,0
+         Work p: (700., 280.1154) v: (0., 310.062) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+         0 1 0 0 0, 0,0.01667,0
+         Work p: (700., 285.4564) v: (0., 320.3974) v_adj: (0., 0.) f_adj: (0., 0.)
+Contacting on first step OR no collision
+Resolve without wrk value
+ v_adj: (0., 0.) f_adj: (0., 0.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 0
+Current P,V: (700., 285.4564)(0., 320.3974)
+Frames: 30
+Energy: 256636.2348168997
+Computing TinyDynamic at time: 0.5167700000000002
+------------------------------------------------------
+TIME : 434426.0578948426
+------------------------------------------------------
+Found: 6, segments.
+         0 0 0 0 0, 0,0.01667,0
+         Work p: (700., 285.4564) v: (0., 320.3974) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Flagging new arbiter... (0., -1.)
+Arbiter penetrating... (0., -1.)
+         0 1 0 0 1, 1,0.01667,1
+         Work p: (700., 290.9697) v: (0., 330.7328) v_adj: (0., 0.) f_adj: (0., 0.)
+Flagging new arbiter... (0., -1.)
+Arbiter penetrating... (0., -1.)
+         0 1 1 0 1, 1,0.008335,1
+         Work p: (700., 288.17) v: (0., 325.5651) v_adj: (0., 0.) f_adj: (0., 0.)
+Flagging new arbiter... (0., -1.)
+Arbiter penetrating... (0., -1.)
+         0 1 1 0 1, 1,0.0041675,1
+         Work p: (700., 286.8024) v: (0., 322.9812) v_adj: (0., 0.) f_adj: (0., 0.)
+Flagging new arbiter... (0., -1.)
+Arbiter penetrating... (0., -1.)
+         0 1 1 0 1, 1,0.00208375,1
+         Work p: (700., 286.1267) v: (0., 321.6893) v_adj: (0., 0.) f_adj: (0., 0.)
+         0 1 1 0 0, 1,0.001041875,0
+         Work p: (700., 285.7909) v: (0., 321.0434) v_adj: (0., 0.) f_adj: (0., 0.)
+Flagging new arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 1 1 0, 1,0.0015628125,1
+         Work p: (700., 285.9586) v: (0., 321.3663) v_adj: (0., 0.) f_adj: (0., 0.)
+Contacting after resolution
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Reducing force to zero
+Taking wrk value
+ v_adj: (0., -321.3663) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.0151071875
+Had pulse: 1
+arbiters_n: 1
+Current P,V: (700., 285.9586)(0., 321.3663)
+Frames: 31
+Energy: 258190.8172381076
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.0151071875,1
+         Work p: (700., 285.9586) v: (0., 0.) v_adj: (0., -321.3663) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Reducing force to zero
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (700., 285.9586)(0., 0.)
+Frames: 31
+Energy: 0
+Computing TinyDynamic at time: 0.5334400000000001
+------------------------------------------------------
+TIME : 434426.0762193571
+------------------------------------------------------
+Found: 4, segments.
+(656., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (700., 285.9586) v: (-50.01, 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (700., 285.9586)(-50.01, 0.)
+Frames: 32
+Energy: 6252.500250000001
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (699.1663, 285.9586) v: (-50.01, 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (699.1663, 285.9586)(-50.01, 0.)
+Frames: 32
+Energy: 6252.500250000001
+Computing TinyDynamic at time: 0.5501100000000001
+------------------------------------------------------
+TIME : 434426.092709239
+------------------------------------------------------
+Found: 4, segments.
+(656., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (699.1663, 285.9586) v: (-100.02, 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (699.1663, 285.9586)(-100.02, 0.)
+Frames: 33
+Energy: 25010.001
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (697.499, 285.9586) v: (-100.02, 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (697.499, 285.9586)(-100.02, 0.)
+Frames: 33
+Energy: 25010.001
+Computing TinyDynamic at time: 0.5667800000000001
+------------------------------------------------------
+TIME : 434426.1091020437
+------------------------------------------------------
+Found: 4, segments.
+(656., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (697.499, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (697.499, 285.9586)(-150., 0.)
+Frames: 34
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (694.9985, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (694.9985, 285.9586)(-150., 0.)
+Frames: 34
+Energy: 56250
+Computing TinyDynamic at time: 0.58345
+------------------------------------------------------
+TIME : 434426.125059925
+------------------------------------------------------
+Found: 4, segments.
+(656., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (694.9985, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (694.9985, 285.9586)(-150., 0.)
+Frames: 35
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (692.498, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (692.498, 285.9586)(-150., 0.)
+Frames: 35
+Energy: 56250
+Computing TinyDynamic at time: 0.60012
+------------------------------------------------------
+TIME : 434426.1414146685
+------------------------------------------------------
+Found: 4, segments.
+(656., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (692.498, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (692.498, 285.9586)(-150., 0.)
+Frames: 36
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (689.9975, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (689.9975, 285.9586)(-150., 0.)
+Frames: 36
+Energy: 56250
+Computing TinyDynamic at time: 0.61679
+------------------------------------------------------
+TIME : 434426.1596763178
+------------------------------------------------------
+Found: 4, segments.
+(640., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (689.9975, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (689.9975, 285.9586)(-150., 0.)
+Frames: 37
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (687.497, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (687.497, 285.9586)(-150., 0.)
+Frames: 37
+Energy: 56250
+Computing TinyDynamic at time: 0.6334599999999999
+------------------------------------------------------
+TIME : 434426.1760250742
+------------------------------------------------------
+Found: 4, segments.
+(640., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (687.497, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (687.497, 285.9586)(-150., 0.)
+Frames: 38
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (684.9965, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (684.9965, 285.9586)(-150., 0.)
+Frames: 38
+Energy: 56250
+Computing TinyDynamic at time: 0.6501299999999999
+------------------------------------------------------
+TIME : 434426.1920235825
+------------------------------------------------------
+Found: 4, segments.
+(640., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (684.9965, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (684.9965, 285.9586)(-150., 0.)
+Frames: 39
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (682.496, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (682.496, 285.9586)(-150., 0.)
+Frames: 39
+Energy: 56250
+Computing TinyDynamic at time: 0.6667999999999998
+------------------------------------------------------
+TIME : 434426.2085096156
+------------------------------------------------------
+Found: 4, segments.
+(640., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (682.496, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (682.496, 285.9586)(-150., 0.)
+Frames: 40
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (679.9955, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (679.9955, 285.9586)(-150., 0.)
+Frames: 40
+Energy: 56250
+Computing TinyDynamic at time: 0.6834699999999998
+------------------------------------------------------
+TIME : 434426.2265069753
+------------------------------------------------------
+Found: 4, segments.
+(640., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (679.9955, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (679.9955, 285.9586)(-150., 0.)
+Frames: 41
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (677.495, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (677.495, 285.9586)(-150., 0.)
+Frames: 41
+Energy: 56250
+Computing TinyDynamic at time: 0.7001399999999998
+------------------------------------------------------
+TIME : 434426.2420500329
+------------------------------------------------------
+Found: 4, segments.
+(640., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (677.495, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (677.495, 285.9586)(-150., 0.)
+Frames: 42
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (674.9945, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (674.9945, 285.9586)(-150., 0.)
+Frames: 42
+Energy: 56250
+Computing TinyDynamic at time: 0.7168099999999997
+------------------------------------------------------
+TIME : 434426.257364296
+------------------------------------------------------
+Found: 4, segments.
+(640., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (674.9945, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (674.9945, 285.9586)(-150., 0.)
+Frames: 43
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (672.494, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (672.494, 285.9586)(-150., 0.)
+Frames: 43
+Energy: 56250
+Computing TinyDynamic at time: 0.7334799999999997
+------------------------------------------------------
+TIME : 434426.274405423
+------------------------------------------------------
+Found: 4, segments.
+(624., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (672.494, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (672.494, 285.9586)(-150., 0.)
+Frames: 44
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (669.9935, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (669.9935, 285.9586)(-150., 0.)
+Frames: 44
+Energy: 56250
+Computing TinyDynamic at time: 0.7501499999999997
+------------------------------------------------------
+TIME : 434426.2925126895
+------------------------------------------------------
+Found: 4, segments.
+(624., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (669.9935, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (669.9935, 285.9586)(-150., 0.)
+Frames: 45
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (667.493, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (667.493, 285.9586)(-150., 0.)
+Frames: 45
+Energy: 56250
+Computing TinyDynamic at time: 0.7668199999999996
+------------------------------------------------------
+TIME : 434426.3086719955
+------------------------------------------------------
+Found: 4, segments.
+(624., 304.), (720., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (667.493, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (667.493, 285.9586)(-150., 0.)
+Frames: 46
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (664.9925, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (664.9925, 285.9586)(-150., 0.)
+Frames: 46
+Energy: 56250
+Computing TinyDynamic at time: 0.7834899999999996
+------------------------------------------------------
+TIME : 434426.3231989491
+------------------------------------------------------
+Found: 4, segments.
+(624., 304.), (704., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (664.9925, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (664.9925, 285.9586)(-150., 0.)
+Frames: 47
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (662.492, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (662.492, 285.9586)(-150., 0.)
+Frames: 47
+Energy: 56250
+Computing TinyDynamic at time: 0.8001599999999995
+------------------------------------------------------
+TIME : 434426.3393946055
+------------------------------------------------------
+Found: 4, segments.
+(624., 304.), (704., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (662.492, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (662.492, 285.9586)(-150., 0.)
+Frames: 48
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (659.9915, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (659.9915, 285.9586)(-150., 0.)
+Frames: 48
+Energy: 56250
+Computing TinyDynamic at time: 0.8168299999999995
+------------------------------------------------------
+TIME : 434426.3566042279
+------------------------------------------------------
+Found: 4, segments.
+(624., 304.), (704., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (659.9915, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (659.9915, 285.9586)(-150., 0.)
+Frames: 49
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (657.491, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (657.491, 285.9586)(-150., 0.)
+Frames: 49
+Energy: 56250
+Computing TinyDynamic at time: 0.8334999999999995
+------------------------------------------------------
+TIME : 434426.3746375105
+------------------------------------------------------
+Found: 4, segments.
+(608., 304.), (704., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (657.491, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (657.491, 285.9586)(-150., 0.)
+Frames: 50
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (654.9905, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (654.9905, 285.9586)(-150., 0.)
+Frames: 50
+Energy: 56250
+Computing TinyDynamic at time: 0.8501699999999994
+------------------------------------------------------
+TIME : 434426.3923851206
+------------------------------------------------------
+Found: 4, segments.
+(608., 304.), (704., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (654.9905, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (654.9905, 285.9586)(-150., 0.)
+Frames: 51
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (652.49, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (652.49, 285.9586)(-150., 0.)
+Frames: 51
+Energy: 56250
+Computing TinyDynamic at time: 0.8668399999999994
+------------------------------------------------------
+TIME : 434426.4087544043
+------------------------------------------------------
+Found: 4, segments.
+(608., 304.), (704., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (652.49, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (652.49, 285.9586)(-150., 0.)
+Frames: 52
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (649.9895, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (649.9895, 285.9586)(-150., 0.)
+Frames: 52
+Energy: 56250
+Computing TinyDynamic at time: 0.8835099999999994
+------------------------------------------------------
+TIME : 434426.4240259021
+------------------------------------------------------
+Found: 4, segments.
+(608., 304.), (704., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (649.9895, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (649.9895, 285.9586)(-150., 0.)
+Frames: 53
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (647.489, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (647.489, 285.9586)(-150., 0.)
+Frames: 53
+Energy: 56250
+Computing TinyDynamic at time: 0.9001799999999993
+------------------------------------------------------
+TIME : 434426.4411636788
+------------------------------------------------------
+Found: 4, segments.
+(608., 304.), (688., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (647.489, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (647.489, 285.9586)(-150., 0.)
+Frames: 54
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (644.9885, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (644.9885, 285.9586)(-150., 0.)
+Frames: 54
+Energy: 56250
+Computing TinyDynamic at time: 0.9168499999999993
+------------------------------------------------------
+TIME : 434426.4590857715
+------------------------------------------------------
+Found: 4, segments.
+(608., 304.), (688., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (644.9885, 285.9586) v: (-150., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (9300., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (644.9885, 285.9586)(-150., 0.)
+Frames: 55
+Energy: 56250
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (643.0049, 285.9586) v: (-118.9938, 0.) v_adj: (0., 0.) f_adj: (9300., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (9300., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (643.0049, 285.9586)(-118.9938, 0.)
+Frames: 55
+Energy: 35398.8110961
+Computing TinyDynamic at time: 0.9335199999999992
+------------------------------------------------------
+TIME : 434426.475662467
+------------------------------------------------------
+Found: 4, segments.
+(608., 304.), (688., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (643.0049, 285.9586) v: (-118.9938, 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (9300., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (643.0049, 285.9586)(-118.9938, 0.)
+Frames: 56
+Energy: 35398.8110961
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (641.5381, 285.9586) v: (-87.9876, 0.) v_adj: (0., 0.) f_adj: (9300., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (9300., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (641.5381, 285.9586)(-87.9876, 0.)
+Frames: 56
+Energy: 19354.54438439999
+Computing TinyDynamic at time: 0.9501899999999992
+------------------------------------------------------
+TIME : 434426.490864685
+------------------------------------------------------
+Found: 4, segments.
+(592., 304.), (688., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (641.5381, 285.9586) v: (-87.9876, 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (9300., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (641.5381, 285.9586)(-87.9876, 0.)
+Frames: 57
+Energy: 19354.54438439999
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (640.5882, 285.9586) v: (-56.9814, 0.) v_adj: (0., 0.) f_adj: (9300., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (9300., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.5882, 285.9586)(-56.9814, 0.)
+Frames: 57
+Energy: 8117.199864899996
+Computing TinyDynamic at time: 0.9668599999999992
+------------------------------------------------------
+TIME : 434426.5081662528
+------------------------------------------------------
+Found: 4, segments.
+(592., 304.), (688., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (640.5882, 285.9586) v: (-56.9814, 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Friction applied normally...
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (9300., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.5882, 285.9586)(-56.9814, 0.)
+Frames: 58
+Energy: 8117.199864899996
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (640.1552, 285.9586) v: (-25.9752, 0.) v_adj: (0., 0.) f_adj: (9300., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Full velocity and force cancel: (-25.9752, 0.), (0., 0.)
+Setting final velocity... (25.9752, 0.) Taking wrk value
+ v_adj: (25.9752, 0.) f_adj: (7791.0018, -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.1552, 285.9586)(0., 0.)
+Frames: 58
+Energy: 0
+Computing TinyDynamic at time: 0.9835299999999991
+------------------------------------------------------
+TIME : 434426.5234664034
+------------------------------------------------------
+Found: 4, segments.
+(592., 304.), (688., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (640.1552, 285.9586) v: (0., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Reducing force to zero
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.1552, 285.9586)(0., 0.)
+Frames: 59
+Energy: 0
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (640.1552, 285.9586) v: (0., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Reducing force to zero
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.1552, 285.9586)(0., 0.)
+Frames: 59
+Energy: 0
+Computing TinyDynamic at time: 1.000199999999999
+------------------------------------------------------
+TIME : 434426.539638539
+------------------------------------------------------
+Found: 4, segments.
+(592., 304.), (688., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (640.1552, 285.9586) v: (0., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Reducing force to zero
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.1552, 285.9586)(0., 0.)
+Frames: 60
+Energy: 0
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (640.1552, 285.9586) v: (0., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Reducing force to zero
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.1552, 285.9586)(0., 0.)
+Frames: 60
+Energy: 0
+Computing TinyDynamic at time: 1.016869999999999
+------------------------------------------------------
+TIME : 434426.5567459522
+------------------------------------------------------
+Found: 4, segments.
+(592., 304.), (688., 304.)
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 0 0 1 0, 0,0.01667,1
+         Work p: (640.1552, 285.9586) v: (0., 0.) v_adj: (0., 0.) f_adj: (0., 0.)
+On first collide
+Contacting on first frame, pre step
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Reducing force to zero
+Skipping c setting, calculating v_adj and f_adj, time:0
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0.01667
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.1552, 285.9586)(0., 0.)
+Frames: 61
+Energy: 0
+skipping first collision check
+Found previous Arbiter... (0., -1.)
+Arbiter contacting... (0., -1.)
+         0 1 0 1 0, 0,0.01667,1
+         Work p: (640.1552, 285.9586) v: (0., 0.) v_adj: (0., 0.) f_adj: (0., -3100.)
+Contacting on first step OR no collision
+VLISTImpulse: Resolving V 
+VLISTImpulse: Resolving V 
+FRICTION: Reducing force to zero
+Setting final velocity... (0., 0.) Taking wrk value
+ v_adj: (0., 0.) f_adj: (0., -3100.) f_total: (0., 3100.)
+Current time: 0
+Had pulse: 0
+arbiters_n: 1
+Current P,V: (640.1552, 285.9586)(0., 0.)
+Frames: 61
+Energy: 0
+Computing TinyDynamic at time: 1.033539999999999

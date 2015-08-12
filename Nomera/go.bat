@@ -1,1 +1,1 @@
-Nomera "shop.map"
+Nomera "lab.map"

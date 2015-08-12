@@ -1,0 +1,22 @@
+      #IMAGE NAME
+"glowmural.png"
+      #IMAGE SIZE
+402,255
+      #DRAW MODE
+"GLOW"
+      #NUMBER OF ANIMATIONS
+1
+      #DEFAULT ANIMATION
+0
+      #INDIVIDUAL ANIMATION DATA
+      #-- INTERFACE OFF --
+"STILL","TO COMPLETION","NO"
+1           #NUM FRAMES
+402,255    #WIDTH/HEIGHT
+0           #DELAY
+0,0         #START/END CELL
+0           #LOOP POINT
+-188,-169   #OFFSET
+0           #NUM RELEASE FRAMES
+"NO"        #PER FRAME DATA?
+

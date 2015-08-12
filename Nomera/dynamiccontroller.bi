@@ -70,7 +70,8 @@ type DynamicController
 	public:
 		declare constructor
 		declare destructor
-      	declare sub flush()
+      	declare sub clean()
+        declare sub flush()
         declare sub setRegionSize(w as integer, h as integer)
 
 		declare sub setLink(link_ as ObjectLink)

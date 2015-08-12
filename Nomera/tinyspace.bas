@@ -141,7 +141,6 @@ sub TinySpace.removeDynamic(index as integer)
         end if
     wend
 	
-	
 	'''''''''''''''''''''''''''
 	'CLEAN UP ANY ARBITERS
 	
@@ -150,7 +149,7 @@ end sub
 function TinySpace.dynamicN(inst as integer) as integer
     dim as integer i
     for i = 0 to dynamics_n - 1
-        if dynamics(dynamics_n)->ind = inst then return i
+        if dynamics(i)->ind = inst then return i
     next i
     return -1
 end function

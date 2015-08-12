@@ -27,14 +27,14 @@ constructor DynamicController()
 end constructor
 
 destructor DynamicController()
-    flush()
+    clean()
 end destructor
 
 sub DynamicController.setRegionSize(w as integer, h as integer)
     valueTargets.init(w, h, sizeof(DynamicController_publish_t ptr))
     slotTargets.init(w, h, sizeof(DynamicController_publishSlot_t ptr))
 end sub
-sub DynamicController.flush()
+sub DynamicController.clean()
     dim as DynamicController_connectionNode_t ptr curConnectionNode
     dim as DynamicController_connectionIncoming_t ptr curIncomingConnection
     dim as DynamicController_connectionOutgoing_t ptr curOutgoingConnection
@@ -51,7 +51,6 @@ sub DynamicController.flush()
     drawobjects_activefront.clean()
     drawobjects_background.clean()
     drawobjects_foreground.clean()
-
 
     BEGIN_DHASH(curPublish, allPublishedValues)
         if curPublish->target then delete(curPublish->target)
@@ -94,12 +93,77 @@ sub DynamicController.flush()
     itemIdGenerator.flush()
     
     BEGIN_HASH(curItem, itemIdPairs)
-        curItem->item_->flush()
         delete(curItem->item_)
     END_HASH()
     itemIdPairs.clean()
     
+    
 end sub
+sub DynamicController.flush()
+    dim as DynamicController_connectionNode_t ptr curConnectionNode
+    dim as DynamicController_connectionIncoming_t ptr curIncomingConnection
+    dim as DynamicController_connectionOutgoing_t ptr curOutgoingConnection
+    dim as DynamicController_connectionOutgoingDestination_t ptr curOutgoingDestination
+    dim as DynamicController_connectionIncomingSource_t ptr curIncomingSource
+    dim as DynamicController_publish_t ptr curPublish
+    dim as DynamicController_publishSlot_t ptr curPublishSlot    
+    dim as DynamicController_itemPair_t ptr curItem
+    
+    valueTargets.flush()
+    slotTargets.flush()
+
+    drawobjects_active.flush()
+    drawobjects_activefront.flush()
+    drawobjects_background.flush()
+    drawobjects_foreground.flush()
+
+    BEGIN_DHASH(curPublish, allPublishedValues)
+        if curPublish->target then delete(curPublish->target)
+        deallocate(curPublish->tag_)
+    END_DHASH()
+    allPublishedValues.flush()
+    BEGIN_DHASH(curPublishSlot, allPublishedSlots)
+        if curPublishSlot->target then delete(curPublishSlot->target)
+        deallocate(curPublishSlot->tag_)
+        deallocate(curPublishSlot->slot_tag_)        
+    END_DHASH()
+    allPublishedSlots.flush()
+    
+    BEGIN_HASH(curConnectionNode, connections)
+        BEGIN_HASH(curIncomingConnection, curConnectionNode->slots)
+            BEGIN_DHASH(curIncomingSource, curIncomingConnection->incomingFromSignals)
+                deallocate(curIncomingSource->incomingID)
+                deallocate(curIncomingSource->incomingSignalTag)
+                deallocate(curIncomingSource->thisSlot)
+            END_DHASH()
+            curIncomingConnection->incomingFromSignals.clean()
+        END_HASH()
+        curConnectionNode->slots.clean()
+        
+        BEGIN_HASH(curOutgoingConnection, curConnectionNode->signals)
+            BEGIN_DHASH(curOutgoingDestination, curOutgoingConnection->outgoingToSlots)
+                deallocate(curOutgoingDestination->outgoingID)
+                deallocate(curOutgoingDestination->outgoingSlotTag)
+                deallocate(curOutgoingDestination->thisSignal)
+                if curOutgoingDestination->appendParameter then
+                    deallocate(curOutgoingDestination->appendParameter)
+                end if
+            END_DHASH()
+            curOutgoingConnection->outgoingToSlots.clean()
+        END_HASH()
+        curConnectionNode->signals.clean()        
+    END_HASH()
+    connections.flush()
+    
+    itemIdGenerator.flush()
+    
+    BEGIN_HASH(curItem, itemIdPairs)
+        delete(curItem->item_)
+    END_HASH()
+    itemIdPairs.flush()
+    
+end sub
+
 sub DynamicController.removeItem(ID_ as string)
     dim as any ptr ptr parameterPtrPtr
     dim as DynamicController_itemPair_t ptr itemPair_
@@ -658,6 +722,7 @@ sub DynamicController.throw(signal_ID as string, signal_tag as string, parameter
                 else
                     thisParameterString = parameter_string
                 end if
+                
                 fireSlot(*(curSlot->outgoingID), *(curSlot->outgoingSlotTag), thisParameterString)
             END_DHASH()
         end if

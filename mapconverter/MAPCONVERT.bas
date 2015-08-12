@@ -703,6 +703,8 @@ do
                         'if left(lcase(item_content), 2) = "on" then
                             snowfall = 1
                         'end if
+                    elseif left(lcase(item_tag), 9) = "back snow" then
+                        snowfall = 2
                     elseif left(lcase(item_tag), 6) = "aurora" then                    
                         aurora = 1
                     elseif left(lcase(item_tag), 10) = "windy mist" then

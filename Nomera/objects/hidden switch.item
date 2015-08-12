@@ -1,0 +1,70 @@
+'#hidden switch
+
+type ITEM_DATA
+    as integer state
+    as integer disable
+end type
+
+parameter "state", integer
+parameter "disable", integer
+publish slot "interact", $interact, Rectangle2D(Vector2D(8,8), Vector2D(24, 24))
+signal $turnOn
+signal $turnOff
+signal $toggle
+
+function _init()
+ 
+    
+    data.state = 0
+    getParameter(data.disable, "disable")
+
+    
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+  
+end function
+
+'----------------------------------
+
+function _run(t as double)
+
+    
+end function
+
+'-----------------------------------
+slot $interact()
+    
+    if data.disable = 0 then
+        data.state = 1 - data.state
+        throw($toggle)
+        if data.state = 1 then
+            throw($turnOn)
+                'play sound
+        else
+            throw($turnOff)
+                'play sound
+        end if
+    end if
+    
+end slot
+
+slot $enable()
+    data.disable = 0
+end slot
+
+

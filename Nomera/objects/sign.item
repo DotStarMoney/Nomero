@@ -1,0 +1,65 @@
+'#sign
+
+type ITEM_DATA
+    as integer doText
+end type
+
+parameter "text", string
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 32))
+publish value "interact", integer
+
+'---------------------------------
+
+function _init()
+    setValue(0, "interact")
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+
+function _draw(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    dim as string text
+    dim as vector2d tl, br
+    if data.doText then
+    
+        getParameter(text, "text")
+        tl = Vector2D(p.x + size.x*0.5 - len(text)*4 - 4, p.y - 21)
+        br = Vector2D(p.x + size.x*0.5 + len(text)*4 + 4, p.y - 9)
+        line scnbuff, (tl.x, tl.y)-(br.x, br.y), 0, BF
+        line scnbuff, (tl.x-1, tl.y-1)-(br.x+1, br.y+1), &h7f7f7f, B
+
+        draw String scnbuff, (p.x - len(text)*4 + size.x*0.5, p.y - 18), text, &h7f7fff
+    end if
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as vector2d v
+    if data.doText then 
+        v = (p + size*0.5) - link.player_ptr->body.p
+        if v.magnitude() > 70 then
+            data.doText = 0
+            setValue(0, "interact")
+        end if
+    end if
+end function
+
+'-----------------------------------
+
+slot $interact()
+    data.doText = 1
+    setValue(1, "interact")
+end slot

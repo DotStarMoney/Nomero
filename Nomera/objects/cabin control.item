@@ -1,0 +1,158 @@
+'#cabin control
+
+type ITEM_DATA
+    as integer state
+    as integer glowChargeFrames
+    as Vector2D muralLoc
+    as Vector2D camTarget
+    as integer drawMural
+    as integer startedSequence
+    as integer enablePanel
+    as integer actionTimer
+end type
+#DEFINE CHARGE_TIME 2700
+'7200
+
+parameter "muralTarget", Vector2D
+parameter "cameraTarget", Vector2D
+signal $enablePanel
+signal $lampEnable
+signal $turnLampOn
+signal $moveCouch
+signal $turnLightsOn
+
+'---------------------------------
+
+function _init()
+    data.state = 0
+    data.glowChargeFrames = 0
+    data.drawMural = 0
+    data.startedSequence = 0
+    data.enablePanel = 0
+    data.actionTimer = 0
+    
+    getParameter(data.muralLoc, "muralTarget")
+    getParameter(data.camTarget, "cameraTarget")
+
+    CREATE_ANIMS(3)
+    anims[0].load(MEDIA_PATH + "glowmural.txt")
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\PaleGreen_Diffuse.txt", MEDIA_PATH + "Lights\PaleGreen_Specular.txt", 1, 2, 1)  
+
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    if data.state = 0 andAlso data.drawMural = 1 then
+        anims[0].drawAnimation(scnbuff, data.muralLoc.x, data.muralLoc.y)
+        
+    end if
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    if data.state = 0 then
+        data.glowChargeFrames -= 1
+        if data.glowChargeFrames < 0 then data.glowChargeFrames = 0
+    else
+        data.glowChargeFrames += 1
+        if data.glowChargeFrames > CHARGE_TIME then 
+            data.glowChargeFrames = CHARGE_TIME
+            data.drawMural = 1
+        end if
+    end if
+    if data.drawMural andAlso (data.state = 0) then
+        lightState = 1
+        if data.enablePanel = 0 then 
+            throw($enablePanel)
+            data.enablePanel = 1
+        end if
+    else
+        lightState = 0
+    end if
+    
+    if link.gamespace_ptr->lockCamera = 0 then
+        link.gamespace_ptr->camera = Vector2D(650, 650) * 0.06 + link.gamespace_ptr->camera * 0.94
+    end if
+    
+    if data.startedSequence = 1 then
+        data.actionTimer += 1
+        select case data.actionTimer 
+        case 60
+            throw($lampEnable)
+            throw($turnLampOn)
+        case 120
+            throw($moveCouch)
+        case 320
+            throw($turnLightsOn)
+        case 340
+            link.gamespace_ptr->lockCamera = 1
+            link.gamespace_ptr->lockAction = 0
+        end select
+    end if
+    
+    light.texture.x = data.muralLoc.x
+    light.texture.y = data.muralLoc.y
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y 
+
+end function
+
+'-----------------------------------
+sub setAmbientLevels()
+    dim as integer i
+    dim as integer col
+    if data.state = 1 then
+        for i = 0 to link.level_ptr->getLayerN() - 1
+            col = link.level_ptr->getAmbientLevel(i)
+            addColor(col, &h3f3f3f)
+            link.level_ptr->setAmbientLevel(i, col)
+        next i
+        col = link.level_ptr->getObjectAmbientLevel()
+        addColor(col, &h3f3f3f)        
+        link.level_ptr->setObjectAmbientLevel(col)
+        col = link.level_ptr->getHiddenObjectAmbientLevel()
+        addColor(col, &h3f3f3f)        
+        link.level_ptr->setHiddenObjectAmbientLevel(col)
+    else
+        for i = 0 to link.level_ptr->getLayerN() - 1
+            col = link.level_ptr->getAmbientLevel(i)
+            subColor(col, &h3f3f3f)
+            link.level_ptr->setAmbientLevel(i, col)
+        next i    
+        col = link.level_ptr->getObjectAmbientLevel()
+        subColor(col, &h3f3f3f)        
+        link.level_ptr->setObjectAmbientLevel(col)
+        col = link.level_ptr->getHiddenObjectAmbientLevel()
+        subColor(col, &h3f3f3f)        
+        link.level_ptr->setHiddenObjectAmbientLevel(col)
+    end if
+
+end sub
+
+slot $startSequence()
+    if data.startedSequence = 0 then
+        data.startedSequence = 1
+        link.gamespace_ptr->lockCamera = 0
+        link.gamespace_ptr->lockAction = 1
+    end if
+end slot
+
+slot $togglelights()
+    data.state = 1 - data.state
+    setAmbientLevels()
+end slot

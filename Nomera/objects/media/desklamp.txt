@@ -1,0 +1,71 @@
+      #IMAGE NAME
+"desklamp.png"
+      #IMAGE SIZE
+192,32
+      #DRAW MODE
+"GLOW"
+      #NUMBER OF ANIMATIONS
+6
+      #DEFAULT ANIMATION
+0
+      #INDIVIDUAL ANIMATION DATA
+      #-- STAND 1 --
+"STILL","INSTANT","NO"
+1        #NUM FRAMES
+32,32    #WIDTH/HEIGHT
+0        #DELAY
+0,0      #START/END CELL
+0        #LOOP POINT
+0,0      #OFFSET
+0        #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- UNLIT 1 --
+"STILL","INSTANT","NO"
+1        #NUM FRAMES
+32,32    #WIDTH/HEIGHT
+0        #DELAY
+2,2      #START/END CELL
+0        #LOOP POINT
+0,0      #OFFSET
+0        #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- LIT 1 --
+"STILL","INSTANT","NO"
+1        #NUM FRAMES
+32,32    #WIDTH/HEIGHT
+0        #DELAY
+4,4      #START/END CELL
+0        #LOOP POINT
+0,0      #OFFSET
+0        #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- STAND 2 --
+"STILL","INSTANT","NO"
+1        #NUM FRAMES
+32,32    #WIDTH/HEIGHT
+0        #DELAY
+1,1      #START/END CELL
+0        #LOOP POINT
+0,0      #OFFSET
+0        #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- UNLIT 2 --
+"STILL","INSTANT","NO"
+1        #NUM FRAMES
+32,32    #WIDTH/HEIGHT
+0        #DELAY
+3,3      #START/END CELL
+0        #LOOP POINT
+0,0      #OFFSET
+0        #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
+      #-- LIT 2 --
+"STILL","INSTANT","NO"
+1        #NUM FRAMES
+32,32    #WIDTH/HEIGHT
+0        #DELAY
+5,5      #START/END CELL
+0        #LOOP POINT
+0,0      #OFFSET
+0        #NUM RELEASE FRAMES
+"NO"     #PER FRAME DATA?
