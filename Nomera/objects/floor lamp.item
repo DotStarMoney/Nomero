@@ -78,7 +78,10 @@ end function
 
 '-----------------------------------
 slot $interact()
-    if data.isDisabled = 0 then data.fCount = 10
+    if data.isDisabled = 0 then 
+        data.fCount = 10
+        link.soundeffects_ptr->playSound(SND_LAMPPULL)
+    end if
     'play sound
 end slot
 

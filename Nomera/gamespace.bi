@@ -103,6 +103,8 @@ type GameSpace
 		as double movingFrmAvg
 		as integer stallTime_mili
 		as double frameTime
+        
+       
 end type
         
         

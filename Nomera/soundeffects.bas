@@ -15,7 +15,7 @@ sub SoundEffects.init()
 	sounds(SND_THROW)		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"throw.wav",0,0,0)                           :volume(SND_THROW)          = 255
 	sounds(SND_SHOOT)		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"shoot.wav",0,0,0)                           :volume(SND_SHOOT)	         = 255
 	sounds(SND_ALARM) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"alert.wav",0,0,0)                           :volume(SND_ALARM)          = 255
-	sounds(SND_DOOR) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"door.wav",0,0,0)                            :volume(SND_DOOR)           = 255
+	sounds(SND_DOOR) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"door.wav",0,0,0)                            :volume(SND_DOOR)           = 30
 	sounds(SND_DRIP) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"drip.wav",0,0,0)                            :volume(SND_DRIP)           = 255
 	sounds(SND_HURT) 		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"hurt.wav",0,0,0)                            :volume(SND_HURT)           = 255
 	sounds(SND_DEATH)		   = FSOUND_SAMPLE_Load(FSOUND_FREE,"death.wav",0,0,0)                           :volume(SND_DEATH)          = 255
@@ -38,6 +38,7 @@ sub SoundEffects.init()
     sounds(SND_POW)            = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\Pow.wav",0,0,0)               :volume(SND_POW)            = 255   
     sounds(SND_GLASSTAP)       = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\glasstap.wav",0,0,0)          :volume(SND_GLASSTAP)       = 10   
     sounds(SND_MACHINEGUN)     = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\machinegun.wav",0,0,0)        :volume(SND_MACHINEGUN)     = 30   
+    sounds(SND_LAMPPULL)       = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\lamppull.wav",0,0,0)          :volume(SND_LAMPPULL)       = 64
 end sub
 
 sub SoundEffects.setLink(link_ as objectLink)

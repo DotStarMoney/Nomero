@@ -109,7 +109,7 @@ sub Player.initPathing
         dim as string filename = ""
         dim as recordFrame_t ptr recordData
         
-        useSoldier = YELLOW_SOLDIER
+        useSoldier = RED_SOLDIER
         
         select case useSoldier
         case RED_SOLDIER

@@ -77,7 +77,7 @@ constructor GameSpace()
     curMusic = lvlData.getCurrentMusicFile()
     music(currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 											 FSOUND_LOOP_NORMAL, 0, 0) 
-    'FSOUND_Stream_Play currentMusic, music(currentMusic)
+    FSOUND_Stream_Play currentMusic, music(currentMusic)
     FSOUND_SetVolumeAbsolute(currentMusic, 128)
     musicVol = 255
     musicVolDir = 0
@@ -85,7 +85,7 @@ constructor GameSpace()
     switchTracks = 0
     
     spy.centerToMap(lvlData.getDefaultPos())
-    'spy.body.p = Vector2D(700, 200)
+    'spy.body.p = Vector2D(1700, 100)
     
     lastSpawn = spy.body.p
     camera = spy.body.p
@@ -103,6 +103,7 @@ constructor GameSpace()
     foregroundSnow.setDepth(0.5, 4)
     foregroundSnow.setDrift(-333)
     foregroundSnow.setSpeed(700)
+    
     
     tracker.init(link)
            
@@ -433,6 +434,8 @@ sub GameSpace.step_draw()
     
     window screen (0,0)-(SCRX-1,SCRY-1)
     
+    
+    
     /'
     if spy.health > 75 then
 		put scnbuff, (8,11), hud_image, (0,18)-(151,25), TRANS
@@ -491,6 +494,7 @@ sub GameSpace.step_draw()
     #ifndef SCALE_ELLIOTT
         #ifndef SCALE_2X
             window screen (0,0)-(SCRX-1,SCRY-1)
+                  
             put (0,0), scnbuff, PSET
         #else
             scale2sync scnbuff
@@ -501,6 +505,8 @@ sub GameSpace.step_draw()
         put (80,60), scnbuff, PSET
     #endif 
     RECORD_PROFILE(0)
+    
+    
 
     for i = 0 to 9
         timeProfiles(i) = timeProfiles(i) * 0.90 + 0.10 * timeAdd(i)

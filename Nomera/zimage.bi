@@ -48,6 +48,7 @@ type zImage
                                      x0 as integer, y0 as integer, x1 as integer, y1 as integer,_
                                      ambientLight as integer = &h00000000,_
                                      light1 as PointLight, light2 as PointLight, light3 as PointLight)
+        declare sub setClip(nx as integer, ny as integer)
     private:
         as integer isEmpty
         as integer isPng
@@ -57,6 +58,7 @@ type zImage
         as integer ptr norm_fbimg   
         as integer w
         as integer h 
+        as integer clipX, clipY
 end type
 
 

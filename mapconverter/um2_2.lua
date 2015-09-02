@@ -8,6 +8,7 @@ return {
   tileheight = 16,
   properties = {
     ["default start"] = "56, 32",
+    ["music"] = "Mountain.ogg",
     ["snow"] = ""
   },
   tilesets = {

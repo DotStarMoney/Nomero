@@ -51,7 +51,8 @@ declare function ScreenClip(px as integer, py as integer ,_
                             sx as integer, sy as integer ,_
                             byref npx  as integer, byref npy  as integer ,_
                             byref sdx1 as integer, byref sdy1 as integer ,_
-                            byref sdx2 as integer, byref sdy2 as integer) as integer
+                            byref sdx2 as integer, byref sdy2 as integer, _
+                            nx as integer = -1, ny as integer = -1) as integer
  
 declare function AnyClip(px as integer, py as integer ,_
                          sx as integer, sy as integer ,_

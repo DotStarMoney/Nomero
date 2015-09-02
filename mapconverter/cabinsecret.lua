@@ -10,7 +10,8 @@ return {
     ["ambient level"] = "&h4f493f",
     ["default start"] = "28, 12",
     ["hidden ambient level"] = "&h3f392f",
-    ["light objects"] = ""
+    ["light objects"] = "",
+    ["music"] = "MountainQuiet.ogg"
   },
   tilesets = {
     {

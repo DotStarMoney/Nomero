@@ -42,6 +42,7 @@ randomize timer
 setmouse ,,0
 FSOUND_Init(44100, 16, 0)
 
+
 #ifdef INTRO
 	#ifndef DEBUG 
 		dim as uinteger ptr scnbuff

@@ -524,7 +524,7 @@ sub Item.CABINCONTROL_PROC_INIT()
     data_.CABINCONTROL_DATA->startedSequence = 0
     data_.CABINCONTROL_DATA->enablePanel = 0
     data_.CABINCONTROL_DATA->actionTimer = 0
-    
+    data_.CABINCONTROL_DATA->playChime = 0
     getParameter(data_.CABINCONTROL_DATA->muralLoc, "muralTarget")
     getParameter(data_.CABINCONTROL_DATA->camTarget, "cameraTarget")
 
@@ -553,6 +553,8 @@ function Item.CABINCONTROL_PROC_RUN(t as double) as integer
     end if
     if data_.CABINCONTROL_DATA->drawMural andAlso (data_.CABINCONTROL_DATA->state = 0) then
         lightState = 1
+        if data_.CABINCONTROL_DATA->playChime = 0 then link.soundeffects_ptr->playSound(SND_SUCCESS)
+        data_.CABINCONTROL_DATA->playChime = 1
         if data_.CABINCONTROL_DATA->enablePanel = 0 then 
             throw("ENABLEPANEL")
             data_.CABINCONTROL_DATA->enablePanel = 1
@@ -953,8 +955,10 @@ sub Item.DEEPSPOTLIGHT_PROC_CONSTRUCT()
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
 end sub
 sub Item.DESKLAMP_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
-    if data_.DESKLAMP_DATA->isDisabled = 0 then data_.DESKLAMP_DATA->fCount = 10
-    
+    if data_.DESKLAMP_DATA->isDisabled = 0 then
+        data_.DESKLAMP_DATA->fCount = 10
+        link.soundeffects_ptr->playSound(SND_LAMPPULL)
+    end if
 end sub
 sub Item.DESKLAMP_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
     data_.DESKLAMP_DATA->isDisabled = 0
@@ -1413,7 +1417,10 @@ end sub
 sub Item.FISHBOWL_PROC_CONSTRUCT()
 end sub
 sub Item.FLOORLAMP_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
-    if data_.FLOORLAMP_DATA->isDisabled = 0 then data_.FLOORLAMP_DATA->fCount = 10
+    if data_.FLOORLAMP_DATA->isDisabled = 0 then 
+        data_.FLOORLAMP_DATA->fCount = 10
+        link.soundeffects_ptr->playSound(SND_LAMPPULL)
+    end if
     
 end sub
 sub Item.FLOORLAMP_SLOT_TOGGLE(pvPair() as _Item_slotValuePair_t)

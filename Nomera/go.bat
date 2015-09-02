@@ -1,1 +1,1 @@
-Nomera "lab.map"
+Nomera "mine.map"

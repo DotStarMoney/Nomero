@@ -6,6 +6,7 @@
   <property name="default start" value="18, 48"/>
   <property name="hidden ambient level" value="&amp;h0f0f0f"/>
   <property name="light objects" value=""/>
+  <property name="music" value="MountainQuiet.ogg"/>
  </properties>
  <tileset firstgid="1" name="BIG Compilation" tilewidth="16" tileheight="16">
   <image source="BIG Compilation.bmp" trans="ff00ff" width="320" height="2080"/>

@@ -16,9 +16,6 @@ const pi_180 = _PI_ / 180
 sub rotozoom_alpha2( byref dst as FB.IMAGE ptr = 0, byref src as const FB.IMAGE ptr, byval positx as integer, byval posity as integer, byref angle as integer,_
                      byref zoomx as single = 0, byref zoomy as single = 0, byval transcol as uinteger = &hffff00ff, byval alphalvl as integer = 255, byref offsetx as integer = 0, byref offsety as integer = 0 )
     
-	'Rotozoom for 32-bit FB.Image by Dr_D(Dave Stanley), yetifoot(Simon Nash) and Mysoft(Gregori Macario Harbs)
-	'No warranty implied... use at your own risk ;) 
-    
 	dim as sse_t sse0, sse1, sse2, sse3, sse4, sse5
 	dim as integer nx = any, ny = any
 	dim as single tcdzx = any, tcdzy = any, tsdzx = any, tsdzy = any
@@ -128,8 +125,8 @@ sub rotozoom_alpha2( byref dst as FB.IMAGE ptr = 0, byref src as const FB.IMAGE 
     
 	dstptr += dstpitch * (starty + posity) \ 4
     
-	x_draw_len = (endx - startx)' + 1
-	y_draw_len = (endy - starty)' + 1
+	x_draw_len = (endx - startx)
+	y_draw_len = (endy - starty)
     
 	sse1.s(0) = tcdzx
 	sse1.s(1) = tsdzx
@@ -166,121 +163,90 @@ sub rotozoom_alpha2( byref dst as FB.IMAGE ptr = 0, byref src as const FB.IMAGE 
         
 		.balign 4
 		y_inner4:
-        
-        ' _mx = nxtc + sw2
-        ' _my = nxts + sh2
+    
         movaps xmm0, xmm4
         
-        ' _dstptr = cptr( any ptr, dstptr )
         mov edi, dword ptr [dstptr]
         
-        ' _x_draw_len = x_draw_len
         mov ecx, dword ptr [x_draw_len]
         
-        ' _mx += -nyts
-        ' _my += nytc
+        
         addps xmm0, xmm2
         
 		.balign 4
 		x_inner4:
         
-        ' get _mx and _my out of sse reg
         cvtps2pi mm0, xmm0
         
-        ' mx = mmx0.i(0)
         movd esi, mm0
         
-        ' shift mm0 so my is ready
         psrlq mm0, 32
         
-        ' if (mx >= srcwidth) or (mx < 0) then goto no_draw3
         cmp esi, dword ptr [srcwidth]
         jae no_draw4
         
-        ' my = mmx0.i(1)
         movd edx, mm0
         
-        ' if (my >= srcheight) or (my < 0) then goto no_draw3
         cmp edx, dword ptr [srcheight]
         jae no_draw4
         
-        ' _srcptr = srcbyteptr + (my * srcpitch) + (mx shl 2)
         shl esi, 2
         mov eax, dword ptr [row_table]
         add esi, dword ptr [eax+edx*4]
         
-        '_srccol = *cptr( uinteger ptr, _srcptr )
         mov eax, dword ptr [esi]
-        
-'        ' if (_srccol and &HFF000000) = 0 then goto no_draw3
-'        test eax, &HFF000000
-'        jz no_draw4
-        
-        ' if _srccol = transcol then goto no_draw3
+
         cmp eax, dword ptr [transcol]
         je no_draw4
-        
-        ' blend
-        
-        ' load src pixel and dst pixel mmx, with unpacking
+      
         punpcklbw mm0, dword ptr [esi]
         punpcklbw mm1, dword ptr [edi]
         
-        ' shift them to the right place
-        psrlw mm0, 8                ' mm0 = 00sa00sr00sg00sb
-        psrlw mm1, 8                ' mm1 = 00da00dr00dg00db
+        psrlw mm0, 8               
+        psrlw mm1, 8               
         
-        ' Prepare alpha
         
-	    'changed by mysoft
-        movq      mm3, [alphalevel]      ' mm2 = 00sa00xx00xx00xx
+        movq      mm3, [alphalevel]
         movq      mm2, mm0
         
-        punpckhwd mm2, mm2          ' mm2 = 00sa00sa00xx00xx
-        punpckhdq mm2, mm2          ' mm2 = 00sa00sa00sa00sa
+        punpckhwd mm2, mm2         
+        punpckhdq mm2, mm2         
         pmullw    mm2, mm3
         psrlw     mm2, 8
         
         
-        ' Perform blend
-        psubw mm0, mm1              ' (sX - dX)
-        pmullw mm0, mm2             ' (sX - dX) * sa
-        psrlq mm0, 8                ' mm0 = 00aa00rr00gg00bb
-        paddw mm0, mm1              ' ((sX - dX) * sa) + dX
-        pand mm0, qword ptr [mask1] ' mask off alpha and high parts
+        psubw mm0, mm1              
+        pmullw mm0, mm2             
+        psrlq mm0, 8                
+        paddw mm0, mm1              
+        pand mm0, qword ptr [mask1] 
         
-        ' repack to 32 bit
         packuswb mm0, mm0
         
-        ' store in destination
         movd dword ptr [edi], mm0
         
 		.balign 4
 		no_draw4:
         
-        ' _mx += tcdzx
-        ' _my += tsdzx
+
+
         addps xmm0, xmm1
         
-        ' _dstptr += 4
         add edi, 4
         
-        ' _x_draw_len -= 1
         sub ecx, 1
         
         jnz x_inner4
         
 		x_end4:
         
-        ' nyts += tsdzy
-        ' nytc += tcdzy
+
+
         addps xmm2, xmm3
         
-        ' cptr( any ptr, dstptr ) += dstpitch
         mov eax, dword ptr [dstpitch]
         add dword ptr [dstptr], eax
         
-        ' y_draw_len -= 1
         sub dword ptr [y_draw_len], 1
         
         jnz y_inner4
@@ -2126,11 +2092,20 @@ Function ScreenClip(px as integer, py as integer ,_
                     sx as integer, sy as integer ,_
                     byref npx  as integer, byref npy  as integer ,_
                     byref sdx1 as integer, byref sdy1 as integer ,_
-                    byref sdx2 as integer, byref sdy2 as integer) as integer
+                    byref sdx2 as integer, byref sdy2 as integer ,_
+                    nx as integer, ny as integer) as integer
     Dim as integer px1,py1,px2,py2,SW,SH
     dim as integer bbx1, bbx2, bby1, bby2
-    SW = SCRX
-    SH = SCRY
+    if nx = -1 then
+        SW = SCRX
+    else
+        SW = nx
+    end if
+    if ny = -1 then
+        SH = SCRY
+    else
+        SH = ny
+    end if
     px1 = px       : py1 = py
     px2 = px+sx - 1: py2 = py+sy - 1
     If px2 <  0  Then Return 0

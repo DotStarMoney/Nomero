@@ -38,6 +38,7 @@ type ITEM_CABINCONTROL_TYPE_DATA
     as integer startedSequence
     as integer enablePanel
     as integer actionTimer
+    as integer playChime
 end type
 type ITEM_CASH_TYPE_DATA
     as integer frameCount

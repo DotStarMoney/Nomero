@@ -9,6 +9,7 @@ type ITEM_DATA
     as integer startedSequence
     as integer enablePanel
     as integer actionTimer
+    as integer playChime
 end type
 #DEFINE CHARGE_TIME 2700
 '7200
@@ -30,7 +31,7 @@ function _init()
     data.startedSequence = 0
     data.enablePanel = 0
     data.actionTimer = 0
-    
+    data.playChime = 0
     getParameter(data.muralLoc, "muralTarget")
     getParameter(data.camTarget, "cameraTarget")
 
@@ -77,6 +78,8 @@ function _run(t as double)
     end if
     if data.drawMural andAlso (data.state = 0) then
         lightState = 1
+        if data.playChime = 0 then link.soundeffects_ptr->playSound(SND_SUCCESS)
+        data.playChime = 1
         if data.enablePanel = 0 then 
             throw($enablePanel)
             data.enablePanel = 1

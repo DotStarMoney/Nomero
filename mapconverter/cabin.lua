@@ -11,7 +11,8 @@ return {
     ["back snow"] = "",
     ["default start"] = "18, 48",
     ["hidden ambient level"] = "&h0f0f0f",
-    ["light objects"] = ""
+    ["light objects"] = "",
+    ["music"] = "MountainQuiet.ogg"
   },
   tilesets = {
     {
