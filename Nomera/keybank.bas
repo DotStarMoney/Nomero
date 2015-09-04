@@ -31,5 +31,6 @@ sub KeyBank.flush()
         deallocate(curNode_->memAddr)
         deallocate(curNode_->key)
     END_HASH()
+    keys.flush()
 end sub
 

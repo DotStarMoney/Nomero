@@ -47,11 +47,13 @@ sub DynamicController.clean()
     valueTargets.flush()
     slotTargets.flush()
     stringToTypeTable.clean()
+    
     drawobjects_active.clean()
     drawobjects_activefront.clean()
     drawobjects_background.clean()
     drawobjects_foreground.clean()
-
+    
+    
     BEGIN_DHASH(curPublish, allPublishedValues)
         if curPublish->target then delete(curPublish->target)
         deallocate(curPublish->tag_)
@@ -97,7 +99,6 @@ sub DynamicController.clean()
     END_HASH()
     itemIdPairs.clean()
     
-    
 end sub
 sub DynamicController.flush()
     dim as DynamicController_connectionNode_t ptr curConnectionNode
@@ -109,6 +110,7 @@ sub DynamicController.flush()
     dim as DynamicController_publishSlot_t ptr curPublishSlot    
     dim as DynamicController_itemPair_t ptr curItem
     
+    
     valueTargets.flush()
     slotTargets.flush()
 
@@ -116,7 +118,7 @@ sub DynamicController.flush()
     drawobjects_activefront.flush()
     drawobjects_background.flush()
     drawobjects_foreground.flush()
-
+    
     BEGIN_DHASH(curPublish, allPublishedValues)
         if curPublish->target then delete(curPublish->target)
         deallocate(curPublish->tag_)
@@ -128,6 +130,7 @@ sub DynamicController.flush()
         deallocate(curPublishSlot->slot_tag_)        
     END_DHASH()
     allPublishedSlots.flush()
+    
     
     BEGIN_HASH(curConnectionNode, connections)
         BEGIN_HASH(curIncomingConnection, curConnectionNode->slots)
@@ -155,12 +158,16 @@ sub DynamicController.flush()
     END_HASH()
     connections.flush()
     
+    
+    
     itemIdGenerator.flush()
+    
     
     BEGIN_HASH(curItem, itemIdPairs)
         delete(curItem->item_)
     END_HASH()
     itemIdPairs.flush()
+    
     
 end sub
 

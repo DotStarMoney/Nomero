@@ -4,21 +4,28 @@ type ITEM_DATA
     as integer state
 end type
 
+parameter "state", integer
+parameter "noSpecular", integer
 
 '---------------------------------
 
 function _init()
-    dim as integer i
+    dim as integer i, noSpec
     
     getParameter(data.state, "state")
-    
+    getParameter(noSpec, "noSpecular")
+
+ 
     CREATE_ANIMS(4)
-    PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 2, 3, 1)  
+    if noSpec = 0 then
+        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 2, 3, 1)  
+    else
+        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\black_specular.txt", 2, 3, 1)  
+    end if
     
     anims[0].load(MEDIA_PATH + "lantern.txt")
     anims[1].load(MEDIA_PATH + "lantern.txt")
     anims[1].hardswitch(1)
-    
  
 end function
 
@@ -56,7 +63,7 @@ function _run(t as double)
         lightState = 0
     end if
     light.texture.x = p.x + size.x * 0.5
-    light.texture.y = p.y + size.y * 0.5
+    light.texture.y = p.y + size.y * 0.5 + 8
     light.shaded.x = light.texture.x
     light.shaded.y = light.texture.y  
 end function

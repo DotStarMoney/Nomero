@@ -759,15 +759,27 @@ sub level.flush()
     highestLayerIndex = -1
     if lvlName <> "" then
         shouldLightObjects = 0
+        #ifdef DEBUG
+            prinTLOG "tilesets..."
+            stall(100)
+        #endif
         if coldata <> 0 then deallocate(coldata)
         for i = 0 to tilesets_N - 1
             deallocate(tilesets[i].set_name)
             tilesets[i].set_image.flush()
         next i
         if tilesets <> 0 then delete(tilesets)
+        #ifdef DEBUG
+            prinTLOG "layers..."
+            stall(100)
+        #endif
         for i = 0 to blocks_N - 1
             if blocks[i] <> 0 then deallocate(blocks[i])
         next i
+        #ifdef DEBUG
+            prinTLOG "windymist..."
+            stall(100)
+        #endif
         if windyMistLayers <> 0 then
             for i = 0 to windyMistLayers_n - 1
                 if windyMistLayers[i].objects <> 0 then deallocate(windyMistLayers[i].objects)
@@ -776,15 +788,27 @@ sub level.flush()
         end if
         if blocks <> 0 then deallocate(blocks)
         if layerData <> 0 then deallocate(layerData)
+        #ifdef DEBUG
+            prinTLOG "layer lists..."
+            stall(100)
+        #endif
         background_layer.flush()
         active_layer.flush()
         activeFront_layer.flush()
         activeCover_layer.flush()
         foreground_layer.flush()
+        #ifdef DEBUG
+            prinTLOG "layer groups..."
+            stall(100)
+        #endif
         BEGIN_HASH(curGroup, groups)
             delete(curGroup->layers)
         END_HASH()
         groups.flush()
+        #ifdef DEBUG
+            prinTLOG "fallout zones..."
+            stall(100)
+        #endif
         falloutZones.rollReset()
         lightList_N = 0
         do
@@ -797,6 +821,10 @@ sub level.flush()
                 exit do
             end if
         loop
+        #ifdef DEBUG
+            prinTLOG "portals..."
+            stall(100)
+        #endif
 		portals.rollReset()
         do
             portalItem = portals.roll()
@@ -810,8 +838,20 @@ sub level.flush()
         loop
         portals.flush()
         falloutZones.flush()
+        #ifdef DEBUG
+            prinTLOG "legacy effects..."
+            stall(100)
+        #endif
         graphicFX_->flush()
+        #ifdef DEBUG
+            prinTLOG "projectiles..."
+            stall(100)
+        #endif
         link.projectilecollection_ptr->flush()
+        #ifdef DEBUG
+            prinTLOG "objects..."
+            stall(100)
+        #endif
         link.dynamiccontroller_ptr->flush()
         windyMistLayers_n = 0
         windyMistLayers = 0

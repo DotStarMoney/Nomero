@@ -356,6 +356,7 @@ sub HashTable.clean()
     dim as HashNode_t ptr curNode
     dim as HashNode_t ptr nextNode
     dim as integer i
+    if data_ = 0 then exit sub
     for i = 0 to numCells - 1
         curNode = data_[i]
         while curNode <> 0 

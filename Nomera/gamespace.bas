@@ -79,7 +79,7 @@ constructor GameSpace()
 											 FSOUND_LOOP_NORMAL, 0, 0) 
     FSOUND_Stream_Play currentMusic, music(currentMusic)
     FSOUND_SetVolumeAbsolute(currentMusic, 128)
-    musicVol = 255
+    musicVol = 128
     musicVolDir = 0
    
     switchTracks = 0
@@ -207,7 +207,7 @@ end sub
 destructor GameSpace
     imagedestroy scnbuff
     timeEndPeriod(SLEEP_RESOLUTION)
-
+    FSOUND_Stream_Close(currentMusic)
 end destructor
         
 sub GameSpace.setMusicVolume(v as integer)

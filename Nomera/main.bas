@@ -300,10 +300,11 @@ FSOUND_Init(44100, 16, 0)
 
 
             gameNomera.go
-            
-        
+
         end if
-        end
+
+        FSOUND_Close()
+        end 
     #endif
 #endif
 
@@ -314,5 +315,6 @@ Dim as GameSpace gameNomera
 
 gameNomera.go
 
+FSOUND_Close()
 
 end

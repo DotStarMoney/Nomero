@@ -3,7 +3,7 @@
 
 #include "debug.bi"
 
-#define KICKSTARTER
+'#define KICKSTARTER
 '#define NO_PLAYER
 
 '#define SCALE_2X
