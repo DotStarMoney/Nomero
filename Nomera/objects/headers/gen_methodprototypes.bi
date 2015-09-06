@@ -146,6 +146,8 @@ declare function HIDDENSWITCH_PROC_RUN(t as double) as integer
 declare sub HIDDENSWITCH_PROC_DRAW(scnbuff as integer ptr)
 declare sub HIDDENSWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 declare sub HIDDENSWITCH_PROC_CONSTRUCT()
+declare sub INTELLIGENCE_SUB_serialize_in()
+declare sub INTELLIGENCE_SUB_serialize_out()
 declare sub INTELLIGENCE_PROC_INIT()
 declare sub INTELLIGENCE_PROC_FLUSH()
 declare function INTELLIGENCE_PROC_RUN(t as double) as integer

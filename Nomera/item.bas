@@ -177,6 +177,12 @@ end sub
 function Item.getID() as string
     return ID
 end function
+sub Item.serialize_in(bindata as byte ptr)
+
+end sub
+sub Item.serialize_out(byref bindata as byte ptr, byref size as integer)
+	
+end sub
 
 function Item.process(t as double) as integer
     

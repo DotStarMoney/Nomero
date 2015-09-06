@@ -78,6 +78,9 @@ type Item
         
         declare function isSignal(signal_tag as string) as integer
         declare function isSlot(slot_tag as string) as integer
+		
+		declare sub serialize_in(bindata as byte ptr)
+		declare sub serialize_out(byref bindata as byte ptr, byref size as integer)
         
         declare static sub valueFormToContainer(value_form as string, byref valueC as _Item_valueContainer_t)
         

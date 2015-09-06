@@ -89,6 +89,9 @@ type DynamicController
         declare sub getBounds(ID_ as string, byref a as Vector2D, byref b as Vector2D)
 
         declare sub removeItem(ID_ as string)
+		
+		declare sub serialize_in(bindata as byte ptr)
+		declare sub serialize_out(byref bindata as byte ptr, byref size as integer)
         
         '---------------- used by outside to create objects ---------------
         declare function itemStringToType(item_tag as string) as Item_Type_e

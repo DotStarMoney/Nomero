@@ -1,1 +1,1 @@
-Nomera "secretshack.map"
+Nomera "cabinsecret.map"

@@ -1807,6 +1807,12 @@ sub Item.HIDDENSWITCH_PROC_CONSTRUCT()
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
 end sub
+sub Item.INTELLIGENCE_SUB_serialize_in()
+	
+end sub
+sub Item.INTELLIGENCE_SUB_serialize_out()
+	
+end sub
 sub Item.INTELLIGENCE_PROC_INIT()
     data_.INTELLIGENCE_DATA = new ITEM_INTELLIGENCE_TYPE_DATA
     data_.INTELLIGENCE_DATA->img = new zImage()

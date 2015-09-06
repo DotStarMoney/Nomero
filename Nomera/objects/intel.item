@@ -72,3 +72,17 @@ function _run(t as double)
 end function
 
 '-----------------------------------
+
+function _serialize_in()
+	capture(@data.frameCount, 4)
+	
+	/'
+	memcpy(@data.frameCount, @(bindata[SERIALIZEIN_currentByte])), 4)
+	'/
+end function
+
+function _serialize_out()
+	store(@data.frameCount, 4)
+end function
+
+

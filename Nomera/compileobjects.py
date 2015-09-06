@@ -154,6 +154,10 @@ file_slotcaseblock = headerDir + 'gen_slotcaseblock.bi'
 text_slotcaseblock = ''
 file_constructcaseblock = headerDir + 'gen_constructcaseblock.bi'
 text_constructcaseblock = ''
+file_serializeincaseblock = headerDir + 'gen_serializeincaseblock.bi'
+text_serializeincaseblock = ''
+file_serializeoutcaseblock = headerDir + 'gen_serializeoutcaseblock.bi'
+text_serializeoutcaseblock = ''
 
 itemFiles = getAllItemFiles()
 
@@ -176,6 +180,8 @@ freshFile(file_drawcaseblock)
 freshFile(file_drawoverlaycaseblock)
 freshFile(file_slotcaseblock)
 freshFile(file_constructcaseblock)
+freshFile(file_serializeincaseblock)
+freshFile(file_serializeoutcaseblock)
 
 for curFileName in itemFiles:
     curFile = open(curFileName, "r")
@@ -516,6 +522,24 @@ for curFileName in itemFiles:
             text_methodprototypes += 'declare sub ' + fDrawOProto + '\n'
             text_drawoverlaycaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + objectShortPrefix + '_PROC_DRAWOVERLAY(scnbuff)' + '\n'           
         
+        #serialize_in
+        fSerializeInGroup = re.search(r'^[ \t]*function[ \t]+_serialize_in[ \t]*\(.*?\).*?^[ \t]*end[ \t]+function[ \t]*(\'.*?$|$)', fileText, flags = re.M | re.I | re.S)
+        if fSerializeInGroup:
+            fSerializeIn = fSerializeInGroup.group(0)
+            fSerializeInLines = fSerializeIn.splitlines()
+            fSerializeInProto = objectShortPrefix + '_PROC_SERIALIZEIN(bindata as byte ptr)'
+            fSerializeInLines[0] = 'sub Item.' + fSerializeInProto
+			fSerializeInLines.insert(1, SPACE_TAB + 'dim as integer SERIALIZEIN_currentByte')
+			fSerializeInLines.insert(2, SPACE_TAB + 'SERIALIZEIN_currentByte = 0')
+            fSerializeInLines[-1] = 'end sub'
+            fSerializeIn = fixPolygon2DInit('\n'.join(fSerializeInLines) + '\n')
+			fSerializeIn = subNotInQuotes(fSerializeIn, r'([ \t])valueset([ \t\[\(])', r'\1ObjectValueSet\2')
+			
+            text_methoddefinitions += fSerializeIn
+            text_methodprototypes += 'declare sub ' + fSerializeInProto + '\n'
+            text_serializeincaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + objectShortPrefix + '_PROC_SERIALIZEIN((bindata as byte ptr)' + '\n'       		
+		
+		
         constructProto = objectShortPrefix + '_PROC_CONSTRUCT()'
         initHeader = 'sub Item.' + constructProto + '\n' + initHeader + 'end sub\n'
         initHeader = fixPolygon2DInit(initHeader)

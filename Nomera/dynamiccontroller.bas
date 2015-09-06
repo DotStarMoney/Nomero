@@ -44,6 +44,7 @@ sub DynamicController.clean()
     dim as DynamicController_publishSlot_t ptr curPublishSlot    
     dim as DynamicController_itemPair_t ptr curItem
     
+	
     valueTargets.flush()
     slotTargets.flush()
     stringToTypeTable.clean()
@@ -169,6 +170,19 @@ sub DynamicController.flush()
     itemIdPairs.flush()
     
     
+end sub
+sub serialize_in(bindata as any ptr)
+
+
+end sub
+sub serialize_out(byref bindata as any ptr, byref size as integer)
+    dim as DynamicController_itemPair_t ptr curItem
+	
+    BEGIN_HASH(curItem, itemIdPairs)
+        
+		
+		
+    END_HASH()	
 end sub
 
 sub DynamicController.removeItem(ID_ as string)
