@@ -1,5 +1,8 @@
 '#intelligence
 
+'persistence item
+persistence level 
+
 type ITEM_DATA
     as zimage ptr img
     as integer frameCount
@@ -74,15 +77,11 @@ end function
 '-----------------------------------
 
 function _serialize_in()
-	capture(@data.frameCount, 4)
-	
-	/'
-	memcpy(@data.frameCount, @(bindata[SERIALIZEIN_currentByte])), 4)
-	'/
+	capture(data.frameCount, 4)
 end function
 
 function _serialize_out()
-	store(@data.frameCount, 4)
+	store(data.frameCount, 4)
 end function
 
 

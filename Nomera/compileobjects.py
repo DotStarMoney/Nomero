@@ -321,10 +321,12 @@ for curFileName in itemFiles:
                (functionName.upper() != '_DRAW') and \
                (functionName.upper() != '_DRAWOVERLAY') and \
                (functionName.upper() != '_RUN'):
-                functionBlockLines[0] = 'function Item.' + functionName + functionArgs
+                functionBlockLines[0] = 'function Item.' + objectShortPrefix + functionName + functionArgs
                 functionBlock = '\n'.join(functionBlockLines) + '\n'                
-                text_methodprototypes += 'declare ' + functionFirstLine + '\n'
+                text_methodprototypes += 'declare ' + functionBlockLines[0] + '\n'
                 text_methoddefinitions += fixPolygon2DInit(functionBlock)
+				
+				
                 fileText = re.sub(r'^[ \t]*function[ \t]+' + functionName + r'[ \t]*\(.*?\).*?^[ \t]*end[ \t]+function[ \t]*$', '', fileText, flags = re.M | re.S | re.I)
         for functionsBlocksGroup in re.finditer(r'^[ \t]*sub[ \t]+\w+\(.*?\).*?^[ \t]*end[ \t]+sub[ \t]*$', fileText, flags = re.M | re.S | re.I):
             functionBlock = functionsBlocksGroup.group(0)
