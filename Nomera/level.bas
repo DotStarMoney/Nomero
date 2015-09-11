@@ -1713,6 +1713,7 @@ sub level.saveMapState()
     dim as PackedBinary serialData
     dim as string saveFileName
     dim as integer curFile
+    dim as integer i
     
     saveFileName = SAVE_PATH + ucase(lvlName) + "_STATE.dat"
     if fileexists(saveFileName) then kill saveFileName
@@ -1725,12 +1726,21 @@ sub level.saveMapState()
     put #curFile,,*cast(byte ptr, serialData.getData()),serialData.getSize()  
     put #curFile,,*curDestBlocks, lvlWidth*lvlHeight
     
+    
+    put #curFile,,objectAmbientLevel
+    put #curFile,,hiddenObjectAmbientLevel
+    for i = 0 to blocks_N - 1
+        put #curFile,,layerData[i].ambientLevel
+        put #curFile,,layerData[i].isHidden    
+    next i
+    
     close curFile
 end sub
 sub level.loadMapState() 
     dim as PackedBinary serialData
     dim as string saveFileName
     dim as integer curFile, dataSize
+    dim as integer i
     
     saveFileName = SAVE_PATH + ucase(lvlName) + "_STATE.dat"
     if fileexists(saveFileName) then 
@@ -1744,6 +1754,14 @@ sub level.loadMapState()
         
         curDestBlocks = allocate(lvlWidth*lvlHeight*sizeof(byte))
         get #curFile,,*curDestBlocks, lvlWidth*lvlHeight
+        
+        
+        get #curFile,,objectAmbientLevel
+        get #curFile,,hiddenObjectAmbientLevel
+        for i = 0 to blocks_N - 1
+            get #curFile,,layerData[i].ambientLevel
+            get #curFile,,layerData[i].isHidden    
+        next i
         
         close curFile
     else

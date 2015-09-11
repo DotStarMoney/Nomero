@@ -1,1 +1,2 @@
-Nomera "um2_1.map"
+del saves\*.dat
+Nomera "cabin.map"

@@ -46,7 +46,7 @@ sub DynamicController.clean()
     dim as DynamicController_publishSlot_t ptr curPublishSlot    
     dim as DynamicController_itemPair_t ptr curItem
     dim as DynamicController_ILIdata_t ptr curILI
-	
+
     valueTargets.flush()
     slotTargets.flush()
     stringToTypeTable.clean()
@@ -55,6 +55,7 @@ sub DynamicController.clean()
     END_HASH()
     activeLoadIdentifiers.clean()
     ILIlookup.clean()
+    
     
     drawobjects_active.clean()
     drawobjects_activefront.clean()
@@ -106,7 +107,6 @@ sub DynamicController.clean()
         delete(curItem->item_)
     END_HASH()
     itemIdPairs.clean()
-    
 end sub
 sub DynamicController.flush()
     dim as DynamicController_connectionNode_t ptr curConnectionNode
@@ -195,7 +195,7 @@ sub DynamicController.serialize_in(pbin as PackedBinary)
     dim as DynamicController_itemPair_t ptr newItem
     dim as DynamicController_itemPair_t ptr refItem
     dim as string signal_tag, slot_ID, slot_tag, parameterString
-    dim as string value_tag, tempString
+    dim as string value_tag, tempString, thisID
     dim as DynamicController_ILIdata_t curILI
     dim as Vector2d offset
     
@@ -203,10 +203,12 @@ sub DynamicController.serialize_in(pbin as PackedBinary)
     for i = 0 to numItems - 1
         newItem = allocate(sizeof(DynamicController_itemPair_t))
         pbin.retrieve(newItem->usedKeyBank)
+        pbin.retrieve(thisID)
         newItem->item_ = new Item()
         newItem->item_->setLink(link)
-        newItem->item_->serialize_in(pbin)
-        refItem = itemIdPairs.insert(newItem->item_->getID(), newItem)           
+        refItem = itemIdPairs.insert(thisID, newItem)   
+        deallocate(newItem)        
+        refItem->item_->serialize_in(pbin)   
         if refItem->item_->orderClass <> orderType.NONE then
             if refItem->item_->orderClass = ACTIVE_FRONT then
                 drawobjects_activeFront.insert(refItem->item_->getID(), @refItem->item_)
@@ -218,7 +220,6 @@ sub DynamicController.serialize_in(pbin as PackedBinary)
                 drawobjects_foreground.insert(refItem->item_->getID(), @refItem->item_) 
             end if        
         end if
-        deallocate(newItem)
         pbin.retrieve(numConnections)
         for q = 0 to numConnections - 1
             pbin.retrieve(slot_ID)
@@ -277,6 +278,7 @@ sub DynamicController.serialize_out(pbin as PackedBinary)
     BEGIN_HASH(curItem, itemIdPairs)
         if curItem->item_->canSerialize() then 
             pbin.store(curItem->usedKeyBank)
+            pbin.store(curItem->item_->getID())
             curItem->item_->serialize_out(pbin)
             numConnections = 0
             curConnectionNode = connections.retrieve(curItem->item_->getID())
@@ -499,7 +501,7 @@ sub DynamicController.removeItem(ID_ as string)
     end if
     
     if itemPair_->item_->ILI >= 0 then
-        if itemPair_->item_->shouldReload() then 
+        if itemPair_->item_->shouldSaveILI() = 0 then 
             curILI = activeLoadIdentifiers.retrieve(itemPair_->item_->ILI)
             deallocate(curILI->ID_)
             activeLoadIdentifiers.remove(itemPair_->item_->ILI)

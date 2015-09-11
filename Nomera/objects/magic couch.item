@@ -1,5 +1,7 @@
 '#magic couch
 
+persistence item
+
 type ITEM_DATA 
     as TinyDynamic ptr platform
     as integer platform_i
@@ -82,8 +84,21 @@ end function
 
 slot $move()
     data.platform->togglePath()
-    
 end slot
 
+function _serialize_in()
+    retrieve(data.lastState)
+    retrieve(data.elevatorPos)
+    data.platform = new TinyDynamic()
+    data.platform->serialize_in(binaryData_)
+    data.platform_i = link.tinyspace_ptr->addDynamic(data.platform)
+end function
 
+'-----------------------------------
+
+function _serialize_out()
+    store(data.lastState)
+    store(data.elevatorPos)
+    data.platform->serialize_out(binaryData_)
+end function
 

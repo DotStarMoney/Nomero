@@ -1,5 +1,7 @@
 '#cabin control
 
+persistence item
+
 type ITEM_DATA
     as integer state
     as integer glowChargeFrames
@@ -11,7 +13,8 @@ type ITEM_DATA
     as integer actionTimer
     as integer playChime
 end type
-#DEFINE CHARGE_TIME 2700
+#DEFINE CHARGE_TIME 10
+'800
 '7200
 
 parameter "muralTarget", Vector2D
@@ -159,3 +162,32 @@ slot $togglelights()
     data.state = 1 - data.state
     setAmbientLevels()
 end slot
+
+'-----------------------------------
+
+function _serialize_in()
+    retrieve(data.state)
+    retrieve(data.glowChargeFrames)
+    retrieve(data.muralLoc)
+    retrieve(data.camTarget)
+    retrieve(data.drawMural)
+    retrieve(data.startedSequence)
+    retrieve(data.enablePanel)
+    retrieve(data.actionTimer)
+    retrieve(data.playChime)
+end function
+
+'-----------------------------------
+
+function _serialize_out()
+    store(data.state)
+    store(data.glowChargeFrames)
+    store(data.muralLoc)
+    store(data.camTarget)
+    store(data.drawMural)
+    store(data.startedSequence)
+    store(data.enablePanel)
+    store(data.actionTimer)
+    store(data.playChime)
+end function
+

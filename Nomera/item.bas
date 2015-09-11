@@ -202,10 +202,13 @@ function Item.canSerialize() as integer
     return 0
 end function
 function Item.shouldReload() as integer
-    if persistenceLevel_ = ITEM_PERSISTENCE_ITEM orElse persistenceLevel_ = ITEM_PERSISTENCE_LEVEL then return 0
+    if persistenceLevel_ = ITEM_PERSISTENCE_ITEM then return 0
     return 1
 end function
-
+function Item.shouldSaveILI() as integer
+    if persistenceLevel_ = ITEM_PERSISTENCE_ITEM orElse persistenceLevel_ = ITEM_PERSISTENCE_LEVEL then return 1
+    return 0
+end function
 sub Item.serialize_in(pbin as PackedBinary)
     dim as integer tempInt
     dim as integer i
@@ -222,7 +225,6 @@ sub Item.serialize_in(pbin as PackedBinary)
     itemType = tempInt
     pbin.retrieve(ID)
     construct(itemType, ID)
-
     pbin.retrieve(numRecords)
     for i = 0 to numRecords - 1
         pbin.retrieve(tempInt)
@@ -269,6 +271,8 @@ sub Item.serialize_in(pbin as PackedBinary)
     next i
     pbin.retrieve(usesLights_)
     if usesLights_ then
+        diffuseTex_ = new Animation()
+        specularTex_ = new Animation()
         diffuseTex_->serialize_in(pbin)
         specularTex_->serialize_in(pbin)
         pbin.retrieve(lightState)
@@ -294,7 +298,11 @@ sub Item.serialize_in(pbin as PackedBinary)
         pbin.retrieve(light.last_br_x)
         pbin.retrieve(light.last_br_y)
     end if
+
     pbin.retrieve(anims_n)
+    if anims_n > 0 then 
+        CREATE_ANIMS(anims_n)
+    end if
     for i = 0 to anims_n - 1
         anims[i].serialize_in(pbin)
     next i
@@ -308,12 +316,11 @@ sub Item.serialize_in(pbin as PackedBinary)
     pbin.retrieve(ILI)
     pbin.retrieve(tempInt)    
     orderClass = tempInt
-    
     #include "objects\headers\gen_serializeincaseblock.bi"
-
 end sub
 sub Item.serialize_out(pbin as PackedBinary)
     dim as _Item_valueContainer_t ptr valueC_ptr
+    dim as Vector2D tempV
     dim as integer i
     
     pbin.store(cint(itemType))
@@ -325,7 +332,8 @@ sub Item.serialize_out(pbin as PackedBinary)
         pbin.store(parameterTable.rollGetKeyString())
         select case valueC_ptr->type_
         case _ITEM_VALUE_VECTOR2D
-            pbin.store(valueC_ptr->data_.Vector2D_)
+            tempV = valueC_ptr->data_.Vector2D_
+            pbin.store(tempV)
         case _ITEM_VALUE_INTEGER
             pbin.store(valueC_ptr->data_.integer_)
         case _ITEM_VALUE_DOUBLE
@@ -340,7 +348,8 @@ sub Item.serialize_out(pbin as PackedBinary)
         pbin.store(valueTable.rollGetKeyString())
         select case valueC_ptr->type_
         case _ITEM_VALUE_VECTOR2D
-            pbin.store(valueC_ptr->data_.Vector2D_)
+            tempV = valueC_ptr->data_.Vector2D_
+            pbin.store(tempV)
         case _ITEM_VALUE_INTEGER
             pbin.store(valueC_ptr->data_.integer_)
         case _ITEM_VALUE_DOUBLE

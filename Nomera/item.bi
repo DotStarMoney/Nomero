@@ -91,6 +91,7 @@ type Item
         
         declare function canSerialize() as integer
         declare function shouldReload() as integer
+        declare function shouldSaveILI() as integer
         
         declare static sub valueFormToContainer(value_form as string, byref valueC as _Item_valueContainer_t)
         

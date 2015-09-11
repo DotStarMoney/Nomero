@@ -460,7 +460,7 @@ sub Item.BIGOSCILLOSCOPE_PROC_CONSTRUCT()
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
-#DEFINE ITEM_CABINCONTROL_DEFINE_CHARGE_TIME 2700
+#DEFINE ITEM_CABINCONTROL_DEFINE_CHARGE_TIME 10
 sub Item.CABINCONTROL_SUB_setAmbientLevels()
     dim as integer i
     dim as integer col
@@ -585,6 +585,29 @@ end sub
 sub Item.CABINCONTROL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
+sub Item.CABINCONTROL_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.CABINCONTROL_DATA = new ITEM_CABINCONTROL_TYPE_DATA
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->state)
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->glowChargeFrames)
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->muralLoc)
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->camTarget)
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->drawMural)
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->startedSequence)
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->enablePanel)
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->actionTimer)
+    binaryData_.retrieve(data_.CABINCONTROL_DATA->playChime)
+end sub
+sub Item.CABINCONTROL_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+    binaryData_.store(data_.CABINCONTROL_DATA->state)
+    binaryData_.store(data_.CABINCONTROL_DATA->glowChargeFrames)
+    binaryData_.store(data_.CABINCONTROL_DATA->muralLoc)
+    binaryData_.store(data_.CABINCONTROL_DATA->camTarget)
+    binaryData_.store(data_.CABINCONTROL_DATA->drawMural)
+    binaryData_.store(data_.CABINCONTROL_DATA->startedSequence)
+    binaryData_.store(data_.CABINCONTROL_DATA->enablePanel)
+    binaryData_.store(data_.CABINCONTROL_DATA->actionTimer)
+    binaryData_.store(data_.CABINCONTROL_DATA->playChime)
+end sub
 sub Item.CABINCONTROL_PROC_CONSTRUCT()
     _initAddSignal_("ENABLEPANEL")
     _initAddSignal_("LAMPENABLE")
@@ -595,7 +618,8 @@ sub Item.CABINCONTROL_PROC_CONSTRUCT()
     _initAddSlot_("TOGGLELIGHTS", ITEM_CABINCONTROL_SLOT_TOGGLELIGHTS_E)
     _initAddParameter_("MURALTARGET", _ITEM_VALUE_VECTOR2D)
     _initAddParameter_("CAMERATARGET", _ITEM_VALUE_VECTOR2D)
-    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
 sub Item.CASH_PROC_INIT()
     data_.CASH_DATA = new ITEM_CASH_TYPE_DATA
@@ -1030,13 +1054,29 @@ end sub
 sub Item.DESKLAMP_PROC_DRAWOVERLAY(scnbuff as integer ptr)
   
 end sub
+sub Item.DESKLAMP_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.DESKLAMP_DATA = new ITEM_DESKLAMP_TYPE_DATA
+	binaryData_.retrieve(data_.DESKLAMP_DATA->isDisabled)
+    binaryData_.retrieve(data_.DESKLAMP_DATA->state)
+    binaryData_.retrieve(data_.DESKLAMP_DATA->flavor)
+    binaryData_.retrieve(data_.DESKLAMP_DATA->fCount)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 32)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.DESKLAMP_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+	binaryData_.store(data_.DESKLAMP_DATA->isDisabled)
+    binaryData_.store(data_.DESKLAMP_DATA->state)
+    binaryData_.store(data_.DESKLAMP_DATA->flavor)
+    binaryData_.store(data_.DESKLAMP_DATA->fCount)
+end sub
 sub Item.DESKLAMP_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_DESKLAMP_SLOT_INTERACT_E)
     _initAddSlot_("ENABLE", ITEM_DESKLAMP_SLOT_ENABLE_E)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
-    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
 #define ITEM_ELECTRICMINE_DEFINE_MAX_RAYCAST_ATTEMPTS 10
 #define ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST 80
@@ -1484,13 +1524,27 @@ end sub
 sub Item.FLOORLAMP_PROC_DRAWOVERLAY(scnbuff as integer ptr)
   
 end sub
+sub Item.FLOORLAMP_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.FLOORLAMP_DATA = new ITEM_FLOORLAMP_TYPE_DATA
+	binaryData_.retrieve(data_.FLOORLAMP_DATA->isDisabled)
+    binaryData_.retrieve(data_.FLOORLAMP_DATA->state)
+    binaryData_.retrieve(data_.FLOORLAMP_DATA->fCount)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 32)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.FLOORLAMP_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+	binaryData_.store(data_.FLOORLAMP_DATA->isDisabled)
+    binaryData_.store(data_.FLOORLAMP_DATA->state)
+    binaryData_.store(data_.FLOORLAMP_DATA->fCount)
+end sub
 sub Item.FLOORLAMP_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_FLOORLAMP_SLOT_INTERACT_E)
     _initAddSlot_("TOGGLE", ITEM_FLOORLAMP_SLOT_TOGGLE_E)
     _initAddSlot_("ENABLE", ITEM_FLOORLAMP_SLOT_ENABLE_E)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
-    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
 sub Item.FREIGHTELEVATOR_SUB_togglePath()
     link.soundeffects_ptr->playSound(SND_SELECT)
@@ -1745,11 +1799,19 @@ end sub
 sub Item.HANGINGBULB_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
+sub Item.HANGINGBULB_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.HANGINGBULB_DATA = new ITEM_HANGINGBULB_TYPE_DATA
+    binaryData_.retrieve(data_.HANGINGBULB_DATA->state)
+end sub
+sub Item.HANGINGBULB_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+    binaryData_.store(data_.HANGINGBULB_DATA->state)
+end sub
 sub Item.HANGINGBULB_PROC_CONSTRUCT()
     _initAddSlot_("TOGGLE", ITEM_HANGINGBULB_SLOT_TOGGLE_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("NOSPECULAR", _ITEM_VALUE_INTEGER)
-    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
 sub Item.HIDDENSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     
@@ -1797,6 +1859,17 @@ end sub
 sub Item.HIDDENSWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
   
 end sub
+sub Item.HIDDENSWITCH_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.HIDDENSWITCH_DATA = new ITEM_HIDDENSWITCH_TYPE_DATA
+	binaryData_.retrieve(data_.HIDDENSWITCH_DATA->state)
+  	binaryData_.retrieve(data_.HIDDENSWITCH_DATA->disable)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(8,8), Vector2D(24, 24)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.HIDDENSWITCH_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+	binaryData_.store(data_.HIDDENSWITCH_DATA->state)
+    binaryData_.store(data_.HIDDENSWITCH_DATA->disable)
+end sub
 sub Item.HIDDENSWITCH_PROC_CONSTRUCT()
     _initAddSignal_("TURNON")
     _initAddSignal_("TURNOFF")
@@ -1805,7 +1878,8 @@ sub Item.HIDDENSWITCH_PROC_CONSTRUCT()
     _initAddSlot_("ENABLE", ITEM_HIDDENSWITCH_SLOT_ENABLE_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
-    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
 sub Item.INTELLIGENCE_PROC_INIT()
     data_.INTELLIGENCE_DATA = new ITEM_INTELLIGENCE_TYPE_DATA
@@ -1876,7 +1950,7 @@ sub Item.INTELLIGENCE_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
 end sub
 sub Item.INTELLIGENCE_PROC_CONSTRUCT()
     canExport_ = 1
-    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
+    persistenceLevel_ = ITEM_PERSISTENCE_LEVEL
 end sub
 sub Item.INTERFACE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 
@@ -1987,11 +2061,19 @@ end sub
 sub Item.LANTERN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
+sub Item.LANTERN_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.LANTERN_DATA = new ITEM_LANTERN_TYPE_DATA
+	binaryData_.retrieve(data_.LANTERN_DATA->state)
+end sub
+sub Item.LANTERN_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+	binaryData_.store(data_.LANTERN_DATA->state)
+end sub
 sub Item.LANTERN_PROC_CONSTRUCT()
     _initAddSlot_("TOGGLE", ITEM_LANTERN_SLOT_TOGGLE_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("NOSPECULAR", _ITEM_VALUE_INTEGER)
-    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
 sub Item.LASEREMITTER_PROC_INIT()
     data_.LASEREMITTER_DATA = new ITEM_LASEREMITTER_TYPE_DATA
@@ -2291,7 +2373,6 @@ sub Item.LASERRECEIVER_PROC_CONSTRUCT()
 end sub
 sub Item.MAGICCOUCH_SLOT_MOVE(pvPair() as _Item_slotValuePair_t)
     data_.MAGICCOUCH_DATA->platform->togglePath()
-    
 end sub
 sub Item.MAGICCOUCH_PROC_INIT()
     data_.MAGICCOUCH_DATA = new ITEM_MAGICCOUCH_TYPE_DATA
@@ -2352,10 +2433,24 @@ sub Item.MAGICCOUCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
     
 end sub
+sub Item.MAGICCOUCH_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.MAGICCOUCH_DATA = new ITEM_MAGICCOUCH_TYPE_DATA
+    binaryData_.retrieve(data_.MAGICCOUCH_DATA->lastState)
+    binaryData_.retrieve(data_.MAGICCOUCH_DATA->elevatorPos)
+    data_.MAGICCOUCH_DATA->platform = new TinyDynamic()
+    data_.MAGICCOUCH_DATA->platform->serialize_in(binaryData_)
+    data_.MAGICCOUCH_DATA->platform_i = link.tinyspace_ptr->addDynamic(data_.MAGICCOUCH_DATA->platform)
+end sub
+sub Item.MAGICCOUCH_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+    binaryData_.store(data_.MAGICCOUCH_DATA->lastState)
+    binaryData_.store(data_.MAGICCOUCH_DATA->elevatorPos)
+    data_.MAGICCOUCH_DATA->platform->serialize_out(binaryData_)
+end sub
 sub Item.MAGICCOUCH_PROC_CONSTRUCT()
     _initAddSlot_("MOVE", ITEM_MAGICCOUCH_SLOT_MOVE_E)
     _initAddParameter_("STARTSIDE", _ITEM_VALUE_INTEGER)
-    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
 #define ITEM_MINELANTERN_DEFINE_MOTH_ANGLE_VAR_DEG 45
 #define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MIN 10
@@ -3989,11 +4084,21 @@ end sub
 sub Item.WALLSWITCH_PROC_DRAWOVERLAY(scnbuff as integer ptr)
   
 end sub
+sub Item.WALLSWITCH_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.WALLSWITCH_DATA = new ITEM_WALLSWITCH_TYPE_DATA
+	binaryData_.retrieve(data_.WALLSWITCH_DATA->state)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(8,8), Vector2D(24, 24)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+end sub
+sub Item.WALLSWITCH_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+	binaryData_.store(data_.WALLSWITCH_DATA->state)
+end sub
 sub Item.WALLSWITCH_PROC_CONSTRUCT()
     _initAddSignal_("TURNON")
     _initAddSignal_("TURNOFF")
     _initAddSignal_("TOGGLE")
     _initAddSlot_("INTERACT", ITEM_WALLSWITCH_SLOT_INTERACT_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
-    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub

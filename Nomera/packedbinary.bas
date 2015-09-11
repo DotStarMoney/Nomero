@@ -55,9 +55,8 @@ sub PackedBinary.store(value_ as string)
     currentOffset += 1
 end sub
 sub PackedBinary.store(value_ as Vector2D)
-    request(sizeof(Vector2D))
-    *cast(Vector2D ptr, @(data_[currentOffset])) = value_
-    currentOffset += sizeof(Vector2D)
+    store(cdbl(value_.xs))
+    store(cdbl(value_.ys))
 end sub
 sub PackedBinary.store(value_ as long)
     request(sizeof(long))
@@ -84,8 +83,8 @@ sub PackedBinary.retrieve(byref value_ as string)
     value_ = left(value_, len(value_) - 1)
 end sub
 sub PackedBinary.retrieve(byref value_ as Vector2D)      
-    value_ = *cast(Vector2D ptr, @(data_[currentOffset]))
-    currentOffset += sizeof(Vector2D)
+    retrieve(value_.xs)
+    retrieve(value_.ys)
 end sub  
 sub PackedBinary.retrieve(byref value_ as long)      
     value_ = *cast(long ptr, @(data_[currentOffset]))

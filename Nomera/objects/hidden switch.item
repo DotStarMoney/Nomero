@@ -1,5 +1,7 @@
 '#hidden switch
 
+persistence item
+
 type ITEM_DATA
     as integer state
     as integer disable
@@ -66,5 +68,18 @@ end slot
 slot $enable()
     data.disable = 0
 end slot
+'-----------------------------------
+
+function _serialize_in()
+	retrieve(data.state)
+  	retrieve(data.disable)
+end function
+
+'-----------------------------------
+
+function _serialize_out()
+	store(data.state)
+    store(data.disable)
+end function
 
 

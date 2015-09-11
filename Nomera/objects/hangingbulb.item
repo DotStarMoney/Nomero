@@ -1,5 +1,7 @@
 '#hangingbulb
 
+persistence item
+
 type ITEM_DATA
     as integer state
 end type
@@ -75,3 +77,14 @@ end function
 slot $toggle()
     data.state = 1 - data.state
 end slot
+
+'-----------------------------------
+function _serialize_in()
+    retrieve(data.state)
+end function
+
+'-----------------------------------
+
+function _serialize_out()
+    store(data.state)
+end function

@@ -1,5 +1,7 @@
 '#wall switch
 
+persistence item
+
 type ITEM_DATA
     as integer state
 end type
@@ -68,5 +70,17 @@ slot $interact()
             'play sound
     end if
 end slot
+
+'-----------------------------------
+
+function _serialize_in()
+	retrieve(data.state)
+end function
+
+'-----------------------------------
+
+function _serialize_out()
+	store(data.state)
+end function
 
 

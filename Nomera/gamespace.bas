@@ -133,7 +133,6 @@ constructor GameSpace()
     lastTurnstyleInput = 0
     lockCamera = 1
     
-    shell "del " + SAVE_PATH + "*.dat"
     
     timeBeginPeriod(SLEEP_RESOLUTION)
     
@@ -209,7 +208,6 @@ end sub
 destructor GameSpace
     imagedestroy scnbuff
     timeEndPeriod(SLEEP_RESOLUTION)
-    FSOUND_Stream_Close(currentMusic)
 end destructor
         
 sub GameSpace.setMusicVolume(v as integer)
@@ -279,7 +277,7 @@ function GameSpace.go() as integer
         end if
         frames += 1
     loop 
-    
+           
 	kill pathFile
 	pathFileNum = freefile
 	open pathfile for binary as #pathFileNum
@@ -288,6 +286,7 @@ function GameSpace.go() as integer
 	put #pathFileNum,,pathData[0], pathBytes
 	close #pathFileNum
 	deallocate(pathData)
+    
     return 0
 end function
             

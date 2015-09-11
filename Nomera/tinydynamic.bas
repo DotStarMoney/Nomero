@@ -113,7 +113,7 @@ sub TinyDynamic.importShape(pts as Vector2D ptr, ptsN as integer)
 	
 	clearShapeData()
 	pointsN = ptsN
-	base_pts = allocate(sizeof(Vector2D) * ptsN)
+	base_pts =  allocate(sizeof(Vector2D) * ptsN)
 	cur_pts_p = allocate(sizeof(Vector2D) * ptsN)
 	cur_pts_v = allocate(sizeof(Vector2D) * ptsN)
 	memcpy(base_pts, pts, sizeof(Vector2D) * ptsN)
@@ -629,3 +629,102 @@ end sub
 function TinyDynamic.isActive() as integer
 	return active
 end function
+
+sub TinyDynamic.serialize_out(pbin as PackedBinary)
+    dim as integer i
+    pbin.store(centroid)
+    pbin.store(cur_t)
+    pbin.store(base_t)
+    pbin.store(pointsN)
+    pbin.store(active)
+    pbin.store(setup)
+    pbin.store(hasBB)
+    pbin.store(isComplete)
+    pbin.store(tl)
+    pbin.store(dr)
+    for i = 0 to pointsN - 1
+        pbin.store(base_pts[i])
+        pbin.store(cur_pts_p[i])
+        pbin.store(cur_pts_v[i])
+        if i < pointsN - 1 then
+            pbin.store(segmentTags[i])
+            pbin.store(referenceTags[i])
+        end if
+    next i
+    pbin.store(cint(type_))
+    select case type_
+    case DYNA_SFX_SPINNER
+        pbin.store(SFX_SPINNER.angle)
+        pbin.store(SFX_SPINNER.angle_v)
+        pbin.store(SFX_SPINNER.length)
+    case DYNA_BASICPATH
+        pbin.store(BASICPATH.pathPointsN)
+        for i = 0 to BASICPATH.pathPointsN - 1
+            pbin.store(BASICPATH.pathPoints[i])
+        next i
+        pbin.store(cint(BASICPATH.type_))
+        pbin.store(BASICPATH.speed)    
+        pbin.store(BASICPATH.segment)
+        pbin.store(BASICPATH.segment_pos)
+        pbin.store(BASICPATH.path_length)
+        pbin.store(BASICPATH.toggleState)
+        pbin.store(BASICPATH.toggleTime)
+    case DYNA_PIVOTER
+        pbin.store(PIVOTER.angle)
+        pbin.store(PIVOTER.angle_v)    
+    end select    
+end sub
+sub TinyDynamic.serialize_in(pbin as PackedBinary)
+    dim as integer i, tempInt    
+    pbin.retrieve(centroid)
+    pbin.retrieve(cur_t)
+    pbin.retrieve(base_t)
+    pbin.retrieve(pointsN)
+    pbin.retrieve(active)
+    pbin.retrieve(setup)
+    pbin.retrieve(hasBB)
+    pbin.retrieve(isComplete)
+    pbin.retrieve(tl)
+    pbin.retrieve(dr)
+    base_pts  = allocate(sizeof(Vector2D) * pointsN)
+    cur_pts_p = allocate(sizeof(Vector2D) * pointsN)
+    cur_pts_v = allocate(sizeof(Vector2D) * pointsN)
+    segmentTags = allocate(sizeof(Vector2D) * (pointsN - 1))
+    referenceTags = allocate(sizeof(Vector2D) * (pointsN - 1))
+    for i = 0 to pointsN - 1
+        pbin.retrieve(base_pts[i])
+        pbin.retrieve(cur_pts_p[i])
+        pbin.retrieve(cur_pts_v[i])
+        if i < pointsN - 1 then
+            pbin.retrieve(segmentTags[i])
+            pbin.retrieve(referenceTags[i])
+        end if
+    next i
+    pbin.retrieve(tempInt)
+    type_ = tempInt
+    select case type_
+    case DYNA_SFX_SPINNER
+        pbin.retrieve(SFX_SPINNER.angle)
+        pbin.retrieve(SFX_SPINNER.angle_v)
+        pbin.retrieve(SFX_SPINNER.length)
+    case DYNA_BASICPATH
+        pbin.retrieve(BASICPATH.pathPointsN)
+        BASICPATH.pathPoints = allocate(sizeof(Vector2D) * BASICPATH.pathPointsN)
+        for i = 0 to BASICPATH.pathPointsN - 1
+            pbin.retrieve(BASICPATH.pathPoints[i])
+        next i
+        pbin.retrieve(tempInt)
+        BASICPATH.type_ = tempInt
+        pbin.retrieve(BASICPATH.speed)    
+        pbin.retrieve(BASICPATH.segment)
+        pbin.retrieve(BASICPATH.segment_pos)
+        pbin.retrieve(BASICPATH.path_length)
+        pbin.retrieve(BASICPATH.toggleState)
+        pbin.retrieve(BASICPATH.toggleTime)
+    case DYNA_PIVOTER
+        pbin.retrieve(PIVOTER.angle)
+        pbin.retrieve(PIVOTER.angle_v)    
+    end select
+end sub
+
+

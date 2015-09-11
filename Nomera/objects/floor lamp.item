@@ -1,5 +1,7 @@
 '#floor lamp
 
+persistence item
+
 type ITEM_DATA
     as integer isDisabled
     as integer state
@@ -92,3 +94,19 @@ end slot
 slot $enable()
     data.isDisabled = 0
 end slot
+
+'-----------------------------------
+
+function _serialize_in()
+	retrieve(data.isDisabled)
+    retrieve(data.state)
+    retrieve(data.fCount)
+end function
+
+'-----------------------------------
+
+function _serialize_out()
+	store(data.isDisabled)
+    store(data.state)
+    store(data.fCount)
+end function

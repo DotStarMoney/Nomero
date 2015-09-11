@@ -304,17 +304,19 @@ FSOUND_Init(44100, 16, 0)
         end if
 
         FSOUND_Close()
-        end 
+        
     #endif
+#else
+    Dim as GameSpace gameNomera
+
+
+    gameNomera.go
+
+    FSOUND_Close()
+
+
 #endif
 
 
 
-Dim as GameSpace gameNomera
 
-
-gameNomera.go
-
-FSOUND_Close()
-
-end

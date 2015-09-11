@@ -3,6 +3,7 @@
 
 #include "vector2d.bi"
 #include "arbiter.bi"
+#include "packedbinary.bi"
 
 enum TinyDynamic_Prototype_e
 	DYNA_NONE
@@ -77,6 +78,9 @@ type TinyDynamic
 		declare function getReferenceTag(i as integer) as integer
 		declare function getTag(i as integer) as integer
 		declare sub setTag(i as integer, t as integer)
+        
+        declare sub serialize_in(pbin as PackedBinary)
+		declare sub serialize_out(pbin as PackedBinary)
 		
 		as integer ind
 	private:
