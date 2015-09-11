@@ -40,8 +40,8 @@ end function
 function _init()
     dim as integer i
     
-    CREATE_ANIMS(4)
-    PREP_LIGHTS(MEDIA_PATH + "Lights\LanternGlow_Diffuse.txt", MEDIA_PATH + "Lights\LanternGlow_Specular.txt", 2, 3, 0)  
+    CREATE_ANIMS(2)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LanternGlow_Diffuse.txt", MEDIA_PATH + "Lights\LanternGlow_Specular.txt", 0)  
     
     anims[0].load(MEDIA_PATH + "lantern.txt")
     anims[1].load(MEDIA_PATH + "lantern.txt")

@@ -17,6 +17,8 @@
 #define FLIPPED_DIAG  &h1
 #define FLIPPED_MASK  &h1fffffff
 
+#define SAVE_PATH "saves\"
+
 #include "leveltypes.bi"
 
 type EffectController_ as EffectController
@@ -94,6 +96,9 @@ type Level
         declare function getAmbientLevel(lyr as integer) as integer
         declare sub setAmbientLevel(lyr as integer, col as integer)
         
+        declare sub saveMapState() 
+        declare sub loadMapState() 
+
        
         dim as integer justLoaded
     private:
@@ -122,7 +127,6 @@ type Level
         dim as string loadedMusic
         dim as ushort default_x
         dim as ushort default_y
-        dim as Hashtable destroyedBlockMemory
         dim as ubyte ptr curDestBlocks
         dim as integer noVisuals
         dim as LightPair ptr ptr lightList
@@ -136,6 +140,8 @@ type Level
         dim as integer highestLayerIndex
         dim as double fadeOut
         dim as integer fadeDir
+        
+
         
         dim as ushort windyMist
         dim as MistLayer_t ptr windyMistLayers

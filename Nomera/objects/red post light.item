@@ -6,9 +6,9 @@
 
 function _init()
 
-    CREATE_ANIMS(3)
+    CREATE_ANIMS(2)
     anims[0].load(MEDIA_PATH + "postbulb.txt")
-    PREP_LIGHTS(MEDIA_PATH + "Lights\TinyRed_Diffuse.txt", MEDIA_PATH + "Lights\TinyRed_Specular.txt", 1, 2, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\TinyRed_Diffuse.txt", MEDIA_PATH + "Lights\TinyRed_Specular.txt", 1)  
 
 end function
 

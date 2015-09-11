@@ -1,7 +1,7 @@
 '#intelligence
 
 'persistence item
-persistence level 
+persistence item 
 
 type ITEM_DATA
     as zimage ptr img
@@ -77,11 +77,15 @@ end function
 '-----------------------------------
 
 function _serialize_in()
-	capture(data.frameCount, 4)
+	retrieve(data.frameCount)
+    data.img = new zImage()
+    data.img->load(MEDIA_PATH + "burst3.png")
 end function
 
+'-----------------------------------
+
 function _serialize_out()
-	store(data.frameCount, 4)
+	store(data.frameCount)
 end function
 
 

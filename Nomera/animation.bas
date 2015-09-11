@@ -17,7 +17,7 @@ constructor Animation(filename as string)
 end constructor
 
 destructor Animation
-    
+    loadedFile = ""
 end destructor
 
 sub Animation.init()
@@ -30,11 +30,13 @@ sub Animation.init()
     isPaused = 1
     completed = 0
     isReleasing = 0
+    preAlphaTarget = 0
     speed = 1
     x0 = 0
     y0 = 0
     x1 = 0
     y1 = 0
+    loadedFile = ""
 end sub
 
 
@@ -64,13 +66,13 @@ sub Animation.load(filename as string)
     dim as string   lne, imageName, curText, filePath
     redim as string pieces(0)
     dim as integer charPos, curAnim, getRFrames
+    loadedFile = filename
     slashP = instrrev(filename, "\")
     if slashP = 0 then
         filePath = ""
     else
         filePath = left(filename, slashP)
     end if 
-  
     if animHash.exists(filename) = 1 then
         data_ = *cast(AnimationData_t ptr ptr, animHash.retrieve(filename))
     else
@@ -300,6 +302,47 @@ sub Animation.step_animation()
             step_LoopBackFromRelease()
         end select
     end if
+end sub
+
+sub Animation.serialize_out(pbin as PackedBinary)
+    pbin.store(loadedFile)
+    pbin.store(glowValue)
+    pbin.store(completed)
+    pbin.store(reachedEnd)
+    pbin.store(currentAnim)
+    pbin.store(delayCounter)
+    pbin.store(currentFrame)
+    pbin.store(drawFrame)
+    pbin.store(isPaused)
+    pbin.store(isReleasing)
+    pbin.store(pendingSwitch)
+    pbin.store(speed)
+    pbin.store(x0)
+    pbin.store(y0)
+    pbin.store(x1)
+    pbin.store(y1)
+    'preAlphaTarget must be set by owner
+end sub
+sub Animation.serialize_in(pbin as PackedBinary)
+    init()
+    pbin.retrieve(loadedFile)
+    load(loadedFile)
+    pbin.retrieve(glowValue)
+    pbin.retrieve(completed)
+    pbin.retrieve(reachedEnd)
+    pbin.retrieve(currentAnim)
+    pbin.retrieve(delayCounter)
+    pbin.retrieve(currentFrame)
+    pbin.retrieve(drawFrame)
+    pbin.retrieve(isPaused)
+    pbin.retrieve(isReleasing)
+    pbin.retrieve(pendingSwitch)
+    pbin.retrieve(speed)
+    pbin.retrieve(x0)
+    pbin.retrieve(y0)
+    pbin.retrieve(x1)
+    pbin.retrieve(y1)
+    'preAlphaTarget must be set by owner
 end sub
 
 sub Animation.advance()  

@@ -10,6 +10,7 @@
 #include "locktoscreen.bi"
 #include "constants.bi"
 #include "C64Draw.bi"
+#include "packedbinary.bi"
 
 #define ifVector2D(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_VECTOR2D, 1, 0)
 #define ifInteger(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_INTEGER, 1, 0)
@@ -56,16 +57,19 @@
         anims[_ANIM_].drawAnimation(scnbuff, _X_, _Y_, link.gamespace_ptr->camera,_FLAGS_,ANIM_TRANS)
     end if  
 #endmacro
-#macro PREP_LIGHTS(_DIFFFILE_, _SPECFILE_, _ANIM0_, _ANIM1_, _FAST_)
-    anims[_ANIM0_].load(_DIFFFILE_)
-    anims[_ANIM1_].load(_SPECFILE_)
-    light.texture.diffuse_fbimg = anims[_ANIM0_].getRawImage()
-    light.texture.specular_fbimg = anims[_ANIM1_].getRawImage()
+#macro PREP_LIGHTS(_DIFFFILE_, _SPECFILE_, _FAST_)
+    diffuseTex_ = new Animation()
+    specularTex_ = new Animation()
+    diffuseTex_->load(_DIFFFILE_)
+    specularTex_->load(_SPECFILE_)
+    light.texture.diffuse_fbimg = diffuseTex_->getRawImage()
+    light.texture.specular_fbimg = specularTex_->getRawImage()
     light.texture.x = 0
     light.texture.y = 0
-    light.texture.w = anims[_ANIM0_].getWidth()
-    light.texture.h = anims[_ANIM0_].getHeight()
+    light.texture.w = diffuseTex_->getWidth()
+    light.texture.h = diffuseTex_->getHeight()
     light.shaded = light.texture
+    fastLight = _FAST_
     if _FAST_ then
         light.shaded.diffuse_fbimg = 0
         light.shaded.specular_fbimg = 0
@@ -79,6 +83,7 @@
     light.last_tl_y = 0
     light.last_br_x = light.texture.w - 1
     light.last_br_y = light.texture.h - 1
+    usesLights_ = 1
 #endmacro
 
 #include "objects\headers\gen_methoddefinitions.bi"
@@ -103,11 +108,11 @@ sub Item.construct_()
 		BOMB_COLORS[8] = rgb(255, 255, 255)
 		BOMB_COLORS[9] = rgb(185, 133, 115)
 	end if
-
     parameterTable.init(sizeof(_Item_valueContainer_t))
     slotTable.init(sizeof(_Item_slotTable_t))
     valueTable.init(sizeof(_Item_valueContainer_t))
     signalTable.init(sizeof(integer))
+    ILI = -1
 end sub
 destructor Item()
     flush()
@@ -121,7 +126,10 @@ end function
 sub Item.construct(itemType_ as Item_Type_e, ID_ as string = "")
     itemType = itemType_
     ID = ID_
-
+    canExport_ = 0
+    lightState = 0
+    usesLights_ = 0
+    
     #include "objects\headers\gen_constructcaseblock.bi"
     
 end sub
@@ -129,8 +137,9 @@ sub Item.initPost(p_ as Vector2D, size_ as Vector2D, depth_ as single)
     p = p_
     depth = depth_
     size = size_
-    lightState = 0
     fastLight = 1
+    diffuseTex_ = 0
+    specularTex_ = 0
     anims_n = 0
     light.shaded.diffuse_fbimg = 0
     light.shaded.specular_fbimg = 0
@@ -150,6 +159,7 @@ sub Item.flush()
     dim as _Item_valueContainer_t ptr valueC_ptr
       
     #include "objects\headers\gen_flushcaseblock.bi"
+    
     BEGIN_HASH(valueC_ptr, parameterTable)
         if valueC_ptr->type_ = _ITEM_VALUE_ZSTRING then
             if valueC_ptr->data_.zstring_ then
@@ -157,6 +167,7 @@ sub Item.flush()
             end if
         end if
     END_HASH()
+    parameterTable.flush()
     BEGIN_HASH(valueC_ptr, valueTable)
         if valueC_ptr->type_ = _ITEM_VALUE_ZSTRING then
             if valueC_ptr->data_.zstring_ then
@@ -164,6 +175,13 @@ sub Item.flush()
             end if
         end if
     END_HASH()
+    valueTable.flush()
+    signalTable.flush()
+    slotTable.flush()
+    if usesLights_ then
+        delete(diffuseTex_)
+        delete(specularTex_)
+    end if
     if lightState then
         if light.shaded.diffuse_fbimg then imagedestroy(light.shaded.diffuse_fbimg)
         if light.shaded.specular_fbimg then imagedestroy(light.shaded.specular_fbimg)
@@ -177,11 +195,188 @@ end sub
 function Item.getID() as string
     return ID
 end function
-sub Item.serialize_in(bindata as byte ptr)
+function Item.canSerialize() as integer
+    if canExport_ then
+        if persistenceLevel_ = ITEM_PERSISTENCE_ITEM then return 1
+    end if
+    return 0
+end function
+function Item.shouldReload() as integer
+    if persistenceLevel_ = ITEM_PERSISTENCE_ITEM orElse persistenceLevel_ = ITEM_PERSISTENCE_LEVEL then return 0
+    return 1
+end function
+
+sub Item.serialize_in(pbin as PackedBinary)
+    dim as integer tempInt
+    dim as integer i
+    dim as integer numRecords
+    dim as integer  data_integer
+    dim as double   data_double
+    dim as Vector2D data_vector2d
+    dim as string   data_string
+    dim as _Item_valueTypes_e vType
+    dim as string keyValue
+    dim as string tempString
+    
+    pbin.retrieve(tempInt)
+    itemType = tempInt
+    pbin.retrieve(ID)
+    construct(itemType, ID)
+
+    pbin.retrieve(numRecords)
+    for i = 0 to numRecords - 1
+        pbin.retrieve(tempInt)
+        vType = tempInt
+        pbin.retrieve(keyValue)
+        select case vType
+        case _ITEM_VALUE_VECTOR2D
+            pbin.retrieve(data_vector2d)
+            setParameter(data_vector2D, keyValue)
+        case _ITEM_VALUE_INTEGER
+            pbin.retrieve(data_integer)
+            setParameter(data_integer, keyValue)
+        case _ITEM_VALUE_DOUBLE
+            pbin.retrieve(data_double)
+            setParameter(data_double, keyValue)
+        case _ITEM_VALUE_ZSTRING
+            pbin.retrieve(data_string)
+            setParameter(data_string, keyValue)
+        end select
+    next i
+    pbin.retrieve(numRecords)
+    for i = 0 to numRecords - 1
+        pbin.retrieve(tempInt)
+        vType = tempInt
+        pbin.retrieve(keyValue)
+        select case vType
+        case _ITEM_VALUE_VECTOR2D
+            _initAddValue_(keyValue, _ITEM_VALUE_VECTOR2D)
+            pbin.retrieve(data_vector2d)
+            setValue(data_vector2D, keyValue)
+        case _ITEM_VALUE_INTEGER
+            _initAddValue_(keyValue, _ITEM_VALUE_INTEGER)
+            pbin.retrieve(data_integer)
+            setValue(data_integer, keyValue)
+        case _ITEM_VALUE_DOUBLE
+            _initAddValue_(keyValue, _ITEM_VALUE_DOUBLE)
+            pbin.retrieve(data_double)
+            setValue(data_double, keyValue)
+        case _ITEM_VALUE_ZSTRING
+            _initAddValue_(keyValue, _ITEM_VALUE_ZSTRING)
+            pbin.retrieve(data_string)
+            setValue(data_string, keyValue)
+        end select
+    next i
+    pbin.retrieve(usesLights_)
+    if usesLights_ then
+        diffuseTex_->serialize_in(pbin)
+        specularTex_->serialize_in(pbin)
+        pbin.retrieve(lightState)
+        pbin.retrieve(fastLight)
+        light.texture.diffuse_fbimg = diffuseTex_->getRawImage()
+        light.texture.specular_fbimg = specularTex_->getRawImage()
+        pbin.retrieve(light.texture.x)
+        pbin.retrieve(light.texture.y)
+        light.texture.w = diffuseTex_->getWidth()
+        light.texture.h = diffuseTex_->getHeight()
+        light.shaded = light.texture
+        if fastLight then
+            light.shaded.diffuse_fbimg = 0
+            light.shaded.specular_fbimg = 0
+            light.occlusion_fbimg = 0    
+        else
+            light.shaded.diffuse_fbimg = imagecreate(light.texture.w, light.texture.h)
+            light.shaded.specular_fbimg = imagecreate(light.texture.w, light.texture.h)   
+            light.occlusion_fbimg = imagecreate(light.texture.w, light.texture.h)
+        end if
+        pbin.retrieve(light.last_tl_x)
+        pbin.retrieve(light.last_tl_y)
+        pbin.retrieve(light.last_br_x)
+        pbin.retrieve(light.last_br_y)
+    end if
+    pbin.retrieve(anims_n)
+    for i = 0 to anims_n - 1
+        anims[i].serialize_in(pbin)
+    next i
+    pbin.retrieve(size)
+    pbin.retrieve(p)
+    pbin.retrieve(bounds_tl)
+    pbin.retrieve(bounds_br)
+    pbin.retrieve(depth)
+    pbin.retrieve(tempInt)    
+    persistenceLevel_ = tempInt
+    pbin.retrieve(ILI)
+    pbin.retrieve(tempInt)    
+    orderClass = tempInt
+    
+    #include "objects\headers\gen_serializeincaseblock.bi"
 
 end sub
-sub Item.serialize_out(byref bindata as byte ptr, byref size as integer)
-	
+sub Item.serialize_out(pbin as PackedBinary)
+    dim as _Item_valueContainer_t ptr valueC_ptr
+    dim as integer i
+    
+    pbin.store(cint(itemType))
+    pbin.store(ID)
+
+    pbin.store(parameterTable.getSize())
+    BEGIN_HASH(valueC_ptr, parameterTable)
+        pbin.store(cint(valueC_ptr->type_))
+        pbin.store(parameterTable.rollGetKeyString())
+        select case valueC_ptr->type_
+        case _ITEM_VALUE_VECTOR2D
+            pbin.store(valueC_ptr->data_.Vector2D_)
+        case _ITEM_VALUE_INTEGER
+            pbin.store(valueC_ptr->data_.integer_)
+        case _ITEM_VALUE_DOUBLE
+            pbin.store(valueC_ptr->data_.double_)
+        case _ITEM_VALUE_ZSTRING
+            pbin.store(*(valueC_ptr->data_.zstring_))
+        end select
+    END_HASH()
+    pbin.store(valueTable.getSize())
+    BEGIN_HASH(valueC_ptr, valueTable)
+        pbin.store(cint(valueC_ptr->type_))
+        pbin.store(valueTable.rollGetKeyString())
+        select case valueC_ptr->type_
+        case _ITEM_VALUE_VECTOR2D
+            pbin.store(valueC_ptr->data_.Vector2D_)
+        case _ITEM_VALUE_INTEGER
+            pbin.store(valueC_ptr->data_.integer_)
+        case _ITEM_VALUE_DOUBLE
+            pbin.store(valueC_ptr->data_.double_)
+        case _ITEM_VALUE_ZSTRING
+            pbin.store(*(valueC_ptr->data_.zstring_))
+        end select
+    END_HASH()    
+    pbin.store(usesLights_)
+    if usesLights_ then
+        diffuseTex_->serialize_out(pbin)
+        specularTex_->serialize_out(pbin)
+        pbin.store(lightState)
+        pbin.store(fastLight)
+        pbin.store(light.texture.x)
+        pbin.store(light.texture.y)
+        pbin.store(light.last_tl_x)
+        pbin.store(light.last_tl_y)
+        pbin.store(light.last_br_x)
+        pbin.store(light.last_br_y)
+    end if
+    pbin.store(anims_n)
+    for i = 0 to anims_n - 1
+        anims[i].serialize_out(pbin)
+    next i
+    pbin.store(size)
+    pbin.store(p)
+    pbin.store(bounds_tl)
+    pbin.store(bounds_br)
+    pbin.store(depth)
+    pbin.store(cint(persistenceLevel_))
+    pbin.store(ILI)
+    pbin.store(cint(orderClass))
+ 
+    #include "objects\headers\gen_serializeoutcaseblock.bi"
+    
 end sub
 
 function Item.process(t as double) as integer

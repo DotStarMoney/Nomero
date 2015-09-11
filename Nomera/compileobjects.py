@@ -159,6 +159,7 @@ text_serializeincaseblock = ''
 file_serializeoutcaseblock = headerDir + 'gen_serializeoutcaseblock.bi'
 text_serializeoutcaseblock = ''
 
+
 itemFiles = getAllItemFiles()
 
 itemPrefixes = []
@@ -203,7 +204,22 @@ for curFileName in itemFiles:
           
         initHeader = ''
         initFooter = ''
+        serializeFooter = ''
+        foundSerilizationFunctions = 0
+        persistenceLevel = 0
         
+        persistenceGroup = re.search(r'^[ \t]*persistence[ \t]+(?:none|item|level)[ \t]*$', fileText, flags = re.I | re.M)
+        if persistenceGroup:
+            persistence = persistenceGroup.group(0).strip()
+            persistenceType = re.search(r'(?:none|item|level)', persistence, flags = re.I).group(0).upper()
+            if persistenceType == 'NONE':
+                persistenceLevel = 0
+            elif persistenceType == 'LEVEL':
+                persistenceLevel = 1
+            elif persistenceType == 'ITEM':
+                persistenceLevel = 2
+            fileText = subNotInQuotes(fileText, r'^[ \t]*persistence[ \t]+.*$', '')     
+
         
         #prefix any consts, remove them and add them to itemprototypes, finally prefix any references to them in the code
         for lines in re.finditer(r'^[ \t]*const[ \t]+.*?$', fileText, flags = re.M | re.I):
@@ -253,8 +269,9 @@ for curFileName in itemFiles:
                (functionName.upper() != '_FLUSH') and \
                (functionName.upper() != '_DRAW') and \
                (functionName.upper() != '_DRAWOVERLAY') and \
-               (functionName.upper() != '_RUN'):
-               
+               (functionName.upper() != '_RUN') and \
+               (functionName.upper() != '_SERIALIZE_IN') and \
+               (functionName.upper() != '_SERIALIZE_OUT'):
                 if functionFirstLine[-1:] != ')':
                     functionPrefixName = objectShortPrefix + '_FUNCTION_' + functionName
                     functionHeader = 'function ' + functionPrefixName + functionArgs
@@ -320,14 +337,15 @@ for curFileName in itemFiles:
                (functionName.upper() != '_FLUSH') and \
                (functionName.upper() != '_DRAW') and \
                (functionName.upper() != '_DRAWOVERLAY') and \
-               (functionName.upper() != '_RUN'):
-                functionBlockLines[0] = 'function Item.' + objectShortPrefix + functionName + functionArgs
+               (functionName.upper() != '_RUN') and \
+               (functionName.upper() != '_SERIALIZE_IN') and \
+               (functionName.upper() != '_SERIALIZE_OUT'):
+                functionBlockLines[0] = 'function Item.' + functionName + functionArgs
                 functionBlock = '\n'.join(functionBlockLines) + '\n'                
-                text_methodprototypes += 'declare ' + functionBlockLines[0] + '\n'
+                text_methodprototypes += 'declare function ' + functionName + functionArgs + '\n'
                 text_methoddefinitions += fixPolygon2DInit(functionBlock)
-				
-				
                 fileText = re.sub(r'^[ \t]*function[ \t]+' + functionName + r'[ \t]*\(.*?\).*?^[ \t]*end[ \t]+function[ \t]*$', '', fileText, flags = re.M | re.S | re.I)
+                
         for functionsBlocksGroup in re.finditer(r'^[ \t]*sub[ \t]+\w+\(.*?\).*?^[ \t]*end[ \t]+sub[ \t]*$', fileText, flags = re.M | re.S | re.I):
             functionBlock = functionsBlocksGroup.group(0)
             functionBlockLines = functionBlock.splitlines()
@@ -419,8 +437,11 @@ for curFileName in itemFiles:
                     publishSlotShape = curPublishItems[2].strip()
                     initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\", new ' + publishSlotShape + ')\n'
                     initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->setTargetSlotOffset(ID, ' + publishSlotTag + ', p)\n'
+                    serializeFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\", new ' + publishSlotShape + ')\n'
+                    serializeFooter += SPACE_TAB+'link.dynamiccontroller_ptr->setTargetSlotOffset(ID, ' + publishSlotTag + ', p)\n'
                 else:
                     initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\")\n'                
+                    serializeFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedSlot(ID, ' + publishSlotTag + ', \"' + publishSlotName + '\")\n'                
             else:
                 curPublish = re.sub(r'^value[ \t]+', '', curPublish, flags = re.I)
                 curPublishItems = hSplit(curPublish)
@@ -439,9 +460,12 @@ for curFileName in itemFiles:
                     initFooter += SPACE_TAB+'_initAddValue_(' + publishValueTag + ', ' + publishValueType + ')\n'
                     initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ', new ' + publishValueShape + ')\n'
                     initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->setTargetValueOffset(ID, ' + publishValueTag + ', p)\n'
+                    serializeFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ', new ' + publishValueShape + ')\n'
+                    serializeFooter += SPACE_TAB+'link.dynamiccontroller_ptr->setTargetValueOffset(ID, ' + publishValueTag + ', p)\n'
                 else:
                     initFooter += SPACE_TAB+'_initAddValue_(' + publishValueTag + ', ' + publishValueType + ')\n'
                     initFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ')\n'
+                    serializeFooter += SPACE_TAB+'link.dynamiccontroller_ptr->addPublishedValue(ID, ' + publishValueTag + ')\n'
             fileText = re.sub(r'^[ \t]*publish[ \t]+(?:(?:value)|(?:slot))[ \t]*.*$', '', fileText, flags = re.M | re.I)
 
         
@@ -524,25 +548,49 @@ for curFileName in itemFiles:
             text_methodprototypes += 'declare sub ' + fDrawOProto + '\n'
             text_drawoverlaycaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + objectShortPrefix + '_PROC_DRAWOVERLAY(scnbuff)' + '\n'           
         
+        
         #serialize_in
         fSerializeInGroup = re.search(r'^[ \t]*function[ \t]+_serialize_in[ \t]*\(.*?\).*?^[ \t]*end[ \t]+function[ \t]*(\'.*?$|$)', fileText, flags = re.M | re.I | re.S)
         if fSerializeInGroup:
             fSerializeIn = fSerializeInGroup.group(0)
             fSerializeInLines = fSerializeIn.splitlines()
-            fSerializeInProto = objectShortPrefix + '_PROC_SERIALIZEIN(bindata as byte ptr)'
+            fSerializeInProto = objectShortPrefix + '_PROC_SERIALIZEIN(binaryData_ as PackedBinary)'
             fSerializeInLines[0] = 'sub Item.' + fSerializeInProto
-			fSerializeInLines.insert(1, SPACE_TAB + 'dim as integer SERIALIZEIN_currentByte')
-			fSerializeInLines.insert(2, SPACE_TAB + 'SERIALIZEIN_currentByte = 0')
-            fSerializeInLines[-1] = 'end sub'
-            fSerializeIn = fixPolygon2DInit('\n'.join(fSerializeInLines) + '\n')
-			fSerializeIn = subNotInQuotes(fSerializeIn, r'([ \t])valueset([ \t\[\(])', r'\1ObjectValueSet\2')
-			
+            fSerializeInLines.pop()            
+            if hasItemData == 1: fSerializeInLines.insert(1, SPACE_TAB + 'data_.' + itemDataPtr + ' = new ' + dataTypePrefixName)
+            fSerializeIn = fixPolygon2DInit('\n'.join(fSerializeInLines) + '\n') + serializeFooter + 'end sub\n'
+            fSerializeIn = subNotInQuotes(fSerializeIn, r'([ \t\:])retrieve([ \t\(])', r'\1binaryData_.retrieve\2')
+            fSerializeIn = subNotInQuotes(fSerializeIn, r'([ \t\:])store([ \t\(])', r'\1binaryData_.store\2')
             text_methoddefinitions += fSerializeIn
             text_methodprototypes += 'declare sub ' + fSerializeInProto + '\n'
-            text_serializeincaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + objectShortPrefix + '_PROC_SERIALIZEIN((bindata as byte ptr)' + '\n'       		
-		
+            text_serializeincaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + objectShortPrefix + '_PROC_SERIALIZEIN(pbin)' + '\n'       		
+            foundSerilizationFunctions += 1
+            
+        fSerializeOutGroup = re.search(r'^[ \t]*function[ \t]+_serialize_out[ \t]*\(.*?\).*?^[ \t]*end[ \t]+function[ \t]*(\'.*?$|$)', fileText, flags = re.M | re.I | re.S)
+        if fSerializeOutGroup:
+            fSerializeOut = fSerializeOutGroup.group(0)
+            fSerializeOutLines = fSerializeOut.splitlines()
+            fSerializeOutProto = objectShortPrefix + '_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)'
+            fSerializeOutLines[0] = 'sub Item.' + fSerializeOutProto
+            fSerializeOutLines[-1] = 'end sub'
+            fSerializeOut = fixPolygon2DInit('\n'.join(fSerializeOutLines) + '\n')        
+            fSerializeOut = subNotInQuotes(fSerializeOut, r'([ \t\:])retrieve([ \t\(])', r'\1binaryData_.retrieve\2')
+            fSerializeOut = subNotInQuotes(fSerializeOut, r'([ \t\:])store([ \t\(])', r'\1binaryData_.store\2')
+            text_methoddefinitions += fSerializeOut
+            text_methodprototypes += 'declare sub ' + fSerializeOutProto + '\n'
+            text_serializeoutcaseblock += 'case ' + objectPrefix + '\n' + SPACE_TAB + objectShortPrefix + '_PROC_SERIALIZEOUT(pbin)' + '\n'       		
+            foundSerilizationFunctions += 1           
+        
 		
         constructProto = objectShortPrefix + '_PROC_CONSTRUCT()'
+        if foundSerilizationFunctions == 2:
+            initHeader = initHeader + SPACE_TAB + 'canExport_ = 1\n'    
+        if persistenceLevel == 0:
+            initHeader = initHeader + SPACE_TAB + 'persistenceLevel_ = ITEM_PERSISTENCE_NONE\n' 
+        elif persistenceLevel == 1:
+            initHeader = initHeader + SPACE_TAB + 'persistenceLevel_ = ITEM_PERSISTENCE_LEVEL\n' 
+        elif persistenceLevel == 2:
+            initHeader = initHeader + SPACE_TAB + 'persistenceLevel_ = ITEM_PERSISTENCE_ITEM\n'            
         initHeader = 'sub Item.' + constructProto + '\n' + initHeader + 'end sub\n'
         initHeader = fixPolygon2DInit(initHeader)
         text_methoddefinitions += initHeader
@@ -576,6 +624,8 @@ text_drawcaseblock = 'select case itemType\n' + text_drawcaseblock + 'end select
 text_drawoverlaycaseblock = 'select case itemType\n' + text_drawoverlaycaseblock + 'end select\n'
 text_slotcaseblock = 'select case slotNumber\n' + text_slotcaseblock + 'end select\n'
 text_constructcaseblock = 'select case itemType\n' + text_constructcaseblock + 'end select\n'
+text_serializeincaseblock = 'select case itemType\n' + text_serializeincaseblock + 'end select\n'
+text_serializeoutcaseblock = 'select case itemType\n' + text_serializeoutcaseblock + 'end select\n'
 
 writeOutFile(file_itemdefines, text_itemdefines)
 writeOutFile(file_namestypes, text_namestypes)
@@ -588,5 +638,5 @@ writeOutFile(file_drawcaseblock, text_drawcaseblock)
 writeOutFile(file_drawoverlaycaseblock, text_drawoverlaycaseblock)
 writeOutFile(file_slotcaseblock, text_slotcaseblock)
 writeOutFile(file_constructcaseblock, text_constructcaseblock)
-
-       
+writeOutFile(file_serializeincaseblock, text_serializeincaseblock)
+writeOutFile(file_serializeoutcaseblock, text_serializeoutcaseblock)

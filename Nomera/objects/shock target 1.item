@@ -12,7 +12,7 @@ function _init()
 
     data.cycleTime = 0
     
-    anims_n = 5
+    anims_n = 3
     anims = new Animation[anims_n]
     anims[0].load(MEDIA_PATH + "pawn.txt")
     anims[1].load(MEDIA_PATH + "pawn.txt")
@@ -20,7 +20,7 @@ function _init()
     anims[2].load(MEDIA_PATH + "pawn.txt")
     anims[2].hardSwitch(2)    
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 3, 4, 0)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 0)  
 
     light.texture.x = p.x + size.x * 0.5
     light.texture.y = p.y + size.y * 0.5

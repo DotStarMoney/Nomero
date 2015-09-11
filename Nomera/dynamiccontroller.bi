@@ -24,7 +24,7 @@ end type
 
 type DynamicController_publishSlot_t
     as Shape2D ptr target
-    as DynamicController_publish_t ptr ptr hash2Dindex 
+    as DynamicController_publishSlot_t ptr ptr hash2Dindex 
     as zstring ptr tag_
     as zstring ptr slot_tag_
     as Item ptr item_
@@ -65,6 +65,10 @@ type DynamicController_connectionOutgoingDestination_t
     as zstring ptr appendParameter
     as zstring ptr thisSignal
 end type
+type DynamicController_ILIdata_t
+    as integer ILI
+    as zstring ptr ID_
+end type
 
 type DynamicController
 	public:
@@ -81,23 +85,28 @@ type DynamicController
 
         declare function hasItem(ID_ as string) as integer
         
+        
         declare sub setPos(ID_ as string, p_ as Vector2D)
         declare sub setSize(ID_ as string, size_ as Vector2D)
         
+        declare function getILI(ID_ as string) as integer
         declare function getPos(ID_ as string) as Vector2D
         declare function getSize(ID_ as string) as Vector2D
         declare sub getBounds(ID_ as string, byref a as Vector2D, byref b as Vector2D)
 
         declare sub removeItem(ID_ as string)
 		
-		declare sub serialize_in(bindata as byte ptr)
-		declare sub serialize_out(byref bindata as byte ptr, byref size as integer)
+		declare sub serialize_in(pbin as PackedBinary)
+		declare sub serialize_out(pbin as PackedBinary)
+        
+        declare function isActiveILI(ILI as integer) as integer
+        declare function getILIentry(ID_ as string) as integer
         
         '---------------- used by outside to create objects ---------------
         declare function itemStringToType(item_tag as string) as Item_Type_e
 		declare function addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0), _
-                                 ID_ as string = "", depth_ as single = 1.0, drawLess as integer = 0) as string
-        declare function constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "", drawLess as integer = 0) as Item ptr
+                                 ID_ as string = "", depth_ as single = 1.0, drawLess as integer = 0, itemLoadIdentifier as integer = -1) as string
+        declare function constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "", drawLess as integer = 0, itemLoadIdentifier as integer = -1) as Item ptr
         declare sub initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D(0, 0), size_ as Vector2D = Vector2D(0, 0), _
                              depth_ as single = 1.0)
         declare sub setParameterFromString(param_string as string, ID_ as string, param_tag as string)
@@ -156,6 +165,8 @@ type DynamicController
         as List addItemPost
         as Hashtable postPairs
         
+        as Hashtable activeLoadIdentifiers
+        as Hashtable ILIlookup
 end type
 	
 

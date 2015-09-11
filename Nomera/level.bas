@@ -11,6 +11,8 @@
 #include "fbpng.bi"
 #include "effects3d.bi"
 #include "gamespace.bi"
+#include "packedbinary.bi"
+#include "vbcompat.bi"
 
 dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
 #ifdef DEBUG
@@ -27,9 +29,9 @@ constructor level
     snowfall = 0
     tilesets = 0
     windyMistLayers_n = 0
+    curDestBlocks = 0
     shouldLightObjects = 0
     blocks = 0
-    destroyedBlockMemory.init(sizeof(destroyedBlocks_t))
     portalZonesNum = 0
     if falloutTex(0) = 0 then
 		falloutTex(0) = png_load("falloutdisk96_1.png")
@@ -119,6 +121,8 @@ end function
 function level.getLevelCenterY() as integer
     return lvlCenterY
 end function
+
+
         
 sub level.drawLayers(scnbuff as uinteger ptr, order as integer,_
                      cam_x as integer, cam_y as integer,_
@@ -855,6 +859,7 @@ sub level.flush()
         link.dynamiccontroller_ptr->flush()
         windyMistLayers_n = 0
         windyMistLayers = 0
+        if curDestBlocks <> 0 then deallocate(curDestBlocks)
     end if
     #ifdef DEBUG
         prinTLOG "Fin-e"
@@ -1208,11 +1213,13 @@ sub level.load(filename as string)
     dim as destroyedBlocks_t tempDblocks
     dim as string itemName, itemID, parameterTag, parameterValue
     dim as ushort numParams, numSignals, numTargets
-    dim as string signalName, signalParameter, slotID, slotName
+    dim as string signalName, signalParameter, slotID, slotName, saveFileName
     dim as Item ptr itemPtr
     dim as zstring ptr groupStringPtr
     dim as ushort isHidden
     dim as Level_layerGroup ptr curGroup
+    dim as integer itemLoadIndex
+    dim as PackedBinary serialData
     
     f = freefile
  
@@ -1545,8 +1552,10 @@ sub level.load(filename as string)
                                      getWidth(), getHeight(),_
                                      16.0)
     
-    get #f,,numObjs
+    loadMapState()
     
+    itemLoadIndex = 0 
+    get #f,,numObjs
     for i = 0 to numObjs - 1 
         get #f,,tempObj.object_name
         get #f,,tempObj.object_type
@@ -1599,40 +1608,74 @@ sub level.load(filename as string)
             *(tempPortal.portal_name) = tempObj.object_name
             portals.insert(tempPortal.a, tempPortal.b, @tempPortal)
         case SPAWN
-			getStringFromFile(f, itemName)
-            getStringFromFile(f, itemID)
+            if link.dynamiccontroller_ptr->isActiveILI(itemLoadIndex) then 
             
-            if tempObj.drawless = LEVEL_ON then
-                drawless = 1
-            elseif tempObj.drawless = LEVEL_OFF then
-                drawless = 0
-            end if
+                ''''''''''''''''''''''''''''''''
+                getStringFromFile(f, itemName)
+                getStringFromFile(f, itemID)                
+                get #f,,numParams
+                for j = 0 to numParams - 1
+                    getStringFromFile(f, parameterTag)
+                    getStringFromFile(f, parameterValue)
+                next j                
+                get #f,,numSignals
+                for j = 0 to numSignals - 1
+                    getStringFromFile(f, signalName)
+                    getStringFromFile(f, signalParameter)
+                    get #f,,numTargets
+                    for q = 0 to numTargets - 1
+                        getStringFromFile(f, slotID)
+                        getStringFromFile(f, slotName)          
+                    next q
+                next j
+                get #f,,objField(1)
+                get #f,,objField(1)
+                get #f,,tempSingleField
+                '''''''''''''''''''''''''''''''
+                        
+            else
+                getStringFromFile(f, itemName)
+                getStringFromFile(f, itemID)
+                
+                if tempObj.drawless = LEVEL_ON then
+                    drawless = 1
+                elseif tempObj.drawless = LEVEL_OFF then
+                    drawless = 0
+                end if
             
-            itemPtr = link.dynamiccontroller_ptr->constructItem(link.dynamiccontroller_ptr->itemStringToType(itemName), tempObj.inRangeSet, itemID, drawless)     
-            if itemPtr then itemID = itemPtr->getID()
-            get #f,,numParams
-            for j = 0 to numParams - 1
-                getStringFromFile(f, parameterTag)
-                getStringFromFile(f, parameterValue)
-                if itemPtr then link.dynamiccontroller_ptr->setParameterFromString(parameterValue, itemID, parameterTag)     
-            next j
-            get #f,,numSignals
-            for j = 0 to numSignals - 1
-                getStringFromFile(f, signalName)
-                getStringFromFile(f, signalParameter)
-                get #f,,numTargets
-                for q = 0 to numTargets - 1
-                    getStringFromFile(f, slotID)
-                    getStringFromFile(f, slotName)          
-                    if itemPtr then link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)
-                next q
-            next j
-            if itemPtr then link.dynamiccontroller_ptr->initItem(itemPtr, tempObj.p, tempObj.size, tempObj.depth)     
+                itemPtr = link.dynamiccontroller_ptr->constructItem(link.dynamiccontroller_ptr->itemStringToType(itemName), tempObj.inRangeSet, itemID, drawless, itemLoadIndex)     
+                if itemPtr then itemID = itemPtr->getID()
+                get #f,,numParams
+                for j = 0 to numParams - 1
+                    getStringFromFile(f, parameterTag)
+                    getStringFromFile(f, parameterValue)
+                    if itemPtr then link.dynamiccontroller_ptr->setParameterFromString(parameterValue, itemID, parameterTag)     
+                next j
+                get #f,,numSignals
+                for j = 0 to numSignals - 1
+                    getStringFromFile(f, signalName)
+                    getStringFromFile(f, signalParameter)
+                    get #f,,numTargets
+                    for q = 0 to numTargets - 1
+                        getStringFromFile(f, slotID)
+                        getStringFromFile(f, slotName)          
+                        if link.dynamiccontroller_ptr->hasItem(slotID) then
+                            if itemPtr then link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)
+                        else
+                            if link.dynamiccontroller_ptr->getILIEntry(slotID) = -1 then
+                                if itemPtr then link.dynamiccontroller_ptr->connect(itemID, signalName, slotID, slotName, signalParameter)  
+                            end if
+                        end if
+                    next q
+                next j
+                if itemPtr then link.dynamiccontroller_ptr->initItem(itemPtr, tempObj.p, tempObj.size, tempObj.depth)     
 
-            get #f,,objField(1)
-            get #f,,objField(1)
-            get #f,,tempSingleField
+                get #f,,objField(1)
+                get #f,,objField(1)
+                get #f,,tempSingleField
+            end if
         end select
+        itemLoadIndex += 1
     next i
    
     
@@ -1644,26 +1687,16 @@ sub level.load(filename as string)
     #endif
     close #f
     
-    if destroyedBlockMemory.exists(lvlName) = 1 then
-		curDestBlocks = cast(destroyedBlocks_t ptr, destroyedBlockMemory.retrieve(lvlName))->data_
-	else
-		curDestBlocks = allocate(sizeof(byte) * lvlWidth * lvlHeight)
-		for i = 0 to lvlWidth * lvlHeight - 1
-			curDestBlocks[i] = 0
-		next i
-		tempDblocks.data_ = curDestBlocks
-		tempDblocks.width_ = lvlWidth
-		tempDblocks.height_ = lvlHeight
-		destroyedBlockMemory.insert(lvlName, @tempDblocks)
-	end if
+    curDestBlocks = allocate(sizeof(byte) * lvlWidth * lvlHeight)    
+    
 	noVisuals = 1
 	for i = 0 to lvlWidth * lvlHeight - 1
 		if curDestBlocks[i] <> 0 then
 			splodeBlockReact(i mod lvlWidth, i / lvlWidth)
 		end if
 	next i
-
 	noVisuals = 0
+   
     falloutZones.init(lvlWidth*16, lvlHeight*16, sizeof(Level_FalloutType))
     pendingPortalSwitch = 0
     justLoaded = 1
@@ -1676,6 +1709,47 @@ sub level.load(filename as string)
     #endif
 end sub
 
+sub level.saveMapState() 
+    dim as PackedBinary serialData
+    dim as string saveFileName
+    dim as integer curFile
+    
+    saveFileName = SAVE_PATH + ucase(lvlName) + "_STATE.dat"
+    if fileexists(saveFileName) then kill saveFileName
+    
+    curFile = freefile
+    open saveFileName for binary as curFile
+    
+    link.dynamiccontroller_ptr->serialize_out(serialData)
+    put #curFile,,cint(serialData.getSize())
+    put #curFile,,*cast(byte ptr, serialData.getData()),serialData.getSize()  
+    put #curFile,,*curDestBlocks, lvlWidth*lvlHeight
+    
+    close curFile
+end sub
+sub level.loadMapState() 
+    dim as PackedBinary serialData
+    dim as string saveFileName
+    dim as integer curFile, dataSize
+    
+    saveFileName = SAVE_PATH + ucase(lvlName) + "_STATE.dat"
+    if fileexists(saveFileName) then 
+        curFile = freefile
+        open saveFileName for binary as curFile
+        
+        get #curFile,,dataSize
+        serialData.request(dataSize) 
+        get #curFile,,*cast(byte ptr, serialData.getData()),dataSize
+        link.dynamiccontroller_ptr->serialize_in(serialData)
+        
+        curDestBlocks = allocate(lvlWidth*lvlHeight*sizeof(byte))
+        get #curFile,,*curDestBlocks, lvlWidth*lvlHeight
+        
+        close curFile
+    else
+        curDestBlocks = callocate(lvlWidth*lvlHeight, sizeof(byte))
+    end if
+end sub
 
 sub Level.setHide(lyr as integer)
     layerData[lyr].isHidden = LEVEL_ON

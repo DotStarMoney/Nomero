@@ -18,13 +18,13 @@ function _init()
     data.cycleTime = 0
     data.state = 0
     
-    CREATE_ANIMS(4)
+    CREATE_ANIMS(2)
     anims[0].load(MEDIA_PATH + "teleporterswitch.txt")
     anims[1].load(MEDIA_PATH + "teleporterswitch.txt")
     anims[1].hardSwitch(1)
     
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 2, 3, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 1)  
 
     light.texture.x = p.x + size.x * 0.5
     light.texture.y = p.y + size.y * 0.5

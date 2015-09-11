@@ -16,14 +16,13 @@ function _init()
     getParameter(noSpec, "noSpecular")
 
     
-    CREATE_ANIMS(3)
     if noSpec = 0 then
-        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 1, 2, 1)  
+        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 1)  
     else
-        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\black_specular.txt", 1, 2, 1)  
+        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\black_specular.txt", 1)  
     end if
     
-    
+    CREATE_ANIMS(1)
     anims[0].load(MEDIA_PATH + "bulb.txt")
     
  

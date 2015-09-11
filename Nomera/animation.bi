@@ -5,6 +5,7 @@
 #include "vector2d.bi"
 #include "hashtable.bi"
 #include "zimage.bi"
+#include "packedbinary.bi"
 
 enum ANIM_TYPE
     ANIM_ONE_SHOT
@@ -131,6 +132,8 @@ type Animation
         declare function getFramePixelCount(rotatedFlags as integer = 0) as integer
         declare sub getFrameImageData(byref img as uinteger ptr, byref xpos as integer, byref ypos as integer, byref w as integer, byref h as integer)
 
+        declare sub serialize_out(pbin as PackedBinary)
+        declare sub serialize_in(pbin as PackedBinary)
     private:
         declare sub init()
         declare sub applySwitch()
@@ -146,6 +149,7 @@ type Animation
     
         as AnimationData_t ptr data_
                
+        as string loadedFile
         as integer glowValue
         as integer completed
         as integer reachedEnd

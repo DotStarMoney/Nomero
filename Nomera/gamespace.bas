@@ -133,6 +133,8 @@ constructor GameSpace()
     lastTurnstyleInput = 0
     lockCamera = 1
     
+    shell "del " + SAVE_PATH + "*.dat"
+    
     timeBeginPeriod(SLEEP_RESOLUTION)
     
     #ifdef KICKSTARTER
@@ -790,7 +792,7 @@ sub GameSpace.switchRegions(ls as LevelSwitch_t)
 end sub     
 sub GameSpace.performSwitch(ls as LevelSwitch_t)
 	isSwitching = -1
-	
+	lvlData.saveMapState()
 	lvlData.load(ls.fileName)
     world.setBlockData(lvlData.getCollisionLayerData(),_
                        lvlData.getWidth(), lvlData.getHeight(),_

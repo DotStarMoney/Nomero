@@ -110,13 +110,13 @@ end function
 
 '-----------------------------------
 
-sub explodeReact()
+function explodeReact()
     Dim as SlotSet reactions
     
     querySlots(reactions, "explosion reaction", new Circle2D(Vector2D(p.x, p.y), EXPLOSION_RADIUS))
     reactions.throw("source = "+str(p))
 
-end sub
+end function
 
 slot $explode()
     dim as integer i

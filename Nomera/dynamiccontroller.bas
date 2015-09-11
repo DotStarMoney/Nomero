@@ -20,6 +20,8 @@ constructor DynamicController()
     drawobjects_foreground.init(sizeof(Item ptr))    
     addItemPost.init(sizeof(DynamicController_itemPair_t))
     postPairs.init(sizeof(DynamicController_itemPair_t ptr))
+    activeLoadIdentifiers.init(sizeof(DynamicController_ILIdata_t))
+    ILIlookup.init(sizeof(integer))
     isProcessing = 0
     
     #include "objects\headers\gen_namestypes.bi"
@@ -43,11 +45,16 @@ sub DynamicController.clean()
     dim as DynamicController_publish_t ptr curPublish
     dim as DynamicController_publishSlot_t ptr curPublishSlot    
     dim as DynamicController_itemPair_t ptr curItem
-    
+    dim as DynamicController_ILIdata_t ptr curILI
 	
     valueTargets.flush()
     slotTargets.flush()
     stringToTypeTable.clean()
+    BEGIN_HASH(curILI, activeLoadIdentifiers)
+        deallocate(curILI->ID_)
+    END_HASH()
+    activeLoadIdentifiers.clean()
+    ILIlookup.clean()
     
     drawobjects_active.clean()
     drawobjects_activefront.clean()
@@ -110,10 +117,15 @@ sub DynamicController.flush()
     dim as DynamicController_publish_t ptr curPublish
     dim as DynamicController_publishSlot_t ptr curPublishSlot    
     dim as DynamicController_itemPair_t ptr curItem
-    
+    dim as DynamicController_ILIdata_t ptr curILI
     
     valueTargets.flush()
     slotTargets.flush()
+    BEGIN_HASH(curILI, activeLoadIdentifiers)
+        deallocate(curILI->ID_)
+    END_HASH()
+    activeLoadIdentifiers.flush()
+    ILIlookup.flush()
 
     drawobjects_active.flush()
     drawobjects_activefront.flush()
@@ -171,20 +183,189 @@ sub DynamicController.flush()
     
     
 end sub
-sub serialize_in(bindata as any ptr)
-
-
+sub DynamicController.serialize_in(pbin as PackedBinary)
+    dim as integer i
+    dim as integer q
+    dim as integer numItems
+    dim as integer numConnections
+    dim as integer numValueOffsets
+    dim as integer numSlotOffsets
+    dim as integer numIdentifiers
+    dim as integer tempIdentifier
+    dim as DynamicController_itemPair_t ptr newItem
+    dim as DynamicController_itemPair_t ptr refItem
+    dim as string signal_tag, slot_ID, slot_tag, parameterString
+    dim as string value_tag, tempString
+    dim as DynamicController_ILIdata_t curILI
+    dim as Vector2d offset
+    
+    pbin.retrieve(numItems)
+    for i = 0 to numItems - 1
+        newItem = allocate(sizeof(DynamicController_itemPair_t))
+        pbin.retrieve(newItem->usedKeyBank)
+        newItem->item_ = new Item()
+        newItem->item_->setLink(link)
+        newItem->item_->serialize_in(pbin)
+        refItem = itemIdPairs.insert(newItem->item_->getID(), newItem)           
+        if refItem->item_->orderClass <> orderType.NONE then
+            if refItem->item_->orderClass = ACTIVE_FRONT then
+                drawobjects_activeFront.insert(refItem->item_->getID(), @refItem->item_)
+            elseif refItem->item_->orderClass = ACTIVE then
+                drawobjects_active.insert(refItem->item_->getID(), @refItem->item_)
+            elseif refItem->item_->orderClass = BACKGROUND then
+                drawobjects_background.insert(refItem->item_->getID(), @refItem->item_) 
+            elseif refItem->item_->orderClass = FOREGROUND then
+                drawobjects_foreground.insert(refItem->item_->getID(), @refItem->item_) 
+            end if        
+        end if
+        deallocate(newItem)
+        pbin.retrieve(numConnections)
+        for q = 0 to numConnections - 1
+            pbin.retrieve(slot_ID)
+            pbin.retrieve(slot_tag)
+            pbin.retrieve(signal_tag)
+            pbin.retrieve(parameterString)
+            connect(refItem->item_->getID(), signal_tag, slot_ID, slot_tag, parameterString)
+        next q
+        pbin.retrieve(numValueOffsets)
+        for q = 0 to numValueOffsets - 1
+            pbin.retrieve(value_tag)
+            pbin.retrieve(offset)
+            setTargetValueOffset(refItem->item_->getID(), value_tag, offset)
+        next q
+        pbin.retrieve(numSlotOffsets)
+        for q = 0 to numSlotOffsets - 1
+            pbin.retrieve(slot_tag)
+            pbin.retrieve(offset)
+            setTargetSlotOffset(refItem->item_->getID(), slot_tag, offset)
+        next q        
+    next i
+    itemIdGenerator.serialize_in(pbin)
+    pbin.retrieve(numIdentifiers)
+    for i = 0 to numIdentifiers - 1
+        pbin.retrieve(curILI.ILI)
+        pbin.retrieve(tempString)
+        curILI.ID_ = allocate(len(tempString) + 1)
+        *(curILI.ID_) = tempString
+        activeLoadIdentifiers.insert(curILI.ILI, @curILI)
+        ILIlookup.insert(*(curILI.ID_), @curILI.ILI)
+    next i
 end sub
-sub serialize_out(byref bindata as any ptr, byref size as integer)
+
+
+sub DynamicController.serialize_out(pbin as PackedBinary)
     dim as DynamicController_itemPair_t ptr curItem
-	
-    BEGIN_HASH(curItem, itemIdPairs)
-        
-		
-		
-    END_HASH()	
-end sub
+    dim as DynamicController_connectionNode_t ptr curConnectionNode
+    dim as DynamicController_connectionOutgoing_t ptr curOutgoingConnection
+    dim as DynamicController_connectionOutgoingDestination_t ptr curOutgoingDestination
+    dim as DynamicController_publish_t ptr ptr publishedValues
+    dim as DynamicController_publishSlot_t ptr ptr publishedSlots
+    dim as any ptr ptr parameterPtrPtr
+    dim as integer numItems
+    dim as integer numConnections
+    dim as integer i
+    dim as integer publishedValues_n
+    dim as integer publishedSlots_n    
+    dim as integer numOffsets, numILIs
+    dim as DynamicController_ILIdata_t ptr curILI
 
+    numItems = 0
+    BEGIN_HASH(curItem, itemIdPairs)
+        if curItem->item_->canSerialize() then numItems += 1
+    END_HASH()    
+    pbin.store(numItems)
+    BEGIN_HASH(curItem, itemIdPairs)
+        if curItem->item_->canSerialize() then 
+            pbin.store(curItem->usedKeyBank)
+            curItem->item_->serialize_out(pbin)
+            numConnections = 0
+            curConnectionNode = connections.retrieve(curItem->item_->getID())
+            if curConnectionNode then
+                BEGIN_HASH(curOutgoingConnection, curConnectionNode->signals)
+                    BEGIN_DHASH(curOutgoingDestination, curOutgoingConnection->outgoingToSlots)
+                        numConnections += 1
+                    END_DHASH()
+                END_HASH()
+            end if
+            pbin.store(numConnections)
+            if curConnectionNode then
+                BEGIN_HASH(curOutgoingConnection, curConnectionNode->signals)
+                    BEGIN_DHASH(curOutgoingDestination, curOutgoingConnection->outgoingToSlots)
+                        pbin.store(*(curOutgoingDestination->outgoingID))
+                        pbin.store(*(curOutgoingDestination->outgoingSlotTag))
+                        pbin.store(*(curOutgoingDestination->thisSignal))
+                        if curOutgoingDestination->appendParameter then
+                            pbin.store(*(curOutgoingDestination->appendParameter))
+                        else
+                            pbin.store("")                        
+                        end if
+                    END_DHASH()
+                END_HASH()
+            end if            
+            publishedValues_n = allPublishedValues.retrieveKey1(curItem->item_->getID(), parameterPtrPtr)
+            publishedValues = parameterPtrPtr
+            numOffsets = 0
+            for i = 0 to publishedValues_n - 1
+                if publishedValues[i]->target <> 0 then
+                    numOffsets += 1
+                end if
+            next i
+            pbin.store(numOffsets)
+            for i = 0 to publishedValues_n - 1
+                if publishedValues[i]->target <> 0 then
+                    pbin.store(*(publishedValues[i]->tag_))
+                    pbin.store(publishedValues[i]->target->getOffset())
+                end if
+            next i            
+            if publishedValues_n then deallocate(publishedValues)
+            publishedSlots_n = allPublishedSlots.retrieveKey1(curItem->item_->getID(), parameterPtrPtr)
+            publishedSlots = parameterPtrPtr
+            numOffsets = 0
+            for i = 0 to publishedSlots_n - 1
+                if publishedSlots[i]->target <> 0 then
+                    numOffsets += 1
+                end if
+            next i
+            pbin.store(numOffsets)
+            for i = 0 to publishedSlots_n - 1
+                if publishedSlots[i]->target <> 0 then
+                    pbin.store(*(publishedSlots[i]->tag_))
+                    pbin.store(publishedSlots[i]->target->getOffset())
+                end if
+            next i            
+            if publishedSlots_n then deallocate(publishedSlots)
+        end if
+    END_HASH()     
+    itemIdGenerator.serialize_out(pbin)
+    
+    numILIs = 0
+    BEGIN_HASH(curILI, activeLoadIdentifiers)
+        curItem = itemIdPairs.retrieve(*(curILI->ID_))
+        if curItem = 0 then
+            numILIs += 1
+        else
+            if curItem->item_->shouldReload() = 0 then
+                numILIs += 1
+            end if
+        end if
+    END_HASH()
+    
+    pbin.store(numILIs)
+    BEGIN_HASH(curILI, activeLoadIdentifiers)
+        curItem = itemIdPairs.retrieve(*(curILI->ID_))
+        if curItem = 0 then
+            pbin.store(curILI->ILI)
+            pbin.store(*(curILI->ID_))        
+        else
+            if curItem->item_->shouldReload() = 0 then
+                pbin.store(curILI->ILI)
+                pbin.store(*(curILI->ID_))
+            end if
+        end if
+    END_HASH()
+   
+end sub
+        
 sub DynamicController.removeItem(ID_ as string)
     dim as any ptr ptr parameterPtrPtr
     dim as DynamicController_itemPair_t ptr itemPair_
@@ -200,6 +381,7 @@ sub DynamicController.removeItem(ID_ as string)
     dim as DynamicController_connectionOutgoingDestination_t ptr connectedDestination
     dim as DynamicController_connectionIncoming_t ptr connectedSlot
     dim as DynamicController_connectionIncomingSource_t ptr connectedSource    
+    dim as DynamicController_ILIdata_t ptr curILI
     dim as integer outConnections_n, removeConnections_n
     dim as string removeID, removeTag, thisTag
     dim as integer publishedVals_N, i
@@ -315,12 +497,33 @@ sub DynamicController.removeItem(ID_ as string)
         curConnectionNode->signals.clean()    
         connections.remove(ID_)
     end if
-
+    
+    if itemPair_->item_->ILI >= 0 then
+        if itemPair_->item_->shouldReload() then 
+            curILI = activeLoadIdentifiers.retrieve(itemPair_->item_->ILI)
+            deallocate(curILI->ID_)
+            activeLoadIdentifiers.remove(itemPair_->item_->ILI)
+            ILIlookup.remove(*(curILI->ID_))
+        end if
+    end if
         
     delete(itemPair_->item_)
     itemIdPairs.remove(ID_)
     
 end sub
+
+function DynamicController.isActiveILI(ILI as integer) as integer
+    if ILI < 0 then return 0
+    if activeLoadIdentifiers.exists(ILI) then return 1
+    return 0
+end function
+
+function DynamicController.getILIentry(ID_ as string) as integer
+    if ILIlookup.exists(ID_) then 
+        return *cast(integer ptr, ILIlookup.retrieve(ID_))
+    end if
+    return -1
+end function
 
 sub DynamicController.setLink(link_ as ObjectLink)
     link = link_
@@ -398,10 +601,11 @@ function DynamicController.itemStringToType(item_tag as string) as Item_Type_e
     end if
 end function
 
-function DynamicController.constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "", drawless as integer) as Item ptr
+function DynamicController.constructItem(itemType_ as Item_Type_e, order as integer = ACTIVE, ID_ as string = "", drawless as integer, itemLoadIdentifier as integer = -1) as Item ptr
     dim as DynamicController_itemPair_t ptr newItem
     dim as DynamicController_itemPair_t ptr refItem
-    
+    dim as DynamicController_ILIdata_t curILI
+
     if itemType_ = ITEM_NONE then return 0
     
     newItem = allocate(sizeof(DynamicController_itemPair_t))
@@ -423,6 +627,7 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
         postPairs.insert(ID_, @refItem)
     end if
 
+    refItem->item_->orderClass = order
     if drawLess = 0 then
         if order = ACTIVE_FRONT then
             drawobjects_activeFront.insert(ID_, @refItem->item_)
@@ -436,6 +641,14 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
     end if
   
     refItem->item_->construct(itemType_, ID_)
+    
+    if itemLoadIdentifier >= 0 then
+        refItem->item_->ILI = itemLoadIdentifier
+        curILI.ILI = itemLoadIdentifier
+        curILI.ID_ = allocate(len(ID_) + 1)
+        *(curILI.ID_) = ID_
+        activeLoadIdentifiers.insert(itemLoadIdentifier, @curILI)
+    end if
 
     deallocate(newItem)
       
@@ -445,10 +658,10 @@ sub DynamicController.initItem(itemToInit as Item ptr, p_ as Vector2D = Vector2D
     itemToInit->initPost(p_, size_, depth_)
 end sub
 function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = ACTIVE, p_ as Vector2D, size_ as Vector2D, _
-                                   ID_ as string = "", depth_ as single = 1.0, drawLess as integer = 0) as string
+                                   ID_ as string = "", depth_ as single = 1.0, drawLess as integer = 0, itemLoadIdentifier as integer = -1) as string
     dim as DynamicController_itemPair_t ptr newItem
     dim as DynamicController_itemPair_t ptr refItem
-    
+    dim as DynamicController_ILIdata_t curILI
     
     if itemType_ = ITEM_NONE then return ""
     
@@ -470,6 +683,7 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
         refItem = addItemPost.push_back(newItem)
     end if
     
+    refItem->item_->orderClass = order
     if drawLess = 0 then
         if order = ACTIVE_FRONT then
             drawobjects_activeFront.insert(ID_, @refItem->item_)
@@ -480,10 +694,20 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
         elseif order = FOREGROUND then
             drawobjects_foreground.insert(ID_, @refItem->item_) 
         end if
+    else 
+      refItem->item_->orderClass = orderType.NONE  
     end if
   
+  
     refItem->item_->init(itemType_, p_, size_, ID_, depth_)
-   
+    if itemLoadIdentifier >= 0 then
+        refItem->item_->ILI = itemLoadIdentifier
+        curILI.ILI = itemLoadIdentifier
+        curILI.ID_ = allocate(len(ID_) + 1)
+        *(curILI.ID_) = ID_
+        activeLoadIdentifiers.insert(itemLoadIdentifier, @curILI)
+    end if
+
     deallocate(newItem)
  
     return ID_
@@ -501,6 +725,13 @@ sub DynamicController.setSize(ID_ as string, size_ as Vector2D)
     curItem = itemIdPairs.retrieve(ID_)
     if curItem then curItem->item_->setSize(size_)
 end sub
+
+function DynamicController.getILI(ID_ as string) as integer
+    dim as DynamicController_itemPair_t ptr curItem
+    curItem = itemIdPairs.retrieve(ID_)
+    if curItem then return(curItem->item_->ILI)
+    return -1
+end function
 
 function DynamicController.getPos(ID_ as string) as Vector2D
     dim as DynamicController_itemPair_t ptr curItem

@@ -100,7 +100,7 @@ end function
 
 '----------------------------------
 
-sub initializeTubes()
+function initializeTubes()
     dim as integer i
     if data.hasInit = 0 then
         data.hasInit = 1
@@ -108,7 +108,7 @@ sub initializeTubes()
             fireExternalSlot(*(data.tubeIDs[i]), "setup", "startLevel = " + str(data.startValues[i]))                    
         next i        
     end if
-end sub
+end function
 
 '----------------------------------
 

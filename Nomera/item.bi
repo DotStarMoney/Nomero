@@ -1,6 +1,7 @@
 #ifndef ITEM_BI
 #define ITEM_BI
 
+#include "zimage.bi"
 #include "objectlink.bi"
 #include "animation.bi"
 #include "pointlight.bi"
@@ -26,6 +27,12 @@ type _Item_slotValuePair_t
     as string parameter_tag
     as _Item_valueContainer_t value_
 end type
+
+enum _Item_persistenceType_e
+    ITEM_PERSISTENCE_NONE
+    ITEM_PERSISTENCE_ITEM
+    ITEM_PERSISTENCE_LEVEL
+end enum
 
 
 type Item
@@ -79,13 +86,20 @@ type Item
         declare function isSignal(signal_tag as string) as integer
         declare function isSlot(slot_tag as string) as integer
 		
-		declare sub serialize_in(bindata as byte ptr)
-		declare sub serialize_out(byref bindata as byte ptr, byref size as integer)
+		declare sub serialize_in(pbin as PackedBinary)
+		declare sub serialize_out(pbin as PackedBinary)
+        
+        declare function canSerialize() as integer
+        declare function shouldReload() as integer
         
         declare static sub valueFormToContainer(value_form as string, byref valueC as _Item_valueContainer_t)
         
         declare static function getIndicatorColor(i as integer) as integer
-	private:
+	
+        as integer ILI
+        as orderType orderClass
+    
+    private:
         #include "objects\headers\gen_methodprototypes.bi"
         
         declare function drawX() as double
@@ -133,21 +147,30 @@ type Item
         as Hashtable signalTable
     
         as Item_Type_e itemType
+      
         as LightPair   light
         as integer     lightState
         as integer     fastLight
- 
+        as Animation ptr diffuseTex_
+        as Animation ptr specularTex_
+        as integer usesLights_
+        
 		as ObjectLink    link
 		as integer       anims_n
 		as Animation ptr anims 
+                
         as Vector2D      size
         as Vector2D      p
         as Vector2D      bounds_tl
         as Vector2D      bounds_br
         as string        ID
         as double        depth
+        as _Item_persistenceType_e persistenceLevel_
+        
+        as integer canExport_
 
         as Item_objectData_u data_ 
+        
         
         static as uinteger ptr BOMB_COLORS
 end type

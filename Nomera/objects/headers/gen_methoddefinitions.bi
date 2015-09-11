@@ -2,7 +2,7 @@ sub Item.ACCENTLIGHT_PROC_INIT()
     data_.ACCENTLIGHT_DATA = new ITEM_ACCENTLIGHT_TYPE_DATA
     dim as integer flavor
     dim as integer fast
-    dim as string  lightfn
+    dim as string  lightfn, pathDiff, pathSpec
     
     getParameter(flavor, "flavor")
     getParameter(fast, "fast")
@@ -23,30 +23,10 @@ sub Item.ACCENTLIGHT_PROC_INIT()
         lightfn = "LightOrange"
     end select
 
-    anims[0].load(MEDIA_PATH + "Lights\" + lightfn + "_Diffuse.txt")
-    anims[1].load(MEDIA_PATH + "Lights\" + lightfn + "_Specular.txt")
-  
-    light.texture.diffuse_fbimg = anims[0].getRawImage()
-    light.texture.specular_fbimg = anims[1].getRawImage()
-    light.texture.x = p.x
-    light.texture.y = p.y
-    light.texture.w = anims[0].getWidth()
-    light.texture.h = anims[0].getHeight()
-    light.shaded = light.texture
-    if fast <> 65535 then
-        light.shaded.diffuse_fbimg = 0
-        light.shaded.specular_fbimg = 0   
-        light.occlusion_fbimg = 0       
-    else
-        light.shaded.diffuse_fbimg = imagecreate(light.texture.w, light.texture.h)
-        light.shaded.specular_fbimg = imagecreate(light.texture.w, light.texture.h)   
-        light.occlusion_fbimg = imagecreate(light.texture.w, light.texture.h)
-    end if
-    light.last_tl_x = 0
-    light.last_tl_y = 0
-    light.last_br_x = light.texture.w - 1
-    light.last_br_y = light.texture.h - 1    
-    lightState = 1
+    pathDiff = MEDIA_PATH + "Lights\" + lightfn + "_Diffuse.txt"
+    pathSpec = MEDIA_PATH + "Lights\" + lightfn + "_Specular.txt"
+
+    PREP_LIGHTS(pathDiff, pathSpec, fast)
     
 end sub
 sub Item.ACCENTLIGHT_PROC_FLUSH()
@@ -71,6 +51,7 @@ sub Item.ACCENTLIGHT_PROC_CONSTRUCT()
     _initAddParameter_("MAXVALUE", _ITEM_VALUE_DOUBLE)
     _initAddParameter_("MODE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("FAST", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.ALARMSPINNER_PROC_INIT()
     data_.ALARMSPINNER_DATA = new ITEM_ALARMSPINNER_TYPE_DATA
@@ -118,13 +99,14 @@ sub Item.ALARMSPINNER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
 sub Item.ALARMSPINNER_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.ALIENSPINNER_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 
 end sub
 sub Item.ALIENSPINNER_PROC_INIT()
     data_.ALIENSPINNER_DATA = new ITEM_ALIENSPINNER_TYPE_DATA
-    anims_n = 6
+    anims_n = 4
     anims = new Animation[anims_n]
     anims[0].load(MEDIA_PATH + "alienspinner.txt")
     anims[0].hardSwitch(3)
@@ -136,7 +118,7 @@ sub Item.ALIENSPINNER_PROC_INIT()
     anims[3].load(MEDIA_PATH + "alienspinner.txt")
     anims[3].hardSwitch(1)   
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\Cyan_Diffuse.txt", MEDIA_PATH + "Lights\Cyan_Specular.txt", 4, 5, 0)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\Cyan_Diffuse.txt", MEDIA_PATH + "Lights\Cyan_Specular.txt", 0)  
 
     data_.ALIENSPINNER_DATA->curFrame = 0
     data_.ALIENSPINNER_DATA->delay = int(rnd * 60) + 30
@@ -233,11 +215,12 @@ sub Item.ALIENSPINNER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.ALIENSPINNER_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_ALIENSPINNER_SLOT_INTERACT_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_ANTIPERSONNELMINE_DEFINE_BOMB_STICKYNESS 0
 #define ITEM_ANTIPERSONNELMINE_DEFINE_MINE_FREEFALL_MAX 30
 #define ITEM_ANTIPERSONNELMINE_DEFINE_EXPLOSION_RADIUS 150
-sub Item.explodeReact()
+sub Item.ANTIPERSONNELMINE_SUB_explodeReact()
     Dim as ObjectSlotSet reactions
     
     querySlots(reactions, "explosion reaction", new Circle2D(Vector2D(p.x, p.y), ITEM_ANTIPERSONNELMINE_DEFINE_EXPLOSION_RADIUS))
@@ -262,7 +245,7 @@ sub Item.ANTIPERSONNELMINE_SLOT_EXPLODE(pvPair() as _Item_slotValuePair_t)
         link.gamespace_ptr->setShakeStyle(0)
         link.gamespace_ptr->vibrateScreen()
         link.level_ptr->addFallout(p.x, p.y)
-        explodeReact()
+        ANTIPERSONNELMINE_SUB_explodeReact()
     end if
 end sub
 sub Item.ANTIPERSONNELMINE_PROC_INIT()
@@ -354,6 +337,7 @@ sub Item.ANTIPERSONNELMINE_PROC_CONSTRUCT()
     _initAddSlot_("EXPLODE", ITEM_ANTIPERSONNELMINE_SLOT_EXPLODE_E)
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.BALLSPAWNER_SLOT_SPAWN(pvPair() as _Item_slotValuePair_t)
     if data_.BALLSPAWNER_DATA->revUpFrames = 0 then
@@ -420,6 +404,7 @@ sub Item.BALLSPAWNER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.BALLSPAWNER_PROC_CONSTRUCT()
     _initAddSlot_("SPAWN", ITEM_BALLSPAWNER_SLOT_SPAWN_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.BIGOSCILLOSCOPE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     data_.BIGOSCILLOSCOPE_DATA->dontDraw = 1 - data_.BIGOSCILLOSCOPE_DATA->dontDraw
@@ -473,9 +458,10 @@ end sub
 sub Item.BIGOSCILLOSCOPE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_BIGOSCILLOSCOPE_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #DEFINE ITEM_CABINCONTROL_DEFINE_CHARGE_TIME 2700
-sub Item.setAmbientLevels()
+sub Item.CABINCONTROL_SUB_setAmbientLevels()
     dim as integer i
     dim as integer col
     if data_.CABINCONTROL_DATA->state = 1 then
@@ -514,7 +500,7 @@ sub Item.CABINCONTROL_SLOT_STARTSEQUENCE(pvPair() as _Item_slotValuePair_t)
 end sub
 sub Item.CABINCONTROL_SLOT_TOGGLELIGHTS(pvPair() as _Item_slotValuePair_t)
     data_.CABINCONTROL_DATA->state = 1 - data_.CABINCONTROL_DATA->state
-    setAmbientLevels()
+    CABINCONTROL_SUB_setAmbientLevels()
 end sub
 sub Item.CABINCONTROL_PROC_INIT()
     data_.CABINCONTROL_DATA = new ITEM_CABINCONTROL_TYPE_DATA
@@ -528,10 +514,10 @@ sub Item.CABINCONTROL_PROC_INIT()
     getParameter(data_.CABINCONTROL_DATA->muralLoc, "muralTarget")
     getParameter(data_.CABINCONTROL_DATA->camTarget, "cameraTarget")
 
-    CREATE_ANIMS(3)
+    CREATE_ANIMS(1)
     anims[0].load(MEDIA_PATH + "glowmural.txt")
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\PaleGreen_Diffuse.txt", MEDIA_PATH + "Lights\PaleGreen_Specular.txt", 1, 2, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\PaleGreen_Diffuse.txt", MEDIA_PATH + "Lights\PaleGreen_Specular.txt", 1)  
 
 end sub
 sub Item.CABINCONTROL_PROC_FLUSH()
@@ -609,6 +595,7 @@ sub Item.CABINCONTROL_PROC_CONSTRUCT()
     _initAddSlot_("TOGGLELIGHTS", ITEM_CABINCONTROL_SLOT_TOGGLELIGHTS_E)
     _initAddParameter_("MURALTARGET", _ITEM_VALUE_VECTOR2D)
     _initAddParameter_("CAMERATARGET", _ITEM_VALUE_VECTOR2D)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.CASH_PROC_INIT()
     data_.CASH_DATA = new ITEM_CASH_TYPE_DATA
@@ -730,6 +717,7 @@ end sub
 sub Item.CASH_PROC_CONSTRUCT()
     _initAddParameter_("BILLTYPE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("VELOCITY", _ITEM_VALUE_VECTOR2D)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.CEILINGFAN_PROC_INIT()
     CREATE_ANIMS(1)
@@ -753,6 +741,7 @@ sub Item.CEILINGFAN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
   
 end sub
 sub Item.CEILINGFAN_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_COVERSMOKE_DEFINE_LIFETIME 300
 #define ITEM_COVERSMOKE_DEFINE_DAMPING_MAX 0.95
@@ -846,17 +835,18 @@ end sub
 sub Item.COVERSMOKE_PROC_CONSTRUCT()
     _initAddParameter_("ISSOLID", _ITEM_VALUE_INTEGER)
     _initAddParameter_("INITVELOCITY", _ITEM_VALUE_VECTOR2D)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.CRYSTALGLOW_PROC_INIT()
     dim as integer flavor
     
     getParameter(flavor, "flavor")
     
-    CREATE_ANIMS(3)
+    CREATE_ANIMS(1)
     anims[0].load(MEDIA_PATH + "crystalglow.txt")
     anims[0].hardSwitch(flavor - 1)
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 1, 2, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 1)  
 
     
     
@@ -899,6 +889,7 @@ sub Item.CRYSTALGLOW_PROC_CONSTRUCT()
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("LOWCUTOFF", _ITEM_VALUE_VECTOR2D)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.DEEPSPOTLIGHT_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
     
@@ -953,6 +944,7 @@ end sub
 sub Item.DEEPSPOTLIGHT_PROC_CONSTRUCT()
     _initAddSlot_("ENABLE", ITEM_DEEPSPOTLIGHT_SLOT_ENABLE_E)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.DESKLAMP_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     if data_.DESKLAMP_DATA->isDisabled = 0 then
@@ -976,7 +968,7 @@ sub Item.DESKLAMP_PROC_INIT()
     getParameter(data_.DESKLAMP_DATA->state, "state")
     getParameter(data_.DESKLAMP_DATA->flavor, "flavor")
     
-    CREATE_ANIMS(5)
+    CREATE_ANIMS(3)
     
     if data_.DESKLAMP_DATA->flavor = 0 then
         anims[0].load(MEDIA_PATH + "desklamp.txt")
@@ -994,7 +986,7 @@ sub Item.DESKLAMP_PROC_INIT()
         anims[2].hardswitch(5)      
     end if
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 3, 4, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 1)  
     
     link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 32)))
     link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
@@ -1044,6 +1036,7 @@ sub Item.DESKLAMP_PROC_CONSTRUCT()
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_ELECTRICMINE_DEFINE_MAX_RAYCAST_ATTEMPTS 10
 #define ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST 80
@@ -1237,6 +1230,7 @@ sub Item.ELECTRICMINE_PROC_CONSTRUCT()
     _initAddSlot_("EXPLODE", ITEM_ELECTRICMINE_SLOT_EXPLODE_E)
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_ENERGYBALL_DEFINE_MAX_RAYCAST_ATTEMPTS 10
 #define ITEM_ENERGYBALL_DEFINE_RAYCAST_DIST 150
@@ -1271,10 +1265,10 @@ sub Item.ENERGYBALL_PROC_INIT()
     data_.ENERGYBALL_DATA->body.f += Vector2D(0, -DEFAULT_GRAV)*data_.ENERGYBALL_DATA->body.m*0.75
     data_.ENERGYBALL_DATA->body_i = link.tinyspace_ptr->addBody(@(data_.ENERGYBALL_DATA->body))
 
-    CREATE_ANIMS(2)
+    CREATE_ANIMS(1)
     
     anims[0].load(MEDIA_PATH + "balllaunch2.txt")
-    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 1, 2, 0)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 0)  
 
     data_.ENERGYBALL_DATA->arcs_n = 0
     data_.ENERGYBALL_DATA->arcs = new ITEM_ENERGYBALL_TYPE_arcData_t[2]
@@ -1392,6 +1386,7 @@ end sub
 sub Item.ENERGYBALL_PROC_CONSTRUCT()
     _initAddSlot_("REACT", ITEM_ENERGYBALL_SLOT_REACT_E)
     _initAddParameter_("TAKECAMERA", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.FISHBOWL_PROC_INIT()
     CREATE_ANIMS(1)
@@ -1415,6 +1410,7 @@ sub Item.FISHBOWL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
   
 end sub
 sub Item.FISHBOWL_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.FLOORLAMP_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     if data_.FLOORLAMP_DATA->isDisabled = 0 then 
@@ -1431,7 +1427,7 @@ sub Item.FLOORLAMP_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
 end sub
 sub Item.FLOORLAMP_PROC_INIT()
     data_.FLOORLAMP_DATA = new ITEM_FLOORLAMP_TYPE_DATA
-    CREATE_ANIMS(4)
+    CREATE_ANIMS(2)
     anims[0].load(MEDIA_PATH + "floorlamp.txt")
     anims[0].hardswitch(2)
     anims[1].load(MEDIA_PATH + "floorlamp.txt")
@@ -1444,7 +1440,7 @@ sub Item.FLOORLAMP_PROC_INIT()
     getParameter(data_.FLOORLAMP_DATA->isDisabled, "disable")
     getParameter(data_.FLOORLAMP_DATA->state, "state")
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 2, 3, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 1)  
     
     link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 32)))
     link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
@@ -1494,15 +1490,16 @@ sub Item.FLOORLAMP_PROC_CONSTRUCT()
     _initAddSlot_("ENABLE", ITEM_FLOORLAMP_SLOT_ENABLE_E)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
-sub Item.togglePath()
+sub Item.FREIGHTELEVATOR_SUB_togglePath()
     link.soundeffects_ptr->playSound(SND_SELECT)
     data_.FREIGHTELEVATOR_DATA->gearSound = link.soundeffects_ptr->playSound(SND_GEARS)
     data_.FREIGHTELEVATOR_DATA->platformLow->togglePath()
     data_.FREIGHTELEVATOR_DATA->platformHi->togglePath()
 end sub
 sub Item.FREIGHTELEVATOR_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
-    togglePath()
+    FREIGHTELEVATOR_SUB_togglePath()
 end sub
 sub Item.FREIGHTELEVATOR_PROC_INIT()
     data_.FREIGHTELEVATOR_DATA = new ITEM_FREIGHTELEVATOR_TYPE_DATA
@@ -1631,6 +1628,7 @@ end sub
 sub Item.FREIGHTELEVATOR_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_FREIGHTELEVATOR_SLOT_INTERACT_E)
     _initAddParameter_("STARTSIDE", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.FREQUENCYCOUNTER_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 
@@ -1689,6 +1687,7 @@ end sub
 sub Item.FREQUENCYCOUNTER_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_FREQUENCYCOUNTER_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.HANGINGBULB_SLOT_TOGGLE(pvPair() as _Item_slotValuePair_t)
     data_.HANGINGBULB_DATA->state = 1 - data_.HANGINGBULB_DATA->state
@@ -1701,14 +1700,13 @@ sub Item.HANGINGBULB_PROC_INIT()
     getParameter(noSpec, "noSpecular")
 
     
-    CREATE_ANIMS(3)
     if noSpec = 0 then
-        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 1, 2, 1)  
+        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 1)  
     else
-        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\black_specular.txt", 1, 2, 1)  
+        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\black_specular.txt", 1)  
     end if
     
-    
+    CREATE_ANIMS(1)
     anims[0].load(MEDIA_PATH + "bulb.txt")
     
  
@@ -1751,6 +1749,7 @@ sub Item.HANGINGBULB_PROC_CONSTRUCT()
     _initAddSlot_("TOGGLE", ITEM_HANGINGBULB_SLOT_TOGGLE_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("NOSPECULAR", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.HIDDENSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     
@@ -1806,12 +1805,7 @@ sub Item.HIDDENSWITCH_PROC_CONSTRUCT()
     _initAddSlot_("ENABLE", ITEM_HIDDENSWITCH_SLOT_ENABLE_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
-end sub
-sub Item.INTELLIGENCE_SUB_serialize_in()
-	
-end sub
-sub Item.INTELLIGENCE_SUB_serialize_out()
-	
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.INTELLIGENCE_PROC_INIT()
     data_.INTELLIGENCE_DATA = new ITEM_INTELLIGENCE_TYPE_DATA
@@ -1871,7 +1865,18 @@ end sub
 sub Item.INTELLIGENCE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     
 end sub
+sub Item.INTELLIGENCE_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.INTELLIGENCE_DATA = new ITEM_INTELLIGENCE_TYPE_DATA
+	binaryData_.retrieve(data_.INTELLIGENCE_DATA->frameCount)
+    data_.INTELLIGENCE_DATA->img = new zImage()
+    data_.INTELLIGENCE_DATA->img->load(MEDIA_PATH + "burst3.png")
+end sub
+sub Item.INTELLIGENCE_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+	binaryData_.store(data_.INTELLIGENCE_DATA->frameCount)
+end sub
 sub Item.INTELLIGENCE_PROC_CONSTRUCT()
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
 sub Item.INTERFACE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 
@@ -1925,6 +1930,7 @@ sub Item.INTERFACE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.INTERFACE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_INTERFACE_SLOT_INTERACT_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.LANTERN_SLOT_TOGGLE(pvPair() as _Item_slotValuePair_t)
     data_.LANTERN_DATA->state = 1 - data_.LANTERN_DATA->state
@@ -1938,11 +1944,11 @@ sub Item.LANTERN_PROC_INIT()
     getParameter(noSpec, "noSpecular")
 
  
-    CREATE_ANIMS(4)
+    CREATE_ANIMS(2)
     if noSpec = 0 then
-        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 2, 3, 1)  
+        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\LightOrange_Specular.txt", 1)  
     else
-        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\black_specular.txt", 2, 3, 1)  
+        PREP_LIGHTS(MEDIA_PATH + "Lights\LightOrange_Diffuse.txt", MEDIA_PATH + "Lights\black_specular.txt", 1)  
     end if
     
     anims[0].load(MEDIA_PATH + "lantern.txt")
@@ -1985,6 +1991,7 @@ sub Item.LANTERN_PROC_CONSTRUCT()
     _initAddSlot_("TOGGLE", ITEM_LANTERN_SLOT_TOGGLE_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("NOSPECULAR", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.LASEREMITTER_PROC_INIT()
     data_.LASEREMITTER_DATA = new ITEM_LASEREMITTER_TYPE_DATA
@@ -2182,6 +2189,7 @@ sub Item.LASEREMITTER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.LASEREMITTER_PROC_CONSTRUCT()
     _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.LASERRECEIVER_SLOT_RECIEVE(pvPair() as _Item_slotValuePair_t)
     data_.LASERRECEIVER_DATA->targetFrames = 10
@@ -2279,6 +2287,7 @@ end sub
 sub Item.LASERRECEIVER_PROC_CONSTRUCT()
     _initAddSlot_("RECIEVE", ITEM_LASERRECEIVER_SLOT_RECIEVE_E)
     _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.MAGICCOUCH_SLOT_MOVE(pvPair() as _Item_slotValuePair_t)
     data_.MAGICCOUCH_DATA->platform->togglePath()
@@ -2346,6 +2355,7 @@ end sub
 sub Item.MAGICCOUCH_PROC_CONSTRUCT()
     _initAddSlot_("MOVE", ITEM_MAGICCOUCH_SLOT_MOVE_E)
     _initAddParameter_("STARTSIDE", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_MINELANTERN_DEFINE_MOTH_ANGLE_VAR_DEG 45
 #define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MIN 10
@@ -2367,8 +2377,8 @@ sub Item.MINELANTERN_PROC_INIT()
     data_.MINELANTERN_DATA = new ITEM_MINELANTERN_TYPE_DATA
     dim as integer i
     
-    CREATE_ANIMS(4)
-    PREP_LIGHTS(MEDIA_PATH + "Lights\LanternGlow_Diffuse.txt", MEDIA_PATH + "Lights\LanternGlow_Specular.txt", 2, 3, 0)  
+    CREATE_ANIMS(2)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\LanternGlow_Diffuse.txt", MEDIA_PATH + "Lights\LanternGlow_Specular.txt", 0)  
     
     anims[0].load(MEDIA_PATH + "lantern.txt")
     anims[1].load(MEDIA_PATH + "lantern.txt")
@@ -2460,6 +2470,7 @@ sub Item.MINELANTERN_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
 sub Item.MINELANTERN_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.MOMENTARYTOGGLESWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     if data_.MOMENTARYTOGGLESWITCH_DATA->toggleCycle = 0 then
@@ -2527,15 +2538,16 @@ sub Item.MOMENTARYTOGGLESWITCH_PROC_CONSTRUCT()
     _initAddSignal_("ACTIVATE")
     _initAddSlot_("INTERACT", ITEM_MOMENTARYTOGGLESWITCH_SLOT_INTERACT_E)
     _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.NIXIEFLICKER_PROC_INIT()
     data_.NIXIEFLICKER_DATA = new ITEM_NIXIEFLICKER_TYPE_DATA
     dim as integer i
-    CREATE_ANIMS(3)
+    CREATE_ANIMS(1)
     anims[0].load(MEDIA_PATH + "nixie.txt")
     anims[0].play()     
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\RedOrange_Diffuse.txt", MEDIA_PATH + "Lights\RedOrange_Specular.txt", 1, 2, 0)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\RedOrange_Diffuse.txt", MEDIA_PATH + "Lights\RedOrange_Specular.txt", 0)  
 
     data_.NIXIEFLICKER_DATA->tubeValues = new integer[6]
     data_.NIXIEFLICKER_DATA->valueFixed = new integer[6]
@@ -2613,9 +2625,10 @@ sub Item.NIXIEFLICKER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     
 end sub
 sub Item.NIXIEFLICKER_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES 20
-sub Item.doBubbles(t as double)
+sub Item.PUZZLETUBE1_SUB_doBubbles(t as double)
     dim as integer i
     if int(rnd * 10) = 0 then
         for i = 0 to ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES - 1
@@ -2704,7 +2717,7 @@ function Item.PUZZLETUBE1_PROC_RUN(t as double) as integer
         data_.PUZZLETUBE1_DATA->targetLevel = 0
         throw("FAILURE")
     end if
-    doBubbles(t)
+    PUZZLETUBE1_SUB_doBubbles(t)
     return 0
 end function
 sub Item.PUZZLETUBE1_PROC_DRAW(scnbuff as integer ptr)
@@ -2734,8 +2747,9 @@ sub Item.PUZZLETUBE1_PROC_CONSTRUCT()
     _initAddSlot_("RESET", ITEM_PUZZLETUBE1_SLOT_RESET_E)
     _initAddSlot_("LOCKUP", ITEM_PUZZLETUBE1_SLOT_LOCKUP_E)
     _initAddSlot_("SETUP", ITEM_PUZZLETUBE1_SLOT_SETUP_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
-sub Item.initializeTubes()
+sub Item.PUZZLE1234_SUB_initializeTubes()
     dim as integer i
     if data_.PUZZLE1234_DATA->hasInit = 0 then
         data_.PUZZLE1234_DATA->hasInit = 1
@@ -2814,7 +2828,7 @@ end sub
 function Item.PUZZLE1234_PROC_RUN(t as double) as integer
     dim as integer total, i, curLevel
     
-    initializeTubes()
+    PUZZLE1234_SUB_initializeTubes()
     
     total = 0
     for i = 0 to 3
@@ -2876,6 +2890,7 @@ sub Item.PUZZLE1234_PROC_CONSTRUCT()
     _initAddParameter_("TUBEID2", _ITEM_VALUE_ZSTRING)
     _initAddParameter_("TUBEID3", _ITEM_VALUE_ZSTRING)
     _initAddParameter_("TUBEID4", _ITEM_VALUE_ZSTRING)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_RAZ200_DEFINE_STARNUM 40
 sub Item.RAZ200_PROC_INIT()
@@ -2987,12 +3002,13 @@ sub Item.RAZ200_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     
 end sub
 sub Item.RAZ200_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.REDPOSTLIGHT_PROC_INIT()
 
-    CREATE_ANIMS(3)
+    CREATE_ANIMS(2)
     anims[0].load(MEDIA_PATH + "postbulb.txt")
-    PREP_LIGHTS(MEDIA_PATH + "Lights\TinyRed_Diffuse.txt", MEDIA_PATH + "Lights\TinyRed_Specular.txt", 1, 2, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\TinyRed_Diffuse.txt", MEDIA_PATH + "Lights\TinyRed_Specular.txt", 1)  
 
 end sub
 sub Item.REDPOSTLIGHT_PROC_FLUSH()
@@ -3016,6 +3032,7 @@ sub Item.REDPOSTLIGHT_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
 sub Item.REDPOSTLIGHT_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_REDWALLLIGHT_DEFINE_ANIM_SPEED 10
 sub Item.REDWALLLIGHT_PROC_INIT()
@@ -3024,9 +3041,9 @@ sub Item.REDWALLLIGHT_PROC_INIT()
     data_.REDWALLLIGHT_DATA->speedCount = ITEM_REDWALLLIGHT_DEFINE_ANIM_SPEED
     data_.REDWALLLIGHT_DATA->frameDir = 1
 
-    CREATE_ANIMS(3)
+    CREATE_ANIMS(1)
     anims[0].load(MEDIA_PATH + "red wall light.txt")
-    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallRed_Diffuse.txt", MEDIA_PATH + "Lights\SmallRed_Specular.txt", 1, 2, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallRed_Diffuse.txt", MEDIA_PATH + "Lights\SmallRed_Specular.txt", 1)  
 
 end sub
 sub Item.REDWALLLIGHT_PROC_FLUSH()
@@ -3054,6 +3071,7 @@ sub Item.REDWALLLIGHT_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 
 end sub
 sub Item.REDWALLLIGHT_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.SHOCKTARGET1_SLOT_SHOCKTARGET(pvPair() as _Item_slotValuePair_t)
     throw("ACTIVATE")
@@ -3065,7 +3083,7 @@ sub Item.SHOCKTARGET1_PROC_INIT()
 
     data_.SHOCKTARGET1_DATA->cycleTime = 0
     
-    anims_n = 5
+    anims_n = 3
     anims = new Animation[anims_n]
     anims[0].load(MEDIA_PATH + "pawn.txt")
     anims[1].load(MEDIA_PATH + "pawn.txt")
@@ -3073,7 +3091,7 @@ sub Item.SHOCKTARGET1_PROC_INIT()
     anims[2].load(MEDIA_PATH + "pawn.txt")
     anims[2].hardSwitch(2)    
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 3, 4, 0)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 0)  
 
     light.texture.x = p.x + size.x * 0.5
     light.texture.y = p.y + size.y * 0.5
@@ -3127,6 +3145,7 @@ end sub
 sub Item.SHOCKTARGET1_PROC_CONSTRUCT()
     _initAddSignal_("ACTIVATE")
     _initAddSlot_("SHOCKTARGET", ITEM_SHOCKTARGET1_SLOT_SHOCKTARGET_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.SIGN_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     data_.SIGN_DATA->doText = 1
@@ -3177,6 +3196,7 @@ end sub
 sub Item.SIGN_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_SIGN_SLOT_INTERACT_E)
     _initAddParameter_("TEXT", _ITEM_VALUE_ZSTRING)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.SMALLOSCILLOSCOPE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     data_.SMALLOSCILLOSCOPE_DATA->dontDraw = 1 - data_.SMALLOSCILLOSCOPE_DATA->dontDraw
@@ -3222,6 +3242,7 @@ sub Item.SMALLOSCILLOSCOPE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.SMALLOSCILLOSCOPE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_SMALLOSCILLOSCOPE_SLOT_INTERACT_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_SMOKEMINE_DEFINE_BOMB_STICKYNESS 0
 #define ITEM_SMOKEMINE_DEFINE_MINE_FREEFALL_MAX 30
@@ -3346,16 +3367,17 @@ sub Item.SMOKEMINE_PROC_CONSTRUCT()
     _initAddSlot_("EXPLODE", ITEM_SMOKEMINE_SLOT_EXPLODE_E)
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_INIT()
     data_.SPOTLIGHTCONTROL_DATA = new ITEM_SPOTLIGHTCONTROL_TYPE_DATA
 
-    CREATE_ANIMS(3)
-    PREP_LIGHTS(MEDIA_PATH + "Lights\MediumWhite_Diffuse.txt", MEDIA_PATH + "Lights\MediumWhite_Specular.txt", 0, 1, 1)  
+    CREATE_ANIMS(1)
+    PREP_LIGHTS(MEDIA_PATH + "Lights\MediumWhite_Diffuse.txt", MEDIA_PATH + "Lights\MediumWhite_Specular.txt", 1)  
     data_.SPOTLIGHTCONTROL_DATA->transitFrames = 240
     data_.SPOTLIGHTCONTROL_DATA->dire = 1
     
-    anims[2].load(MEDIA_PATH + "halo.txt")
+    anims[0].load(MEDIA_PATH + "halo.txt")
     data_.SPOTLIGHTCONTROL_DATA->tracking = 0
     data_.SPOTLIGHTCONTROL_DATA->stopPos = p
     data_.SPOTLIGHTCONTROL_DATA->sweepDire = int(rnd * 2) * 2 - 1
@@ -3479,11 +3501,12 @@ end function
 sub Item.SPOTLIGHTCONTROL_PROC_DRAW(scnbuff as integer ptr)
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
-    anims[2].setGlow(&h7fffffff)
-    anims[2].drawAnimation(scnbuff, p.x+size.x*0.5,p.y+size.y*0.5)
+    anims[0].setGlow(&h7fffffff)
+    anims[0].drawAnimation(scnbuff, p.x+size.x*0.5,p.y+size.y*0.5)
 
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.setToState()
     if data_.STANDUPSWITCH_DATA->state = 0 then
@@ -3551,6 +3574,7 @@ sub Item.STANDUPSWITCH_PROC_CONSTRUCT()
     _initAddSignal_("TURNOFF")
     _initAddSlot_("INTERACT", ITEM_STANDUPSWITCH_SLOT_INTERACT_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.TANDY2000_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
 
@@ -3601,6 +3625,7 @@ end sub
 sub Item.TANDY2000_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_TANDY2000_SLOT_INTERACT_E)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.setAmbientLevels(glowAmount as integer, subAmountPlayer as integer, subAmountUnlit as integer)
     dim as integer col
@@ -3740,6 +3765,7 @@ sub Item.TELEPORTERREVEALSEQUENCE_PROC_CONSTRUCT()
     _initAddSlot_("START", ITEM_TELEPORTERREVEALSEQUENCE_SLOT_START_E)
     _initAddParameter_("HIDELAYERS", _ITEM_VALUE_ZSTRING)
     _initAddParameter_("SHOWLAYERS", _ITEM_VALUE_ZSTRING)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.TELEPORTERSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     dim as integer enabled
@@ -3774,13 +3800,13 @@ sub Item.TELEPORTERSWITCH_PROC_INIT()
     data_.TELEPORTERSWITCH_DATA->cycleTime = 0
     data_.TELEPORTERSWITCH_DATA->state = 0
     
-    CREATE_ANIMS(4)
+    CREATE_ANIMS(2)
     anims[0].load(MEDIA_PATH + "teleporterswitch.txt")
     anims[1].load(MEDIA_PATH + "teleporterswitch.txt")
     anims[1].hardSwitch(1)
     
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 2, 3, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 1)  
 
     light.texture.x = p.x + size.x * 0.5
     light.texture.y = p.y + size.y * 0.5
@@ -3832,6 +3858,7 @@ sub Item.TELEPORTERSWITCH_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_TELEPORTERSWITCH_SLOT_INTERACT_E)
     _initAddSlot_("ENABLE", ITEM_TELEPORTERSWITCH_SLOT_ENABLE_E)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.TUBEPUZZLEMAP_SLOT_UPDATE(pvPair() as _Item_slotValuePair_t)
     data_.TUBEPUZZLEMAP_DATA->cycle = 20
@@ -3885,6 +3912,7 @@ sub Item.TUBEPUZZLEMAP_PROC_DRAWOVERLAY(scnbuff as integer ptr)
 end sub
 sub Item.TUBEPUZZLEMAP_PROC_CONSTRUCT()
     _initAddSlot_("UPDATE", ITEM_TUBEPUZZLEMAP_SLOT_UPDATE_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.VENTWIRES_PROC_INIT()
     CREATE_ANIMS(1)
@@ -3908,6 +3936,7 @@ sub Item.VENTWIRES_PROC_DRAWOVERLAY(scnbuff as integer ptr)
   
 end sub
 sub Item.VENTWIRES_PROC_CONSTRUCT()
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.WALLSWITCH_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
     
@@ -3966,4 +3995,5 @@ sub Item.WALLSWITCH_PROC_CONSTRUCT()
     _initAddSignal_("TOGGLE")
     _initAddSlot_("INTERACT", ITEM_WALLSWITCH_SLOT_INTERACT_E)
     _initAddParameter_("STATE", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub

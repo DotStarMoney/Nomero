@@ -18,6 +18,7 @@ enum orderType
     BACKGROUND = 3
     ACTIVE_FRONT = 4
     OVERLAY = 5
+    NONE = 6
 end enum
 
 enum shapeType

@@ -14,7 +14,7 @@ publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 64))
 '---------------------------------
 
 function _init()
-    anims_n = 6
+    anims_n = 4
     anims = new Animation[anims_n]
     anims[0].load(MEDIA_PATH + "alienspinner.txt")
     anims[0].hardSwitch(3)
@@ -26,7 +26,7 @@ function _init()
     anims[3].load(MEDIA_PATH + "alienspinner.txt")
     anims[3].hardSwitch(1)   
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\Cyan_Diffuse.txt", MEDIA_PATH + "Lights\Cyan_Specular.txt", 4, 5, 0)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\Cyan_Diffuse.txt", MEDIA_PATH + "Lights\Cyan_Specular.txt", 0)  
 
     data.curFrame = 0
     data.delay = int(rnd * 60) + 30

@@ -25,7 +25,7 @@ function _init()
     getParameter(data.state, "state")
     getParameter(data.flavor, "flavor")
     
-    CREATE_ANIMS(5)
+    CREATE_ANIMS(3)
     
     if data.flavor = 0 then
         anims[0].load(MEDIA_PATH + "desklamp.txt")
@@ -43,7 +43,7 @@ function _init()
         anims[2].hardswitch(5)      
     end if
     
-    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 3, 4, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 1)  
     
 end function
 

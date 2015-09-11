@@ -22,6 +22,7 @@
 enum DoubleHashNodeKeyType_e
     KEY_STRING
     KEY_INTEGER
+    KEY_INVALID
 end enum
 
 union DoubleHashNode_data_u
@@ -90,6 +91,13 @@ type DoubleHash
         declare function getDataSizeBytes() as integer
         declare sub resetRoll()
         declare function roll() as any ptr
+        declare function rollGetKey1Type() as DoubleHashNodeKeyType_e
+        declare function rollGetKey1String() as string
+        declare function rollGetKey1Integer() as integer
+        declare function rollGetKey2Type() as DoubleHashNodeKeyType_e
+        declare function rollGetKey2String() as string
+        declare function rollGetKey2Integer() as integer        
+        
         declare sub flush()
         declare sub clean()
     private:
@@ -111,6 +119,7 @@ type DoubleHash
         as DoubleHashNode_t ptr ptr data1_
         as DoubleHashNode_t ptr ptr data2_
 
+        as DoubleHashFrame_t ptr lastRollFrame
         as DoubleHashNode_t ptr curRollNode
         as integer              curRollIndx
         as integer              curRollTble

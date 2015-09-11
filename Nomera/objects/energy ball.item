@@ -34,10 +34,10 @@ function _init()
     data.body.f += Vector2D(0, -DEFAULT_GRAV)*data.body.m*0.75
     data.body_i = link.tinyspace_ptr->addBody(@(data.body))
 
-    CREATE_ANIMS(2)
+    CREATE_ANIMS(1)
     
     anims[0].load(MEDIA_PATH + "balllaunch2.txt")
-    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 1, 2, 0)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\BrightWhite_Diffuse.txt", MEDIA_PATH + "Lights\BrightWhite_Specular.txt", 0)  
 
     data.arcs_n = 0
     data.arcs = new arcData_t[2]

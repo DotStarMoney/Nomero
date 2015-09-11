@@ -27,6 +27,7 @@ end destructor
 sub HashTable.construct_()
     ready_flag = 0
     data_ = 0
+    lastRollNode = 0
 end sub
 
 sub HashTable.init(datasize as uinteger)
@@ -46,6 +47,7 @@ end sub
 sub HashTable.resetRoll()
     curRollNode = 0
     curRollIndx = 0
+    lastRollNode = 0
 end sub
 
 function HashTable.roll() as any ptr
@@ -53,6 +55,7 @@ function HashTable.roll() as any ptr
     dim as integer i
     if curRollNode <> 0 then 
         cn = curRollNode->data_
+        lastRollNode = curRollNode
         curRollNode = curRollNode->next_
         return cn
     else
@@ -61,13 +64,38 @@ function HashTable.roll() as any ptr
                 curRollNode = data_[i]
                 curRollIndx = i
                 cn = curRollNode->data_
+                lastRollNode = curRollNode
                 curRollNode = curRollNode->next_
                 curRollIndx += 1
                 return cn
             end if
         next i
+        lastRollNode = 0
         return 0
     end if
+end function
+
+function HashTable.rollGetKeyType() as HashNodeKeyType_e
+    if lastRollNode then
+        return lastRollNode->key_type
+    end if
+    return KEY_INVALID
+end function
+function HashTable.rollGetKeyString() as string
+    if lastRollNode then
+        if lastRollNode->key_type = KEY_STRING then
+            return *(lastRollNode->key_string)
+        end if
+    end if
+    return ""
+end function
+function HashTable.rollGetKeyInteger() as integer
+    if lastRollNode then
+        if lastRollNode->key_type = KEY_INTEGER then
+            return lastRollNode->key_integer
+        end if
+    end if
+    return 0
 end function
 
 function HashTable.getSize() as integer

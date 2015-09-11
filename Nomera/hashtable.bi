@@ -22,6 +22,7 @@
 enum HashNodeKeyType_e
     KEY_STRING
     KEY_INTEGER
+    KEY_INVALID
 end enum
 
 
@@ -52,6 +53,9 @@ type HashTable
         declare function getDataSizeBytes() as integer
         declare sub resetRoll()
         declare function roll() as any ptr
+        declare function rollGetKeyType() as HashNodeKeyType_e
+        declare function rollGetKeyString() as string
+        declare function rollGetKeyInteger() as integer
         declare sub flush()
         declare sub clean()
     private:
@@ -62,6 +66,7 @@ type HashTable
         as uinteger dataSizeBytes
         as uinteger numObjects
         as uinteger numCells
+        as HashNode_t ptr lastRollNode
         as HashNode_t ptr ptr data_
         as HashNode_t ptr curRollNode
         as integer        curRollIndx

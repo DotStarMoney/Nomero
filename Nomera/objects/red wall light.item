@@ -14,9 +14,9 @@ function _init()
     data.speedCount = ANIM_SPEED
     data.frameDir = 1
 
-    CREATE_ANIMS(3)
+    CREATE_ANIMS(1)
     anims[0].load(MEDIA_PATH + "red wall light.txt")
-    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallRed_Diffuse.txt", MEDIA_PATH + "Lights\SmallRed_Specular.txt", 1, 2, 1)  
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallRed_Diffuse.txt", MEDIA_PATH + "Lights\SmallRed_Specular.txt", 1)  
 
 end function
 

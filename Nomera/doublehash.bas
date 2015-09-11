@@ -1229,10 +1229,51 @@ end function
 function DoubleHash.getDataSizeBytes() as integer
     return dataSizeBytes
 end function
+function DoubleHash.rollGetKey1Type() as DoubleHashNodeKeyType_e
+    if lastRollFrame then return lastRollFrame->key_type1
+    return KEY_INVALID
+end function
+function DoubleHash.rollGetKey1String() as string
+    if lastRollFrame then 
+        if lastRollFrame->key_type1 = KEY_STRING then
+            return *(lastRollFrame->data1.key_string)
+        end if
+    end if
+    return ""
+end function
+function DoubleHash.rollGetKey1Integer() as integer
+    if lastRollFrame then 
+        if lastRollFrame->key_type1 = KEY_INTEGER then
+            return lastRollFrame->data1.key_integer
+        end if
+    end if
+    return 0
+end function
+function DoubleHash.rollGetKey2Type() as DoubleHashNodeKeyType_e
+    if lastRollFrame then return lastRollFrame->key_type2
+    return KEY_INVALID
+end function
+function DoubleHash.rollGetKey2String() as string
+    if lastRollFrame then 
+        if lastRollFrame->key_type2 = KEY_STRING then
+            return *(lastRollFrame->data2.key_string)
+        end if
+    end if
+    return ""
+end function
+function DoubleHash.rollGetKey2Integer() as integer
+    if lastRollFrame then 
+        if lastRollFrame->key_type2 = KEY_INTEGER then
+            return lastRollFrame->data2.key_integer
+        end if
+    end if
+    return 0
+end function
 sub DoubleHash.resetRoll()
     curRollNode = 0
     curRollIndx = 0
     curRollTble = 0
+    lastRollFrame = 0
 end sub
 function DoubleHash.roll() as any ptr
     dim as any ptr cn
@@ -1248,6 +1289,7 @@ function DoubleHash.roll() as any ptr
     
     if curRollNode <> 0 then 
         cn = curRollNode->data_->data_
+        lastRollFrame = curRollNode->data_
         curRollNode = curRollNode->next_
         return cn
     else
@@ -1257,6 +1299,7 @@ function DoubleHash.roll() as any ptr
                     curRollNode = data1_[i]
                     curRollIndx = i + 1
                     cn = curRollNode->data_->data_
+                    lastRollFrame = curRollNode->data_
                     curRollNode = curRollNode->next_
                     return cn
                 end if
@@ -1267,11 +1310,13 @@ function DoubleHash.roll() as any ptr
                     curRollNode = data2_[i]
                     curRollIndx = i + 1
                     cn = curRollNode->data_->data_
+                    lastRollFrame = curRollNode->data_
                     curRollNode = curRollNode->next_
                     return cn
                 end if
             next i        
         end if
+        lastRollFrame = 0
         return 0
     end if   
 end function

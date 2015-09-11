@@ -146,12 +146,12 @@ end function
 
 '-----------------------------------
 
-sub togglePath()
+function togglePath()
     link.soundeffects_ptr->playSound(SND_SELECT)
     data.gearSound = link.soundeffects_ptr->playSound(SND_GEARS)
     data.platformLow->togglePath()
     data.platformHi->togglePath()
-end sub
+end function
 
 slot $interact()
     togglePath()
