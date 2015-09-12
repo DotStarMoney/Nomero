@@ -1,0 +1,21 @@
+      #IMAGE NAME
+"minecart.png"
+      #IMAGE SIZE
+64,48
+      #DRAW MODE
+"TRANS"
+      #NUMBER OF ANIMATIONS
+1
+      #DEFAULT ANIMATION
+0
+      #INDIVIDUAL ANIMATION DATA
+      #-- CART --
+"STILL","INSTANT","NO"
+1         #NUM FRAMES
+64,48     #WIDTH/HEIGHT
+0         #DELAY
+0,0       #START/END CELL
+0         #LOOP POINT
+0,0       #OFFSET
+0         #NUM RELEASE FRAMES
+"NO"      #PER FRAME DATA?

@@ -99,13 +99,15 @@ end sub
 
 sub zimage.putTRANS(dest_fbimg as integer ptr, posX as integer, posY as integer,_
                     x0 as integer, y0 as integer, x1 as integer, y1 as integer)
-
-    if dest_fbimg = 0 then
-        dim as integer dw, dh
-        imageinfo diffuse_fbimg, dw, dh
-        print dw, dh
-    end if
-    put dest_fbimg, (posX, posY), diffuse_fbimg, (x0, y0)-(x1, y1), TRANS      
+    dim as integer npx, npy
+    dim as integer sdx0, sdy0, sdx1, sdy1
+    dim as integer sw, sh
+    imageinfo dest_fbimg, sw, sh
+        
+    pmapFix(posX, posY)
+       
+    bitblt_trans_clip(dest_fbimg, posX, posY, diffuse_fbimg, x0, y0, x1, y1)
+     
 end sub
 
 
@@ -115,10 +117,12 @@ sub zimage.putGLOW(dest_fbimg as integer ptr, posX as integer, posY as integer,_
              
     dim as integer npx, npy
     dim as integer sdx0, sdy0, sdx1, sdy1
+    dim as integer sw, sh
+    imageinfo dest_fbimg, sw, sh
         
     pmapFix(posX, posY)
     
-    if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1, clipX, clipY) then 
+    if AnyClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, 0, 0, sw, sh, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0
         sdy0 += y0
         sdx1 += x0
@@ -135,10 +139,12 @@ sub zimage.putPREALPHA_TARGET(dest_fbimg as integer ptr, prealphasource_fbimg as
                               x0 as integer, y0 as integer, x1 as integer, y1 as integer)    
     dim as integer npx, npy
     dim as integer sdx0, sdy0, sdx1, sdy1
+    dim as integer sw, sh
+    imageinfo dest_fbimg, sw, sh
         
     pmapFix(posX, posY)
     
-    if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1, clipX, clipY) then 
+    if AnyClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, 0, 0, sw, sh, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0
         sdy0 += y0
         sdx1 += x0
@@ -155,10 +161,12 @@ sub zimage.putPREALPHA(dest_fbimg as integer ptr, posX as integer, posY as integ
                        x0 as integer, y0 as integer, x1 as integer, y1 as integer)
     dim as integer npx, npy
     dim as integer sdx0, sdy0, sdx1, sdy1
+    dim as integer sw, sh
+    imageinfo dest_fbimg, sw, sh
         
     pmapFix(posX, posY)
     
-    if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1, clipX, clipY) then 
+    if AnyClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, 0, 0, sw, sh, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0
         sdy0 += y0
         sdx1 += x0
@@ -176,10 +184,12 @@ sub zimage.putTRANS_0xLight(dest_fbimg as integer ptr, posX as integer, posY as 
 
     dim as integer npx, npy
     dim as integer sdx0, sdy0, sdx1, sdy1
-    
+    dim as integer sw, sh
+    imageinfo dest_fbimg, sw, sh
+        
     pmapFix(posX, posY)
     
-    if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1, clipX, clipY) then 
+    if AnyClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, 0, 0, sw, sh, npx, npy, sdx0, sdy0, sdx1, sdy1) then 
         sdx0 += x0
         sdy0 += y0
         sdx1 += x0
@@ -229,7 +239,11 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer xp, yp, yDest, xDest, lightCol
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
+    dim as integer sw, sh
+    imageinfo dest_fbimg, sw, sh
         
+    
+       
     if norm_fbimg = 0 then
         putTRANS_0xLight(dest_fbimg, posX, posY,_
                          x0, y0, x1, y1,_
@@ -242,7 +256,8 @@ sub zimage.putTRANS_1xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     
     pmapFix(posX, posY)
     
-    if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1, clipX, clipY) then 
+    if AnyClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, 0, 0, sw, sh, npx, npy, sdx0, sdy0, sdx1, sdy1) then     
+
         sdx0 += x0
         sdy0 += y0
         sdx1 += x0
@@ -416,7 +431,9 @@ sub zimage.putTRANS_2xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer xp, yp, yDest, xDest, lightCol
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
-        
+    dim as integer sw, sh
+    imageinfo dest_fbimg, sw, sh  
+       
     if norm_fbimg = 0 then
         putTRANS_0xLight(dest_fbimg, posX, posY,_
                          x0, y0, x1, y1,_
@@ -429,7 +446,7 @@ sub zimage.putTRANS_2xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     
     pmapFix(posX, posY)
     
-    if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1, clipX, clipY) then 
+    if AnyClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, 0, 0, sw, sh, npx, npy, sdx0, sdy0, sdx1, sdy1) then  
         sdx0 += x0
         sdy0 += y0
         sdx1 += x0
@@ -649,7 +666,9 @@ sub zimage.putTRANS_3xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     dim as integer xp, yp, yDest, xDest, lightCol
     dim as integer lvx, lvy, lv, normCol, hicol, scol, pcol, startX
     dim as integer destPos, destOffset, srcOffset, wCount
-        
+    dim as integer sw, sh
+    imageinfo dest_fbimg, sw, sh  
+       
     if norm_fbimg = 0 then
         putTRANS_0xLight(dest_fbimg, posX, posY,_
                          x0, y0, x1, y1,_
@@ -662,7 +681,7 @@ sub zimage.putTRANS_3xLight(dest_fbimg as integer ptr, posX as integer, posY as 
     
     pmapFix(posX, posY)
     
-    if ScreenClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, npx, npy, sdx0, sdy0, sdx1, sdy1, clipX, clipY) then 
+    if AnyClip(posX, posY, x1 - x0 + 1, y1 - y0 + 1, 0, 0, sw, sh, npx, npy, sdx0, sdy0, sdx1, sdy1) then
         sdx0 += x0
         sdy0 += y0
         sdx1 += x0

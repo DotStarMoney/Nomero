@@ -61,6 +61,8 @@ enum PathTracker_Child_State_e
 	PT_IDLE
 	PT_CATATONIC
 	PT_TRACKING
+    PT_THINKINGPURSUIT
+    PT_THINKINGGIVEUP
 end enum
 
 'stuck on ladders and not completing edges that touch down on some platforms
@@ -109,6 +111,12 @@ type PathTracker_Child_t
 	as integer                      shouldSprint
 	as integer                      reachedGoal
 	as integer                      runningStart
+    as integer                      homeNode
+    as double                       homeTarget
+    as double                       paceTarget
+    as double                       suspicionLevel
+    as double                       suspicionTimeout
+    as integer                      lastLineOfSight
 end type
 
 type PathTracker_Node_t Field = 1
@@ -139,6 +147,8 @@ type PathTracker
 		declare sub step_record(del_key as integer)
 		declare sub record_draw(scnbuff as integer ptr)
 		declare sub register(e_ as Enemy ptr)
+        declare sub unregister(e_ as Enemy ptr)
+
 		
 		declare sub requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t)
 		declare sub requestLock(e_ as Enemy ptr)

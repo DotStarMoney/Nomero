@@ -53,6 +53,8 @@ type GameSpace
         as integer shouldBail
         as integer bailFrame
         as Vector2D  camera
+        
+        as integer manualInput_dire
     private:
 		declare sub performSwitch(ls as LevelSwitch_t)
         declare sub step_input()
@@ -91,6 +93,7 @@ type GameSpace
         as integer   	 isSwitching
         as integer   	 switchFrame
         as LevelSwitch_t pendingSwitch
+        as ObjectLink   link
                 
         as byte ptr      pathData
         as integer       pathBytes

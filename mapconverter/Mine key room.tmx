@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="40" height="37" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="default start" value="31, 28"/>
+  <property name="music" value="computersounds.ogg"/>
+ </properties>
+ <tileset firstgid="1" name="BIG Compilation" tilewidth="16" tileheight="16">
+  <image source="BIG Compilation.bmp" trans="ff00ff" width="320" height="2080"/>
+ </tileset>
+ <tileset firstgid="2601" name="cave stones" tilewidth="16" tileheight="16">
+  <image source="cave stones.bmp" trans="ff00ff" width="320" height="512"/>
+ </tileset>
+ <tileset firstgid="3241" name="shop tiles" tilewidth="16" tileheight="16">
+  <image source="shop tiles.bmp" trans="ff00ff" width="320" height="288"/>
+ </tileset>
+ <tileset firstgid="3601" name="Collision" tilewidth="16" tileheight="16">
+  <image source="CShapes (3).bmp" trans="ff00ff" width="336" height="64"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="40" height="37">
+  <data encoding="base64" compression="zlib">
+   eJzNWFtOAkEQXIXsBPUCmKhcQC+hd/B5BR8XIngH9lr6p982cSsUvd09wyJmPyoNwzyqqx8zYVpX1angMVXVU+paa6zv3G32nLa8LgVXglcZe0tda431nbvNnuB1LZ9vBPN6WLgXTg+CW8Ed8Vu2OJaxk7T+bqFp7ULwHqBprZ6HM3geeDzL+Eva1K+htRcyNku/ezKWxGmhOHjAGj0PZ+h5nn4eF60Z7zWRtUdpzdVaizXsUzTP08/iwvHQ2q1wJmvPU3d8YfCx1lvzPP00H44FdGLtrFy04MWC99Tx9fKP4enE9dMU8EDu6ThgT72Hp5+nPZ+Bz6vc9mrcq2EgypdIv7mzN35r6i7HGfkf1TJz8Op7Wef731Dg6TcU5O4PzhUdey9vvPtD3xtRH4/0Q73vix/XvAbfdZ5+uocgl73aydWs1g31ZN0fXGul/Y/7kean7/aIF77n7g/Er/T+5X40V+exFrl3Qek9g/iV3r+Im8VP65PTJHprlL5fvPgxv4hbpInlh84RcPb083I54hdBn6+/8xn6vvLeL1FP4l4Q9Qrr/Vm6JtIPOajfWfwbasPznWPFmpWsyemndeJ6x3guxyMNS+Hpx72O33w8pusAa0rqGf5yT7LmefrpN473vak3fYn6D+oUcV75m6v5KP/YB5xj1S/P994gOJ9zL5cfuffLUAD98D/Hh+BzQFb//3IgXA/TcCx4fY2q6nvU38LPXffx7GQsNT/ub+Hnrvt4dl9+D0W/Uos8GKp+ffN9X37/V/79VZ33tT/t1UiU
+  </data>
+ </layer>
+ <layer name="Tile Layer 5" width="40" height="37">
+  <data encoding="base64" compression="zlib">
+   eJztzjENACAMAMFu9S+PgAUCEqgAdhjukt8/AgDgrmfEqFq+Prlb9bWr+ekfAAAAfzvmzgWH
+  </data>
+ </layer>
+ <layer name="Tile Layer 2" width="40" height="37">
+  <data encoding="base64" compression="zlib">
+   eJztlstvElEUhw8E7BBCdMXWR+KrahF8JMW3FDYK9T+obU3sVvfqbHSjG20T3clGwf5HFTa6V9jQjS78JuFCuVzAwjBMm/kl32Iul3O+HEjmiPg/5+Jin4UzcBq86vsiLvISXoEN9BYcBBfHqZObON2ALCx66Pcehw+wCVtAb8FBcHGcOnmE0zKUoOih3xccvkIFqkBvwUFwcZw6eYLTOqzBqod+eugtOAgujtPQ1GIi9dh0fSbp0eB7zSn7edHDq1xIiFyEFFxOuFNT1fqfmuqO8tBzh7O7kIMll/xUrUE1P86JfJrrvas89FzibAHSkHHJT9XSax4PiZyAk3Aq1HtXeei5x9l9yEPBJT9VS695BaercA2uh3rvKg89f6Ni/4FWVMqzBAfHpS/Hjoh9FGr8H+qwA99h3Odxg4Pj0pdw269B7Sb8gt8w7vMkfuEBfuNXdTcmv6SP/JIHcH5+8jPNz0+/72GY3yz3P9P8Uhb7g9V9nuX+Z5pfDrcl+Mb97RnvjKb5pXHLwHmYt/o/H5Qf1PrZrrfIeyO7j3fHs4jI80j/uWl+eZwKcAtut/0qzLE6YpYtau226xVxK8FTnjcMPfS8xu2Nwc80vwc4PbS6c3Qyapb6Hmfa64blLW7vNL9BPVc4e2x15+hk7yxN0fc40143LJ9xK2t+o3oGCRIkSBB/5B9lHK+v
+  </data>
+ </layer>
+ <layer name="Tile Layer 3" width="40" height="37">
+  <data encoding="base64" compression="zlib">
+   eJztlksKglAUho+DBHUNOq9GNa/WEK2hoqDHBgpKt9Bj6LSsNtFjCz320bw/KpBKUK9cHZwPPoTLHXyc6+AQMQzDMEmxV4kOatoVwZzRdpHYZypElhL+/hFtJ4l9JbSVI/Rd0XZLuO+eI/epbRA5RvS+Dnq6sAf7cACHMRo/Hd/nMzTN4QIuv/rCvO8ILWM4gVNoQyfBGa7QtIYe3MToS5Oo/59seH5iZL2P31eMrM8v6338vmLIml/TILcOKzBv/O4IQfjnp+lEuv7/nuju0no3VfEtBPR5GvYDuIU77XXmn5+JNiugT3R3aaOpAWuwGGF+DMMwjHweojkwuQ==
+  </data>
+ </layer>
+ <layer name="Collision" width="40" height="37">
+  <data encoding="base64" compression="zlib">
+   eJztlkEKwDAIBPOCQD/Rx/T/D+qhBIJoMLXgSndgD4Egw160tRocHSvSDY3ZiX770C9GNb9LJIKc5Zkp/1brb8XZn3yFp9dMPw/aDrH2zOyHuN+y+6PfPvSLQb8Y9Ith3S8aCH4rkPy0HpH8NFD9RpeWn3UnR27wN/dzdn/jjRRCCPk7NwKPJac=
+  </data>
+ </layer>
+ <objectgroup name="Objects" width="40" height="37">
+  <object name="key" type="Spawn" x="464" y="128" width="32" height="32">
+   <properties>
+    <property name="spawn" value="key"/>
+   </properties>
+  </object>
+  <object name="interface" type="Spawn" x="336" y="128" width="32" height="32">
+   <properties>
+    <property name="spawn" value="interface"/>
+   </properties>
+  </object>
+  <object name="computer" type="Spawn" x="256" y="384" width="32" height="32">
+   <properties>
+    <property name="spawn" value="tandy2000"/>
+   </properties>
+  </object>
+  <object name="tomine" type="Portal" x="496" y="384" width="32" height="64">
+   <properties>
+    <property name="direction" value="in"/>
+    <property name="to map" value="mine.map"/>
+    <property name="to portal" value="torelay"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

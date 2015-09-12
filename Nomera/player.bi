@@ -18,8 +18,6 @@
 #define SCREEN_IND_BOUND 0
 
 
-
-
 enum PlayerState
     ON_LADDER
     JUMPING
@@ -74,7 +72,7 @@ type Player
         declare sub drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer, positionless as integer = 0)
         declare function getState() as PlayerState
         declare sub explosionAlert(p as Vector2D)
-        declare sub harm(p as Vector2D, amount as integer)
+        declare sub harm(p as Vector2D, amount as integer, kickM as double = -1)
         declare sub getBounds(byref p as Vector2D, byref size as Vector2D)
         declare sub centerToMap(byref p as Vector2D)
         declare sub exportMovementParameters(byref dire_p as integer, byref jump_p as integer,_
@@ -82,13 +80,18 @@ type Player
         declare function beingHarmed() as integer
         declare sub removeItemReference(data_ as integer)
         declare function getCovered() as double
+        declare sub addIntel()
+        declare sub addKey()
+        declare sub useKey()
+        declare function hasKey() as integer
+        declare sub showItemBar() 
 		
 		explodeAllHoldFrames as integer
 		deactivateHoldFrames as integer
 		
 		explodeAllHoldFrames_time as integer
 		deactivateHoldFrames_time as integer
-		
+            
     
 		bombs   as integer
 		health  as integer
@@ -158,6 +161,9 @@ type Player
         as integer isJumping
         as integer jumpBoostFrames
         as integer freeJump
+        as integer intelCount
+        as integer keyCount
+
         
         as Animation hudspinner
         as Animation anim
@@ -196,7 +202,9 @@ type Player
         as zimage hudTrim
         as zimage detectmeter
         as zimage huditembar
+        as zimage keyIcon
         
+        as Animation intelIcon
 
 End type
 

@@ -53,6 +53,89 @@ sub Item.ACCENTLIGHT_PROC_CONSTRUCT()
     _initAddParameter_("FAST", _ITEM_VALUE_INTEGER)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
+sub Item.AK47SHOT_PROC_INIT()
+    data_.AK47SHOT_DATA = new ITEM_AK47SHOT_TYPE_DATA
+    getParameter(data_.AK47SHOT_DATA->heading, "heading")
+    data_.AK47SHOT_DATA->hasTraj = 0
+    data_.AK47SHOT_DATA->lifeFrames = 8
+    data_.AK47SHOT_DATA->cmul = rnd*0.75 + 0.25
+    data_.AK47SHOT_DATA->heading += Vector2D(0,(rnd*3.0 - 1.0)*0.002)
+    
+    data_.AK47SHOT_DATA->cbase = 96
+end sub
+sub Item.AK47SHOT_PROC_FLUSH()
+    
+    if anims_n then delete(anims)
+    if data_.AK47SHOT_DATA then delete(data_.AK47SHOT_DATA)
+    data_.AK47SHOT_DATA = 0
+end sub
+function Item.AK47SHOT_PROC_RUN(t as double) as integer
+    dim as Vector2D dest, pt, ppt, tl, br
+    dim as integer i
+    dim as double dist
+    if data_.AK47SHOT_DATA->hasTraj = 0 then
+        data_.AK47SHOT_DATA->hasTraj = 1
+        UNLOCK_TO_SCREEN()
+      
+        dest = p + data_.AK47SHOT_DATA->heading * 5000
+        
+        
+        dist = link.tinyspace_ptr->raycast(p, dest - p, pt)
+        
+
+        link.player_ptr->getBounds(tl, br)
+        br = tl + br
+        
+        UNLOCK_TO_SCREEN()
+        lineRectangleCollision(p, dest, tl + Vector2D(8,10), br - Vector2D(8,0), ppt)
+        
+        if (ppt - p).magnitude() < (pt - p).magnitude() then
+            pt = ppt
+            
+        end if
+        
+        if dist < 0 then pt = dest
+        
+        data_.AK47SHOT_DATA->a = p
+        data_.AK47SHOT_DATA->b = pt
+        
+        link.projectilecollection_ptr->create(data_.AK47SHOT_DATA->b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+        if int(rnd * 3) = 0 then
+            link.projectilecollection_ptr->create(data_.AK47SHOT_DATA->b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+            link.projectilecollection_ptr->create(data_.AK47SHOT_DATA->b, Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, SPARK, 1)
+        end if
+    end if
+    data_.AK47SHOT_DATA->cbase -= 60
+    
+    data_.AK47SHOT_DATA->lifeFrames -= 1
+    if data_.AK47SHOT_DATA->lifeFrames <= 0 then return 1
+    
+    
+    return 0
+end function
+sub Item.AK47SHOT_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer i
+    dim as double cval
+    dim as Vector2D dvec, na, nb
+    dvec = data_.AK47SHOT_DATA->b - data_.AK47SHOT_DATA->a
+    na = data_.AK47SHOT_DATA->a
+    
+    for i = 0 to 63
+        nb = na + dvec / 64.0
+        cval = (data_.AK47SHOT_DATA->cbase + i*4) * data_.AK47SHOT_DATA->cmul 
+        if cval < 0 then cval = 0
+        if cval > 255 then cval = 255
+        line link.level_ptr->getSmokeTexture, (na.x, na.y)-(nb.x, nb.y), rgb(cval, cval, cval*0.75) 
+        na = nb
+    next i
+end sub
+sub Item.AK47SHOT_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.AK47SHOT_PROC_CONSTRUCT()
+    _initAddParameter_("HEADING", _ITEM_VALUE_VECTOR2D)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+end sub
 sub Item.ALARMSPINNER_PROC_INIT()
     data_.ALARMSPINNER_DATA = new ITEM_ALARMSPINNER_TYPE_DATA
     dim as integer i, amt
@@ -406,8 +489,12 @@ sub Item.BALLSPAWNER_PROC_CONSTRUCT()
     _initAddSlot_("SPAWN", ITEM_BALLSPAWNER_SLOT_SPAWN_E)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
+sub Item.BIGOSCILLOSCOPE_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
+    data_.BIGOSCILLOSCOPE_DATA->enable = 1
+    data_.BIGOSCILLOSCOPE_DATA->dontDraw = 0
+end sub
 sub Item.BIGOSCILLOSCOPE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
-    data_.BIGOSCILLOSCOPE_DATA->dontDraw = 1 - data_.BIGOSCILLOSCOPE_DATA->dontDraw
+    if data_.BIGOSCILLOSCOPE_DATA->enable then data_.BIGOSCILLOSCOPE_DATA->dontDraw = 1 - data_.BIGOSCILLOSCOPE_DATA->dontDraw
 end sub
 sub Item.BIGOSCILLOSCOPE_PROC_INIT()
     data_.BIGOSCILLOSCOPE_DATA = new ITEM_BIGOSCILLOSCOPE_TYPE_DATA
@@ -432,7 +519,11 @@ sub Item.BIGOSCILLOSCOPE_PROC_INIT()
     end if
     steps = int(rnd * 30)
     for i = 0 to steps: anims[0].step_animation(): next i
-    data_.BIGOSCILLOSCOPE_DATA->dontDraw = 0
+    
+    getParameter(data_.BIGOSCILLOSCOPE_DATA->enable, "disable")
+    data_.BIGOSCILLOSCOPE_DATA->enable = 1 - data_.BIGOSCILLOSCOPE_DATA->enable
+    
+    data_.BIGOSCILLOSCOPE_DATA->dontDraw = 1 - data_.BIGOSCILLOSCOPE_DATA->enable
     link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(64, 32)))
     link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
 end sub
@@ -456,11 +547,13 @@ sub Item.BIGOSCILLOSCOPE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     
 end sub
 sub Item.BIGOSCILLOSCOPE_PROC_CONSTRUCT()
+    _initAddSlot_("ENABLE", ITEM_BIGOSCILLOSCOPE_SLOT_ENABLE_E)
     _initAddSlot_("INTERACT", ITEM_BIGOSCILLOSCOPE_SLOT_INTERACT_E)
+    _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
     _initAddParameter_("FLAVOR", _ITEM_VALUE_INTEGER)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
-#DEFINE ITEM_CABINCONTROL_DEFINE_CHARGE_TIME 10
+#DEFINE ITEM_CABINCONTROL_DEFINE_CHARGE_TIME 1800
 sub Item.CABINCONTROL_SUB_setAmbientLevels()
     dim as integer i
     dim as integer col
@@ -1078,6 +1171,83 @@ sub Item.DESKLAMP_PROC_CONSTRUCT()
     canExport_ = 1
     persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
+sub Item.DOORKEY_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
+    if link.player_ptr->hasKey() > 0 then
+        link.player_ptr->useKey()
+        setValue(1, "interact")
+        data_.DOORKEY_DATA->state = 1
+        data_.DOORKEY_DATA->doText = 0
+    else
+        data_.DOORKEY_DATA->doText = 1
+    end if
+end sub
+sub Item.DOORKEY_PROC_INIT()
+    data_.DOORKEY_DATA = new ITEM_DOORKEY_TYPE_DATA
+    data_.DOORKEY_DATA->state = 0
+    data_.DOORKEY_DATA->doText = 0
+    setValue(0, "interact")
+
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32,64)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+    _initAddValue_("INTERACT", _ITEM_VALUE_INTEGER)
+    link.dynamiccontroller_ptr->addPublishedValue(ID, "INTERACT")
+end sub
+sub Item.DOORKEY_PROC_FLUSH()
+ 
+    if anims_n then delete(anims)
+    if data_.DOORKEY_DATA then delete(data_.DOORKEY_DATA)
+    data_.DOORKEY_DATA = 0
+end sub
+function Item.DOORKEY_PROC_RUN(t as double) as integer
+    dim as string portalNme
+    dim as Vector2D v
+    getParameter(portalNme, "portal")
+    
+    portalNme = ucase(portalNme)
+    if data_.DOORKEY_DATA->state = 0 then
+        link.level_ptr->disablePortal(portalNme)
+    elseif data_.DOORKEY_DATA->state = 1 then
+        link.level_ptr->enablePortal(portalNme)
+    end if
+    if data_.DOORKEY_DATA->doText then 
+        v = (p + size*0.5) - link.player_ptr->body.p
+        if v.magnitude() > 70 then data_.DOORKEY_DATA->doText = 0
+    end if
+    return 0
+end function
+sub Item.DOORKEY_PROC_DRAW(scnbuff as integer ptr)
+
+end sub
+sub Item.DOORKEY_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    dim as string text
+    dim as vector2d tl, br
+    if data_.DOORKEY_DATA->doText then
+    
+        text = "This door is locked."
+        tl = Vector2D(p.x + size.x*0.5 - len(text)*4 - 4, p.y - 21)
+        br = Vector2D(p.x + size.x*0.5 + len(text)*4 + 4, p.y - 9)
+        line scnbuff, (tl.x, tl.y)-(br.x, br.y), 0, BF
+        line scnbuff, (tl.x-1, tl.y-1)-(br.x+1, br.y+1), &h7f7f7f, B
+
+        draw String scnbuff, (p.x - len(text)*4 + size.x*0.5, p.y - 18), text, &h7f7fff
+    end if
+end sub
+sub Item.DOORKEY_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.DOORKEY_DATA = new ITEM_DOORKEY_TYPE_DATA
+    binaryData_.retrieve(data_.DOORKEY_DATA->state)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32,64)))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
+    link.dynamiccontroller_ptr->addPublishedValue(ID, "INTERACT")
+end sub
+sub Item.DOORKEY_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+    binaryData_.store(data_.DOORKEY_DATA->state)
+end sub
+sub Item.DOORKEY_PROC_CONSTRUCT()
+    _initAddSlot_("INTERACT", ITEM_DOORKEY_SLOT_INTERACT_E)
+    _initAddParameter_("PORTAL", _ITEM_VALUE_ZSTRING)
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
+end sub
 #define ITEM_ELECTRICMINE_DEFINE_MAX_RAYCAST_ATTEMPTS 10
 #define ITEM_ELECTRICMINE_DEFINE_RAYCAST_DIST 80
 #define ITEM_ELECTRICMINE_DEFINE_RUN_TIME 50
@@ -1553,7 +1723,9 @@ sub Item.FREIGHTELEVATOR_SUB_togglePath()
     data_.FREIGHTELEVATOR_DATA->platformHi->togglePath()
 end sub
 sub Item.FREIGHTELEVATOR_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
-    FREIGHTELEVATOR_SUB_togglePath()
+    dim as integer inter
+    getValue(inter, "interact")
+    if inter = 0 then FREIGHTELEVATOR_SUB_togglePath()
 end sub
 sub Item.FREIGHTELEVATOR_PROC_INIT()
     data_.FREIGHTELEVATOR_DATA = new ITEM_FREIGHTELEVATOR_TYPE_DATA
@@ -1577,6 +1749,7 @@ sub Item.FREIGHTELEVATOR_PROC_INIT()
     data_.FREIGHTELEVATOR_DATA->platformLow = new TinyDynamic(DYNA_BASICPATH)
     data_.FREIGHTELEVATOR_DATA->platformHi->importParams(@pathData)
     data_.FREIGHTELEVATOR_DATA->platformLow->importParams(@pathData)
+    data_.FREIGHTELEVATOR_DATA->gearSound = -1
     
     shape(0) = Vector2D(0,0)
     shape(1) = Vector2D(96, 0)
@@ -1618,7 +1791,9 @@ sub Item.FREIGHTELEVATOR_PROC_INIT()
     link.dynamiccontroller_ptr->addPublishedValue(ID, "INTERACT")
 end sub
 sub Item.FREIGHTELEVATOR_PROC_FLUSH()
-    
+
+    if data_.FREIGHTELEVATOR_DATA->gearSound <> -1 then link.soundeffects_ptr->stopSound(data_.FREIGHTELEVATOR_DATA->gearSound)  
+  
     link.tinyspace_ptr->removeDynamic(data_.FREIGHTELEVATOR_DATA->platformLow_i)  
     link.tinyspace_ptr->removeDynamic(data_.FREIGHTELEVATOR_DATA->platformHi_i)    
     delete(data_.FREIGHTELEVATOR_DATA->platformHi)
@@ -1637,7 +1812,8 @@ function Item.FREIGHTELEVATOR_PROC_RUN(t as double) as integer
     else
         if data_.FREIGHTELEVATOR_DATA->lastState > 1 then 
             link.soundeffects_ptr->playSound(SND_COLLIDE)
-            link.soundeffects_ptr->stopSound(data_.FREIGHTELEVATOR_DATA->gearSound)            
+            link.soundeffects_ptr->stopSound(data_.FREIGHTELEVATOR_DATA->gearSound)    
+            data_.FREIGHTELEVATOR_DATA->gearSound = -1
         end if
         setValue(0, "interact")
         anims[3].pause()
@@ -1914,7 +2090,9 @@ function Item.INTELLIGENCE_PROC_RUN(t as double) as integer
             link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)        
         next i
         link.oneshoteffects_ptr->create(p + size*0.5, BLUE_FLASH)        
-
+        link.player_ptr->showItemBar()
+        link.player_ptr->addIntel()
+        link.soundeffects_ptr->playSound(SND_COLLECT)
         return 1
     end if
     if data_.INTELLIGENCE_DATA->frameCount mod 7 = 0 then link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)
@@ -2005,6 +2183,67 @@ end sub
 sub Item.INTERFACE_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_INTERFACE_SLOT_INTERACT_E)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
+end sub
+sub Item.KEY_PROC_INIT()
+    data_.KEY_DATA = new ITEM_KEY_TYPE_DATA
+
+    data_.KEY_DATA->frameCount = int(rnd * 1000)
+    
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "collectables.txt")
+    anims[0].hardSwitch(8)
+    anims[0].play()
+    
+    
+end sub
+sub Item.KEY_PROC_FLUSH()
+    if anims_n then delete(anims)
+    if data_.KEY_DATA then delete(data_.KEY_DATA)
+    data_.KEY_DATA = 0
+end sub
+function Item.KEY_PROC_RUN(t as double) as integer
+    dim as vector2D v
+    dim as integer i
+    anims[0].step_animation()
+    data_.KEY_DATA->frameCount += 1
+    
+    v = link.player_ptr->body.p - (p + size*0.5)
+    
+    if v.magnitude < 32 then 
+        for i = 0 to 9
+        
+            link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)        
+        next i
+        link.oneshoteffects_ptr->create(p + size*0.5, BLUE_FLASH)        
+        link.player_ptr->showItemBar()
+        link.player_ptr->addKey()
+        link.soundeffects_ptr->playSound(SND_COLLECT)
+        return 1
+    end if
+    if data_.KEY_DATA->frameCount mod 20 = 0 then link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)
+    
+    
+    return 0
+end function
+sub Item.KEY_PROC_DRAW(scnbuff as integer ptr)
+
+    
+    anims[0].drawAnimation(scnbuff, p.x+size.x*0.5, p.y + size.y*0.5+sin(data_.KEY_DATA->frameCount*0.1)*3)
+    
+end sub
+sub Item.KEY_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    
+end sub
+sub Item.KEY_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.KEY_DATA = new ITEM_KEY_TYPE_DATA
+	binaryData_.retrieve(data_.KEY_DATA->frameCount)
+end sub
+sub Item.KEY_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+	binaryData_.store(data_.KEY_DATA->frameCount)
+end sub
+sub Item.KEY_PROC_CONSTRUCT()
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_LEVEL
 end sub
 sub Item.LANTERN_SLOT_TOGGLE(pvPair() as _Item_slotValuePair_t)
     data_.LANTERN_DATA->state = 1 - data_.LANTERN_DATA->state
@@ -2452,6 +2691,80 @@ sub Item.MAGICCOUCH_PROC_CONSTRUCT()
     canExport_ = 1
     persistenceLevel_ = ITEM_PERSISTENCE_ITEM
 end sub
+sub Item.MAGICMINECART_SLOT_DRAWASOCCLUDER(pvPair() as _Item_slotValuePair_t)
+    dim as integer y
+    dim as integer x
+    dim as integer dest
+    matchParameter(y, "Y", pvPair())
+    matchParameter(x, "X", pvPair())
+    matchParameter(dest, "DEST", pvPair())
+    anims[0].drawAnimation(cast(integer ptr, dest), data_.MAGICMINECART_DATA->curPos.x - x, data_.MAGICMINECART_DATA->curPos.y - y)
+end sub
+sub Item.MAGICMINECART_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
+
+    setParameter(0, "disable")
+    
+end sub
+sub Item.MAGICMINECART_PROC_INIT()
+    data_.MAGICMINECART_DATA = new ITEM_MAGICMINECART_TYPE_DATA
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "minecart.txt")
+    data_.MAGICMINECART_DATA->curPos = p
+    data_.MAGICMINECART_DATA->curDire = 1
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "LIGHTOCCLUDER", "DRAWASOCCLUDER")
+end sub
+sub Item.MAGICMINECART_PROC_FLUSH()
+ 
+    if anims_n then delete(anims)
+    if data_.MAGICMINECART_DATA then delete(data_.MAGICMINECART_DATA)
+    data_.MAGICMINECART_DATA = 0
+end sub
+function Item.MAGICMINECART_PROC_RUN(t as double) as integer
+    dim as integer enable
+    getParameter(enable, "disable")
+    enable = 1 - enable
+    
+    if enable then
+        data_.MAGICMINECART_DATA->curPos.xs += data_.MAGICMINECART_DATA->curDire*2
+        if data_.MAGICMINECART_DATA->curPos.x + 64 > (p.x + size.x) then
+            data_.MAGICMINECART_DATA->curPos.xs = p.x + size.x - 64
+            data_.MAGICMINECART_DATA->curDire = -1
+        elseif data_.MAGICMINECART_DATA->curPos.x < p.x then
+            data_.MAGICMINECART_DATA->curPos.xs = p.x 
+            data_.MAGICMINECART_DATA->curDire = 1
+        end if
+    
+    
+    end if
+    return 0
+end function
+sub Item.MAGICMINECART_PROC_DRAW(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, data_.MAGICMINECART_DATA->curPos.x, data_.MAGICMINECART_DATA->curPos.y,0,1)
+end sub
+sub Item.MAGICMINECART_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.MAGICMINECART_PROC_SERIALIZEIN(binaryData_ as PackedBinary)
+    data_.MAGICMINECART_DATA = new ITEM_MAGICMINECART_TYPE_DATA
+    binaryData_.retrieve(data_.MAGICMINECART_DATA->toggleCycle)
+    binaryData_.retrieve(data_.MAGICMINECART_DATA->curPos)
+    binaryData_.retrieve(data_.MAGICMINECART_DATA->curDire)    
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "LIGHTOCCLUDER", "DRAWASOCCLUDER")
+end sub
+sub Item.MAGICMINECART_PROC_SERIALIZEOUT(binaryData_ as PackedBinary)
+    binaryData_.store(data_.MAGICMINECART_DATA->toggleCycle)
+    binaryData_.store(data_.MAGICMINECART_DATA->curPos)
+    binaryData_.store(data_.MAGICMINECART_DATA->curDire)    
+end sub
+sub Item.MAGICMINECART_PROC_CONSTRUCT()
+    _initAddSlot_("DRAWASOCCLUDER", ITEM_MAGICMINECART_SLOT_DRAWASOCCLUDER_E)
+    _initAddSlot_("ENABLE", ITEM_MAGICMINECART_SLOT_ENABLE_E)
+    _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+    canExport_ = 1
+    persistenceLevel_ = ITEM_PERSISTENCE_ITEM
+end sub
 #define ITEM_MINELANTERN_DEFINE_MOTH_ANGLE_VAR_DEG 45
 #define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MIN 10
 #define ITEM_MINELANTERN_DEFINE_MOTH_MAG_MAX 40
@@ -2548,8 +2861,8 @@ sub Item.MINELANTERN_PROC_DRAW(scnbuff as integer ptr)
     dim as integer i
     PREP_LIT_ANIMATION()
     
-    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
-    if iif(data_.MINELANTERN_DATA->flickerCounter > 0, int(data_.MINELANTERN_DATA->frame * 0.5) and 1, 1) then anims[1].drawAnimation(scnbuff, p.x, p.y)
+    DRAW_LIT_ANIMATION(0, p.x + 10, p.y - 1, 0, 0)
+    if iif(data_.MINELANTERN_DATA->flickerCounter > 0, int(data_.MINELANTERN_DATA->frame * 0.5) and 1, 1) then anims[1].drawAnimation(scnbuff, p.x + 10, p.y - 1)
     
     for i = 0 to data_.MINELANTERN_DATA->moths_N - 1
         if link.level_ptr->shouldLight() then
@@ -2635,6 +2948,10 @@ sub Item.MOMENTARYTOGGLESWITCH_PROC_CONSTRUCT()
     _initAddParameter_("FACING", _ITEM_VALUE_INTEGER)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
+sub Item.NIXIEFLICKER_SLOT_BEGINSEQ(pvPair() as _Item_slotValuePair_t)
+    data_.NIXIEFLICKER_DATA->activated = 1
+    link.gamespace_ptr->lockAction = 1
+end sub
 sub Item.NIXIEFLICKER_PROC_INIT()
     data_.NIXIEFLICKER_DATA = new ITEM_NIXIEFLICKER_TYPE_DATA
     dim as integer i
@@ -2652,6 +2969,10 @@ sub Item.NIXIEFLICKER_PROC_INIT()
     next i
     data_.NIXIEFLICKER_DATA->countup = 0
     data_.NIXIEFLICKER_DATA->countA = 0
+    data_.NIXIEFLICKER_DATA->interimCount = 0
+    data_.NIXIEFLICKER_DATA->activated = 0
+    
+    data_.NIXIEFLICKER_DATA->nomeraSplash.load(MEDIA_PATH + "nomeraSplashWord.png")
 end sub
 sub Item.NIXIEFLICKER_PROC_FLUSH()
     delete(data_.NIXIEFLICKER_DATA->tubeValues)
@@ -2662,44 +2983,104 @@ sub Item.NIXIEFLICKER_PROC_FLUSH()
 end sub
 function Item.NIXIEFLICKER_PROC_RUN(t as double) as integer
     dim as integer i, value
+    dim as integer ptr scnbuff
     light.texture.x = p.x + size.x * 0.5
     light.texture.y = p.y + size.y * 0.5
     light.shaded.x = light.texture.x
     light.shaded.y = light.texture.y  
 
-    data_.NIXIEFLICKER_DATA->countup += 1
-    
-    if data_.NIXIEFLICKER_DATA->countup < 603 then
+    if data_.NIXIEFLICKER_DATA->activated = 1 then
+        if abs(link.player_ptr->body.p.x - 670) > 8 then
+            link.gamespace_ptr->manualInput_dire = 1
+        else
+            link.gamespace_ptr->manualInput_dire = 0
+        end if
+        data_.NIXIEFLICKER_DATA->countup += 1
+        
+        if data_.NIXIEFLICKER_DATA->countup < 603 then
+            data_.NIXIEFLICKER_DATA->countA += 1
+            if data_.NIXIEFLICKER_DATA->countA >= 2 then
+                data_.NIXIEFLICKER_DATA->countA = 0
+                lightState = 1 - lightState
+                for i = 0 to 5
+                    if (data_.NIXIEFLICKER_DATA->countup = (300 + i*60)) orElse (data_.NIXIEFLICKER_DATA->countup = (301 + i*60)) then
+                        link.soundeffects_ptr->playSound(SND_POW)
+                    end if
+                    if data_.NIXIEFLICKER_DATA->countup > (300 + i*60) then
+                        select case i
+                        case 0
+                            value = 30
+                        case 1
+                            value = 31
+                        case 2
+                            value = 11
+                        case 3
+                            value = 0
+                        case 4
+                            value = 7
+                        case 5
+                            value = 6
+                        end select 
+                        data_.NIXIEFLICKER_DATA->valueFixed[i] = 1
+                    else
+                        value = int(rnd * 36)
+                    end if
+                    data_.NIXIEFLICKER_DATA->tubeValues[i] = value
+                next i
+            end if
+        else
+            lightState = 1
+        end if    
+        if data_.NIXIEFLICKER_DATA->countup = 600 then link.soundeffects_ptr->playSound(SND_UVB76)   
+        
+        if data_.NIXIEFLICKER_DATA->countup = 718 then
+            throw("LEFTON")
+            link.soundeffects_ptr->playSound(SND_POW)           
+        end if
+        if data_.NIXIEFLICKER_DATA->countup = 838 then 
+            throw("RIGHTON")
+            link.soundeffects_ptr->playSound(SND_POW)
+        end if
+        if data_.NIXIEFLICKER_DATA->countup = 955 then
+            scnbuff = imagecreate(640,480)
+            link.soundeffects_ptr->playSound(SND_POW)
+            do
+                window screen (0,0)-(SCRX-1,SCRY-1)
+                line scnbuff, (0,0)-(SCRX-1,SCRY-1), 0, BF
+            
+                data_.NIXIEFLICKER_DATA->nomeraSplash.putGLOW(scnbuff, 230, 224, 0, 0, 179, 31, &hffffffff)
+
+            
+                #ifndef SCALE_ELLIOTT
+                    #ifndef SCALE_2X
+                        window screen (0,0)-(SCRX-1,SCRY-1)
+                              
+                        put (0,0), scnbuff, PSET
+                    #else
+                        scale2sync scnbuff
+                    #endif
+                #else
+                    window screen (0,0)-(799, 599)
+                    line (79, 59)-(720, 540), &h1f1f1f, B
+                    put (80,60), scnbuff, PSET
+                #endif 
+                
+            loop until multikey(1)
+        
+            end 
+        end if
+    else
+        data_.NIXIEFLICKER_DATA->interimCount += 1
         data_.NIXIEFLICKER_DATA->countA += 1
         if data_.NIXIEFLICKER_DATA->countA >= 2 then
             data_.NIXIEFLICKER_DATA->countA = 0
             lightState = 1 - lightState
             for i = 0 to 5
-                if data_.NIXIEFLICKER_DATA->countup > (300 + i*60) then
-                    select case i
-                    case 0
-                        value = 30
-                    case 1
-                        value = 31
-                    case 2
-                        value = 11
-                    case 3
-                        value = 0
-                    case 4
-                        value = 7
-                    case 5
-                        value = 6
-                    end select 
-                    data_.NIXIEFLICKER_DATA->valueFixed[i] = 1
-                else
-                    value = int(rnd * 36)
-                end if
+                value = int(rnd * 36)
                 data_.NIXIEFLICKER_DATA->tubeValues[i] = value
             next i
-        end if
-    else
-        lightState = 1
-    end if    
+        end if    
+    end if
     return 0
 end function
 sub Item.NIXIEFLICKER_PROC_DRAW(scnbuff as integer ptr)
@@ -2720,6 +3101,9 @@ sub Item.NIXIEFLICKER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     
 end sub
 sub Item.NIXIEFLICKER_PROC_CONSTRUCT()
+    _initAddSignal_("LEFTON")
+    _initAddSignal_("RIGHTON")
+    _initAddSlot_("BEGINSEQ", ITEM_NIXIEFLICKER_SLOT_BEGINSEQ_E)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_PUZZLETUBE1_DEFINE_MAX_BUBBLES 20
@@ -3168,6 +3552,52 @@ end sub
 sub Item.REDWALLLIGHT_PROC_CONSTRUCT()
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
+sub Item.REVEALINGWALL_SLOT_REACT(pvPair() as _Item_slotValuePair_t)
+    dim as Vector2D source
+    matchParameter(source, "SOURCE", pvPair())
+    dim as Vector2D v
+    dim as double mag
+    v = source - (p + size*0.5)
+    mag = v.magnitude()
+    if mag < 64 then
+        data_.REVEALINGWALL_DATA->state = 1
+    end if
+end sub
+sub Item.REVEALINGWALL_PROC_INIT()
+    data_.REVEALINGWALL_DATA = new ITEM_REVEALINGWALL_TYPE_DATA
+    data_.REVEALINGWALL_DATA->state = 0
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "EXPLOSION REACTION", "REACT", new Circle2D(Vector2D(0,-10), 24))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "EXPLOSION REACTION", p)
+end sub
+sub Item.REVEALINGWALL_PROC_FLUSH()
+ 
+    if anims_n then delete(anims)
+    if data_.REVEALINGWALL_DATA then delete(data_.REVEALINGWALL_DATA)
+    data_.REVEALINGWALL_DATA = 0
+end sub
+function Item.REVEALINGWALL_PROC_RUN(t as double) as integer
+    dim as string portalNme
+    getParameter(portalNme, "portal")
+    
+    portalNme = ucase(portalNme)
+    if data_.REVEALINGWALL_DATA->state = 0 then
+        link.level_ptr->disablePortal(portalNme)
+    elseif data_.REVEALINGWALL_DATA->state = 1 then
+        link.level_ptr->enablePortal(portalNme)
+    end if
+    return 0
+end function
+sub Item.REVEALINGWALL_PROC_DRAW(scnbuff as integer ptr)
+
+end sub
+sub Item.REVEALINGWALL_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.REVEALINGWALL_PROC_CONSTRUCT()
+    _initAddSlot_("REACT", ITEM_REVEALINGWALL_SLOT_REACT_E)
+    _initAddParameter_("PORTAL", _ITEM_VALUE_ZSTRING)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+end sub
 sub Item.SHOCKTARGET1_SLOT_SHOCKTARGET(pvPair() as _Item_slotValuePair_t)
     throw("ACTIVATE")
     data_.SHOCKTARGET1_DATA->cycleTime = 50
@@ -3293,8 +3723,12 @@ sub Item.SIGN_PROC_CONSTRUCT()
     _initAddParameter_("TEXT", _ITEM_VALUE_ZSTRING)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
+sub Item.SMALLOSCILLOSCOPE_SLOT_ENABLE(pvPair() as _Item_slotValuePair_t)
+    data_.SMALLOSCILLOSCOPE_DATA->enable = 1
+    data_.SMALLOSCILLOSCOPE_DATA->dontDraw = 0
+end sub
 sub Item.SMALLOSCILLOSCOPE_SLOT_INTERACT(pvPair() as _Item_slotValuePair_t)
-    data_.SMALLOSCILLOSCOPE_DATA->dontDraw = 1 - data_.SMALLOSCILLOSCOPE_DATA->dontDraw
+    if data_.SMALLOSCILLOSCOPE_DATA->enable then data_.SMALLOSCILLOSCOPE_DATA->dontDraw = 1 - data_.SMALLOSCILLOSCOPE_DATA->dontDraw
 end sub
 sub Item.SMALLOSCILLOSCOPE_PROC_INIT()
     data_.SMALLOSCILLOSCOPE_DATA = new ITEM_SMALLOSCILLOSCOPE_TYPE_DATA
@@ -3312,7 +3746,10 @@ sub Item.SMALLOSCILLOSCOPE_PROC_INIT()
     anims[1].hardSwitch(1)
     steps = int(rnd * 30)
     for i = 0 to steps: anims[0].step_animation(): next i
-    data_.SMALLOSCILLOSCOPE_DATA->dontDraw = 0
+    getParameter(data_.SMALLOSCILLOSCOPE_DATA->enable, "disable")
+    data_.SMALLOSCILLOSCOPE_DATA->enable = 1 - data_.SMALLOSCILLOSCOPE_DATA->enable
+    
+    data_.SMALLOSCILLOSCOPE_DATA->dontDraw = 1 - data_.SMALLOSCILLOSCOPE_DATA->enable
     link.dynamiccontroller_ptr->addPublishedSlot(ID, "INTERACT", "INTERACT", new Rectangle2D(Vector2D(0,0), Vector2D(32, 32)))
     link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "INTERACT", p)
 end sub
@@ -3336,7 +3773,9 @@ sub Item.SMALLOSCILLOSCOPE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
     
 end sub
 sub Item.SMALLOSCILLOSCOPE_PROC_CONSTRUCT()
+    _initAddSlot_("ENABLE", ITEM_SMALLOSCILLOSCOPE_SLOT_ENABLE_E)
     _initAddSlot_("INTERACT", ITEM_SMALLOSCILLOSCOPE_SLOT_INTERACT_E)
+    _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 #define ITEM_SMOKEMINE_DEFINE_BOMB_STICKYNESS 0
@@ -3463,6 +3902,268 @@ sub Item.SMOKEMINE_PROC_CONSTRUCT()
     _initAddParameter_("ORIENTATION", _ITEM_VALUE_INTEGER)
     _initAddParameter_("COLORINDEX", _ITEM_VALUE_INTEGER)
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
+end sub
+sub Item.drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, override_ as integer = 0)
+    dim as integer flags
+    dim as integer jiggle
+
+    select case data_.SOLDIER_DATA->enemyWrapper.facing
+    case -1
+        flags = 0
+    case 1
+        flags = 4
+    end select
+    
+    if data_.SOLDIER_DATA->death andAlso data_.SOLDIER_DATA->zapTime then
+        jiggle = ((int(data_.SOLDIER_DATA->frameCount * 0.33) and 1) * 2 - 1) * 1
+    else
+        jiggle = 0
+    end if  
+
+    data_.SOLDIER_DATA->enemyWrapper.anim.drawAnimation(dest_img, p.x - x + jiggle, p.y - y,,flags,ANIM_TRANS) 
+    
+end sub
+sub Item.SOLDIER_SUB_doDeath()
+    dim as integer i
+    dim as integer numBills
+    dim as Vector2D v
+    dim as double ang, mag
+    
+    numBills = int(rnd * 10) + 5
+    
+    for i = 0 to numBills - 1
+        ang = rnd*2*_PI_
+        mag = rnd*300 + 100
+        v = Vector2D(cos(ang), sin(ang) - 0.5) * mag
+        
+        SOLDIER_SUB_addCash(v)
+    next i
+end sub
+sub Item.SOLDIER_SUB_addCash(vel as Vector2D)
+    dim as Item ptr sitem
+    dim as integer cashScale
+    sitem = DControl->constructItem(DControl->itemStringToType("CASH"), ACTIVE_FRONT)
+    
+    cashScale = int(rnd * 100)
+    if cashScale < 10 then
+        sitem->setParameter(2, "billType")
+    elseif cashScale < 40 then
+        sitem->setParameter(1, "billType")
+    else
+        sitem->setParameter(0, "billType")
+    end if
+    
+    sitem->setParameter(vel, "velocity")
+    
+    
+    DControl->initItem(sitem, p)
+end sub
+sub Item.SOLDIER_SLOT_DRAWASOCCLUDER(pvPair() as _Item_slotValuePair_t)
+    dim as integer y
+    dim as integer x
+    dim as integer dest
+    matchParameter(y, "Y", pvPair())
+    matchParameter(x, "X", pvPair())
+    matchParameter(dest, "DEST", pvPair())
+    drawInto(cast(integer ptr, dest), x, y, 1)
+end sub
+sub Item.SOLDIER_SLOT_CLOSESOLDIERALERT(pvPair() as _Item_slotValuePair_t)
+    data_.SOLDIER_DATA->enemyWrapper.receivedAlert = 1
+end sub
+sub Item.SOLDIER_SLOT_REACT(pvPair() as _Item_slotValuePair_t)
+    dim as Vector2D source
+    matchParameter(source, "SOURCE", pvPair())
+    dim as Vector2D v
+    dim as double mag
+    v = source - p
+    mag = v.magnitude()
+    if mag < 64 then
+        if data_.SOLDIER_DATA->enemyWrapper.death = 0 then
+            data_.SOLDIER_DATA->enemyWrapper.death = 1
+            data_.SOLDIER_DATA->enemyWrapper.anim.hardswitch(6)
+        end if
+    end if
+end sub
+sub Item.SOLDIER_SLOT_SHOCKTARGET(pvPair() as _Item_slotValuePair_t)
+    dim as Vector2D source
+    matchParameter(source, "SOURCE", pvPair())
+    if data_.SOLDIER_DATA->enemyWrapper.death = 0 then
+        data_.SOLDIER_DATA->zapTime = 50
+        data_.SOLDIER_DATA->enemyWrapper.death = 1
+        data_.SOLDIER_DATA->enemyWrapper.anim.hardswitch(5)
+    end if
+end sub
+sub Item.SOLDIER_PROC_INIT()
+    data_.SOLDIER_DATA = new ITEM_SOLDIER_TYPE_DATA
+    data_.SOLDIER_DATA->enemyWrapper.loadType(SOLDIER_1)
+    data_.SOLDIER_DATA->enemyWrapper.setParent(link.tinyspace_ptr, link.level_ptr)
+    data_.SOLDIER_DATA->enemyWrapper.setLink(link)
+    data_.SOLDIER_DATA->enemyWrapper.body.r = 18
+    data_.SOLDIER_DATA->enemyWrapper.body.m = 5                 
+    data_.SOLDIER_DATA->enemyWrapper.body_i = link.tinyspace_ptr->addBody(@(data_.SOLDIER_DATA->enemyWrapper.body))
+    data_.SOLDIER_DATA->enemyWrapper.body.friction = 2
+    p += Vector2D(16, 46)
+    data_.SOLDIER_DATA->enemyWrapper.body.p = p
+    data_.SOLDIER_DATA->bulletCooldown = 0
+    
+    data_.SOLDIER_DATA->frameCount = int(rnd * 1000)
+    CREATE_ANIMS(2)
+    anims[0].load(MEDIA_PATH + "NPC\detectmeter.txt")
+    anims[0].play()
+    anims[1].load(MEDIA_PATH + "NPC\alerts.txt")
+    anims[1].play()
+    
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 1)  
+
+    data_.SOLDIER_DATA->deathRise = 1
+    data_.SOLDIER_DATA->kaboom = 0
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "LIGHTOCCLUDER", "DRAWASOCCLUDER")
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "CLOSESOLDIERALERT", "CLOSESOLDIERALERT", new Circle2D(Vector2D(0,0), 128))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "CLOSESOLDIERALERT", p)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "EXPLOSION REACTION", "REACT", new Circle2D(Vector2D(0,-10), 24))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "EXPLOSION REACTION", p)
+    link.dynamiccontroller_ptr->addPublishedSlot(ID, "SHOCK TARGET", "SHOCKTARGET", new Circle2D(Vector2D(0,-10), 14))
+    link.dynamiccontroller_ptr->setTargetSlotOffset(ID, "SHOCK TARGET", p)
+end sub
+sub Item.SOLDIER_PROC_FLUSH()
+    
+    link.tinyspace_ptr->removeBody(data_.SOLDIER_DATA->enemyWrapper.body_i)    
+    if anims_n then delete(anims)
+    if data_.SOLDIER_DATA then delete(data_.SOLDIER_DATA)
+    data_.SOLDIER_DATA = 0
+end sub
+function Item.SOLDIER_PROC_RUN(t as double) as integer
+    dim as item ptr sitem
+    dim as vector2d heading
+    dim as ObjectSlotSet slots
+    anims[1].step_animation()
+    data_.SOLDIER_DATA->enemyWrapper.process(t)
+    data_.SOLDIER_DATA->frameCount += 1
+    
+    DControl->setTargetSlotOffset(ID, "explosion reaction", p) 
+    DControl->setTargetSlotOffset(ID, "shock target", p) 
+    
+    if data_.SOLDIER_DATA->enemyWrapper.death = 0 then
+        p = data_.SOLDIER_DATA->enemyWrapper.body.p
+        if data_.SOLDIER_DATA->enemyWrapper.alertOthers then
+            querySlots(slots, "closeSoldierAlert", new Circle2D(p, 128))
+            slots.throw()
+        end if
+        
+        if data_.SOLDIER_DATA->enemyWrapper.canShoot then
+            if data_.SOLDIER_DATA->bulletCooldown = 0 then
+                sitem = DControl->constructItem(DControl->itemstringtotype("AK47SHOT"), ACTIVE_FRONT)
+                heading = link.player_ptr->body.p - p
+                heading.normalize()
+                
+                sitem->setParameter(heading, "heading")
+                DControl->initItem(sitem, p + Vector2D((data_.SOLDIER_DATA->enemyWrapper.facing*2-1) * 20, -14))
+                link.projectilecollection_ptr->create(p + Vector2D((data_.SOLDIER_DATA->enemyWrapper.facing*2-1) * 12, -15), Vector2D((rnd * 3 - 1)*0.5+(data_.SOLDIER_DATA->enemyWrapper.facing*2-1)*-0.6, -rnd - 0.5) * 100, CARTRIDGE)
+                data_.SOLDIER_DATA->bulletCooldown = 6
+            end if
+        end if
+        if data_.SOLDIER_DATA->bulletCooldown > 0 then data_.SOLDIER_DATA->bulletCooldown -= 1
+        
+        if data_.SOLDIER_DATA->bulletCooldown > 3 then 
+            lightState = 1
+        else
+            lightState = 0
+        end if
+        light.texture.x = p.x + (data_.SOLDIER_DATA->enemyWrapper.facing*2-1)*20
+        light.texture.y = p.y - 15
+        light.shaded.x = light.texture.x
+        light.shaded.y = light.texture.y  
+    else
+        data_.SOLDIER_DATA->enemyWrapper.anim.step_animation()
+        if data_.SOLDIER_DATA->zapTime = 0 then
+            lightState = 0
+            if data_.SOLDIER_DATA->kaboom = 0 then p.ys -= data_.SOLDIER_DATA->deathRise
+            data_.SOLDIER_DATA->deathRise += 0.6
+            
+            if data_.SOLDIER_DATA->enemyWrapper.anim.getFrame() = 3 andAlso data_.SOLDIER_DATA->kaboom = 0 then
+                data_.SOLDIER_DATA->kaboom = 1
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(p, FLASH,,1)
+                link.soundeffects_ptr->playSound(SND_EXPLODE)
+                SOLDIER_SUB_doDeath()
+            end if
+            if data_.SOLDIER_DATA->enemyWrapper.anim.done() then
+                return 1
+            end if
+        else
+            data_.SOLDIER_DATA->zapTime -= 1
+            link.projectilecollection_ptr->create(Vector2D(p.x, p.y - 10), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, BLUE_SPARK)
+            if int(data_.SOLDIER_DATA->frameCount * 0.5) and 1 then 
+                lightState = 1
+            else
+                lightState = 0
+            end if
+            light.texture.x = p.x 
+            light.texture.y = p.y - 15
+            light.shaded.x = light.texture.x
+            light.shaded.y = light.texture.y  
+            if data_.SOLDIER_DATA->zapTime = 0 then data_.SOLDIER_DATA->enemyWrapper.anim.hardswitch(6)    
+        end if        
+        
+    end if
+    return 0
+end function
+sub Item.SOLDIER_PROC_DRAW(scnbuff as integer ptr)
+    dim as integer curFrame, glow, jiggle
+    dim as double floatAmount
+    PREP_LIT_ANIMATION()
+    
+    if data_.SOLDIER_DATA->enemyWrapper.death andAlso data_.SOLDIER_DATA->zapTime then
+        jiggle = ((int(data_.SOLDIER_DATA->frameCount * 0.33) and 1) * 2 - 1)
+    else
+        jiggle = 0
+    end if  
+    
+    if link.level_ptr->shouldLight() then
+        data_.SOLDIER_DATA->enemyWrapper.anim.drawAnimationLit(scnbuff, p.x+jiggle, p.y,_
+                                       lights, numLights, link.level_ptr->getObjectAmbientLevel(),_
+                                       link.gamespace_ptr->camera,data_.SOLDIER_DATA->enemyWrapper.facing*4,1,ANIM_TRANS)            
+    else
+        data_.SOLDIER_DATA->enemyWrapper.anim.drawAnimation(scnbuff, p.x+jiggle, p.y, link.gamespace_ptr->camera,data_.SOLDIER_DATA->enemyWrapper.facing*4,ANIM_TRANS)
+    end if 
+    
+    if data_.SOLDIER_DATA->enemyWrapper.death = 0 then
+        curFrame = data_.SOLDIER_DATA->enemyWrapper.suspicionLevel / 16
+        floatAmount = sin(data_.SOLDIER_DATA->frameCount * 0.1) * 3
+        glow = data_.SOLDIER_DATA->enemyWrapper.suspicionLevel * 10
+        if glow > 255 then glow = 255
+        if curFrame > 5 then curFrame = 5
+        anims[0].setGlow(&h00ffffff or ((glow shr 1) shl 24))
+        if curFrame = 5 then
+            curFrame = 5 + (int(data_.SOLDIER_DATA->frameCount * 0.3333) and 1)
+            anims[0].drawImage(scnbuff, p.x-10, p.y - 10 + floatAmount, curFrame*20, 0, curFrame*20+ 19, 19)
+        else                               
+            anims[0].drawImage(scnbuff, p.x-10, p.y - 10 + floatAmount, curFrame*20, 0, curFrame*20+ 19, 19)
+        end if
+        
+        floatAmount = sin(data_.SOLDIER_DATA->frameCount * 0.1) * -3
+        if data_.SOLDIER_DATA->enemyWrapper.suspicionLevel > 35 andALso data_.SOLDIER_DATA->enemyWrapper.suspicionLevel < 90 then
+            anims[1].hardswitch(0)
+            anims[1].drawAnimation(scnbuff, p.x, p.y - 60 + floatAmount)
+        elseif data_.SOLDIER_DATA->enemyWrapper.suspicionLevel >= 90 then
+            anims[1].hardswitch(1)
+            anims[1].drawAnimation(scnbuff, p.x, p.y - 60 + floatAmount)       
+        end if
+    end if
+end sub
+sub Item.SOLDIER_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+    
+end sub
+sub Item.SOLDIER_PROC_CONSTRUCT()
+    _initAddSlot_("DRAWASOCCLUDER", ITEM_SOLDIER_SLOT_DRAWASOCCLUDER_E)
+    _initAddSlot_("CLOSESOLDIERALERT", ITEM_SOLDIER_SLOT_CLOSESOLDIERALERT_E)
+    _initAddSlot_("REACT", ITEM_SOLDIER_SLOT_REACT_E)
+    _initAddSlot_("SHOCKTARGET", ITEM_SOLDIER_SLOT_SHOCKTARGET_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_LEVEL
 end sub
 sub Item.SPOTLIGHTCONTROL_PROC_INIT()
     data_.SPOTLIGHTCONTROL_DATA = new ITEM_SPOTLIGHTCONTROL_TYPE_DATA
@@ -3953,6 +4654,75 @@ sub Item.TELEPORTERSWITCH_PROC_CONSTRUCT()
     _initAddSlot_("INTERACT", ITEM_TELEPORTERSWITCH_SLOT_INTERACT_E)
     _initAddSlot_("ENABLE", ITEM_TELEPORTERSWITCH_SLOT_ENABLE_E)
     _initAddParameter_("DISABLE", _ITEM_VALUE_INTEGER)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+end sub
+sub Item.TOGGLELIGHT_SLOT_TOGGLE(pvPair() as _Item_slotValuePair_t)
+    data_.TOGGLELIGHT_DATA->state = 1 - data_.TOGGLELIGHT_DATA->state
+end sub
+sub Item.TOGGLELIGHT_PROC_INIT()
+    data_.TOGGLELIGHT_DATA = new ITEM_TOGGLELIGHT_TYPE_DATA
+    data_.TOGGLELIGHT_DATA->state = 0
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\MediumWhite_diffuse.txt", MEDIA_PATH + "Lights\MediumWhite_specular.txt", 1)
+end sub
+sub Item.TOGGLELIGHT_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.TOGGLELIGHT_DATA then delete(data_.TOGGLELIGHT_DATA)
+    data_.TOGGLELIGHT_DATA = 0
+end sub
+function Item.TOGGLELIGHT_PROC_RUN(t as double) as integer
+    
+    lightState = data_.TOGGLELIGHT_DATA->state
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+    return 0
+end function
+sub Item.TOGGLELIGHT_PROC_DRAW(scnbuff as integer ptr)
+
+end sub
+sub Item.TOGGLELIGHT_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.TOGGLELIGHT_PROC_CONSTRUCT()
+    _initAddSlot_("TOGGLE", ITEM_TOGGLELIGHT_SLOT_TOGGLE_E)
+    persistenceLevel_ = ITEM_PERSISTENCE_NONE
+end sub
+sub Item.TRIGGERZONE_PROC_INIT()
+    data_.TRIGGERZONE_DATA = new ITEM_TRIGGERZONE_TYPE_DATA
+    data_.TRIGGERZONE_DATA->lastState = 0
+    
+  
+end sub
+sub Item.TRIGGERZONE_PROC_FLUSH()
+
+    if anims_n then delete(anims)
+    if data_.TRIGGERZONE_DATA then delete(data_.TRIGGERZONE_DATA)
+    data_.TRIGGERZONE_DATA = 0
+end sub
+function Item.TRIGGERZONE_PROC_RUN(t as double) as integer
+    dim as integer state
+    dim as Vector2D tl, br
+    
+    link.player_ptr->getBounds(tl, br)
+    br = tl + br
+    
+    state = boxBox(p, p + size, tl, br)
+    if state andAlso (data_.TRIGGERZONE_DATA->lastState = 0) then throw("ENTER")
+       
+    data_.TRIGGERZONE_DATA->lastState = state
+    return 0
+end function
+sub Item.TRIGGERZONE_PROC_DRAW(scnbuff as integer ptr)
+
+end sub
+sub Item.TRIGGERZONE_PROC_DRAWOVERLAY(scnbuff as integer ptr)
+
+end sub
+sub Item.TRIGGERZONE_PROC_CONSTRUCT()
+    _initAddSignal_("ENTER")
     persistenceLevel_ = ITEM_PERSISTENCE_NONE
 end sub
 sub Item.TUBEPUZZLEMAP_SLOT_UPDATE(pvPair() as _Item_slotValuePair_t)

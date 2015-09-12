@@ -11,7 +11,7 @@
 #include "objectslotset.bi"
 
 #define MIN_BOMB_TILE_POS -46
-#define MIN_ITEM_BAR_POS -22
+#define MIN_ITEM_BAR_POS -50
 #define ITEM_BAR_LIFE 300
 #define INTERACT_INTRO_TIME 60
 #define INTERACT_FLASH_CYCLE_TIME 90
@@ -56,7 +56,9 @@ constructor Player
     itemBarPos = MIN_ITEM_BAR_POS
     money = 0
     displayMoney = 0
+    intelCount = 0
     addedMoneyCounter = 0
+    keyCount = 0
     
     
     isCrouching = 0
@@ -78,7 +80,12 @@ constructor Player
     healthindi.load("hindicator.png")
 	hudTrim.load("hudtrim.png")
     detectmeter.load("dmeter.png")
-    huditembar.load("huditembar.png")
+    huditembar.load("itembar.png")
+    keyIcon.load("key.png")
+    
+    intelIcon.load("objects\media\collectables.txt")
+    intelIcon.hardSwitch(9)
+    intelIcon.play()
     
     spinnerItem = 0
     anim.play()
@@ -102,7 +109,9 @@ constructor Player
     #endif
 
 end constructor
-
+sub Player.showItemBar() 
+    itemBarLife = ITEM_BAR_LIFE
+end sub
 #ifdef KICKSTARTER
 sub Player.initPathing
      
@@ -187,7 +196,8 @@ sub Player.drawPlayer(scnbuff as uinteger ptr)
 end sub
 
 sub Player.drawPlayerInto(destbuff as uinteger ptr, posx as integer, posy as integer, positionless as integer = 0)
-    
+    posx = 0
+    posy = 0
     #IFNDEF NO_PLAYER
     if positionless = 0 then
         if harmedFlashing > 0 then
@@ -245,6 +255,11 @@ sub Player.computeCoverage()
 	for i = 0 to numblocks_ - 1
         bitblt_trans_clip(comptex, blocks_[i].rpx - pposx, blocks_[i].rpy - pposy, blocks_[i].img, blocks_[i].x0, blocks_[i].y0, blocks_[i].x1, blocks_[i].y1)
 	next i
+    
+    window screen (pposx, pposy)-(pposx + SCRX - 1, pposy + SCRY - 1)
+    link.dynamiccontroller_ptr->setOverrideLightObjects()
+    link.dynamiccontroller_ptr->drawDynamics(comptex, ACTIVE_COVER)
+    link.dynamiccontroller_ptr->resetOverrideLightObjects()
 
 	anim.getFrameImageData(playerImg, xpos, ypos, w, h)
 	
@@ -382,15 +397,20 @@ sub Player.getBounds(byref p as Vector2D, byref size as Vector2D)
 	size = Vector2D(anim.getWidth(), anim.getHeight())
 end sub
 
-sub Player.harm(p as Vector2D, amount as integer)
-dim as Vector2D expM
+sub Player.harm(p as Vector2D, amount as integer, kickM as double = -1)
+    dim as Vector2D expM
 	dim as double kickback
 	dim as double mag
-	expM = p - (body.p - Vector2D(0, 24))
-	mag = expM.magnitude()
-	if mag < 70 then
+    
+    expM = p - (body.p - Vector2D(0, 24))
+    mag = expM.magnitude()
+	if mag < 70 andAlso kickM = -1 then
 		kickback = (70 - mag) / 70
 		body.v = body.v - ((expM / mag) * kickback) * 100
+    elseif kickM <> -1 then
+        expM = body.p - p
+        expM.normalize()
+		body.v = body.v + expM*kickM    
 	end if
 	health -= amount
 	harmedFlashing = 24
@@ -739,7 +759,7 @@ sub Player.processControls(dire as integer, jump as integer,_
 	
 	if fire = 0 andAlso lastFire = 1 then
 		if bombs > 0 then
-			proj_parent->create(this.body.p, this.body.v + Vector2D((facing * 2 - 1) * charge * 4, -200))
+			'proj_parent->create(this.body.p, this.body.v + Vector2D((facing * 2 - 1) * charge * 4, -200))
 			link.soundeffects_ptr->playSound(SND_THROW)
 			bombs -= 1
 			charge = 0
@@ -978,6 +998,19 @@ function Player.getCovered() as double
     return covered
 end function
 
+sub Player.addIntel()
+    intelCount += 1
+end sub
+sub Player.addKey()
+    keyCount += 1
+end sub
+sub Player.useKey()
+    keyCount -= 1
+end sub
+function Player.hasKey() as integer
+    return keyCount
+end function
+
 sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,0))
 	dim as Vector2D center, curPos
 	dim as Vector2D bombPos, ntl, nbr
@@ -1059,7 +1092,12 @@ sub Player.drawOverlay(scnbuff as uinteger ptr, offset as Vector2D = Vector2D(0,
     
     drawDetectMeter(scnbuff, (sin(timer * 0.5) + 1) * 50)
     
-    huditembar.putTRANS(scnbuff, 0, itemBarPos, 0, 0, 639, 21)
+    huditembar.putTRANS(scnbuff, 0, itemBarPos, 0, 0, 639, 49)
+    intelIcon.drawAnimation(scnbuff, 619, itemBarPos + 13)
+    huditembar.putTRANS(scnbuff, 610, itemBarPos + 29, intelCount*20, 50, intelCount*20 + 19, 69)    
+    for i = 0 to keyCount - 1
+        keyIcon.putTRANS(scnbuff, 22 + i * 18, 2 + itemBarPos, 0, 0, 16, 16)
+    next i
     
     
     UNLOCK_TO_SCREEN()
@@ -1224,7 +1262,7 @@ sub Player.processItems(t as double)
         itemBarPos -= 4
         if itembarPos < MIN_ITEM_BAR_POS then itemBarPos = MIN_ITEM_BAR_POS
     end if
-    
+    intelIcon.step_animation()
     DControl->querySlots(interactables, "interact", @Circle2D(Vector2D(body.p.x, body.p.y - iif(isCrouching, 0, 26)), 8))
     dIndex = 0
     while dIndex < interactables.getMember_N()

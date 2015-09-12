@@ -14,6 +14,8 @@
 #include "objectvalueset.bi"
 #include "constants.bi"
 #include "C64Draw.bi"
+#include "enemy.bi"
+
 
 #include "objects\headers\gen_itemdefines.bi"
 

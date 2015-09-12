@@ -90,8 +90,8 @@ function _draw(scnbuff as integer ptr)
     dim as integer i
     PREP_LIT_ANIMATION()
     
-    DRAW_LIT_ANIMATION(0, p.x, p.y, 0, 0)
-    if iif(data.flickerCounter > 0, int(data.frame * 0.5) and 1, 1) then anims[1].drawAnimation(scnbuff, p.x, p.y)
+    DRAW_LIT_ANIMATION(0, p.x + 10, p.y - 1, 0, 0)
+    if iif(data.flickerCounter > 0, int(data.frame * 0.5) and 1, 1) then anims[1].drawAnimation(scnbuff, p.x + 10, p.y - 1)
     
     for i = 0 to data.moths_N - 1
         if link.level_ptr->shouldLight() then

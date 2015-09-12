@@ -19,7 +19,7 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "BIG Compilation.bmp",
+      image = "../Level Concepts and WIPS/um2-1shack/BIG Compilation.bmp",
       imagewidth = 320,
       imageheight = 2080,
       transparentcolor = "#ff00ff",
@@ -33,7 +33,7 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "CShapes (3).bmp",
+      image = "../Level Concepts and WIPS/um2-1shack/CShapes (3).bmp",
       imagewidth = 336,
       imageheight = 64,
       transparentcolor = "#ff00ff",
@@ -47,7 +47,7 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "mountain rocks.bmp",
+      image = "../Level Concepts and WIPS/um2-1shack/mountain rocks.bmp",
       imagewidth = 320,
       imageheight = 384,
       transparentcolor = "#ff00ff",
@@ -61,7 +61,7 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "mountainside COMP.bmp",
+      image = "../Level Concepts and WIPS/um2-1shack/mountainside COMP.bmp",
       imagewidth = 320,
       imageheight = 416,
       transparentcolor = "#ff00ff",
@@ -75,7 +75,7 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "mountaim backdrop.bmp",
+      image = "../Level Concepts and WIPS/um2-1shack/mountaim backdrop.bmp",
       imagewidth = 320,
       imageheight = 501,
       transparentcolor = "#ff00ff",
@@ -89,7 +89,7 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "sky.bmp",
+      image = "../Level Concepts and WIPS/um2-1shack/sky.bmp",
       imagewidth = 256,
       imageheight = 514,
       transparentcolor = "#ff00ff",
@@ -103,7 +103,7 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "endpiece.bmp",
+      image = "../Level Concepts and WIPS/um2-1shack/endpiece.bmp",
       imagewidth = 161,
       imageheight = 98,
       transparentcolor = "#ff00ff",
@@ -117,7 +117,7 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "chair.bmp",
+      image = "../Level Concepts and WIPS/um2-1shack/chair.bmp",
       imagewidth = 96,
       imageheight = 49,
       transparentcolor = "#ff00ff",
@@ -793,7 +793,7 @@ return {
       y = 0,
       width = 100,
       height = 50,
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {},
       encoding = "lua",
@@ -853,7 +853,7 @@ return {
     {
       type = "objectgroup",
       name = "Objects",
-      visible = false,
+      visible = true,
       opacity = 1,
       properties = {},
       objects = {
@@ -897,6 +897,35 @@ return {
             ["direction"] = "left",
             ["to map"] = "um2_2.map",
             ["to portal"] = "screenright"
+          }
+        },
+        {
+          name = "toshack",
+          type = "Portal",
+          shape = "rectangle",
+          x = 1488,
+          y = 592,
+          width = 32,
+          height = 64,
+          visible = true,
+          properties = {
+            ["direction"] = "in",
+            ["to map"] = "secretshack.map",
+            ["to portal"] = "tooutside"
+          }
+        },
+        {
+          name = "door key",
+          type = "Spawn",
+          shape = "rectangle",
+          x = 1488,
+          y = 592,
+          width = 32,
+          height = 64,
+          visible = true,
+          properties = {
+            ["p(portal)"] = "'toshack'",
+            ["spawn"] = "door key"
           }
         }
       }

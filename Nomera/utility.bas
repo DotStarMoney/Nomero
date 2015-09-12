@@ -4247,3 +4247,68 @@ function intToBCD(value as integer, bcd as integer ptr) as integer
         return i
     end if
 end function
+function lineLineIntersection(a0 as Vector2D, b0 as Vector2D, a1 as Vector2D, b1 as Vector2D, byref p as Vector2D) as integer
+    dim as double det
+    dim as double c1
+    dim as double c2
+ 
+    det = (a0.x - b0.x)*(a1.y - b1.y) - (a0.y - b0.y)*(a1.x - b1.x)
+    if det = 0 then 
+        p = Vector2D(0,0)
+        return 0
+    end if
+    
+    c1 = a0.x*b0.y - a0.y*b0.x
+    c2 = a1.x*b1.y - a1.y*b1.x
+    p.xs = ((a1.x - b1.x)*c1 - (a0.x - b0.x)*c2) / det
+    p.ys = ((a1.y - b1.y)*c1 - (a0.y - b0.y)*c2) / det
+
+    if (a1.x = b1.x) orELse (a0.x = b0.x) then
+        if (p.y < _min_(a0.y, b0.y)) orElse (p.y > _max_(a0.y, b0.y)) then return 0
+        if (p.y < _min_(a1.y, b1.y)) orELse (p.y > _max_(a1.y, b1.y)) then return 0        
+    else
+        if (p.x < _min_(a0.x, b0.x)) orElse (p.x > _max_(a0.x, b0.x)) then return 0
+        if (p.x < _min_(a1.x, b1.x)) orELse (p.x > _max_(a1.x, b1.x)) then return 0
+    end if
+    return 1
+end function
+
+function lineRectangleCollision(a as Vector2D, b as Vector2D, tl as Vector2D, br as Vector2D, byref p as Vector2D) as integer
+    dim as Vector2D iPts(0 to 1)
+    dim as Vector2D tempP
+    dim as integer cp
+    
+    cp = 0
+    if lineLineIntersection(Vector2D(tl.x,tl.y), Vector2D(br.x,tl.y), a, b, tempP) then
+        iPts(cp) = tempP
+        cp += 1
+    end if
+    if lineLineIntersection(Vector2D(br.x,tl.y), Vector2D(br.x,br.y), a, b, tempP) then
+        iPts(cp) = tempP
+        cp += 1
+    end if    
+    
+    if cp < 2 then
+        if lineLineIntersection(Vector2D(br.x,br.y), Vector2D(tl.x,br.y), a, b, tempP) then
+            iPts(cp) = tempP
+            cp += 1
+        end if        
+        if cp < 2 then
+            if lineLineIntersection(Vector2D(tl.x,br.y), Vector2D(tl.x,tl.y), a, b, tempP) then
+                iPts(cp) = tempP
+                cp += 1
+            end if          
+        end if
+    end if
+    
+    if cp = 2 then
+        if (a - iPts(0)).magnitude() < (a - iPts(1)).magnitude() then
+            p = iPts(0)
+        else
+            p = iPts(1)
+        end if
+        return 1
+    end if
+    return 0
+end function
+

@@ -13,6 +13,7 @@
 #include "gamespace.bi"
 #include "packedbinary.bi"
 #include "vbcompat.bi"
+#include "locktoscreen.bi"
 
 dim as integer ptr Level.falloutTex(0 to 2) = {0, 0, 0}
 #ifdef DEBUG
@@ -841,6 +842,7 @@ sub level.flush()
             end if
         loop
         portals.flush()
+        portalLookup.flush()
         falloutZones.flush()
         #ifdef DEBUG
             prinTLOG "legacy effects..."
@@ -1050,9 +1052,10 @@ sub level.processLights()
                     END_LIST()	
                 next order
                 
+                window screen (cornerX, cornerY)-(cornerX + SCRX - 1, cornerY + SCRY - 1)
                 link.player_ptr->drawPlayerInto(lightList[i]->occlusion_fbimg, cornerX, cornerY)
                 link.dynamiccontroller_ptr->querySlots(occluders, "lightoccluder")
-                occluders.throw("dest = " + str(lightList[i]->occlusion_fbimg) + ", x = " + str(cornerX) + ", y = " + str(cornerY))
+                occluders.throw("dest = " + str(lightList[i]->occlusion_fbimg) + ", x = " + str(0) + ", y = " + str(0))
 
                 
                 line lightList[i]->occlusion_fbimg, (lightList[i]->texture.w*0.5 - 4, lightList[i]->texture.h*0.5 - 4)-_
@@ -1192,6 +1195,24 @@ function level.getLayerN() as integer
     return blocks_N
 end function
 
+sub level.enablePortal(portalName as string)
+    dim as PortalType_t ptr portalDataPtr
+    portalName = ucase(portalName)
+    if portalLookup.exists(portalName) then
+        portalDataPtr = *(cast(PortalType_t ptr ptr, portalLookup.retrieve(portalName)))
+        portalDataPtr->enable = 1
+    end if
+end sub
+sub level.disablePortal(portalName as string)
+    dim as PortalType_t ptr portalDataPtr
+    portalName = ucase(portalName)
+    if portalLookup.exists(portalName) then
+        portalDataPtr = *(cast(PortalType_t ptr ptr, portalLookup.retrieve(portalName)))
+        portalDataPtr->enable = 0
+    end if
+end sub
+       
+
 sub level.load(filename as string)
     dim as integer f, i, q, j, s, x, y, xscan, yscan, skipCheck
     dim as TinyBlock block
@@ -1220,6 +1241,7 @@ sub level.load(filename as string)
     dim as Level_layerGroup ptr curGroup
     dim as integer itemLoadIndex
     dim as PackedBinary serialData
+    dim as PortalType_t ptr portalDataPtr
     
     f = freefile
  
@@ -1241,9 +1263,12 @@ sub level.load(filename as string)
     layerData = 0
     portalZonesNum = 0
    
+   
     open filename for binary as #f
     get #f,,strdata
     lvlName = strdata
+    link.gamespace_ptr->lastMap = lvlName
+
     
     get #f,,lvlWidth
     get #f,,lvlHeight
@@ -1274,6 +1299,7 @@ sub level.load(filename as string)
     graphicFX_->init(lvlWidth * 16, lvlHeight * 16)
    
     portals.init(lvlWidth * 16, lvlHeight * 16, sizeof(PortalType_t))
+    portalLookup.init(sizeof(PortalType_t ptr))
         
     #ifdef DEBUG
         if tilesets = 0 then
@@ -1606,7 +1632,9 @@ sub level.load(filename as string)
             tempPortal.b = tempObj.p + tempObj.size
             tempPortal.portal_name = allocate(len(tempObj.object_name) + 1)
             *(tempPortal.portal_name) = tempObj.object_name
-            portals.insert(tempPortal.a, tempPortal.b, @tempPortal)
+            tempPortal.enable = 1
+            portalDataPtr = portals.insert(tempPortal.a, tempPortal.b, @tempPortal)
+            portalLookup.insert(ucase(tempObj.object_name), @portalDataPtr)
         case SPAWN
             if link.dynamiccontroller_ptr->isActiveILI(itemLoadIndex) then 
             
@@ -1687,7 +1715,7 @@ sub level.load(filename as string)
     #endif
     close #f
     
-    curDestBlocks = allocate(sizeof(byte) * lvlWidth * lvlHeight)    
+    'curDestBlocks = allocate(sizeof(byte) * lvlWidth * lvlHeight)    
     
 	noVisuals = 1
 	for i = 0 to lvlWidth * lvlHeight - 1
@@ -1814,11 +1842,15 @@ sub Level.repositionFromPortal(l as levelSwitch_t, _
 		p.v = Vector2D(0,0)
 		exit sub
 	end if
+
 	do
 		portal_p = portals.roll()
+        
 		if portal_p <> 0 then
 			test2 = trimwhite(ucase(*(portal_p->portal_name)))
+  
 			if test1 = test2 then
+                
 				select case portal_p->direction
 				case D_UP
 					p.p = Vector2D(p.p.x(), portal_p->b.y() + p.r)
@@ -1845,10 +1877,12 @@ sub Level.repositionFromPortal(l as levelSwitch_t, _
 					end if
 					if p.v.x() > 0 then p.v.setX(0)
 				case D_IN
+                    
 					p.p = Vector2D((portal_p->a.x() + portal_p->b.x()) * 0.5,_
 								   portal_p->b.y() - p.r)
 					p.v = Vector2D(0,0)
 				end select
+                link.gamespace_ptr->lastSpawn = p.p
 				exit do
 			end if
 		else
@@ -1880,6 +1914,10 @@ function Level.processPortalCoverage(p as Vector2D,_
 	
 	if numFound > 0 then
 		tempPortal = p_list[0]
+        if tempPortal->enable = 0 then 
+            l.shouldSwitch = 0
+            return 0
+        end if
 		a.setX(_max_(tempPortal->a.x(), p.x()))
 		a.setY(_max_(tempPortal->a.y(), p.y()))
 		b.setX(_min_(tempPortal->b.x(), p.x() + w))

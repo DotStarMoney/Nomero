@@ -15,7 +15,6 @@
 using fb
 
 constructor GameSpace()
-	dim as ObjectLink link
     dim as integer i
     randomize timer
      
@@ -85,7 +84,7 @@ constructor GameSpace()
     switchTracks = 0
     
     spy.centerToMap(lvlData.getDefaultPos())
-    'spy.body.p = Vector2D(1700, 100)
+    'spy.body.p = Vector2D(3000, 1000)
     
     lastSpawn = spy.body.p
     camera = spy.body.p
@@ -195,7 +194,7 @@ constructor GameSpace()
         Loop
         'sleep            
     #endif
-
+    manualInput_dire = 0
 end constructor
 
 sub GameSpace.reconnectCollision()
@@ -277,7 +276,7 @@ function GameSpace.go() as integer
         end if
         frames += 1
     loop 
-           
+    
 	kill pathFile
 	pathFileNum = freefile
 	open pathfile for binary as #pathFileNum
@@ -402,6 +401,7 @@ sub GameSpace.step_draw()
      
     START_PROFILE(1)
 	lvlData.drawLayers(scnbuff, ACTIVE_COVER, camera.x(), camera.y(), Vector2D(0, shake))'
+    dynControl.drawDynamics(scnbuff, ACTIVE_COVER)
     RECORD_PROFILE(1)
 
     
@@ -544,9 +544,9 @@ sub GameSpace.step_process()
     #define RECORD_PROFILE(X) timeAdd(X) += timer - startTime(X)
     
     dim as integer i, dire, jump, ups, fire, explodeAll, deactivateAll
-    dim as integer numbers(0 to 9), turnstyle, turnstyleInput, activate
+    dim as integer numbers(0 to 9), turnstyle, turnstyleInput, activate, actualVol
 
-    dim as double tM, tS, totalT, startTotalT
+    dim as double tM, tS, totalT, startTotalT, mmult
     dim as double timeAdd(0 to 9), startTime(0 to 9)
     static as double timeProfiles(0 to 9)
     
@@ -648,16 +648,18 @@ sub GameSpace.step_process()
         turnstyleInput = 0       
     end if
         
-    numbers(0) = keypress(SC_1)
-    numbers(1) = keypress(SC_2)
-    numbers(2) = keypress(SC_3)
-    numbers(3) = keypress(SC_4)
-    numbers(4) = keypress(SC_5)
-    numbers(5) = keypress(SC_6)
-    numbers(6) = keypress(SC_7)
-    numbers(7) = keypress(SC_8)
-    numbers(8) = keypress(SC_9)
-    numbers(9) = keypress(SC_0)
+    if lockAction = 0 then
+        numbers(0) = keypress(SC_1)
+        numbers(1) = keypress(SC_2)
+        numbers(2) = keypress(SC_3)
+        numbers(3) = keypress(SC_4)
+        numbers(4) = keypress(SC_5)
+        numbers(5) = keypress(SC_6)
+        numbers(6) = keypress(SC_7)
+        numbers(7) = keypress(SC_8)
+        numbers(8) = keypress(SC_9)
+        numbers(9) = keypress(SC_0)
+    end if
     
     explodeAll = keypress(SC_W)
     deactivateAll = keypress(SC_Q)
@@ -671,7 +673,16 @@ sub GameSpace.step_process()
         musicVol = 255
     end if
     
-    FSOUND_SetVolumeAbsolute(currentMusic, musicVol)
+    actualVol = musicVol
+
+    mmult = 1
+    select case curMusic
+    case "Mountain.ogg"
+        mmult = 0.25
+    case "Lab.ogg"
+        mmult = 0.5
+    end select
+    FSOUND_SetVolumeAbsolute(currentMusic, actualVol*mmult)
     
     if keypress(SC_SPACE) andAlso (last_keypress(SC_SPACE) = 0) then 
         activate = 1
@@ -688,7 +699,7 @@ sub GameSpace.step_process()
 	if isSwitching <> 1 andAlso lockAction <> 1 then
     	spy.processControls(dire, jump, ups, fire, keypress(SC_LSHIFT), numbers(), explodeAll, deactivateAll, turnstyleInput, activate, 0.01667)
     elseif lockAction = 1 then
-    	spy.processControls(0, 0, 0, 0, 0, numbers(), 0, 0, 0, 0, 0.01667)
+    	spy.processControls(manualInput_dire, 0, 0, 0, 0, numbers(), 0, 0, 0, 0, 0.01667)
     end if
     spy.processItems(0.01667)
     if lvlData.usesSnow() then 
@@ -716,20 +727,24 @@ sub GameSpace.step_process()
 			if lvlData.getCurrentMusicFile() <> curMusic then
 				music(1 - currentMusic) = FSOUND_Stream_Open(lvlData.getCurrentMusicFile(),_
 															 FSOUND_LOOP_NORMAL, 0, 0) 
-				FSOUND_Stream_Play (1 - currentMusic), music(1 - currentMusic)
-				FSOUND_SetVolumeAbsolute (1 - currentMusic), 0
+				'FSOUND_SetVolumeAbsolute (1 - currentMusic), 0
 				switchTracks = 1
+                FSOUND_SetVolumeAbsolute(currentMusic, 0)'(switchFrame / 512) * 255 * mmult)
+
 			end if
 		end if
 		switchFrame -= 64
 		if switchTracks = 1 then
-			FSOUND_SetVolumeAbsolute(currentMusic, (switchFrame / 512) * 255)
-			FSOUND_SetVolumeAbsolute((1 - currentMusic), (1 - (switchFrame / 512)) * 255)
+			FSOUND_SetVolumeAbsolute((1 - currentMusic), 0)
 		end if
 		if switchFrame = 0 then
 			isSwitching = 0
 			if switchTracks = 1 then
 				switchTracks = 0
+               
+                FSOUND_Stream_Play (1 - currentMusic), music(1 - currentMusic)
+
+                FSOUND_SetVolumeAbsolute((1 - currentMusic), 0)
 				FSOUND_Stream_Stop  music(currentMusic)
 				FSOUND_Stream_Close music(currentMusic)
 				currentMusic = 1 - currentMusic
@@ -791,11 +806,36 @@ sub GameSpace.switchRegions(ls as LevelSwitch_t)
 end sub     
 sub GameSpace.performSwitch(ls as LevelSwitch_t)
 	isSwitching = -1
+    
+    kill pathFile
+	pathFileNum = freefile
+	open pathfile for binary as #pathFileNum
+	tracker.exportGraph(pathData, pathBytes)
+	put #pathFileNum,,pathBytes
+	put #pathFileNum,,pathData[0], pathBytes
+	close #pathFileNum
+	deallocate(pathData)
+    
 	lvlData.saveMapState()
 	lvlData.load(ls.fileName)
     world.setBlockData(lvlData.getCollisionLayerData(),_
                        lvlData.getWidth(), lvlData.getHeight(),_
                        16.0)
+                       
+    tracker.init(link)
+    
+    pathfile = lvlData.getName() & "_pathing.dat"
+    if fileexists(pathfile) then
+        pathFileNum = freefile
+		open pathfile for binary as #pathFileNum
+		get #pathFileNum,,pathBytes
+		pathData = new byte[pathBytes]
+		get #pathFileNum,,pathData[0],pathBytes
+		tracker.importGraph(pathData, pathBytes)
+		delete(pathData)
+		close #pathFileNum
+    end if
+
 end sub 
 
 function GameSpace.getLastFileName() as string

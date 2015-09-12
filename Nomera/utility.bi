@@ -158,6 +158,12 @@ end enum
 declare function extractOrthoBoundsCheck(A as integer ptr, w as integer, h as integer, x as integer, y as integer) as integer
 declare function extractOrthoSegs(A as integer ptr, w as integer, h as integer) as SegList_t ptr
 
+declare function lineLineIntersection(a0 as Vector2D, b0 as Vector2D, a1 as Vector2D, b1 as Vector2D, byref p as Vector2D) as integer
+
+declare function lineRectangleCollision(a as Vector2D, b as Vector2D, tl as Vector2D, br as Vector2D, byref p as Vector2D) as integer
+
+
+
 declare function lineCircleCollision(p as Vector2D, r as double, a as Vector2D, b as Vector2D, ret1 as vector2D, ret2 as vector2D) as integer
 declare function angDist(a as double, b as double) as double
 

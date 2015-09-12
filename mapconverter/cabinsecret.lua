@@ -1,19 +1,17 @@
 return {
   version = "1.1",
   luaversion = "5.1",
-  tiledversion = "0.13.0",
   orientation = "orthogonal",
   width = 35,
   height = 21,
   tilewidth = 16,
   tileheight = 16,
-  nextobjectid = 6,
   properties = {
     ["ambient level"] = "&h4f493f",
     ["default start"] = "28, 12",
     ["hidden ambient level"] = "&h3f392f",
     ["light objects"] = "",
-    ["music"] = "CabinSuprise.ogg"
+    ["music"] = "CabinSuprise_.ogg"
   },
   tilesets = {
     {
@@ -23,17 +21,11 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "BIG Compilation.bmp",
+      image = "../Level Concepts and WIPS/UM 4-2 & 5-2/BIG Compilation.bmp",
       imagewidth = 320,
       imageheight = 2048,
       transparentcolor = "#ff00ff",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
       properties = {},
-      terrains = {},
-      tilecount = 2560,
       tiles = {}
     },
     {
@@ -43,17 +35,11 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "mountainside COMP.bmp",
+      image = "../Level Concepts and WIPS/UM 4-2 & 5-2/mountainside COMP.bmp",
       imagewidth = 320,
       imageheight = 384,
       transparentcolor = "#ff00ff",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
       properties = {},
-      terrains = {},
-      tilecount = 480,
       tiles = {}
     },
     {
@@ -63,17 +49,11 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "CShapes (3).bmp",
+      image = "../Level Concepts and WIPS/UM 4-2 & 5-2/CShapes (3).bmp",
       imagewidth = 336,
       imageheight = 64,
       transparentcolor = "#ff00ff",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
       properties = {},
-      terrains = {},
-      tilecount = 84,
       tiles = {}
     },
     {
@@ -83,17 +63,11 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "Collectables with animations.bmp",
+      image = "../Level Concepts and WIPS/UM 4-2 & 5-2/Collectables with animations.bmp",
       imagewidth = 320,
       imageheight = 288,
       transparentcolor = "#ff00ff",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
       properties = {},
-      terrains = {},
-      tilecount = 360,
       tiles = {}
     },
     {
@@ -103,17 +77,11 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "artillery boxes.bmp",
+      image = "../Level Concepts and WIPS/UM 4-2 & 5-2/artillery boxes.bmp",
       imagewidth = 320,
       imageheight = 96,
       transparentcolor = "#ff00ff",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
       properties = {},
-      terrains = {},
-      tilecount = 120,
       tiles = {}
     },
     {
@@ -123,17 +91,11 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "Soviet Soldiers.bmp",
+      image = "../Level Concepts and WIPS/UM 4-2 & 5-2/Soviet Soldiers.bmp",
       imagewidth = 96,
       imageheight = 64,
       transparentcolor = "#ff00ff",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
       properties = {},
-      terrains = {},
-      tilecount = 24,
       tiles = {}
     },
     {
@@ -143,17 +105,11 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "wood stove.bmp",
+      image = "../Level Concepts and WIPS/UM 4-2 & 5-2/wood stove.bmp",
       imagewidth = 240,
       imageheight = 64,
       transparentcolor = "#ff00ff",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
       properties = {},
-      terrains = {},
-      tilecount = 60,
       tiles = {}
     },
     {
@@ -163,17 +119,11 @@ return {
       tileheight = 16,
       spacing = 0,
       margin = 0,
-      image = "45 crossbeam.bmp",
+      image = "../Level Concepts and WIPS/UM 4-2 & 5-2/45 crossbeam.bmp",
       imagewidth = 64,
       imageheight = 64,
       transparentcolor = "#ff00ff",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
       properties = {},
-      terrains = {},
-      tilecount = 16,
       tiles = {}
     }
   },
@@ -413,7 +363,6 @@ return {
       properties = {},
       objects = {
         {
-          id = 1,
           name = "intel",
           type = "Spawn",
           shape = "rectangle",
@@ -421,14 +370,12 @@ return {
           y = 128,
           width = 32,
           height = 32,
-          rotation = 0,
           visible = true,
           properties = {
             ["spawn"] = "intelligence"
           }
         },
         {
-          id = 2,
           name = "floor lamp",
           type = "Spawn",
           shape = "rectangle",
@@ -436,7 +383,6 @@ return {
           y = 128,
           width = 32,
           height = 64,
-          rotation = 0,
           visible = true,
           properties = {
             ["p(disable)"] = "1",
@@ -445,7 +391,6 @@ return {
           }
         },
         {
-          id = 3,
           name = "interface",
           type = "Spawn",
           shape = "rectangle",
@@ -453,14 +398,12 @@ return {
           y = 208,
           width = 32,
           height = 32,
-          rotation = 0,
           visible = true,
           properties = {
             ["spawn"] = "interface"
           }
         },
         {
-          id = 4,
           name = "interface",
           type = "Spawn",
           shape = "rectangle",
@@ -468,14 +411,12 @@ return {
           y = 176,
           width = 32,
           height = 32,
-          rotation = 0,
           visible = true,
           properties = {
             ["spawn"] = "small oscilloscope"
           }
         },
         {
-          id = 5,
           name = "entrance",
           type = "Portal",
           shape = "rectangle",
@@ -483,7 +424,6 @@ return {
           y = 128,
           width = 32,
           height = 64,
-          rotation = 0,
           visible = true,
           properties = {
             ["direction"] = "in",

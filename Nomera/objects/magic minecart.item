@@ -1,0 +1,86 @@
+'#magic minecart
+
+persistence item
+
+type ITEM_DATA 
+    as integer toggleCycle
+    as Vector2D curPos
+    as double curDire
+end type
+
+parameter "disable", integer
+publish slot "lightoccluder", $drawAsOccluder
+
+
+'---------------------------------
+
+function _init()
+    CREATE_ANIMS(1)
+    anims[0].load(MEDIA_PATH + "minecart.txt")
+    data.curPos = p
+    data.curDire = 1
+end function
+
+'---------------------------------
+
+function _flush()
+ 
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    PREP_LIT_ANIMATION()
+    
+    DRAW_LIT_ANIMATION(0, data.curPos.x, data.curPos.y,0,1)
+end function
+
+slot $drawAsOccluder(dest as integer, x as integer, y as integer)
+    anims[0].drawAnimation(cast(integer ptr, dest), data.curPos.x - x, data.curPos.y - y)
+end slot
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer enable
+    getParameter(enable, "disable")
+    enable = 1 - enable
+    
+    if enable then
+        data.curPos.xs += data.curDire*2
+        if data.curPos.x + 64 > (p.x + size.x) then
+            data.curPos.xs = p.x + size.x - 64
+            data.curDire = -1
+        elseif data.curPos.x < p.x then
+            data.curPos.xs = p.x 
+            data.curDire = 1
+        end if
+    
+    
+    end if
+end function
+
+'-----------------------------------
+
+slot $enable()
+
+    setParameter(0, "disable")
+    
+end slot
+
+function _serialize_in()
+    retrieve(data.toggleCycle)
+    retrieve(data.curPos)
+    retrieve(data.curDire)    
+end function
+
+function _serialize_out()
+    store(data.toggleCycle)
+    store(data.curPos)
+    store(data.curDire)    
+end function

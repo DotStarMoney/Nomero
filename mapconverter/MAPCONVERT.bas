@@ -816,7 +816,9 @@ do
                         elseif left(lcase(item_tag), 10) = "background" then
                             objects(N_objects - 1).inRangeSet = BACKGROUND
                         elseif left(lcase(item_tag), 12) = "active front" then
-                            objects(N_objects - 1).inRangeSet = ACTIVE_FRONT                  
+                            objects(N_objects - 1).inRangeSet = ACTIVE_FRONT    
+                        elseif left(lcase(item_tag), 12) = "active cover" then
+                            objects(N_objects - 1).inRangeSet = ACTIVE_COVER                         
                         elseif left(lcase(item_tag), 6) = "active" then
                             objects(N_objects - 1).inRangeSet = ACTIVE
                         elseif left(lcase(item_tag), 10) = "foreground" then

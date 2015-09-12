@@ -34,8 +34,8 @@ type Player_ as Player
 type Enemy
     public:
         declare constructor
-        declare sub setParent(p as TinySpace ptr, l as Level ptr, g as ProjectileCollection ptr,_
-                              gs as any ptr, ply as Player_ ptr)
+        declare destructor
+        declare sub setParent(p as TinySpace ptr, l as Level ptr)
         declare sub setLink(link_ as objectLink)
         declare function process(t as double) as integer
         declare sub loadType(type_ as EnemyType)
@@ -43,13 +43,13 @@ type Enemy
         declare function getState() as EnemyState
         declare sub explosionAlert(p as Vector2D)
     
-        body    as TinyBody
-        body_i  as integer
-        acc     as double
-        air_acc as double
-        top_speed as double
-        air_top_speed as double
-        as integer facing
+        body           as TinyBody
+        body_i         as integer
+        acc            as double
+        air_acc        as double
+        top_speed      as double
+        air_top_speed  as double
+        facing         as integer
         top_speed_mul  as double
         groundDot      as double
         cutSpeed       as double
@@ -58,6 +58,12 @@ type Enemy
         boostForce     as double
         jumpImpulse    as double
         freeJumpFrames as integer
+        anim           as Animation
+        suspicionLevel as double
+        canShoot       as integer
+        death          as integer
+        alertOthers    as integer
+        receivedAlert  as integer
     private: 
         declare function onLadder() as integer
         declare function onSpikes() as integer
@@ -74,16 +80,21 @@ type Enemy
         as EnemyState state
         as TinySpace ptr parent
         as Level ptr level_parent
-        as Player_ ptr player_parent
-        as ProjectileCollection ptr proj_parent
         as integer lastJump
         as integer isJumping
         as integer jumpBoostFrames
         as integer freeJump
-        as Animation anim
         as integer lastFire 
         as double lastTopSpeed
         as integer jumpHoldFrames
+        as integer lastJumpMemory
+        as integer lastJumpMemoryFrames
+        as integer lastGrounded
+        as EnemyState lastState
+        as vector2D lastVel
+        as integer landedSFXFrames
+        as integer isCrouching
+        as integer lastSpikes
         
         as integer dire_
         as integer jump_

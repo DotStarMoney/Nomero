@@ -25,7 +25,6 @@ parameter "frames_ptr", integer
 parameter "frames_N", integer
 parameter "tag", integer
 
-publish slot "lightoccluder", $drawAsOccluder
 publish slot "explosion reaction", $react, Circle2D(Vector2D(0,-10), 24)
 publish slot "shock target", $shockTarget, Circle2D(Vector2D(0,-10), 14)
 

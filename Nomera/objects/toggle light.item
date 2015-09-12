@@ -1,0 +1,49 @@
+'#toggle light
+
+type ITEM_DATA
+    as integer state
+end type
+
+'---------------------------------
+
+function _init()
+    data.state = 0
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\MediumWhite_diffuse.txt", MEDIA_PATH + "Lights\MediumWhite_specular.txt", 1)
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+
+function _draw(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    
+    lightState = data.state
+    light.texture.x = p.x + size.x * 0.5
+    light.texture.y = p.y + size.y * 0.5
+    light.shaded.x = light.texture.x
+    light.shaded.y = light.texture.y  
+end function
+
+'-----------------------------------
+
+slot $toggle()
+    data.state = 1 - data.state
+end slot

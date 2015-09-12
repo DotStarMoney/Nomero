@@ -134,6 +134,7 @@ type PortalType_t
     as zstring ptr to_map
     as zstring ptr to_portal
     as PortalDirection_t direction
+    as integer enable
 end type
 
 type BoundingBox_t

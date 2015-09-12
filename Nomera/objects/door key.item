@@ -1,0 +1,87 @@
+'#door key
+
+persistence item
+
+type ITEM_DATA 
+    as integer state
+    as integer doText
+end type
+
+publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32,64))
+publish value "interact", integer
+
+parameter "portal", string
+
+'---------------------------------
+
+function _init()
+    data.state = 0
+    data.doText = 0
+    setValue(0, "interact")
+
+end function
+
+'---------------------------------
+
+function _flush()
+ 
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+
+end function
+
+function _drawOverlay(scnbuff as integer ptr)
+    dim as string text
+    dim as vector2d tl, br
+    if data.doText then
+    
+        text = "This door is locked."
+        tl = Vector2D(p.x + size.x*0.5 - len(text)*4 - 4, p.y - 21)
+        br = Vector2D(p.x + size.x*0.5 + len(text)*4 + 4, p.y - 9)
+        line scnbuff, (tl.x, tl.y)-(br.x, br.y), 0, BF
+        line scnbuff, (tl.x-1, tl.y-1)-(br.x+1, br.y+1), &h7f7f7f, B
+
+        draw String scnbuff, (p.x - len(text)*4 + size.x*0.5, p.y - 18), text, &h7f7fff
+    end if
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as string portalNme
+    dim as Vector2D v
+    getParameter(portalNme, "portal")
+    
+    portalNme = ucase(portalNme)
+    if data.state = 0 then
+        link.level_ptr->disablePortal(portalNme)
+    elseif data.state = 1 then
+        link.level_ptr->enablePortal(portalNme)
+    end if
+    if data.doText then 
+        v = (p + size*0.5) - link.player_ptr->body.p
+        if v.magnitude() > 70 then data.doText = 0
+    end if
+end function
+
+'-----------------------------------
+function _serialize_in()
+    retrieve(data.state)
+end function
+
+function _serialize_out()
+    store(data.state)
+end function
+slot $interact()
+    if link.player_ptr->hasKey() > 0 then
+        link.player_ptr->useKey()
+        setValue(1, "interact")
+        data.state = 1
+        data.doText = 0
+    else
+        data.doText = 1
+    end if
+end slot

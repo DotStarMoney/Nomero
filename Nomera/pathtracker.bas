@@ -35,7 +35,6 @@ end function
 sub PathTracker.flush()
 	dim as PathTracker_Node_t ptr curNode
 	dim as PathTracker_Edge_t ptr ptr curEdge
- 
 	nodes.resetRoll()
 	do
 		curNode = nodes.roll()
@@ -57,7 +56,6 @@ sub PathTracker.flush()
 		end if
 	loop	
 	edges.flush()  
-	children.flush()
 	spacialEdgePTRs.flush()
 	spacialNodeIDs.flush()
 end sub
@@ -163,6 +161,7 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
     sleep
     '/
     
+    
 	if segs(0).a.x < segs(0).b.x then
         leftMostIndex = 0
         while leftMostIndex <= ubound(segs)
@@ -177,11 +176,13 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
 				leftMostIndex = i
 			end if
 		next i
+        
         /'
         line (segs(leftMostIndex).a.x()*0.5, segs(leftMostIndex).a.y()*0.5)-(segs(leftMostIndex).b.x()*0.5, segs(leftMostIndex).b.y()*0.5), &hffffff
         circle (segs(leftMostIndex).a.x()*0.5, segs(leftMostIndex).a.y()*0.5), 5
         circle (segs(leftMostIndex).b.x()*0.5, segs(leftMostIndex).b.y()*0.5), 5
         '/
+        
         shiftAmount = leftMostIndex
 		if shiftAmount <> 0 then
 			i = shiftAmount
@@ -209,6 +210,7 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
                 swap segs(boundA + j), segs(boundB + j)
             next j 
 		end if
+        
         /'
         print leftMostIndex
         for i = 0 to ubound(segs)
@@ -217,6 +219,7 @@ sub PathTracker.dumpStaticShape(segs() as PathTracker_Segment_t)
         next i
         sleep
         '/
+        
 		lastSplit = 0 
 		old_safe = 0
 		safe = 0
@@ -388,9 +391,7 @@ sub PathTracker.addNode(segs() as PathTracker_Segment_t, type_ as integer)
 	curNode.edges.init(sizeof(PathTracker_Edge_t ptr))
 	nodes.insert(curNode.ID, @curNode)
 	spacialNodeIDs.insert(tl, dr, @curNode.ID)
-    
-    'sleep
-    
+
 end sub
 
 sub PathTracker.record()
@@ -460,10 +461,13 @@ sub PathTracker.step_record(del_key as integer)
 	dim as integer highIndexS
 	dim as Vector2D pos_
 	
+  
+    
 	nodeList = 0
 	if enable then
 		getmouse mx, my, ,mb
-		
+        
+
 		numEdges = spacialEdgePTRs.search(Vector2D(mx - 2, my - 2) * 0.5 + link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5, _
 		                                  Vector2D(mx + 2, my + 2) * 0.5 + link.gamespace_ptr->camera - Vector2D(SCRX, SCRY)*0.5, edgeList)
 		
@@ -551,6 +555,7 @@ sub PathTracker.step_record(del_key as integer)
 		   (lastJump <> curFrame.jump) andAlso (onEdge = 0) then
 			onEdge = 1
 			startEdge(PT_JUMP)
+            
 		end if
 		
 		lastJump = curFrame.jump
@@ -725,13 +730,26 @@ sub PathTracker.register(e_ as Enemy ptr)
 	c.target.x = 0
 	c.nodeTarget = 0
 	c.headingEdge = 0
-	c.state = PT_TRACKING
+	c.state = PT_IDLE
 	c.edgeList.init(sizeof(integer))
 	c.sprintFrames = 0
 	c.reachedGoal = 0
 	c.shouldSprint = 0
 	c.runningStart = 0
+    c.suspicionLevel = 0
+    c.suspicionTimeout = 0
+    c.homeNode = -1
 	children.insert(cast(integer, e_), @c)
+
+end sub
+
+sub PathTracker.unregister(e_ as Enemy ptr)
+	dim as PathTracker_Child_t ptr c
+    c = children.retrieve(cast(integer, e_))
+    if c then
+        c->edgeList.flush()
+        children.remove(cast(integer, e_))
+    end if
 end sub
 
 sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t)
@@ -746,16 +764,19 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 	dim as integer shouldTrack
 	dim as Vector2D  playerPos
 	dim as PathTracker_Inputs_t ptr curInputs
-	dim as Vector2D curPos
+	dim as Vector2D curPos, vec2d, viewV
 	dim as integer correctSpeed
 	dim as double runDir
 	dim as double farEdge
 	dim as integer shouldSprint
-	dim as double speedStandoff
-	
+	dim as double speedStandoff, viewDist
+    dim as integer hasLineOfSight
+    dim as double distToPlayer, noticeability
+    
+ 
 	c = children.retrieve(cast(integer, e_))
 	if c = 0 then exit sub
-	
+  
 	ret.dire = 0
 	ret.jump = 0
 	ret.ups = 0
@@ -764,11 +785,17 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 	shouldTrack = 0
 	
 	getGroundedData(e_->body, e_->body_i, curNodeID, curPos)	
+    if curNodeID > 0 andAlso c->homeNode = -1 then
+        c->homeNode = curNodeID
+        getNodeDist(e_->body.p, c->homeNode, c->homeTarget)
+        c->paceTarget = e_->body.p.x
+    end if
 	getGroundedData(link.player_ptr->body, link.player_ptr->body_i, tempPlayerNode, playerPos)
 	if tempPlayerNode <> 0 then 
 		playerNode = tempPlayerNode
 		bodyP = link.player_ptr->body.p
 	end if
+    
 	
 	if c->moveState <> PT_ON_EDGE then
 		if curNodeID then
@@ -778,6 +805,36 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 		end if
 	end if
 	
+    viewDist = -2
+    viewV = link.player_ptr->body.p - e_->body.p
+    if sgn(viewV.x) * sgn(e_->facing*2-1) = -1 then
+        hasLineOfSight = 0
+    else
+        viewDist = link.tinyspace_ptr->raycast(e_->body.p - Vector2D(0,24), link.player_ptr->body.p - e_->body.p, vec2d)
+        if viewDist = -1 then
+            hasLineOfSight = 1
+        else
+            hasLineOfSight = 0
+        end if
+    end if
+    distToPlayer = viewV.magnitude()
+    
+    noticeability = _max_(cdbl(hasLineOfSight),0.1) * ((SCRX*0.75) / _max_(distToPlayer,1.0)) * ((1 - link.player_ptr->getCovered())^2)
+    
+
+    if noticeability > 1.4 then
+        c->suspicionLevel += 1.0
+        if c->suspicionLevel > 100 then c->suspicionLevel = 100
+    else
+        c->suspicionLevel -= 0.333
+        if c->suspicionLevel < 0 then c->suspicionLevel = 0
+    end if
+    if e_->receivedAlert then
+        e_->receivedAlert = 0 
+        c->suspicionLevel = 100
+    end if
+    e_->suspicionLevel = c->suspicionLevel
+    
 	select case c->state 
 	case PT_IDLE
 		shouldSprint = 0
@@ -786,47 +843,119 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 	case PT_TRACKING
 		shouldSprint = 0
 	end select
-				
+			
+    if c->state = PT_TRACKING then
+        if hasLineOfSight = 1 andAlso c->lastLineOfSight = 0 then
+            if noticeability < 0.8 then
+                c->suspicionTimeout = 0
+                c->state = PT_IDLE
+                c->suspicionLevel = 50
+                e_->suspicionLevel = 50
+            end if
+        end if
+        if distToPlayer > SCRX*1.5 then
+              c->suspicionTimeout = 0
+              c->state = PT_IDLE
+              c->suspicionLevel = 50
+              e_->suspicionLevel = 50        
+        end if
+    end if
+    e_->canShoot = 0
+    e_->alertOthers = 0
 	select case c->state
 	case PT_TRACKING
-		if curNodeID <> playerNode orElse c->moveState = PT_ON_EDGE then
-			if (c->target.node <> playerNode) orElse (c->startNode <> curNodeID) then
-				if curNodeID andAlso playerNode then
-					c->target.node = playerNode
-					c->target.x = playerPos.x
-					c->startNode = curNodeID
-					c->edgeList.flush()
-					c->headingEdge = 0
-					c->reachedGoal = 0
-					if c->moveState = PT_ON_EDGE then c->moveState = PT_ON_NODE
-					computePath(curNodeID, curPos.x(), c->target.node, c->target.x, c->edgeList, 30)			
-				end if
-			end if
-			if (c->edgeList.getSize() > 0) then shouldTrack = 1
-		else			
-			c->headingEdge = 0
-			c->runningStart = 0
-			c->edgeList.flush()
-			c->target.node = 0
-			shouldTrack = 0
-			curNode = nodes.retrieve(playerNode)
-			if playerNode <> 0 then
-				if bodyP.x <= (curNode->bb_a.x() + PATH_RUN_PINCH) then
-					direX = (curNode->bb_a.x() + PATH_RUN_PINCH) - e_->body.p.x
-				elseif bodyP.x > (curNode->bb_b.x() - PATH_RUN_PINCH) then
-					direX = (curNode->bb_b.x() - PATH_RUN_PINCH) - e_->body.p.x
-				else
-					direX = bodyP.x - e_->body.p.x
-				end if
-			else
-				direX = 0
-			end if
-			if abs(direX) >= 8 then
-				ret.dire = sgn(direX)
-				c->reachedGoal = 1
-			end if
-			ret.shift = shouldSprint
-		end if
+        e_->alertOthers = 1
+        c->suspicionLevel = 100
+        e_->suspicionLevel = c->suspicionLevel
+        if (hasLineOfSight = 0 andAlso distToPlayer > 65) orElse (distToPlayer > SCRX*0.45) orElse (c->moveState = PT_ON_EDGE) then
+            if curNodeID <> playerNode orElse c->moveState = PT_ON_EDGE then
+                if (c->target.node <> playerNode) orElse (c->startNode <> curNodeID) then
+                    if curNodeID andAlso playerNode then
+                        c->target.node = playerNode
+                        c->target.x = playerPos.x
+                        c->startNode = curNodeID
+                        c->edgeList.flush()
+                        c->headingEdge = 0
+                        c->reachedGoal = 0
+                        if c->moveState = PT_ON_EDGE then c->moveState = PT_ON_NODE
+                        computePath(curNodeID, curPos.x(), c->target.node, c->target.x, c->edgeList, 30)			
+                    end if
+                end if
+                if (c->edgeList.getSize() > 0) then shouldTrack = 1
+            else			
+                c->headingEdge = 0
+                c->runningStart = 0
+                c->edgeList.flush()
+                c->target.node = 0
+                shouldTrack = 0
+                curNode = nodes.retrieve(playerNode)
+                if playerNode <> 0 then
+                    if bodyP.x <= (curNode->bb_a.x() + PATH_RUN_PINCH) then
+                        direX = (curNode->bb_a.x() + PATH_RUN_PINCH) - e_->body.p.x
+                    elseif bodyP.x > (curNode->bb_b.x() - PATH_RUN_PINCH) then
+                        direX = (curNode->bb_b.x() - PATH_RUN_PINCH) - e_->body.p.x
+                    else
+                        direX = bodyP.x - e_->body.p.x
+                    end if
+                else
+                    direX = 0
+                end if
+                if abs(direX) >= 8 then
+                    ret.dire = sgn(direX)
+                    c->reachedGoal = 1
+                end if
+                ret.shift = shouldSprint
+            end if
+        else
+            c->headingEdge = 0
+            c->runningStart = 0
+            c->edgeList.flush()
+            c->target.node = 0      
+
+            
+            e_->canShoot = 1
+
+        end if
+    case PT_IDLE
+        if c->suspicionLevel < 35 then
+            if curNodeID <> c->homeNode orElse c->moveState = PT_ON_EDGE then
+                
+                if (c->target.node <> c->homeNode) orElse (c->startNode <> curNodeID) then
+                    if curNodeID then
+                        c->target.node = c->homeNode
+                        c->target.x = c->homeTarget
+                        c->startNode = curNodeID
+                        c->edgeList.flush()
+                        c->headingEdge = 0
+                        c->reachedGoal = 0
+                        if c->moveState = PT_ON_EDGE then c->moveState = PT_ON_NODE
+                        computePath(curNodeID, curPos.x(), c->target.node, c->target.x, c->edgeList, 30)	               
+                    end if
+                end if
+                if (c->edgeList.getSize() > 0) then shouldTrack = 1
+            else
+                c->headingEdge = 0
+                c->runningStart = 0
+                c->edgeList.flush()
+                c->target.node = 0
+                shouldTrack = 0
+                direX = 0
+                curNode = nodes.retrieve(c->homeNode)
+                if curNode then
+                    if int(rnd * 100) = 0 then c->paceTarget = (curNode->bb_b.x - curNode->bb_a.x)*0.75*rnd + curNode->bb_a.x+(curNode->bb_b.x - curNode->bb_a.x)*0.125
+                    direX = c->paceTarget - e_->body.p.x
+                end if
+                if abs(direX) >= 8 then
+                    ret.dire = sgn(direX)
+                    c->reachedGoal = 1
+                end if
+            end if
+            c->suspicionTimeout -= 0.1
+            if c->suspicionTimeout < 0 then c->suspicionTimeout = 0
+        else
+            c->suspicionTimeout += 2
+            if c->suspicionLevel >= 90 orElse c->suspicionTimeout >= 120 then c->state = PT_TRACKING
+        end if
 	end select
 	
 	
@@ -917,6 +1046,7 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 					c->headingEdge->frames.rollReset()
 					c->listBuffer = c->headingEdge->frames.bufferRoll()
 					c->moveState = PT_ON_EDGE
+                    
 				end if	
 			elseif curNodeID = playerNode then
 				direX = c->target.x - e_->body.p.x
@@ -940,7 +1070,7 @@ sub PathTracker.requestInputs(e_ as Enemy ptr, byref ret as PathTracker_Inputs_t
 			end if
 		end if	
 	end if
-	
+	c->lastLineOfSight = hasLineOfSight
 end sub
 
 
@@ -987,6 +1117,7 @@ sub PathTracker.computePath(startNode as integer, startX as double,_
 		prevID.insert(tnode->ID, @temp_i)
 		nodelist.insert(tnode->ID, @(tnode->ID))
 	END_HASH()
+   
 	
 	while(nodelist.getSize())
 		min_d = 1000000
@@ -1028,6 +1159,7 @@ sub PathTracker.computePath(startNode as integer, startX as double,_
 			end if
 		END_LIST()
 	wend	
+   
 	edgeList.flush()
 	tempInt = prevID.retrieve(endNode)
 	if *tempInt = -1 then exit sub
@@ -1037,6 +1169,7 @@ sub PathTracker.computePath(startNode as integer, startX as double,_
 		tedge = *tedge_
 		tempInt = prevID.retrieve(tedge->ID_start)
 	loop until tedge->ID_start = startNode
+
 end sub
 
 

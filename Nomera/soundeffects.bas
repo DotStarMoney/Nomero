@@ -35,10 +35,12 @@ sub SoundEffects.init()
     sounds(SND_CLACKDOWN)      = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\clackDown.wav",0,0,0)         :volume(SND_CLACKDOWN)      = 32     
     sounds(SND_SUCCESS)        = FSOUND_SAMPLE_Load(FSOUND_FREE,"success.wav",0,0,0)                         :volume(SND_SUCCESS)        = 40  
     sounds(SND_RUMBLE)         = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\rockslide_raw2.wav",0,0,0)    :volume(SND_RUMBLE)         = 255   
-    sounds(SND_POW)            = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\Pow.wav",0,0,0)               :volume(SND_POW)            = 255   
+    sounds(SND_POW)            = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\Pow.wav",0,0,0)               :volume(SND_POW)            = 64   
     sounds(SND_GLASSTAP)       = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\glasstap.wav",0,0,0)          :volume(SND_GLASSTAP)       = 10   
     sounds(SND_MACHINEGUN)     = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\machinegun.wav",0,0,0)        :volume(SND_MACHINEGUN)     = 30   
     sounds(SND_LAMPPULL)       = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\lamppull.wav",0,0,0)          :volume(SND_LAMPPULL)       = 64
+    sounds(SND_UVB76)          = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\uvb76.wav",0,0,0)             :volume(SND_UVB76)          = 110
+    sounds(SND_COLLECT)        = FSOUND_SAMPLE_Load(FSOUND_FREE,"objects\media\collect.wav",0,0,0)           :volume(SND_COLLECT)        = 64
 end sub
 
 sub SoundEffects.setLink(link_ as objectLink)
@@ -69,6 +71,8 @@ function SoundEffects.playSound(s as SoundEffect_e) as integer
     select case s
     case SND_GEARS
         FSOUND_SetLoopMode(chnl, FSOUND_LOOP_NORMAL)
+    case SND_UVB76
+        FSOUND_SetLoopMode(chnl, FSOUND_LOOP_NORMAL)    
     case else
         FSOUND_SetLoopMode(chnl, FSOUND_LOOP_OFF)
     end select

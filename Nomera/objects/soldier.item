@@ -1,0 +1,270 @@
+'#soldier
+
+persistence level
+
+type ITEM_DATA
+    as Enemy enemyWrapper
+    as integer death
+    as integer zapTime
+    as integer bulletCooldown
+    as integer frameCount
+    as integer kaboom
+    as double deathRise
+end type
+
+publish slot "lightoccluder", $drawAsOccluder
+publish slot "closeSoldierAlert", $closeSoldierAlert, Circle2D(Vector2D(0,0), 128)
+publish slot "explosion reaction", $react, Circle2D(Vector2D(0,-10), 24)
+publish slot "shock target", $shockTarget, Circle2D(Vector2D(0,-10), 14)
+
+'---------------------------------
+
+function _init()
+    data.enemyWrapper.loadType(SOLDIER_1)
+    data.enemyWrapper.setParent(link.tinyspace_ptr, link.level_ptr)
+    data.enemyWrapper.setLink(link)
+    data.enemyWrapper.body.r = 18
+    data.enemyWrapper.body.m = 5                 
+    data.enemyWrapper.body_i = link.tinyspace_ptr->addBody(@(data.enemyWrapper.body))
+    data.enemyWrapper.body.friction = 2
+    p += Vector2D(16, 46)
+    data.enemyWrapper.body.p = p
+    data.bulletCooldown = 0
+    
+    data.frameCount = int(rnd * 1000)
+    CREATE_ANIMS(2)
+    anims[0].load(MEDIA_PATH + "NPC\detectmeter.txt")
+    anims[0].play()
+    anims[1].load(MEDIA_PATH + "NPC\alerts.txt")
+    anims[1].play()
+    
+    
+    PREP_LIGHTS(MEDIA_PATH + "Lights\SmallWhite_Diffuse.txt", MEDIA_PATH + "Lights\SmallWhite_Specular.txt", 1)  
+
+    data.deathRise = 1
+    data.kaboom = 0
+end function
+
+'---------------------------------
+
+function _flush()
+    
+    link.tinyspace_ptr->removeBody(data.enemyWrapper.body_i)    
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+    dim as integer curFrame, glow, jiggle
+    dim as double floatAmount
+    PREP_LIT_ANIMATION()
+    
+    if data.enemyWrapper.death andAlso data.zapTime then
+        jiggle = ((int(data.frameCount * 0.33) and 1) * 2 - 1)
+    else
+        jiggle = 0
+    end if  
+    
+    if link.level_ptr->shouldLight() then
+        data.enemyWrapper.anim.drawAnimationLit(scnbuff, p.x+jiggle, p.y,_
+                                       lights, numLights, link.level_ptr->getObjectAmbientLevel(),_
+                                       link.gamespace_ptr->camera,data.enemyWrapper.facing*4,1,ANIM_TRANS)            
+    else
+        data.enemyWrapper.anim.drawAnimation(scnbuff, p.x+jiggle, p.y, link.gamespace_ptr->camera,data.enemyWrapper.facing*4,ANIM_TRANS)
+    end if 
+    
+    if data.enemyWrapper.death = 0 then
+        curFrame = data.enemyWrapper.suspicionLevel / 16
+        floatAmount = sin(data.frameCount * 0.1) * 3
+        glow = data.enemyWrapper.suspicionLevel * 10
+        if glow > 255 then glow = 255
+        if curFrame > 5 then curFrame = 5
+        anims[0].setGlow(&h00ffffff or ((glow shr 1) shl 24))
+        if curFrame = 5 then
+            curFrame = 5 + (int(data.frameCount * 0.3333) and 1)
+            anims[0].drawImage(scnbuff, p.x-10, p.y - 10 + floatAmount, curFrame*20, 0, curFrame*20+ 19, 19)
+        else                               
+            anims[0].drawImage(scnbuff, p.x-10, p.y - 10 + floatAmount, curFrame*20, 0, curFrame*20+ 19, 19)
+        end if
+        
+        floatAmount = sin(data.frameCount * 0.1) * -3
+        if data.enemyWrapper.suspicionLevel > 35 andALso data.enemyWrapper.suspicionLevel < 90 then
+            anims[1].hardswitch(0)
+            anims[1].drawAnimation(scnbuff, p.x, p.y - 60 + floatAmount)
+        elseif data.enemyWrapper.suspicionLevel >= 90 then
+            anims[1].hardswitch(1)
+            anims[1].drawAnimation(scnbuff, p.x, p.y - 60 + floatAmount)       
+        end if
+    end if
+end function
+
+sub drawInto(dest_img as integer ptr, x as integer = 0, y as integer = 0, override_ as integer = 0)
+    dim as integer flags
+    dim as integer jiggle
+
+    select case data.enemyWrapper.facing
+    case -1
+        flags = 0
+    case 1
+        flags = 4
+    end select
+    
+    if data.death andAlso data.zapTime then
+        jiggle = ((int(data.frameCount * 0.33) and 1) * 2 - 1) * 1
+    else
+        jiggle = 0
+    end if  
+
+    data.enemyWrapper.anim.drawAnimation(dest_img, p.x - x + jiggle, p.y - y,,flags,ANIM_TRANS) 
+    
+end sub
+
+slot $drawAsOccluder(dest as integer, x as integer, y as integer)
+    drawInto(cast(integer ptr, dest), x, y, 1)
+end slot
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+    
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as item ptr sitem
+    dim as vector2d heading
+    dim as SlotSet slots
+    anims[1].step_animation()
+    data.enemyWrapper.process(t)
+    data.frameCount += 1
+    
+    DControl->setTargetSlotOffset(ID, "explosion reaction", p) 
+    DControl->setTargetSlotOffset(ID, "shock target", p) 
+    
+    if data.enemyWrapper.death = 0 then
+        p = data.enemyWrapper.body.p
+        if data.enemyWrapper.alertOthers then
+            querySlots(slots, "closeSoldierAlert", new Circle2D(p, 128))
+            slots.throw()
+        end if
+        
+        if data.enemyWrapper.canShoot then
+            if data.bulletCooldown = 0 then
+                sitem = DControl->constructItem(DControl->itemstringtotype("AK47SHOT"), ACTIVE_FRONT)
+                heading = link.player_ptr->body.p - p
+                heading.normalize()
+                
+                sitem->setParameter(heading, "heading")
+                DControl->initItem(sitem, p + Vector2D((data.enemyWrapper.facing*2-1) * 20, -14))
+                link.projectilecollection_ptr->create(p + Vector2D((data.enemyWrapper.facing*2-1) * 12, -15), Vector2D((rnd * 3 - 1)*0.5+(data.enemyWrapper.facing*2-1)*-0.6, -rnd - 0.5) * 100, CARTRIDGE)
+                data.bulletCooldown = 6
+            end if
+        end if
+        if data.bulletCooldown > 0 then data.bulletCooldown -= 1
+        
+        if data.bulletCooldown > 3 then 
+            lightState = 1
+        else
+            lightState = 0
+        end if
+        light.texture.x = p.x + (data.enemyWrapper.facing*2-1)*20
+        light.texture.y = p.y - 15
+        light.shaded.x = light.texture.x
+        light.shaded.y = light.texture.y  
+    else
+        data.enemyWrapper.anim.step_animation()
+        if data.zapTime = 0 then
+            lightState = 0
+            if data.kaboom = 0 then p.ys -= data.deathRise
+            data.deathRise += 0.6
+            
+            if data.enemyWrapper.anim.getFrame() = 3 andAlso data.kaboom = 0 then
+                data.kaboom = 1
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,1)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 16 - 8, rnd * 16 - 8),,,2)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(p + Vector2D(rnd * 64 - 32, rnd * 64 - 32),,,2)
+                link.oneshoteffects_ptr->create(p, FLASH,,1)
+                link.soundeffects_ptr->playSound(SND_EXPLODE)
+                doDeath()
+            end if
+            if data.enemyWrapper.anim.done() then
+                return 1
+            end if
+        else
+            data.zapTime -= 1
+            link.projectilecollection_ptr->create(Vector2D(p.x, p.y - 10), Vector2D((rnd * 2 - 1), (rnd * 2 - 1)) * 200, BLUE_SPARK)
+            if int(data.frameCount * 0.5) and 1 then 
+                lightState = 1
+            else
+                lightState = 0
+            end if
+            light.texture.x = p.x 
+            light.texture.y = p.y - 15
+            light.shaded.x = light.texture.x
+            light.shaded.y = light.texture.y  
+            if data.zapTime = 0 then data.enemyWrapper.anim.hardswitch(6)    
+        end if        
+        
+    end if
+end function
+
+function doDeath()
+    dim as integer i
+    dim as integer numBills
+    dim as Vector2D v
+    dim as double ang, mag
+    
+    numBills = int(rnd * 10) + 5
+    
+    for i = 0 to numBills - 1
+        ang = rnd*2*_PI_
+        mag = rnd*300 + 100
+        v = Vector2D(cos(ang), sin(ang) - 0.5) * mag
+        
+        addCash(v)
+    next i
+end function
+function addCash(vel as Vector2D)
+    dim as Item ptr sitem
+    dim as integer cashScale
+    sitem = DControl->constructItem(DControl->itemStringToType("CASH"), ACTIVE_FRONT)
+    
+    cashScale = int(rnd * 100)
+    if cashScale < 10 then
+        sitem->setParameter(2, "billType")
+    elseif cashScale < 40 then
+        sitem->setParameter(1, "billType")
+    else
+        sitem->setParameter(0, "billType")
+    end if
+    
+    sitem->setParameter(vel, "velocity")
+    
+    
+    DControl->initItem(sitem, p)
+end function
+
+slot $closeSoldierAlert()
+    data.enemyWrapper.receivedAlert = 1
+end slot
+
+slot $react(source as Vector2D)
+    dim as Vector2D v
+    dim as double mag
+    v = source - p
+    mag = v.magnitude()
+    if mag < 64 then
+        if data.enemyWrapper.death = 0 then
+            data.enemyWrapper.death = 1
+            data.enemyWrapper.anim.hardswitch(6)
+        end if
+    end if
+end slot
+slot $shockTarget(source as Vector2D)
+    if data.enemyWrapper.death = 0 then
+        data.zapTime = 50
+        data.enemyWrapper.death = 1
+        data.enemyWrapper.anim.hardswitch(5)
+    end if
+end slot

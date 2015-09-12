@@ -1,2 +1,2 @@
 del saves\*.dat
-Nomera "cabin.map"
+Nomera "go.map"

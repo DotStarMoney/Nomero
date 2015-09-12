@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="40" height="100" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="default start" value="32, 15"/>
+  <property name="music" value="MountainQuiet.ogg"/>
+ </properties>
+ <tileset firstgid="1" name="BIG Compilation" tilewidth="16" tileheight="16">
+  <image source="BIG Compilation.bmp" trans="ff00ff" width="320" height="2112"/>
+ </tileset>
+ <tileset firstgid="2641" name="elevator" tilewidth="16" tileheight="16">
+  <image source="elevator.bmp" trans="ff00ff" width="288" height="97"/>
+ </tileset>
+ <tileset firstgid="2749" name="Mine" tilewidth="16" tileheight="16">
+  <image source="Mine.bmp" trans="ff00ff" width="256" height="1728"/>
+ </tileset>
+ <tileset firstgid="4477" name="cave stones" tilewidth="16" tileheight="16">
+  <image source="cave stones.bmp" trans="ff00ff" width="320" height="512"/>
+ </tileset>
+ <tileset firstgid="5117" name="Collision" tilewidth="16" tileheight="16">
+  <image source="CShapes (3).bmp" trans="ff00ff" width="336" height="64"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="40" height="100">
+  <data encoding="base64" compression="zlib">
+   eJztm71yEzEQx88Zxjo7tNA50ELn9NDw0UAPAWZgJrWBR+BN4B3wA/Au0EILJSvinSxrrbT6ulOcKzQ6X+SV7pf/alc6eTXvuhMoq0brNZTThms+3qNl92kG5bXpujdQhqqhT9t3kN9tGNstKB/gOx+hDFVDn7ZvkR9y+wzX52ac8mW+z5Fzo+2/z7rux2yYayycI47zEfztMWlnOf6G7/6ZXTwXXn8l17ad677Uhtrh9rHfMyivzD6/F3Dv5a7Ndn7RR6i2bUPtYu1toLw3fn72eezzhWrk7GsXa0/LbwH1csfnGOqbZp9LTJHspPJDW/a57kB913E/xA/b4me0w++n8ENb/Dnp/ZD+sO2WjJXfz9Ef2sQauaXoD8dUSn9UL2ib87RtqU5z/Bd1GsPPpReuvxWUE+PWW0zcSJ3/sE/Ui09/VFf/xr6APkjRcIz1X59uzs3/PLnu1jCm011Z3NDNg1p+1N9cPJGf5Of8f7hR6lDLD/tdeniG/JeO78yU5WefB7UvzYfa+FuDH5/7cuIv9dNS/JCXVl+a+FuSX8n8pTQ/jAkl8z8tRw0/9IvS+Z+GY0r+LOVtKflziGOK/mj+F+LH/d1lj2qyBL+Q/ihf7u+SPTrG2v4r8eX80O98esyNvzn6o/FI4hgbf4dYv/E43eL6NyV/Lj3/aextCvGrEX+vAr8Y/eH+0pZc0/u2rev+Vmgj2UnlF9p3sm2l/ajY/asUfnReojqS9OVqz+c3qf0h6k9at+XOf758KJWfK56k8vPlQy3FD56nj60/vj/D8/QUfr48JoaftSPt++XwC+2/aPnV2P+b4u8w/kvnM67XkD2+H5bDz7V+4PMZ11mIH98Py+HH1w9cV9RHY/PnWH7ISqs/OrYh9IestPGDcqN6rMXPt+8X8l/KsRY/ad+v1vrtOs9/E78p/tbgN61/D3P9K50PaEV/oXXCNP+Nu39Qg1/J/YMp/rbDT9o/yI2/kp5T9w+WDg6p/BZG1nMqP/7eJ0d/rvdIKfyOhecspT/XeaMYfpr9phh+fN+U2x/bf33vOXPmP+k8Qivzn3QeoYX5LzV+oNaG4Oc7LyrxQK3F2kvh5zsvmqK/UudPS/mvpl1p/eXG3+uQv0zr38Nc/14V/fny5xL5Swn/LZn/1cpfpDwmJ39xndvP1Z/rfa2WH38fQM/tU3t8fEOtf7XvA/j/twX/XffAqB+Xn6/dExjb074NfvdgHPf7y8/I7l3ffXsLZWx+D2AsD/vLz8juOYztGRSJH9Y/ofwasQ797ncGYz8y49XS735bq8f+XbT2d9N/ARXQ/Ys=
+  </data>
+ </layer>
+ <layer name="Lights" width="40" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt1zENACAQBMFv8S8PPIAEMED3CRBmBFyu3QgAdmqJaOX0i72+vo2L/wEAAPCG7P7N3svuXz0NAADwJ/0LAADAD/QvAACQYQK6BxoX
+  </data>
+ </layer>
+ <layer name="Tile Layer 2" width="40" height="100">
+  <data encoding="base64" compression="zlib">
+   eJztm9lu01AQho/USFZ8acQt8mPRIngDoOUCKOtILAIKZb1iEWUTfQG6sDwEOy/A2t6CxBo+o0Q6sZL6OKrtoZ1P+nWkJD7n1yT2zMTHzhmbkdeJc2/QW/Qu0TP3atvJCvrMcV/QCloNmGN77Nw4mkA74rU/O2hu1szWLiZ20sHfb477gzrZ8VvW19+guTvtf2tXRhl/TfC/+TvEd3cYHVnnc2tU8v5m8XURXVLiz+cOnu6ie+i+En+TxGwK7UOP8LSAFtFSgb+pFse06vE4Cqfwdlqxvxm8nVfs7zbe5pT420aO2Bk5tysaPn4dc+7bWD1+ppP+62BMnNqtsLEOLiT918E9XnyKxjrIXwcnIl3xy18H64xf2RpzPKo3fmXr191RvfErW7/26mNNvz+fXn28NdZz/g4iNI5NERrHpimKY9MUxVELw+KohWFx1EY+jtqo+v8Dn3zdp4183acNjf2vT5n+1zAMwzAMwzAMY6NAfyv0uUK/K/S9UuW+ilGgvxX6XKHfFfre0vsqqob+VuhzhX5X6HtL76uoGvpboc8V+l2h75Wm/RiGYWx2/DyrLedm+HlWW87N8POstpxrGIZh6OY5+eIFeoleeXlNy/3f96z9AX1EnzwfWu7/fmftH+gn+uX5sPu/G5Pe/nHDMPrZz3lxAB1E0wrPkTN4OovOoZka/e1tOTcZsJ/sOp5uoJvoVoC/5cTNPUCX0VEU4oW8npI7U/JTSg5Is9dO4O1kBfvdHnc9XWE8FuiPmiOd7fpa6I5VPT/yBE8P0VV0PNAf9VBKzZGS19PFrr+i50eerTEf78mw957iaR5dQxLozzDq5i9gPxem
+  </data>
+ </layer>
+ <layer name="In Front of MS 2" width="40" height="100">
+  <properties>
+   <property name="foreground" value=""/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJzt1rENwkAQBdGLCbc5aqAEMC1QA6IEAlMfJnB49krDGizNk8i+tCRjuzVpn+6H72yqPBO3M5sqx8TtzKbKKXE7s6kydG6fo7XL9Buiv9nCLXE7s6nSa/MR65st9Nocp//3iuXNFuyXybRpv31Lbc7PwM/mGv1dpT2/f+dn4L/2O8b6ppr9Mn4/M75/Gftl7JexX8Z+Gftl7JexX8Z+Gftl7JexX8Z+Gftl7JexX8Z+Gftl7JexX8Z+Gftl7JexX8Z+Gftl7JexX8Z+Gftl7JexX8Z+Gftl7JexX+m33gktbaY=
+  </data>
+ </layer>
+ <layer name="In Front of MS" width="40" height="100">
+  <properties>
+   <property name="foreground" value=""/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJzt16ENgEAMBdBqZmSGm4EZmABxMzAfFQgE5kwvkPeSL1pV99MIAEacSxw9s2e2TLvn/rJfM7PvBYA/GOnf9phn3w0AX+b/BYB6+hcA6ulfAKinfwGgnv4FAABGXWMfaK8=
+  </data>
+ </layer>
+ <layer name="Collision" width="40" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt2DEOgzAQAEHyhuT/PyVBKWiN7fXdFd6VqIzMiAKfOA7bsfOde430Hbx/Rb/OZ1bY7p6Mo+85opZB33P6WPpY+liZvtXncKRv1X5RrdhbX/0ekXvv7Oudj1tFf5+pMeP8IMas823WmHn+zhiz54NRY8X8MmKsmq96jZXzX4+xej71/wFPH0sfSx9LH0sfSx9LH0sfSx9LH0sfSx9LH0sfSx9LH0sfSx9LH0sfSx9LH0sfSx9LH0sfSx9LH0sfSx9rN9/r01hsrU0a/uuVl+3VBQhqEnM=
+  </data>
+ </layer>
+ <objectgroup name="Objects" width="40" height="100">
+  <object name="elevator" type="Spawn" x="272" y="160" width="96" height="1376">
+   <properties>
+    <property name="ID" value="elevator"/>
+    <property name="spawn" value="freight elevator"/>
+   </properties>
+  </object>
+  <object name="switch" type="Spawn" x="192" y="1488" width="32" height="48">
+   <properties>
+    <property name="signal(activate)" value="slot(elevator, interact)"/>
+    <property name="spawn" value="momentary toggle switch"/>
+   </properties>
+  </object>
+  <object name="switch" type="Spawn" x="448" y="192" width="32" height="48">
+   <properties>
+    <property name="p(facing)" value="1"/>
+    <property name="signal(activate)" value="slot(elevator, interact)"/>
+    <property name="spawn" value="momentary toggle switch"/>
+   </properties>
+  </object>
+  <object name="tomine" type="Portal" x="128" y="1472" width="32" height="64">
+   <properties>
+    <property name="direction" value="in"/>
+    <property name="to map" value="mine.map"/>
+    <property name="to portal" value="toelevator"/>
+   </properties>
+  </object>
+  <object name="tooutside" type="Portal" x="512" y="176" width="32" height="64">
+   <properties>
+    <property name="direction" value="in"/>
+    <property name="to map" value="um2_6.map"/>
+    <property name="to portal" value="toshaft"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

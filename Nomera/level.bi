@@ -99,6 +99,8 @@ type Level
         declare sub saveMapState() 
         declare sub loadMapState() 
 
+        declare sub enablePortal(portalName as string)
+        declare sub disablePortal(portalName as string)
        
         dim as integer justLoaded
     private:
@@ -175,6 +177,7 @@ type Level
 			static as integer ptr collisionBlox
         #endif
 
+        dim as Hashtable portalLookup
         dim as Hash2D portals
         dim as integer pendingPortalSwitch
 end type

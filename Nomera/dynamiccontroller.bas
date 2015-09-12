@@ -18,11 +18,14 @@ constructor DynamicController()
     drawobjects_activeFront.init(sizeof(Item ptr))
     drawobjects_background.init(sizeof(Item ptr))    
     drawobjects_foreground.init(sizeof(Item ptr))    
+    drawobjects_activeCover.init(sizeof(Item ptr))    
+
     addItemPost.init(sizeof(DynamicController_itemPair_t))
     postPairs.init(sizeof(DynamicController_itemPair_t ptr))
     activeLoadIdentifiers.init(sizeof(DynamicController_ILIdata_t))
     ILIlookup.init(sizeof(integer))
     isProcessing = 0
+    overrideLight = 0
     
     #include "objects\headers\gen_namestypes.bi"
     
@@ -47,6 +50,7 @@ sub DynamicController.clean()
     dim as DynamicController_itemPair_t ptr curItem
     dim as DynamicController_ILIdata_t ptr curILI
 
+    
     valueTargets.flush()
     slotTargets.flush()
     stringToTypeTable.clean()
@@ -61,7 +65,7 @@ sub DynamicController.clean()
     drawobjects_activefront.clean()
     drawobjects_background.clean()
     drawobjects_foreground.clean()
-    
+    drawobjects_activeCover.clean()    
     
     BEGIN_DHASH(curPublish, allPublishedValues)
         if curPublish->target then delete(curPublish->target)
@@ -104,6 +108,7 @@ sub DynamicController.clean()
     itemIdGenerator.flush()
     
     BEGIN_HASH(curItem, itemIdPairs)
+
         delete(curItem->item_)
     END_HASH()
     itemIdPairs.clean()
@@ -130,6 +135,7 @@ sub DynamicController.flush()
     drawobjects_active.flush()
     drawobjects_activefront.flush()
     drawobjects_background.flush()
+    drawobjects_activeCover.flush()
     drawobjects_foreground.flush()
     
     BEGIN_DHASH(curPublish, allPublishedValues)
@@ -175,7 +181,6 @@ sub DynamicController.flush()
     
     itemIdGenerator.flush()
     
-    
     BEGIN_HASH(curItem, itemIdPairs)
         delete(curItem->item_)
     END_HASH()
@@ -218,6 +223,8 @@ sub DynamicController.serialize_in(pbin as PackedBinary)
                 drawobjects_background.insert(refItem->item_->getID(), @refItem->item_) 
             elseif refItem->item_->orderClass = FOREGROUND then
                 drawobjects_foreground.insert(refItem->item_->getID(), @refItem->item_) 
+            elseif refItem->item_->orderClass = ACTIVE_COVER then
+                drawobjects_activeCover.insert(refItem->item_->getID(), @refItem->item_) 
             end if        
         end if
         pbin.retrieve(numConnections)
@@ -432,6 +439,8 @@ sub DynamicController.removeItem(ID_ as string)
         drawObjects_background.remove(ID_)
     elseif drawObjects_foreground.exists(ID_) then
         drawobjects_foreground.remove(ID_)
+    elseif drawObjects_activeCover.exists(ID_) then
+        drawObjects_activeCover.remove(ID_)
     end if
     
 
@@ -559,6 +568,16 @@ sub DynamicController.process(t as double)
     postPairs.flush()
     
 end sub
+
+function DynamicController.overrideLightObjects() as integer
+    return overrideLight
+end function
+sub DynamicController.setOverrideLightObjects()
+    overrideLight = 1
+end sub
+sub DynamicController.resetOverrideLightObjects()
+    overrideLight = 0
+end sub
 sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = ACTIVE)
     dim as Item ptr ptr curItem
     select case order
@@ -578,6 +597,10 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = AC
         BEGIN_HASH(curItem, drawobjects_foreground)
             (*curItem)->drawItem(scnbuff)
         END_HASH()         
+    case ACTIVE_COVER
+        BEGIN_HASH(curItem, drawobjects_activeCover)
+            (*curItem)->drawItem(scnbuff)
+        END_HASH()     
     case OVERLAY
         BEGIN_HASH(curItem, drawobjects_background)
             (*curItem)->drawItemOverlay(scnbuff)
@@ -587,7 +610,16 @@ sub DynamicController.drawDynamics(scnbuff as integer ptr, order as integer = AC
         END_HASH()  
         BEGIN_HASH(curItem, drawobjects_activefront)
             (*curItem)->drawItemOverlay(scnbuff)
-        END_HASH()  
+        END_HASH() 
+        BEGIN_HASH(curItem, drawobjects_foreground)
+            (*curItem)->drawItemOverlay(scnbuff)
+        END_HASH()
+        BEGIN_HASH(curItem, drawobjects_foreground)
+            (*curItem)->drawItemOverlay(scnbuff)
+        END_HASH()   
+        BEGIN_HASH(curItem, drawobjects_activeCover)
+            (*curItem)->drawItemOverlay(scnbuff)
+        END_HASH()           
     end select 
 end sub
 sub DynamicController._addStringToType_(tag as string, item_t as Item_Type_e)
@@ -639,6 +671,8 @@ function DynamicController.constructItem(itemType_ as Item_Type_e, order as inte
             drawobjects_background.insert(ID_, @refItem->item_) 
         elseif order = FOREGROUND then
             drawobjects_foreground.insert(ID_, @refItem->item_) 
+        elseif order = ACTIVE_COVER then
+            drawobjects_activeCover.insert(ID_, @refItem->item_)             
         end if
     end if
   
@@ -695,6 +729,8 @@ function DynamicController.addItem(itemType_ as Item_Type_e, order as integer = 
             drawobjects_background.insert(ID_, @refItem->item_) 
         elseif order = FOREGROUND then
             drawobjects_foreground.insert(ID_, @refItem->item_) 
+        elseif order = ACTIVE_COVER then
+            drawobjects_activeCover.insert(ID_, @refItem->item_)
         end if
     else 
       refItem->item_->orderClass = orderType.NONE  

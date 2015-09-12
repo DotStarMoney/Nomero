@@ -39,10 +39,10 @@ using fb
     #endif
 #endmacro
 randomize timer
-setmouse ,,0
+'setmouse ,,0
 FSOUND_Init(44100, 16, 0)
 
-
+ 
 #ifdef INTRO
 	#ifndef DEBUG 
 		dim as uinteger ptr scnbuff
@@ -66,6 +66,7 @@ FSOUND_Init(44100, 16, 0)
         dim as integer ptr menuMusic, menuSound(0 to 2)
         randomize timer
 
+        
         mist.load("mist.png")
         baseTexture.load("base.png")
         mountain(0).load("menuback0.png")
@@ -79,6 +80,7 @@ FSOUND_Init(44100, 16, 0)
         letters.load("menuletters.png")
         subtitle.load("dsmsub.png")
         
+      
         menuSound(0) = FSOUND_SAMPLE_Load(FSOUND_FREE,"menuSwitch.wav",0,0,0)
         menuSound(1) = FSOUND_SAMPLE_Load(FSOUND_FREE,"menuSelect.wav",0,0,0)
         menuSound(2) = FSOUND_SAMPLE_Load(FSOUND_FREE,"menuBack.wav",0,0,0)
@@ -250,7 +252,7 @@ FSOUND_Init(44100, 16, 0)
             next i
             
             subtitle.putTrans(scnbuff, 205, 215+titlePosition, 0, 0, 94, 38)
-            subtitle.putTrans(scnbuff, 310, 215+titlePosition, 95, 0, 241, 38)
+            subtitle.putTrans(scnbuff, 310, 215+titlePosition, 95, 0, 240, 38)
 
             window screen
             

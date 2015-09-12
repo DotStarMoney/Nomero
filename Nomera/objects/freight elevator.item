@@ -37,6 +37,7 @@ function _init()
     data.platformLow = new TinyDynamic(DYNA_BASICPATH)
     data.platformHi->importParams(@pathData)
     data.platformLow->importParams(@pathData)
+    data.gearSound = -1
     
     shape(0) = Vector2D(0,0)
     shape(1) = Vector2D(96, 0)
@@ -77,7 +78,9 @@ end function
 '---------------------------------
 
 function _flush()
-    
+
+    if data.gearSound <> -1 then link.soundeffects_ptr->stopSound(data.gearSound)  
+  
     link.tinyspace_ptr->removeDynamic(data.platformLow_i)  
     link.tinyspace_ptr->removeDynamic(data.platformHi_i)    
     delete(data.platformHi)
@@ -132,7 +135,8 @@ function _run(t as double)
     else
         if data.lastState > 1 then 
             link.soundeffects_ptr->playSound(SND_COLLIDE)
-            link.soundeffects_ptr->stopSound(data.gearSound)            
+            link.soundeffects_ptr->stopSound(data.gearSound)    
+            data.gearSound = -1
         end if
         setValue(0, "interact")
         anims[3].pause()
@@ -154,7 +158,9 @@ function togglePath()
 end function
 
 slot $interact()
-    togglePath()
+    dim as integer inter
+    getValue(inter, "interact")
+    if inter = 0 then togglePath()
 end slot
 
 

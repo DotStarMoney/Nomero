@@ -1,9 +1,10 @@
 '#small oscilloscope
 type ITEM_DATA
     as integer dontDraw
+    as integer enable
 end type
 
-
+parameter "disable", integer
 publish slot "interact", $interact, Rectangle2D(Vector2D(0,0), Vector2D(32, 32))
 
 
@@ -24,7 +25,10 @@ function _init()
     anims[1].hardSwitch(1)
     steps = int(rnd * 30)
     for i = 0 to steps: anims[0].step_animation(): next i
-    data.dontDraw = 0
+    getParameter(data.enable, "disable")
+    data.enable = 1 - data.enable
+    
+    data.dontDraw = 1 - data.enable
 end function
 
 '---------------------------------
@@ -55,7 +59,13 @@ function _run(t as double)
 end function
 
 '-----------------------------------
-slot $interact()
-    data.dontDraw = 1 - data.dontDraw
+slot $enable()
+    data.enable = 1
+    data.dontDraw = 0
 end slot
+
+slot $interact()
+    if data.enable then data.dontDraw = 1 - data.dontDraw
+end slot
+
 

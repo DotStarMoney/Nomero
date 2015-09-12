@@ -65,7 +65,9 @@ function _run(t as double)
             link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)        
         next i
         link.oneshoteffects_ptr->create(p + size*0.5, BLUE_FLASH)        
-
+        link.player_ptr->showItemBar()
+        link.player_ptr->addIntel()
+        link.soundeffects_ptr->playSound(SND_COLLECT)
         return 1
     end if
     if data.frameCount mod 7 = 0 then link.oneshoteffects_ptr->create(p + Vector2D(size.x*rnd, size.y*rnd), SPARKLE)

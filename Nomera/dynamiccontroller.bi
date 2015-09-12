@@ -133,6 +133,10 @@ type DynamicController
         
         declare sub throw(signal_ID as string, signal_tag as string, parameter_string as string = "")
         declare sub fireSlot(ID_ as string, slot_tag as string, parameter_string as string = "")
+        
+        declare function overrideLightObjects() as integer
+        declare sub setOverrideLightObjects()
+        declare sub resetOverrideLightObjects()
                                     
         '-------------------------------- aux functions -------------------------------------
 		declare function populateLightList(ll as LightPair ptr ptr) as integer 
@@ -140,6 +144,8 @@ type DynamicController
     private:
         declare sub _addStringToType_(tag as string, item_t as Item_Type_e)
         declare function getItem(ID_ as string) as Item ptr
+
+        as integer overrideLight
 
         as Hashtable stringToTypeTable
         
@@ -157,6 +163,7 @@ type DynamicController
 		as Hashtable drawobjects_active      
         as Hashtable drawobjects_activeFront 
         as Hashtable drawobjects_foreground
+        as Hashtable drawobjects_activeCover
         
         as KeyBank itemIdGenerator
 		as ObjectLink link

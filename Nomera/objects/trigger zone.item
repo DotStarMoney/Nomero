@@ -1,0 +1,52 @@
+'#trigger zone
+
+type ITEM_DATA
+    as integer lastState
+end type
+
+signal $enter
+
+'---------------------------------
+
+function _init()
+    data.lastState = 0
+    
+  
+end function
+
+'---------------------------------
+
+function _flush()
+
+end function
+
+'---------------------------------
+
+
+function _draw(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as integer state
+    dim as Vector2D tl, br
+    
+    link.player_ptr->getBounds(tl, br)
+    br = tl + br
+    
+    state = boxBox(p, p + size, tl, br)
+    if state andAlso (data.lastState = 0) then throw($enter)
+       
+    data.lastState = state
+end function
+
+'-----------------------------------
+

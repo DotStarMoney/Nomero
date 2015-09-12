@@ -13,8 +13,7 @@ type ITEM_DATA
     as integer actionTimer
     as integer playChime
 end type
-#DEFINE CHARGE_TIME 10
-'800
+#DEFINE CHARGE_TIME 1800
 '7200
 
 parameter "muralTarget", Vector2D

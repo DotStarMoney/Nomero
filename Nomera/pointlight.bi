@@ -1,7 +1,7 @@
 #ifndef POINTLIGHT_BI
 #define POINTLIGHT_BI
 
-#define LIGHT_MAX 8
+#define LIGHT_MAX 64
 
 type PointLight
     as integer ptr diffuse_fbimg

@@ -11,6 +11,8 @@
 #include "constants.bi"
 #include "C64Draw.bi"
 #include "packedbinary.bi"
+#include "constants.bi"
+#include "debug.bi"
 
 #define ifVector2D(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_VECTOR2D, 1, 0)
 #define ifInteger(_VTC_) iif(_VTC_.type_ = _ITEM_VALUE_INTEGER, 1, 0)
@@ -40,7 +42,7 @@
     end if
 #endmacro
 #macro DRAW_LIT_ANIMATION(_ANIM_, _X_, _Y_, _FLAGS_, _FORCE_)
-    if link.level_ptr->shouldLight() then
+    if link.level_ptr->shouldLight() andAlso (DControl->overrideLightObjects() = 0) then
         anims[_ANIM_].drawAnimationLit(scnbuff, _X_, _Y_,_
                                        lights, numLights, link.level_ptr->getHiddenObjectAmbientLevel(),_
                                        link.gamespace_ptr->camera,_FLAGS_,_FORCE_,ANIM_TRANS)            
@@ -49,7 +51,7 @@
     end if  
 #endmacro
 #macro DRAW_LIT_ANIMATION_BRIGHT(_ANIM_, _X_, _Y_, _FLAGS_, _FORCE_)
-    if link.level_ptr->shouldLight() then
+    if link.level_ptr->shouldLight() andAlso (DControl->overrideLightObjects() = 0) then
         anims[_ANIM_].drawAnimationLit(scnbuff, _X_, _Y_,_
                                        lights, numLights, link.level_ptr->getObjectAmbientLevel(),_
                                        link.gamespace_ptr->camera,_FLAGS_,_FORCE_,ANIM_TRANS)            

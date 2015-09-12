@@ -4,8 +4,14 @@ type ITEM_DATA
     as integer ptr tubeValues
     as integer ptr valueFixed
     as integer countup
+    as integer interimCount
     as integer countA
+    as integer activated
+    as zimage nomeraSplash
 end type
+
+signal $leftOn
+signal $rightOn
 
 function _init()
     dim as integer i
@@ -23,6 +29,10 @@ function _init()
     next i
     data.countup = 0
     data.countA = 0
+    data.interimCount = 0
+    data.activated = 0
+    
+    data.nomeraSplash.load(MEDIA_PATH + "nomeraSplashWord.png")
 end function
 
 '---------------------------------
@@ -59,42 +69,107 @@ end function
 
 function _run(t as double)
     dim as integer i, value
+    dim as integer ptr scnbuff
     light.texture.x = p.x + size.x * 0.5
     light.texture.y = p.y + size.y * 0.5
     light.shaded.x = light.texture.x
     light.shaded.y = light.texture.y  
 
-    data.countup += 1
-    
-    if data.countup < 603 then
+    if data.activated = 1 then
+        if abs(link.player_ptr->body.p.x - 670) > 8 then
+            link.gamespace_ptr->manualInput_dire = 1
+        else
+            link.gamespace_ptr->manualInput_dire = 0
+        end if
+        data.countup += 1
+        
+        if data.countup < 603 then
+            data.countA += 1
+            if data.countA >= 2 then
+                data.countA = 0
+                lightState = 1 - lightState
+                for i = 0 to 5
+                    if (data.countup = (300 + i*60)) orElse (data.countup = (301 + i*60)) then
+                        link.soundeffects_ptr->playSound(SND_POW)
+                    end if
+                    if data.countup > (300 + i*60) then
+                        select case i
+                        case 0
+                            value = 30
+                        case 1
+                            value = 31
+                        case 2
+                            value = 11
+                        case 3
+                            value = 0
+                        case 4
+                            value = 7
+                        case 5
+                            value = 6
+                        end select 
+                        data.valueFixed[i] = 1
+                    else
+                        value = int(rnd * 36)
+                    end if
+                    data.tubeValues[i] = value
+                next i
+            end if
+        else
+            lightState = 1
+        end if    
+        if data.countup = 600 then link.soundeffects_ptr->playSound(SND_UVB76)   
+        
+        if data.countup = 718 then
+            throw($leftOn)
+            link.soundeffects_ptr->playSound(SND_POW)           
+        end if
+        if data.countup = 838 then 
+            throw($rightOn)
+            link.soundeffects_ptr->playSound(SND_POW)
+        end if
+        if data.countup = 955 then
+            scnbuff = imagecreate(640,480)
+            link.soundeffects_ptr->playSound(SND_POW)
+            do
+                window screen (0,0)-(SCRX-1,SCRY-1)
+                line scnbuff, (0,0)-(SCRX-1,SCRY-1), 0, BF
+            
+                data.nomeraSplash.putGLOW(scnbuff, 230, 224, 0, 0, 179, 31, &hffffffff)
+
+            
+                #ifndef SCALE_ELLIOTT
+                    #ifndef SCALE_2X
+                        window screen (0,0)-(SCRX-1,SCRY-1)
+                              
+                        put (0,0), scnbuff, PSET
+                    #else
+                        scale2sync scnbuff
+                    #endif
+                #else
+                    window screen (0,0)-(799, 599)
+                    line (79, 59)-(720, 540), &h1f1f1f, B
+                    put (80,60), scnbuff, PSET
+                #endif 
+                
+            loop until multikey(1)
+        
+            end 
+        end if
+    else
+        data.interimCount += 1
         data.countA += 1
         if data.countA >= 2 then
             data.countA = 0
             lightState = 1 - lightState
             for i = 0 to 5
-                if data.countup > (300 + i*60) then
-                    select case i
-                    case 0
-                        value = 30
-                    case 1
-                        value = 31
-                    case 2
-                        value = 11
-                    case 3
-                        value = 0
-                    case 4
-                        value = 7
-                    case 5
-                        value = 6
-                    end select 
-                    data.valueFixed[i] = 1
-                else
-                    value = int(rnd * 36)
-                end if
+                value = int(rnd * 36)
                 data.tubeValues[i] = value
             next i
-        end if
-    else
-        lightState = 1
-    end if    
+        end if    
+    end if
 end function
+
+slot $beginseq()
+    data.activated = 1
+    link.gamespace_ptr->lockAction = 1
+end slot

@@ -98,6 +98,7 @@ type Animation
         declare sub setPrealphaTarget(target as integer ptr)
         declare sub setSpeed(s as integer)
         declare sub setGlow(glow as integer)
+        
  
         declare sub drawAnimation(scnbuff as uinteger ptr, x as integer, y as integer, _
                                   cam as Vector2D = Vector2D(0,0), drawFlags as integer = 0, typeOverride as integer = ANIM_NONE, adj as Vector2D = Vector2D(0,0))

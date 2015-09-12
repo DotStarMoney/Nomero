@@ -1,0 +1,58 @@
+'#revealing wall
+
+
+type ITEM_DATA 
+    as integer state
+end type
+
+parameter "portal", string
+publish slot "explosion reaction", $react, Circle2D(Vector2D(0,-10), 24)
+
+
+'---------------------------------
+
+function _init()
+    data.state = 0
+end function
+
+'---------------------------------
+
+function _flush()
+ 
+end function
+
+'---------------------------------
+
+function _draw(scnbuff as integer ptr)
+
+end function
+
+function _drawOverlay(scnbuff as integer ptr)
+
+end function
+
+'----------------------------------
+
+function _run(t as double)
+    dim as string portalNme
+    getParameter(portalNme, "portal")
+    
+    portalNme = ucase(portalNme)
+    if data.state = 0 then
+        link.level_ptr->disablePortal(portalNme)
+    elseif data.state = 1 then
+        link.level_ptr->enablePortal(portalNme)
+    end if
+end function
+
+'-----------------------------------
+slot $react(source as Vector2D)
+    dim as Vector2D v
+    dim as double mag
+    v = source - (p + size*0.5)
+    mag = v.magnitude()
+    if mag < 64 then
+        data.state = 1
+    end if
+end slot
+
